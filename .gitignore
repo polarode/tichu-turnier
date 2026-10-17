@@ -1,0 +1,28 @@
+# Build output
+**/build/
+**/dist/
+**/out/
+**/target/
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Node
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+coverage/
+
+# TanStack router generated file is committed; its temp dir is not
+**/.tanstack/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Env
+.env.local
+*.local

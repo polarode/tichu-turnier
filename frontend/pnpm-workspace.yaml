@@ -1,0 +1,27 @@
+# Shared dependency versions. Reference with `catalog:` in package.json files so
+# every workspace package stays on the same version.
+catalog:
+  '@hookform/resolvers': 5.1.1
+  '@tailwindcss/vite': 4.1.11
+  '@tanstack/react-query': 5.84.1
+  '@tanstack/react-router': 1.131.2
+  axios: 1.11.0
+  class-variance-authority: 0.7.1
+  clsx: 2.1.1
+  lucide-react: 0.536.0
+  react: 19.1.1
+  react-dom: 19.1.1
+  react-hook-form: 7.62.0
+  tailwind-merge: 3.3.1
+  tailwindcss: 4.1.11
+  zod: 4.0.14
+  zustand: 5.0.7
+
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Native build scripts we trust to run on install (vite's esbuild, tailwind's oxide).
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - esbuild

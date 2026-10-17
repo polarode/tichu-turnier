@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: template-backend
+
+server:
+  port: 8080
+
+app:
+  # Origin allowed by CORS; the frontend dev server runs here.
+  frontend-url: http://localhost:3000

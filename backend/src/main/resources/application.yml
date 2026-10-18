@@ -2,6 +2,20 @@ spring:
   application:
     name: template-backend
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tichu_turnier
+    username: tichu
+    password: tichu
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # The schema belongs to Flyway; Hibernate must never create or alter it.
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
 server:
   port: 8080
 

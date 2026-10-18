@@ -15,17 +15,19 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
+import com.example.template.testsupport.PostgresBackedIntegrationTest
 
 /**
  * Integration test: boots the real application context (all beans wired through the
- * `*Configuration` classes) and drives the controller over MockMvc. `@Autowired` is
- * fine in tests — the no-field-injection rule applies to production code.
+ * `*Configuration` classes) against Testcontainers PostgreSQL and drives the
+ * controller over MockMvc. `@Autowired` is fine in tests — the no-field-injection
+ * rule applies to production code.
  */
 @SpringBootTest(classes = [com.example.template.main.Application::class])
 class TaskControllerIntegrationTest(
     @Autowired private val context: WebApplicationContext,
     @Autowired private val objectMapper: ObjectMapper,
-) {
+) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context).build()
 

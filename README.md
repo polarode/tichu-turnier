@@ -21,7 +21,34 @@ each subproject for how to run it.
 
 ## Quick start
 
-### Backend
+### Everything at once (Docker)
+
+```bash
+docker compose up        # Postgres + backend + frontend dev server
+```
+
+- Backend on http://localhost:8080, frontend on http://localhost:3000
+- PostgreSQL data persists in the `pgdata` volume; the backend applies Flyway
+  migrations on startup
+- The backend image is built from `backend/Dockerfile`; the frontend runs its
+  regular pnpm dev server inside a Node container
+
+### Backend (without Docker)
+
+The backend needs PostgreSQL on `localhost:5432` (database `tichu_turnier`, user
+`tichu`, password `tichu`) — e.g. start only the database with
+`docker compose up postgres`. Then:
+
+```bash
+cd backend
+./gradlew bootRun        # starts http://localhost:8080
+./gradlew test           # run tests (integration tests use Testcontainers)
+```
+
+The schema is owned by Flyway (`backend/src/main/resources/db/migration`); the
+Task data lives in PostgreSQL and survives restarts.
+
+### Frontend
 
 ```bash
 cd backend

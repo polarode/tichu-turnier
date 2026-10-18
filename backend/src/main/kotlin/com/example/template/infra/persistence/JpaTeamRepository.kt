@@ -25,6 +25,10 @@ class JpaTeamRepository(
     override fun save(team: Team): Team {
         try {
             val savedTeam = springDataTeamRepository.save(TeamEntity.from(team))
+            // Replace semantics: an update must rename/replace the two players, never
+            // leave the previous rows behind. The delete runs before the inserts in
+            // the caller's transaction, so a failed save rolls the whole thing back.
+            springDataPlayerRepository.deleteAllByTeamId(team.id.value)
             val savedPlayers = team.players.map { springDataPlayerRepository.save(PlayerEntity.from(it)) }
             return savedTeam.toDomain(savedPlayers)
         } catch (ex: DataIntegrityViolationException) {
@@ -82,6 +86,9 @@ class JpaTeamRepository(
         val teams = springDataTeamRepository.findAllByTournamentId(tournamentId.value)
         return withPlayers(teams)
     }
+
+    override fun countByTournament(tournamentId: TournamentId): Int =
+        springDataTeamRepository.countByTournamentId(tournamentId.value)
 
     override fun findById(teamId: TeamId, tournamentId: TournamentId): Team? =
         springDataTeamRepository.findByIdAndTournamentId(teamId.value, tournamentId.value)

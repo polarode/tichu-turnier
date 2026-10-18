@@ -14,7 +14,8 @@ import jakarta.persistence.Table
  * stays framework-free. Players are tournament-scoped (no global player table):
  * the same name may recur in another tournament, but within one tournament each
  * name exists exactly once (see the V5 migration's unique constraint), which is
- * what keeps a player off two teams. Players are never updated after creation.
+ * what keeps a player off two teams. A team update replaces its two player rows,
+ * preserving the player ids and changing the names.
  */
 @Entity
 @Table(name = "players")

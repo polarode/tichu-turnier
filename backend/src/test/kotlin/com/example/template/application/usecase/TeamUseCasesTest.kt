@@ -13,6 +13,7 @@ import com.example.template.vocabulary.DuplicateTeamPlayersException
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.NotFoundException
+import com.example.template.vocabulary.TeamLimitReachedException
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -25,9 +26,9 @@ import kotlin.test.assertTrue
  *
  * Covers the full team validation matrix at the use-case seam: field rules, the
  * tournament-scoped uniqueness rules (team name, player name, two identical
- * players in one team) and the ownership rule inherited from the tournament phase.
- * The cross-tournament acceptance is proven by the same organizer running two
- * tournaments with identical names.
+ * players in one team), capacity enforcement and the ownership rule inherited from
+ * the tournament phase. The cross-tournament acceptance is proven by the same
+ * organizer running two tournaments with identical names.
  */
 class TeamUseCasesTest {
 
@@ -46,10 +47,12 @@ class TeamUseCasesTest {
     private val createTeam = CreateTeamCommand(tournamentRepository, teamRepository, idGenerator)
     private val listTeams = ListTeamsQuery(tournamentRepository, teamRepository)
     private val getTeam = GetTeamQuery(tournamentRepository, teamRepository)
+    private val updateTeam = UpdateTeamCommand(tournamentRepository, teamRepository)
+    private val deleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository)
 
-    private fun createTournament(name: String, asAdmin: AdminUserId = owner) =
+    private fun createTournament(name: String, asAdmin: AdminUserId = owner, maxTeams: Int = 16) =
         createTournament.create(
-            com.example.template.application.api.TournamentWriteRequest(name, "", 16),
+            com.example.template.application.api.TournamentWriteRequest(name, "", maxTeams),
             asAdmin,
         ).id
 
@@ -295,5 +298,235 @@ class TeamUseCasesTest {
         val tournamentId = createTournament("Spring Classic")
 
         assertFailsWith<NotFoundException> { getTeam.get(tournamentId, TeamId("does-not-exist"), owner) }
+    }
+
+    // ---------------------------------------------------------------- capacity
+
+    @Test
+    fun `rejects creating a team beyond the tournament max teams with a typed error`() {
+        val tournamentId = createTournament("Small", maxTeams = 2)
+        createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeamSafe(tournamentId, "Team Beta", "Carol", "Dave")
+
+        val ex = assertFailsWith<TeamLimitReachedException> {
+            createTeam.create(tournamentId, createTeamRequest("Team Gamma", "Erin", "Frank"), owner)
+        }
+
+        assertEquals(ErrorCode.TEAM_LIMIT_REACHED, ex.code)
+        assertEquals(2, teamRepository.findAllByTournament(tournamentId).size, "the rejected team is not persisted")
+    }
+
+    @Test
+    fun `a team can be created while the tournament is below max teams`() {
+        val tournamentId = createTournament("Small", maxTeams = 2)
+        createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val team = createTeam.create(tournamentId, createTeamRequest("Team Beta", "Carol", "Dave"), owner)
+
+        assertEquals("Team Beta", team.name)
+        assertEquals(2, teamRepository.countByTournament(tournamentId))
+    }
+
+    // ------------------------------------------------------------------ update
+
+    @Test
+    fun `update renames a team and keeps its players and id`() {
+        val tournamentId = createTournament("Spring Classic")
+        val original = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val updated = updateTeam.update(
+            tournamentId,
+            original.id,
+            createTeamRequest("  Team Renamed  ", "Alice", "Bob"),
+            owner,
+        )
+
+        assertEquals(original.id, updated.id, "the team id is stable")
+        assertEquals("Team Renamed", updated.name, "the name is trimmed")
+        assertEquals(listOf("Alice", "Bob"), updated.players.map { it.name })
+        assertEquals(listOf(original.players[0].id, original.players[1].id), updated.players.map { it.id }, "player identities are preserved")
+        assertEquals(updated, getTeam.get(tournamentId, original.id, owner), "the update is persisted")
+    }
+
+    @Test
+    fun `update swaps both players while keeping the team name`() {
+        val tournamentId = createTournament("Spring Classic")
+        val original = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val updated = updateTeam.update(
+            tournamentId,
+            original.id,
+            createTeamRequest("Team Alpha", "Carol", "Dave"),
+            owner,
+        )
+
+        assertEquals("Team Alpha", updated.name)
+        assertEquals(listOf("Carol", "Dave"), updated.players.map { it.name })
+        assertTrue(updated.players.all { it.teamId == original.id }, "both players point back at the team")
+    }
+
+    @Test
+    fun `update accepts a team keeping its own name and players`() {
+        val tournamentId = createTournament("Spring Classic")
+        val original = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val updated = updateTeam.update(
+            tournamentId,
+            original.id,
+            createTeamRequest("Team Alpha", "Alice", "Bob"),
+            owner,
+        )
+
+        assertEquals("Team Alpha", updated.name)
+        assertEquals(listOf("Alice", "Bob"), updated.players.map { it.name })
+    }
+
+    @Test
+    fun `update re-runs the field rules anchored to the name field`() {
+        val tournamentId = createTournament("Spring Classic")
+        val original = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val ex = assertFailsWith<InvalidFieldException> {
+            updateTeam.update(tournamentId, original.id, createTeamRequest("   ", "Alice", "Bob"), owner)
+        }
+
+        assertEquals("name", ex.field)
+        assertEquals("Team Alpha", getTeam.get(tournamentId, original.id, owner).name, "a rejected update changes nothing")
+    }
+
+    @Test
+    fun `update re-runs the field rules anchored to the offending player field`() {
+        val tournamentId = createTournament("Spring Classic")
+        val original = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val ex = assertFailsWith<InvalidFieldException> {
+            updateTeam.update(tournamentId, original.id, createTeamRequest("Team Alpha", "Alice", "   "), owner)
+        }
+
+        assertEquals("playerTwoName", ex.field)
+    }
+
+    @Test
+    fun `update rejects two identical players anchored to the second player`() {
+        val tournamentId = createTournament("Spring Classic")
+        val original = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        val ex = assertFailsWith<DuplicateTeamPlayersException> {
+            updateTeam.update(tournamentId, original.id, createTeamRequest("Team Alpha", "Carol", "Carol"), owner)
+        }
+
+        assertEquals(ErrorCode.DUPLICATE_TEAM_PLAYERS, ex.code)
+        assertEquals("playerTwoName", ex.field)
+    }
+
+    @Test
+    fun `update rejects a team name already taken by another team`() {
+        val tournamentId = createTournament("Spring Classic")
+        val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeamSafe(tournamentId, "Team Beta", "Carol", "Dave")
+
+        val ex = assertFailsWith<DuplicateTeamNameException> {
+            updateTeam.update(tournamentId, alpha.id, createTeamRequest("Team Beta", "Alice", "Bob"), owner)
+        }
+
+        assertEquals(ErrorCode.DUPLICATE_TEAM_NAME, ex.code)
+        assertEquals("name", ex.field)
+        assertEquals("Team Alpha", getTeam.get(tournamentId, alpha.id, owner).name, "a rejected update changes nothing")
+    }
+
+    @Test
+    fun `update rejects a player already on another team anchored to the offending field`() {
+        val tournamentId = createTournament("Spring Classic")
+        val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeamSafe(tournamentId, "Team Beta", "Carol", "Dave")
+
+        val ex = assertFailsWith<DuplicatePlayerNameException> {
+            updateTeam.update(tournamentId, alpha.id, createTeamRequest("Team Alpha", "Alice", "Carol"), owner)
+        }
+
+        assertEquals(ErrorCode.DUPLICATE_PLAYER_NAME, ex.code)
+        assertEquals("playerTwoName", ex.field)
+    }
+
+    @Test
+    fun `a foreign admin cannot update another admin's team`() {
+        val tournamentId = createTournament("Alice's tournament")
+        val team = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        assertFailsWith<NotFoundException> {
+            updateTeam.update(tournamentId, team.id, createTeamRequest("Hijacked", "Eve", "Mallory"), intruder)
+        }
+        assertEquals("Team Alpha", getTeam.get(tournamentId, team.id, owner).name)
+    }
+
+    @Test
+    fun `update of an unknown team id fails as not-found`() {
+        val tournamentId = createTournament("Spring Classic")
+
+        assertFailsWith<NotFoundException> {
+            updateTeam.update(tournamentId, TeamId("does-not-exist"), createTeamRequest(), owner)
+        }
+    }
+
+    @Test
+    fun `a team id from another tournament cannot be updated`() {
+        val first = createTournament("Spring Classic")
+        val second = createTournament("Autumn Cup")
+        val team = createTeamSafe(first, "Team Alpha", "Alice", "Bob")
+
+        assertFailsWith<NotFoundException> {
+            updateTeam.update(second, team.id, createTeamRequest("Hijacked", "Eve", "Mallory"), owner)
+        }
+    }
+
+    // ------------------------------------------------------------------ delete
+
+    @Test
+    fun `delete removes the team and its players`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        deleteTeam.delete(tournamentId, team.id, owner)
+
+        assertTrue(listTeams.list(tournamentId, owner).isEmpty(), "the team is gone")
+        assertFailsWith<NotFoundException> { getTeam.get(tournamentId, team.id, owner) }
+    }
+
+    @Test
+    fun `delete leaves the other teams of the tournament untouched`() {
+        val tournamentId = createTournament("Spring Classic")
+        val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+        val beta = createTeamSafe(tournamentId, "Team Beta", "Carol", "Dave")
+
+        deleteTeam.delete(tournamentId, alpha.id, owner)
+
+        assertEquals(listOf(beta.id), listTeams.list(tournamentId, owner).map { it.id })
+    }
+
+    @Test
+    fun `a foreign admin cannot delete another admin's team`() {
+        val tournamentId = createTournament("Alice's tournament")
+        val team = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        assertFailsWith<NotFoundException> { deleteTeam.delete(tournamentId, team.id, intruder) }
+
+        assertEquals("Team Alpha", getTeam.get(tournamentId, team.id, owner).name)
+    }
+
+    @Test
+    fun `delete of an unknown team id fails as not-found`() {
+        val tournamentId = createTournament("Spring Classic")
+
+        assertFailsWith<NotFoundException> { deleteTeam.delete(tournamentId, TeamId("does-not-exist"), owner) }
+    }
+
+    @Test
+    fun `a team id from another tournament cannot be deleted`() {
+        val first = createTournament("Spring Classic")
+        val second = createTournament("Autumn Cup")
+        val team = createTeamSafe(first, "Team Alpha", "Alice", "Bob")
+
+        assertFailsWith<NotFoundException> { deleteTeam.delete(second, team.id, owner) }
+        assertEquals("Team Alpha", getTeam.get(first, team.id, owner).name)
     }
 }

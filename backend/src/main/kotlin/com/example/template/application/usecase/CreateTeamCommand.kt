@@ -11,9 +11,7 @@ import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
-import com.example.template.vocabulary.DuplicatePlayerNameException
-import com.example.template.vocabulary.DuplicateTeamNameException
-import com.example.template.vocabulary.DuplicateTeamPlayersException
+import com.example.template.vocabulary.TeamLimitReachedException
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -24,15 +22,17 @@ import org.springframework.transaction.annotation.Transactional
  *
  * 1. ownership: a foreign or missing tournament id fails as not-found (`findOwnedOrThrow`);
  * 2. field rules: blank / overlong names (see [TeamInputValidator]);
- * 3. the two players of one team must be different people (typed, field-anchored);
- * 4. the team name must be free within the tournament (typed, field-anchored);
- * 5. each player name must be free within the tournament — a player may not sit on
+ * 3. capacity: the tournament must be below its configured `max_teams`;
+ * 4. the two players of one team must be different people (typed, field-anchored);
+ * 5. the team name must be free within the tournament (typed, field-anchored);
+ * 6. each player name must be free within the tournament — a player may not sit on
  *    two teams of one tournament (typed, field-anchored).
  *
- * Names are compared case-insensitively after trimming, mirroring how emails are
- * matched for uniqueness. Identical team/player names in *different* tournaments
- * of the same organizer are accepted because every check is scoped to one
- * tournament id.
+ * The field and uniqueness matrix is delegated to [TeamInputValidator] so it stays
+ * identical to the update path. Names are compared case-insensitively after trimming,
+ * mirroring how emails are matched for uniqueness. Identical team/player names in
+ * *different* tournaments of the same organizer are accepted because every check is
+ * scoped to one tournament id.
  *
  * Saving touches two tables (teams + players), so the use case is transactional.
  */
@@ -44,7 +44,7 @@ class CreateTeamCommand(
 ) : CreateTeam {
 
     override fun create(tournamentId: TournamentId, command: TeamWriteRequest, owner: AdminUserId): Team {
-        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
 
         val name = command.name.trim()
         val playerOneName = command.playerOneName.trim()
@@ -52,22 +52,12 @@ class CreateTeamCommand(
         TeamInputValidator.validate(name, playerOneName, playerTwoName)
 
         val existingTeams = teamRepository.findAllByTournament(tournamentId)
-        if (playerOneName.equals(playerTwoName, ignoreCase = true)) {
-            throw DuplicateTeamPlayersException(
-                "playerTwoName",
-                "The two players of a team must be different people",
+        if (existingTeams.size >= tournament.maxTeams) {
+            throw TeamLimitReachedException(
+                "Tournament \"${tournament.name}\" already holds its maximum of ${tournament.maxTeams} teams",
             )
         }
-        if (existingTeams.any { it.name.equals(name, ignoreCase = true) }) {
-            throw DuplicateTeamNameException("name", "Team name \"$name\" is already taken in this tournament")
-        }
-        listOf("playerOneName" to playerOneName, "playerTwoName" to playerTwoName)
-            .firstOrNull { (field, playerName) ->
-                existingTeams.any { team -> team.players.any { it.name.equals(playerName, ignoreCase = true) } }
-            }
-            ?.let { (field, playerName) ->
-                throw DuplicatePlayerNameException(field, "Player \"$playerName\" is already on a team in this tournament")
-            }
+        TeamInputValidator.validateUniqueness(existingTeams, name, playerOneName, playerTwoName)
 
         val teamId = TeamId(idGenerator.newId())
         val playerOne = Player(

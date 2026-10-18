@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 interface SpringDataTeamRepository : JpaRepository<TeamEntity, String> {
     fun findAllByTournamentId(tournamentId: String): List<TeamEntity>
+    fun countByTournamentId(tournamentId: String): Int
     fun findByIdAndTournamentId(id: String, tournamentId: String): TeamEntity?
 
     /** Scoped delete so a team can only be removed from the tournament it belongs to. Derived deletes run outside `SimpleJpaRepository`, so they carry their own transaction. */

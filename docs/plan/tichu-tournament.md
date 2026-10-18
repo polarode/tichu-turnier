@@ -6,7 +6,7 @@
 
 - [x] **Phase 1** — Scaffold + persistence + CI
 - [x] **Phase 2** — Admin auth & ownership
-- [ ] **Phase 3** — Tournament & team setup
+- [x] **Phase 3** — Tournament & team setup
 - [ ] **Phase 4** — Invite-gated admin onboarding
 - [ ] **Phase 5** — Team magic-link access
 - [ ] **Phase 6** — Start tournament: rounds & Swiss pairing
@@ -92,7 +92,7 @@ Introduce admin accounts (email/password) with Spring Security token sessions, w
 
 ---
 
-## Phase 3: Tournament & team setup (in progress — tickets 005–007 done; ticket 008 open)
+## Phase 3: Tournament & team setup ✅ (done — tickets 005–008)
 
 **User stories**: As an organizer I create a tournament, describe it, set limits and settings (incl. grand Tichu toggle); I add teams with two named players each, catching duplicates and rule violations with clear, field-anchored error messages (stable server error codes, localized in the frontend).
 
@@ -102,10 +102,10 @@ Full setup-phase CRUD: tournaments (name, description, max teams, settings, stat
 
 ### Acceptance criteria
 
-- [ ] Create/edit/delete tournament and teams via API, all returning typed validation errors
-- [ ] Duplicate player / duplicate team name / over-capacity violations rejected server-side with tests for each
-- [ ] Players are tournament-scoped: identical names allowed in different tournaments, impossible within one
-- [ ] Use-case unit tests cover the rule matrix; integration tests cover the endpoints
+- [x] Create/edit/delete tournament and teams via API, all returning typed validation errors
+- [x] Duplicate player / duplicate team name / over-capacity violations rejected server-side with tests for each
+- [x] Players are tournament-scoped: identical names allowed in different tournaments, impossible within one
+- [x] Use-case unit tests cover the rule matrix; integration tests cover the endpoints
 
 ---
 

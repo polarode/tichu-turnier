@@ -3,10 +3,12 @@ package com.example.template.application.usecase
 import com.example.template.application.api.TournamentWriteRequest
 import com.example.template.application.api.UpdateTournament
 import com.example.template.domain.AdminUserId
+import com.example.template.domain.TeamRepository
 import com.example.template.domain.Tournament
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
 import com.example.template.domain.TournamentStatus
+import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -16,11 +18,14 @@ import java.time.Clock
  * as a bean in [UseCaseConfiguration] — never annotated with @Service.
  *
  * Order of checks is deliberate: ownership first (a foreign id stays invisible as a
- * 404 regardless of body), then the status machine (409), then field validation (400).
+ * 404 regardless of body), then the status machine (409), then field validation (400),
+ * then the capacity rule — lowering `max_teams` below the teams already registered is
+ * rejected so an edit cannot orphan teams outside the configured limit (409).
  */
 @Transactional
 class UpdateTournamentCommand(
     private val repository: TournamentRepository,
+    private val teamRepository: TeamRepository,
     private val clock: Clock,
 ) : UpdateTournament {
 
@@ -39,6 +44,14 @@ class UpdateTournamentCommand(
 
         val name = command.name.trim()
         TournamentInputValidator.validate(name, command.maxTeams)
+
+        val teamCount = teamRepository.countByTournament(id)
+        if (command.maxTeams < teamCount) {
+            throw MaxTeamsBelowTeamCountException(
+                "maxTeams",
+                "Tournament already has $teamCount teams; max teams cannot be lowered below that",
+            )
+        }
 
         return repository.save(
             tournament.copy(

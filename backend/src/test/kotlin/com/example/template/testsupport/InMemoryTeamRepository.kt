@@ -23,6 +23,9 @@ class InMemoryTeamRepository : TeamRepository {
     override fun findAllByTournament(tournamentId: TournamentId): List<Team> =
         store.values.filter { it.tournamentId == tournamentId }
 
+    override fun countByTournament(tournamentId: TournamentId): Int =
+        store.values.count { it.tournamentId == tournamentId }
+
     override fun findById(teamId: TeamId, tournamentId: TournamentId): Team? =
         store[teamId.value]?.takeIf { it.tournamentId == tournamentId }
 

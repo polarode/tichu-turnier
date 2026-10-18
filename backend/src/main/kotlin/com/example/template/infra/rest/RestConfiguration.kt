@@ -2,11 +2,13 @@ package com.example.template.infra.rest
 
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.UpdateTeam
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
@@ -48,7 +50,9 @@ class RestConfiguration(
         createTeam: CreateTeam,
         listTeams: ListTeams,
         getTeam: GetTeam,
-    ): TeamController = TeamController(createTeam, listTeams, getTeam)
+        updateTeam: UpdateTeam,
+        deleteTeam: DeleteTeam,
+    ): TeamController = TeamController(createTeam, listTeams, getTeam, updateTeam, deleteTeam)
 
     @Bean
     fun sessionCookieFactory(): SessionCookieFactory =

@@ -1,17 +1,21 @@
 package com.example.template.infra.rest.web
 
 import com.example.template.application.api.CreateTeam
+import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.AuthenticatedAdmin
+import com.example.template.application.api.UpdateTeam
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -29,6 +33,8 @@ class TeamController(
     private val createTeam: CreateTeam,
     private val listTeams: ListTeams,
     private val getTeam: GetTeam,
+    private val updateTeam: UpdateTeam,
+    private val deleteTeam: DeleteTeam,
 ) {
 
     @PostMapping
@@ -56,4 +62,29 @@ class TeamController(
     ): TeamResponseDto = TeamResponseDto.from(
         getTeam.get(TournamentId(tournamentId), TeamId(teamId), principal.adminUserId),
     )
+
+    @PutMapping("/{teamId}")
+    fun update(
+        @PathVariable tournamentId: String,
+        @PathVariable teamId: String,
+        @Valid @RequestBody body: TeamRequestDto,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TeamResponseDto = TeamResponseDto.from(
+        updateTeam.update(
+            TournamentId(tournamentId),
+            TeamId(teamId),
+            body.toWriteRequest(),
+            principal.adminUserId,
+        ),
+    )
+
+    @DeleteMapping("/{teamId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(
+        @PathVariable tournamentId: String,
+        @PathVariable teamId: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ) {
+        deleteTeam.delete(TournamentId(tournamentId), TeamId(teamId), principal.adminUserId)
+    }
 }

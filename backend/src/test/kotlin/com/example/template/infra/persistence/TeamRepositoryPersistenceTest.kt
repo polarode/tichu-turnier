@@ -193,6 +193,37 @@ class TeamRepositoryPersistenceTest(
         assertNull(teamRepository.findById(TeamId("t9-team-1"), second))
     }
 
+    @Test
+    fun `countByTournament counts only that tournament's teams`() {
+        val first = insertTournament()
+        val second = insertTournament()
+        teamRepository.save(team("t10-team-1", first, name = "A", playerOneName = "P1", playerTwoName = "P2"))
+        teamRepository.save(team("t10-team-2", first, name = "B", playerOneName = "P3", playerTwoName = "P4"))
+        teamRepository.save(team("t10-team-3", second, name = "C", playerOneName = "P5", playerTwoName = "P6"))
+
+        assertEquals(2, teamRepository.countByTournament(first))
+        assertEquals(1, teamRepository.countByTournament(second))
+    }
+
+    @Test
+    fun `saving an existing team renames it and replaces its players`() {
+        val tournamentId = insertTournament()
+        teamRepository.save(team("t11-team-1", tournamentId, name = "Old Name", playerOneName = "Alice", playerTwoName = "Bob"))
+
+        val updated = team("t11-team-1", tournamentId, name = "New Name", playerOneName = "Carol", playerTwoName = "Dave")
+        teamRepository.save(updated)
+
+        val loaded = teamRepository.findById(TeamId("t11-team-1"), tournamentId)
+        assertEquals(updated, loaded)
+        assertEquals(listOf("Carol", "Dave"), loaded?.players?.map { it.name })
+        assertEquals(2L, jdbcTemplate.queryForObject("SELECT count(*) FROM players", Long::class.java), "old players are not orphaned")
+        assertEquals(
+            0L,
+            jdbcTemplate.queryForObject("SELECT count(*) FROM players WHERE name IN ('Alice', 'Bob')", Long::class.java),
+            "the previous player names are gone",
+        )
+    }
+
     private fun freshAdapter(): TeamRepository =
         // Rebuild the adapter over the shared Spring Data repositories so the read
         // bypasses any JPA first-level cache and proves the row was committed.

@@ -11,11 +11,18 @@ package com.example.template.domain
  */
 interface TeamRepository {
 
-    /** Persists the team together with its players (one aggregate, one transaction). */
+    /**
+     * Persists the team together with its players (one aggregate, one transaction).
+     * For an existing team this replaces its players, so a rename or a player swap
+     * does not leave orphaned rows behind.
+     */
     fun save(team: Team): Team
 
     /** All teams of one tournament, each with its players. */
     fun findAllByTournament(tournamentId: TournamentId): List<Team>
+
+    /** Number of teams already registered in one tournament — used by the capacity rule. */
+    fun countByTournament(tournamentId: TournamentId): Int
 
     /** Exact id lookup inside one tournament — returns null for foreign/missing ids. */
     fun findById(teamId: TeamId, tournamentId: TournamentId): Team?

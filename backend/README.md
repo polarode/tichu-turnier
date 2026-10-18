@@ -22,12 +22,26 @@ Requires a JDK 21+ on the machine; the Gradle wrapper handles the rest.
 | POST   | `/api/tournaments`       | create a tournament                    |
 | PUT    | `/api/tournaments/{id}`  | replace a tournament's configuration   |
 | DELETE | `/api/tournaments/{id}`  | delete a tournament and its scoped data |
+| GET    | `/api/tournaments/{tournamentId}/teams` | list a tournament's teams |
+| GET    | `/api/tournaments/{tournamentId}/teams/{teamId}` | get one team with its players |
+| POST   | `/api/tournaments/{tournamentId}/teams` | create a team (name + two players) |
+| PUT    | `/api/tournaments/{tournamentId}/teams/{teamId}` | rename a team and/or swap its players |
+| DELETE | `/api/tournaments/{tournamentId}/teams/{teamId}` | delete a team and its players |
 
 All tournament endpoints require a valid admin session. New tournaments start in
 status `setup` (the machine is `setup → active → completed`, final). A tournament's
 configuration can only be edited while it is in `setup`; an edit against a started
 or completed tournament answers `409 TOURNAMENT_NOT_EDITABLE`. Deleting is allowed
 in any status and cascades to everything scoped to the tournament.
+
+Teams are tournament-scoped and validated server-side: names are compared
+case-insensitively, a player may sit on only one team per tournament, and the two
+players of a team must be different people. Field and uniqueness violations answer
+`409` with a stable `code` (`DUPLICATE_TEAM_NAME`, `DUPLICATE_PLAYER_NAME`,
+`DUPLICATE_TEAM_PLAYERS`) and a `field` member. Creating a team when the tournament
+already holds its `maxTeams` answers `409 TEAM_LIMIT_REACHED`; lowering `maxTeams`
+below the registered team count answers `409 MAX_TEAMS_BELOW_TEAM_COUNT` anchored to
+`maxTeams`. Team and player names may repeat across different tournaments.
 
 Example:
 
@@ -49,7 +63,9 @@ curl -X POST localhost:8080/api/tournaments \
 Sessions use the `admin_session` httpOnly `Secure` `SameSite=Lax` cookie; the raw
 token is never returned in a response body. Error responses are RFC 7807 problem
 JSON carrying a stable `code` (`EMAIL_ALREADY_REGISTERED`, `INVALID_CREDENTIALS`,
-`UNAUTHENTICATED`, `INVALID_INPUT`, `NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`). Cookie
+`UNAUTHENTICATED`, `INVALID_INPUT`, `NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`,
+`DUPLICATE_TEAM_NAME`, `DUPLICATE_PLAYER_NAME`, `DUPLICATE_TEAM_PLAYERS`,
+`TEAM_LIMIT_REACHED`, `MAX_TEAMS_BELOW_TEAM_COUNT`). Cookie
 lifetime and the `Secure`
 flag are configured under `app.auth` in `application.yml`.
 
@@ -69,18 +85,21 @@ curl -b cookies.txt -c cookies.txt -X POST localhost:8080/api/auth/refresh
 ## Layers
 
 - `domain` — `Tournament`, `TournamentStatus`, `TournamentId`,
-  `TournamentSettings`, and the `TournamentRepository`/`IdGenerator` ports. No Spring.
+  `TournamentSettings`, `Team`, `Player` and the
+  `TournamentRepository`/`TeamRepository`/`IdGenerator` ports. No Spring.
 - `application/api` — inbound ports: `CreateTournament`, `ListTournaments`,
-  `GetTournament`, `UpdateTournament`, `DeleteTournament`, `RegisterAdmin`,
+  `GetTournament`, `UpdateTournament`, `DeleteTournament`, `CreateTeam`, `ListTeams`,
+  `GetTeam`, `UpdateTeam`, `DeleteTeam`, `RegisterAdmin`,
   `LoginAdmin`, `RefreshSession`, `LogoutAdmin`.
 - `application/usecase` — implementations + `UseCaseConfiguration`.
-- `infra/persistence` — `JpaTournamentRepository` (+ `TournamentEntity` and the
-  Spring Data repository it wraps), `UuidIdGenerator` + `PersistenceConfiguration`.
-  `InMemoryTournamentRepository` remains as a fast fake for use-case unit tests.
+- `infra/persistence` — `JpaTournamentRepository`/`JpaTeamRepository`
+  (+ their entities and the Spring Data repositories they wrap), `UuidIdGenerator` +
+  `PersistenceConfiguration`. `InMemoryTournamentRepository` and
+  `InMemoryTeamRepository` remain as fast fakes for use-case unit tests.
 - `infra/security` — `BcryptPasswordHasher`, `SecureSessionTokens` +
   `SecurityConfiguration` (the crypto ports).
-- `infra/rest` — `TournamentController`, `AuthController`, DTOs, the session-cookie
-  factory, error advice + `RestConfiguration`.
+- `infra/rest` — `TournamentController`, `TeamController`, `AuthController`, DTOs,
+  the session-cookie factory, error advice + `RestConfiguration`.
 - `main` — `Application` composition root.
 
 The production adapter is JPA over PostgreSQL with the schema managed by Flyway

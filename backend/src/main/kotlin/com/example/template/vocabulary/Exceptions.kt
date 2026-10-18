@@ -24,6 +24,12 @@ enum class ErrorCode {
 
     /** The two players of one team are the same player. */
     DUPLICATE_TEAM_PLAYERS,
+
+    /** The tournament already holds its configured maximum number of teams. */
+    TEAM_LIMIT_REACHED,
+
+    /** A tournament edit would drop `max_teams` below the number of teams already registered. */
+    MAX_TEAMS_BELOW_TEAM_COUNT,
 }
 
 /**
@@ -103,3 +109,21 @@ class DuplicateTeamPlayersException(
     val field: String,
     message: String,
 ) : ApiException(ErrorCode.DUPLICATE_TEAM_PLAYERS, message)
+
+/**
+ * Thrown when a team is created in a tournament that already holds its configured
+ * maximum number of teams. The limit is a tournament-level rule, so the failure is
+ * not anchored to a team field. Mapped to HTTP 409.
+ */
+class TeamLimitReachedException(message: String) :
+    ApiException(ErrorCode.TEAM_LIMIT_REACHED, message)
+
+/**
+ * Thrown when a tournament edit would lower `max_teams` below the number of teams
+ * already registered. Field-anchored to `maxTeams` so the frontend highlights that
+ * input. Mapped to HTTP 409.
+ */
+class MaxTeamsBelowTeamCountException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.MAX_TEAMS_BELOW_TEAM_COUNT, message)

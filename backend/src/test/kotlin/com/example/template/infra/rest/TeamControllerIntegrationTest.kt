@@ -11,8 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -267,6 +269,176 @@ class TeamControllerIntegrationTest(
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId/teams/any-team")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(teamBody("Team Alpha")),
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+
+        mockMvc.perform(delete("/api/tournaments/$tournamentId/teams/any-team"))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    // ------------------------------------------------------------------ update
+
+    @Test
+    fun `update renames a team and swaps its players`() {
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(teamBody("Team Renamed", "Carol", "Dave")),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(teamId))
+            .andExpect(jsonPath("$.name").value("Team Renamed"))
+            .andExpect(jsonPath("$.players[0].name").value("Carol"))
+            .andExpect(jsonPath("$.players[1].name").value("Dave"))
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.name").value("Team Renamed"))
+            .andExpect(jsonPath("$.players.length()").value(2))
+            .andExpect(jsonPath("$.players[0].name").value("Carol"))
+    }
+
+    @Test
+    fun `update rejects a duplicate team name with a typed field-anchored 409`() {
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeam(tournamentId, "Team Beta", "Carol", "Dave")
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(teamBody("Team Beta", "Alice", "Bob")),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("DUPLICATE_TEAM_NAME"))
+            .andExpect(jsonPath("$.field").value("name"))
+    }
+
+    @Test
+    fun `update rejects a player already on another team with a typed field-anchored 409`() {
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeam(tournamentId, "Team Beta", "Carol", "Dave")
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(teamBody("Team Alpha", "Alice", "Carol")),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("DUPLICATE_PLAYER_NAME"))
+            .andExpect(jsonPath("$.field").value("playerTwoName"))
+    }
+
+    @Test
+    fun `a foreign admin cannot update another admin's team`() {
+        val tournamentId = createTournament("Alice's tournament")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId/teams/$teamId").cookie(otherAdminCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(teamBody("Hijacked", "Eve", "Mallory")),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie))
+            .andExpect(jsonPath("$.name").value("Team Alpha"))
+    }
+
+    // ------------------------------------------------------------------ delete
+
+    @Test
+    fun `delete removes the team and answers 404 afterwards`() {
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        mockMvc.perform(delete("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie))
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams").cookie(sessionCookie))
+            .andExpect(jsonPath("$.length()").value(0))
+    }
+
+    @Test
+    fun `a foreign admin cannot delete another admin's team`() {
+        val tournamentId = createTournament("Alice's tournament")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        mockMvc.perform(delete("/api/tournaments/$tournamentId/teams/$teamId").cookie(otherAdminCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie))
+            .andExpect(status().isOk)
+    }
+
+    // ---------------------------------------------------------------- capacity
+
+    @Test
+    fun `create beyond the tournament max teams is rejected with a stable error code`() {
+        val tournamentId = createTournament("Small", maxTeams = 1)
+        createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        mockMvc.perform(
+            post("/api/tournaments/$tournamentId/teams").cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(teamBody("Team Beta", "Carol", "Dave")),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("TEAM_LIMIT_REACHED"))
+    }
+
+    @Test
+    fun `lowering max teams below the team count is rejected with a field-anchored 409`() {
+        val tournamentId = createTournament("Small", maxTeams = 4)
+        createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeam(tournamentId, "Team Beta", "Carol", "Dave")
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId").cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Small","description":"","maxTeams":1,"settings":{"allowGrandTichu":true}}"""),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("MAX_TEAMS_BELOW_TEAM_COUNT"))
+            .andExpect(jsonPath("$.field").value("maxTeams"))
+    }
+
+    @Test
+    fun `raising max teams unblocks further team creation`() {
+        val tournamentId = createTournament("Small", maxTeams = 1)
+        createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        mockMvc.perform(
+            put("/api/tournaments/$tournamentId").cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Small","description":"","maxTeams":2,"settings":{"allowGrandTichu":true}}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.maxTeams").value(2))
+
+        createTeam(tournamentId, "Team Beta", "Carol", "Dave")
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams").cookie(sessionCookie))
+            .andExpect(jsonPath("$.length()").value(2))
     }
 
     private fun teamBody(name: String, playerOne: String = "Alice", playerTwo: String = "Bob"): String =
@@ -278,14 +450,14 @@ class TeamControllerIntegrationTest(
             ),
         )
 
-    private fun createTournament(name: String, cookie: Cookie = sessionCookie): String {
+    private fun createTournament(name: String, maxTeams: Int = 16, cookie: Cookie = sessionCookie): String {
         val response = mockMvc.perform(
             post("/api/tournaments")
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        mapOf("name" to name, "description" to "", "maxTeams" to 16, "settings" to mapOf("allowGrandTichu" to true)),
+                        mapOf("name" to name, "description" to "", "maxTeams" to maxTeams, "settings" to mapOf("allowGrandTichu" to true)),
                     ),
                 ),
         )

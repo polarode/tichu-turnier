@@ -1,5 +1,6 @@
 package com.example.template.application.usecase
 
+import com.example.template.application.api.TeamWriteRequest
 import com.example.template.application.api.TournamentWriteRequest
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.IdGenerator
@@ -7,8 +8,10 @@ import com.example.template.infra.persistence.InMemoryTournamentRepository
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
+import com.example.template.testsupport.InMemoryTeamRepository
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InvalidFieldException
+import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
 import com.example.template.vocabulary.TournamentNotEditableException
 import org.junit.jupiter.api.Test
@@ -34,6 +37,7 @@ class TournamentUseCasesTest {
     private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T12:00:00Z"), ZoneOffset.UTC)
     private val laterClock = Clock.fixed(Instant.parse("2026-01-02T08:00:00Z"), ZoneOffset.UTC)
     private val repository = InMemoryTournamentRepository()
+    private val teamRepository = InMemoryTeamRepository()
     private val idGenerator = object : IdGenerator {
         private var counter = 0
         override fun newId(): String = "tournament-${++counter}"
@@ -45,8 +49,9 @@ class TournamentUseCasesTest {
     private val createTournament = CreateTournamentCommand(repository, idGenerator, fixedClock)
     private val listTournaments = ListTournamentsQuery(repository)
     private val getTournament = GetTournamentQuery(repository)
-    private val updateTournament = UpdateTournamentCommand(repository, laterClock)
+    private val updateTournament = UpdateTournamentCommand(repository, teamRepository, laterClock)
     private val deleteTournament = DeleteTournamentCommand(repository)
+    private val createTeam = CreateTeamCommand(repository, teamRepository, idGenerator)
 
     private fun create(name: String = "Spring Classic", asAdmin: AdminUserId = owner) =
         createTournament.create(
@@ -60,6 +65,13 @@ class TournamentUseCasesTest {
         maxTeams: Int = 16,
         settings: TournamentSettings = TournamentSettings(),
     ) = TournamentWriteRequest(name, description, maxTeams, settings)
+
+    private fun addTeam(
+        tournamentId: TournamentId,
+        name: String = "Team Alpha",
+        playerOne: String = "Alice",
+        playerTwo: String = "Bob",
+    ) = createTeam.create(tournamentId, TeamWriteRequest(name, playerOne, playerTwo), owner)
 
     @Test
     fun `creates a tournament in setup status with generated id and the caller as owner`() {
@@ -230,6 +242,43 @@ class TournamentUseCasesTest {
         assertFailsWith<TournamentNotEditableException> {
             updateTournament.update(created.id, updateRequest(name = "too late"), owner)
         }
+    }
+
+    @Test
+    fun `update rejects lowering max teams below the registered team count`() {
+        val created = create()
+        addTeam(created.id, name = "Team Alpha", playerOne = "Alice", playerTwo = "Bob")
+        addTeam(created.id, name = "Team Beta", playerOne = "Carol", playerTwo = "Dave")
+
+        val ex = assertFailsWith<MaxTeamsBelowTeamCountException> {
+            updateTournament.update(created.id, updateRequest(maxTeams = 1), owner)
+        }
+
+        assertEquals(ErrorCode.MAX_TEAMS_BELOW_TEAM_COUNT, ex.code)
+        assertEquals("maxTeams", ex.field)
+        assertEquals(16, getTournament.get(created.id, owner).maxTeams, "a rejected update changes nothing")
+    }
+
+    @Test
+    fun `update accepts a max teams value equal to the registered team count`() {
+        val created = create()
+        addTeam(created.id, name = "Team Alpha", playerOne = "Alice", playerTwo = "Bob")
+        addTeam(created.id, name = "Team Beta", playerOne = "Carol", playerTwo = "Dave")
+
+        val updated = updateTournament.update(created.id, updateRequest(maxTeams = 2), owner)
+
+        assertEquals(2, updated.maxTeams)
+    }
+
+    @Test
+    fun `raising max teams unblocks further team creation`() {
+        val created = createTournament.create(TournamentWriteRequest("Small", "", 1), owner).id
+        addTeam(created, name = "Team Alpha", playerOne = "Alice", playerTwo = "Bob")
+
+        updateTournament.update(created, updateRequest(name = "Small", maxTeams = 2), owner)
+        addTeam(created, name = "Team Beta", playerOne = "Carol", playerTwo = "Dave")
+
+        assertEquals(2, teamRepository.countByTournament(created))
     }
 
     @Test

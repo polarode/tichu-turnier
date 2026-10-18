@@ -9,7 +9,9 @@ import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
+import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
+import com.example.template.vocabulary.TeamLimitReachedException
 import com.example.template.vocabulary.TournamentNotEditableException
 import com.example.template.vocabulary.UnauthenticatedException
 import org.springframework.http.HttpStatus
@@ -62,25 +64,29 @@ class WebControllerAdvice {
     /** Uniqueness violations of teams/players: 409, field-anchored like InvalidFieldException. */
     @ExceptionHandler(DuplicateTeamNameException::class)
     fun handleDuplicateTeamName(ex: DuplicateTeamNameException): ProblemDetail =
-        anchoredConflict(ex)
+        anchoredConflict(ex, ex.field)
 
     @ExceptionHandler(DuplicatePlayerNameException::class)
     fun handleDuplicatePlayerName(ex: DuplicatePlayerNameException): ProblemDetail =
-        anchoredConflict(ex)
+        anchoredConflict(ex, ex.field)
 
     @ExceptionHandler(DuplicateTeamPlayersException::class)
     fun handleDuplicateTeamPlayers(ex: DuplicateTeamPlayersException): ProblemDetail =
-        anchoredConflict(ex)
+        anchoredConflict(ex, ex.field)
 
-    private fun anchoredConflict(ex: ApiException): ProblemDetail {
+    /** The tournament already holds its configured maximum number of teams: HTTP 409. */
+    @ExceptionHandler(TeamLimitReachedException::class)
+    fun handleTeamLimitReached(ex: TeamLimitReachedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Lowering `max_teams` below the registered team count: 409, anchored to `maxTeams`. */
+    @ExceptionHandler(MaxTeamsBelowTeamCountException::class)
+    fun handleMaxTeamsBelowTeamCount(ex: MaxTeamsBelowTeamCountException): ProblemDetail =
+        anchoredConflict(ex, ex.field)
+
+    private fun anchoredConflict(ex: ApiException, field: String): ProblemDetail {
         val problem = problem(HttpStatus.CONFLICT, ex)
-        val field = when (ex) {
-            is DuplicateTeamNameException -> ex.field
-            is DuplicatePlayerNameException -> ex.field
-            is DuplicateTeamPlayersException -> ex.field
-            else -> null
-        }
-        field?.let { problem.setProperty("field", it) }
+        problem.setProperty("field", field)
         return problem
     }
 

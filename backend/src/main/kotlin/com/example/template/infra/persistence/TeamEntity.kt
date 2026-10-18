@@ -10,13 +10,14 @@ import jakarta.persistence.Table
 
 /**
  * Persistence model for [Team]. Lives in the infra layer — the domain entity stays
- * framework-free. Teams are never updated after creation, so fields are immutable
- * from the adapter's point of view.
+ * framework-free.
  *
  * The players are a separate [PlayerEntity] table referencing this one with
  * ON DELETE CASCADE (see the V5 migration); the JPA adapter loads them per team
  * and hands them to the domain. Uniqueness of `name` is per tournament and backed
  * by a database constraint, so the application-level check cannot be raced around.
+ * An update replaces the team's name and its two player rows (see
+ * [JpaTeamRepository.save]).
  */
 @Entity
 @Table(name = "teams")

@@ -3,11 +3,13 @@ package com.example.template.application.usecase
 import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.UpdateTeam
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
@@ -55,8 +57,11 @@ class UseCaseConfiguration(
         GetTournamentQuery(repository)
 
     @Bean
-    fun updateTournament(repository: TournamentRepository, clock: Clock): UpdateTournament =
-        UpdateTournamentCommand(repository, clock)
+    fun updateTournament(
+        repository: TournamentRepository,
+        teamRepository: TeamRepository,
+        clock: Clock,
+    ): UpdateTournament = UpdateTournamentCommand(repository, teamRepository, clock)
 
     @Bean
     fun deleteTournament(repository: TournamentRepository): DeleteTournament =
@@ -76,6 +81,14 @@ class UseCaseConfiguration(
     @Bean
     fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =
         GetTeamQuery(tournamentRepository, teamRepository)
+
+    @Bean
+    fun updateTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): UpdateTeam =
+        UpdateTeamCommand(tournamentRepository, teamRepository)
+
+    @Bean
+    fun deleteTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): DeleteTeam =
+        DeleteTeamCommand(tournamentRepository, teamRepository)
 
     @Bean
     fun adminSessionIssuer(

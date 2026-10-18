@@ -23,11 +23,13 @@ each subproject for its details.
 
 ## Status
 
-- **Backend** — admin auth and session lifecycle, plus tournament and team setup
-  (create, list, get, edit, delete with server-side validation). Rounds, scoring,
-  confirmations and live events are next.
-- **Frontend** — app shell with the four areas (admin, team, public, login) and
-  de/en i18n. The screens are wired up to the API in later phases.
+- **Backend** — admin auth and account lifecycle (invite-gated onboarding, owner
+  admin management), plus tournament and team setup (create, list, get, edit, delete
+  with server-side validation). Rounds, scoring, confirmations and live events are next.
+- **Frontend** — admin area with register/login, the pending-approval and invite
+  states, the tournament dashboard and the owner console (approve/reject requests,
+  disable/reactivate admins, issue invites), all in de/en. Tournament create/edit,
+  team management and the team/public screens follow in later phases.
 
 ## Quick start
 

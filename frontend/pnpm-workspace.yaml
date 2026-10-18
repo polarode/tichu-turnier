@@ -22,6 +22,6 @@ packages:
   - 'packages/*'
 
 # Native build scripts we trust to run on install (vite's esbuild, tailwind's oxide).
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - esbuild
+allowBuilds:
+  '@tailwindcss/oxide': true
+  esbuild: true

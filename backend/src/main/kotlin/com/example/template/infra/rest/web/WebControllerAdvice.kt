@@ -46,14 +46,9 @@ class WebControllerAdvice {
         val message = ex.bindingResult.fieldErrors
             .joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
             .ifBlank { "Validation failed" }
-        return problem(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
+        return problemDetail(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
     }
 
     private fun problem(status: HttpStatus, ex: ApiException): ProblemDetail =
-        problem(status, ex.code, ex.message ?: status.reasonPhrase)
-
-    private fun problem(status: HttpStatus, code: ErrorCode, detail: String): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(status, detail).apply {
-            setProperty("code", code.name)
-        }
+        problemDetail(status, ex.code, ex.message ?: status.reasonPhrase)
 }

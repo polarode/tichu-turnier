@@ -5,6 +5,7 @@ import com.example.template.infra.persistence.PersistenceConfiguration
 import com.example.template.infra.rest.RestConfiguration
 import com.example.template.infra.security.SecurityConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -15,9 +16,11 @@ import org.springframework.context.annotation.Import
  * and enforces the rule that beans are declared in `*Configuration` classes.
  *
  * `@EnableAutoConfiguration` still gives us Spring Boot's web/Jackson/etc. setup.
+ * The default in-memory `UserDetailsService` is excluded because authentication is
+ * backed by our own session repository, not Spring Security's user store.
  */
 @Configuration
-@EnableAutoConfiguration
+@EnableAutoConfiguration(exclude = [UserDetailsServiceAutoConfiguration::class])
 @Import(
     UseCaseConfiguration::class,
     PersistenceConfiguration::class,

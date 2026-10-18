@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -31,7 +32,9 @@ class AuthControllerIntegrationTest(
     @Autowired private val context: WebApplicationContext,
 ) : PostgresBackedIntegrationTest() {
 
-    private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context).build()
+    private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
+        .apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        .build()
 
     private fun uniqueEmail() = "admin-${UUID.randomUUID()}@example.com"
 

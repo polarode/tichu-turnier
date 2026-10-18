@@ -1,5 +1,6 @@
 package com.example.template.application.usecase
 
+import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.CreateTask
 import com.example.template.application.api.DeleteTask
 import com.example.template.application.api.GetTask
@@ -68,6 +69,15 @@ class UseCaseConfiguration(
         idGenerator: IdGenerator,
         clock: Clock,
     ): RegisterAdmin = RegisterAdminCommand(adminUsers, passwordHasher, idGenerator, clock)
+
+    @Bean
+    fun authenticateSession(
+        sessions: AdminSessionRepository,
+        adminUsers: AdminUserRepository,
+        sessionTokens: SessionTokens,
+        clock: Clock,
+    ): AuthenticateSession =
+        AuthenticateSessionQuery(sessions, adminUsers, sessionTokens, clock)
 
     @Bean
     fun loginAdmin(

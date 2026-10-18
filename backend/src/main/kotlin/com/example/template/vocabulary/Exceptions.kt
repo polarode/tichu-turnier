@@ -11,6 +11,7 @@ enum class ErrorCode {
     EMAIL_ALREADY_REGISTERED,
     INVALID_CREDENTIALS,
     UNAUTHENTICATED,
+    FORBIDDEN,
 }
 
 /**

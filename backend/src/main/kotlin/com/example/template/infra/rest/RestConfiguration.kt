@@ -16,8 +16,6 @@ import com.example.template.infra.rest.web.WebControllerAdvice
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.time.Duration
 
 /**
@@ -26,7 +24,6 @@ import java.time.Duration
  */
 @Configuration
 class RestConfiguration(
-    @param:Value("\${app.frontend-url}") private val frontendUrl: String,
     @param:Value("\${app.auth.session-cookie-name}") private val sessionCookieName: String,
     @param:Value("\${app.auth.session-cookie-secure}") private val sessionCookieSecure: Boolean,
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
@@ -57,14 +54,4 @@ class RestConfiguration(
 
     @Bean
     fun webControllerAdvice(): WebControllerAdvice = WebControllerAdvice()
-
-    @Bean
-    fun corsConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
-        override fun addCorsMappings(registry: CorsRegistry) {
-            registry.addMapping("/api/**")
-                .allowedOrigins(frontendUrl)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowCredentials(true)
-        }
-    }
 }

@@ -25,6 +25,7 @@ VITE_API_URL=http://localhost:9000 pnpm dev
 domain/              # framework-free domain models + write inputs
 vocabulary/          # enums / shared value types (status, backend error codes)
 auth-api/            # one folder per upstream API: repository + dtos/ + mappers/
+admin-api/
 tournament-api/
 team-api/
 features/            # feature folders: components, hooks, queries
@@ -62,7 +63,9 @@ navigation and language switch around every screen. Four areas hang off it:
 are redirected to `/login`, and the session is refreshed from the httpOnly cookie on
 load so a returning admin stays signed in. Inside it, `/admin` is the tournament
 dashboard, with `/admin/tournaments/new` and `/admin/tournaments/$tournamentId` as the
-create and detail entry points.
+create and detail entry points. Platform owners also get `/admin/console` (pending
+requests, admin management and invite issuance); other admins see the localized
+forbidden state there instead.
 
 ## i18n
 

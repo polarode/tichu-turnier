@@ -11,7 +11,6 @@ import {
     issuedInviteDtoSchema,
 } from '@/admin-api/dtos/admin.dto.ts';
 import type { AdminAccount, AdminInvite, IssuedInvite } from '@/domain/admin-account.domain.ts';
-import type { AdminStatus } from '@/vocabulary/admin.enum.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
 /**
@@ -19,10 +18,8 @@ import { apiClient } from '@/shared/api/api-client.ts';
  * parses the response with zod and maps it to a domain model; the backend enforces the
  * owner role, so a non-owner gets a 403 the caller surfaces as a forbidden state.
  */
-async function listAccounts(status?: AdminStatus): Promise<AdminAccount[]> {
-    const { data } = await apiClient.get<unknown>('/api/admins', {
-        params: status ? { status } : undefined,
-    });
+async function listAccounts(): Promise<AdminAccount[]> {
+    const { data } = await apiClient.get<unknown>('/api/admins');
     return adminAccountListDtoSchema.parse(data).map(adminAccountDtoToDomain);
 }
 

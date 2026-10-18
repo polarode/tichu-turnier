@@ -48,14 +48,6 @@ describe('AdminRepository', () => {
         expect(accounts[0]!.createdAt).toEqual(new Date('2026-01-01T00:00:00Z'));
     });
 
-    it('passes the status filter as a query parameter', async () => {
-        mock.onGet('/api/admins', { params: { status: 'PENDING' } }).reply(200, [accountDto]);
-
-        await AdminRepository.listAccounts('PENDING');
-
-        expect(mock.history.get[0]!.params).toEqual({ status: 'PENDING' });
-    });
-
     it('approves an account and returns the updated account', async () => {
         mock.onPost('/api/admins/admin-1/approve').reply(200, {
             ...accountDto,

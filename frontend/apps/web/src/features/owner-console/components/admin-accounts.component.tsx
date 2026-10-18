@@ -1,18 +1,19 @@
 import { Badge } from '@tichu/ui/badge.tsx';
 import { Button } from '@tichu/ui/button.tsx';
-import { useState } from 'react';
 
 import type { AdminAccount } from '@/domain/admin-account.domain.ts';
+import { ConsoleRow } from '@/features/owner-console/components/console-row.component.tsx';
+import { ConsoleSection } from '@/features/owner-console/components/console-section.component.tsx';
 import {
     useDisableAdmin,
     useReactivateAdmin,
 } from '@/features/owner-console/hooks/owner-console-queries.hook.ts';
+import { useConsoleAction } from '@/features/owner-console/hooks/use-console-action.hook.ts';
 import {
     ADMIN_ROLE_LABEL_KEYS,
     ADMIN_STATUS_LABEL_KEYS,
 } from '@/features/owner-console/labels.ts';
-import { FormAlert } from '@/shared/components/form-alert.component.tsx';
-import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
+import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { AdminRole, AdminStatus } from '@/vocabulary/admin.enum.ts';
 
@@ -22,6 +23,11 @@ function actionFor(account: AdminAccount): 'disable' | 'reactivate' | null {
     return account.status === AdminStatus.ACTIVE ? 'disable' : 'reactivate';
 }
 
+const ACTION_LABEL_KEYS: Record<'disable' | 'reactivate', TranslationKey> = {
+    disable: 'ownerConsole.admins.disable',
+    reactivate: 'ownerConsole.admins.reactivate',
+};
+
 /**
  * Existing (non-pending) admins with disable/reactivate actions. The owner account
  * itself is rendered without an action because the backend refuses to disable an owner.
@@ -30,34 +36,20 @@ export function AdminAccounts({ accounts }: { accounts: AdminAccount[] }) {
     const { t } = useI18n();
     const disable = useDisableAdmin();
     const reactivate = useReactivateAdmin();
-    const [error, setError] = useState<string>();
+    const { error, run } = useConsoleAction(t);
 
     const busy = disable.isPending || reactivate.isPending;
-
-    const run = async (action: 'disable' | 'reactivate', id: string) => {
-        setError(undefined);
-        try {
-            if (action === 'disable') {
-                await disable.mutateAsync(id);
-            } else {
-                await reactivate.mutateAsync(id);
-            }
-        } catch (failure) {
-            setError(localizedErrorMessage(failure, t));
-        }
-    };
+    const handlers = {
+        disable: (id: string) => disable.mutateAsync(id),
+        reactivate: (id: string) => reactivate.mutateAsync(id),
+    } as const;
 
     return (
-        <section className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-                <h2 className="text-xl font-semibold">{t('ownerConsole.admins.title')}</h2>
-                <p className="text-sm text-muted-foreground">
-                    {t('ownerConsole.admins.description')}
-                </p>
-            </div>
-
-            <FormAlert message={error} />
-
+        <ConsoleSection
+            title={t('ownerConsole.admins.title')}
+            description={t('ownerConsole.admins.description')}
+            error={error}
+        >
             {accounts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('ownerConsole.admins.empty')}</p>
             ) : (
@@ -65,10 +57,7 @@ export function AdminAccounts({ accounts }: { accounts: AdminAccount[] }) {
                     {accounts.map((account) => {
                         const action = actionFor(account);
                         return (
-                            <li
-                                key={account.id}
-                                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3"
-                            >
+                            <ConsoleRow key={account.id}>
                                 <div className="flex flex-wrap items-center gap-3">
                                     <span className="font-medium">{account.email}</span>
                                     <Badge variant="outline">
@@ -89,18 +78,16 @@ export function AdminAccounts({ accounts }: { accounts: AdminAccount[] }) {
                                         size="sm"
                                         variant="outline"
                                         disabled={busy}
-                                        onClick={() => void run(action, account.id)}
+                                        onClick={() => void run(() => handlers[action](account.id))}
                                     >
-                                        {action === 'disable'
-                                            ? t('ownerConsole.admins.disable')
-                                            : t('ownerConsole.admins.reactivate')}
+                                        {t(ACTION_LABEL_KEYS[action])}
                                     </Button>
                                 ) : null}
-                            </li>
+                            </ConsoleRow>
                         );
                     })}
                 </ul>
             )}
-        </section>
+        </ConsoleSection>
     );
 }

@@ -294,8 +294,8 @@ Admin screens end-to-end on the new API: register/login including the **pending-
 
 - [ ] Full happy path demoable: register → create tournament → add 4+ teams → see links/QRs  
       _partial: register + dashboard done (#14, #16); create/edit (#17), teams (#18) and links/QR (#19) pending_
-- [ ] Pending account sees a clear "awaiting approval" state (localized); owner can approve requests and issue invites from the console (component tests)  
-      _partial: pending/invite states and login gating done (#15); owner console done (#20)_
+- [x] Pending account sees a clear "awaiting approval" state (localized); owner can approve requests and issue invites from the console (component tests)  
+      _done: pending/invite states and login gating (#15); owner console (#20)_
 - [ ] All v1 validation errors display as localized, field-anchored messages  
       _partial: error-code→de/en mapping, `applyServerError` field/code anchoring and auth messages done (#14); tournament/team errors pending #17/#18_
 - [ ] Component tests for the team-add dialog and validation rendering  

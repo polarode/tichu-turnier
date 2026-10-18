@@ -20,7 +20,7 @@ export const teamsQueryKey = (tournamentId: string) => [QueryKeys.TEAMS, tournam
 export const teamQueryKey = (tournamentId: string, teamId: string) =>
     [QueryKeys.TEAMS, tournamentId, teamId] as const;
 
-/** Key for the owner console's admin-account list; a status filter is a suffix. */
+/** Key for the owner console's admin-account list. */
 export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;
 
 /** Key for the owner console's invite list. */

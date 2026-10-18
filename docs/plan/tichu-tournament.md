@@ -10,12 +10,12 @@ Durable decisions that apply across all phases:
 - **Backend stack**: Kotlin 2.1 / JDK 21 / Spring Boot 3.4 / Gradle, hexagonal architecture (domain → application → infra), explicit `@Bean` wiring only (no `@Service`/`@ComponentScan`/`@Autowired` in production code), RFC 7807 `ProblemDetail` error handling, vocabulary exceptions thrown by use cases.
 - **Persistence**: PostgreSQL + Flyway migrations; Spring Data JPA as the first real adapter behind the template's repository ports (the swap point the template README documents); Testcontainers for integration tests; explicit transactions on every multi-write use case.
 - **API**: REST under `/api/...`; wire DTOs owned by the infra layer; frontend mirrors the contract with zod schemas parsed at the axios boundary (template convention — no OpenAPI codegen). Errors are RFC 7807 `ProblemDetail` with a stable machine-readable error code and English human-readable text; the server speaks English only — localization to de/en happens in the frontend via the error code.
-- **Auth**: admins = email/password accounts (Spring Security). Teams = hardened magic link — long random cryptographically-secure token, never readable by third parties, validated only server-side, revocable by the organizer, rate-limited. Both admin and team sessions are `httpOnly` cookies (`Secure`, `SameSite=Lax`), exchanged once after magic-link/password validation; tokens never appear in URLs, headers-as-storage, or localStorage. Cookie + restricted CORS + JSON-only API avoids CSRF without extra tokens.
-- **Authorization model**: every mutation ownership-checked against the authenticated principal; service-role-style bypass does not exist; all rules enforced server-side regardless of client behavior.
+- **Auth**: admins = email/password accounts (Spring Security), **invite-gated** — self-registration is a request an existing platform owner approves, and owners can also issue single-use invites. Admin accounts carry a `status` (`PENDING`/`ACTIVE`/`DISABLED`) and a `role` (`OWNER`/`ADMIN`); only owners manage admins. Teams = hardened magic link — long random cryptographically-secure token, never readable by third parties, validated only server-side, revocable by the organizer, rate-limited. Both admin and team sessions are `httpOnly` cookies (`Secure`, `SameSite=Lax`), exchanged once after magic-link/password validation; tokens never appear in URLs, headers-as-storage, or localStorage. Cookie + restricted CORS + JSON-only API avoids CSRF without extra tokens.
+- **Authorization model**: every mutation ownership-checked against the authenticated principal; owner-only operations checked by role; service-role-style bypass does not exist; all rules enforced server-side regardless of client behavior. Ownership failures return 404 (resource invisible), permission/role failures return 403.
 - **Schema shape**: `tournaments` → `rounds` → `tables` → `games` → `game_participants`, plus `users` (admins), `teams`, `players` (tournament-scoped, no global player table). **A table seats 2 or 3 teams** (3 = trio table); games reference the two playing teams; confirmations are per (table, team) — 2 rows for normal tables, 3 for trio tables. Tournament status machine: `setup → active → completed`, final — no reopen in v2.
 - **Public visibility**: a game result becomes publicly visible (team views, public views, SSE, live standings) the moment it is entered as finished — not only after table confirmation. Results may still be edited until the table confirms, so live standings can shift until then; that is accepted behavior.
 - **Scoring rules (server-authoritative)**: base scores sum to 100 (or 0 for double win); small Tichu ±100, grand Tichu ±200, double win +200; victory points per game = win 2 / tie 1 / +1 double-win bonus; position/tichu/bomb validation as in v1; `settings.allow_grand_tichu` enforced server-side; `beschiss` flag persisted.
-- **Pairing**: Swiss system on victory points, tie-break total points; odd team counts produce exactly one trio table (see Phase 6); rematches allowed; organizer-facing round length is `total_rounds` chosen explicitly (no estimate formula). **Trio selection**: round 1 = random; from round 2 on, the **bottom three teams in current standings** form the trio table. This may put the same teams at the trio table repeatedly — accepted for v2, smarter selection is a later refinement.
+- **Pairing**: Swiss system on victory points, tie-break total points; odd team counts produce exactly one trio table (see Phase 7); rematches allowed; organizer-facing round length is `total_rounds` chosen explicitly (no estimate formula). **Trio selection**: round 1 = random; from round 2 on, the **bottom three teams in current standings** form the trio table. This may put the same teams at the trio table repeatedly — accepted for v2, smarter selection is a later refinement.
 - **Ties in standings**: if VP *and* total points are identical, teams share the same rank — no further tie-break, shared ranks are accepted output.
 - **Realtime**: Server-Sent Events from the backend; clients refresh state via TanStack Query on events.
 - **i18n**: German + English from day one, no hardcoded UI strings. The server speaks English only and returns stable error codes; all localization is frontend-side.
@@ -52,7 +52,7 @@ Create the new monorepo from the template, rebrand from the template's Task exam
 
 ---
 
-## Phase 2: Admin auth & ownership
+## Phase 2: Admin auth & ownership ✅ (done — tickets 002–004; backend suite green, CI to confirm on push)
 
 **User stories**: As a tournament organizer I register and log in; I only ever see and change my own tournaments; nobody can touch my data with someone else's session or no session at all.
 
@@ -70,7 +70,35 @@ Introduce admin accounts (email/password) with Spring Security token sessions, w
 
 ---
 
-## Phase 3: Tournament & team setup
+## Phase 3: Invite-gated admin onboarding
+
+**User stories**: As the platform owner I decide who becomes a tournament admin — I approve or reject registration requests and can invite someone directly; as a prospective organizer I register, wait to be approved (or use my invite), and only then can log in.
+
+### What to build
+
+Close open registration. Admin accounts gain a lifecycle — `status` (`PENDING`, `ACTIVE`, `DISABLED`) and `role` (`OWNER`, `ADMIN`) — and only owners manage admins:
+
+- **Owner bootstrap**: the first owner is provisioned idempotently from configuration (email + password hash from env), with no open endpoint that can mint an owner. Where a system already has admins, existing rows migrate to `ACTIVE`/`ADMIN`.
+- **Registration as a request**: `POST /api/auth/register` creates a `PENDING` account (password still hashed). A pending or disabled account cannot log in: after *correct* credentials it gets a stable `ACCOUNT_PENDING` / `ACCOUNT_DISABLED` code; wrong credentials still return the generic `INVALID_CREDENTIALS`, so account existence is not disclosed.
+- **Owner admin-management API** (owner-only): list admins by status, approve a pending request, reject it, disable/reactivate an admin.
+- **Invites**: an owner issues a single-use, expiring, revocable invite token addressed to an email, stored hashed and returned only at issuance as a copyable link (no email sending — the same out-of-band model as team magic links, Phase 5). Registering with a valid invite activates immediately; a spent/expired/revoked invite is rejected.
+- **Role enforcement**: owner-only endpoints are guarded by role in the security chain/use cases; a non-owner admin gets a 403 `ProblemDetail` (the 403 path the ownership work left dormant). Status is re-checked on every request, so disabling an admin kills a live session on its next call.
+- **Audit**: each account records who approved or invited it, and when.
+- Everything transactional; status and role are enforced server-side and never trusted from the client. The operator console, invite entry and pending-login states are built in the Admin frontend phase (Phase 13).
+
+### Acceptance criteria
+
+- [ ] A newly registered account starts `PENDING` and cannot log in or reach any `/api/**` route until approved (test)
+- [ ] Owner can approve/reject/disable/reactivate admins; a disabled admin's existing session stops working on the next request (tests)
+- [ ] Registering with a valid invite activates immediately; the invite is single-use, expiring and revocable (tests)
+- [ ] Non-owner admin calling an owner-only endpoint gets 403 `ProblemDetail`; unauthenticated gets 401 — the two stay distinct (test)
+- [ ] Bootstrap produces exactly one owner and offers no open owner-creation path (test)
+- [ ] Invite tokens are high-entropy, stored hashed, and never returned by any listing API (test)
+- [ ] Role/status checks live in the use-case layer; wiring stays `@Configuration` + `@Bean`
+
+---
+
+## Phase 4: Tournament & team setup
 
 **User stories**: As an organizer I create a tournament, describe it, set limits and settings (incl. grand Tichu toggle); I add teams with two named players each, catching duplicates and rule violations with clear, field-anchored error messages (stable server error codes, localized in the frontend).
 
@@ -87,13 +115,15 @@ Full setup-phase CRUD: tournaments (name, description, max teams, settings, stat
 
 ---
 
-## Phase 4: Team magic-link access
+## Phase 5: Team magic-link access
 
 **User stories**: As an organizer I issue each team a secret link (and QR), and can revoke/rotate it; as a team member I open the link once and get access to my team's matches for that tournament — and no one else can use or enumerate my token.
 
 ### What to build
 
 Cryptographically secure team tokens (long, random, stored hashed), issuance/rotation/revocation endpoints, a team login exchange: link opens → server validates token → returns a scoped team session credential used in headers thereafter (token never persists in URLs or localStorage history). Rate limiting on guessing attempts; tokens never exposed in any listing API (fixes v1's public `access_token` leak).
+
+Credential-lifecycle hygiene: expired admin and team sessions are removed by a scheduled, idempotent sweep (`DELETE FROM … WHERE expires_at < now`) backed by an index on `expires_at`, so the session tables do not grow without bound. The sweep is safe to run concurrently on every instance.
 
 ### Acceptance criteria
 
@@ -102,12 +132,13 @@ Cryptographically secure team tokens (long, random, stored hashed), issuance/rot
 - [ ] Rotation invalidates the old link immediately; revoked token gets 401/403
 - [ ] Rate limiting kicks in on repeated failed attempts (test)
 - [ ] Team session cannot access another team's data or admin endpoints (tests)
+- [ ] Expired admin and team sessions are purged by a periodic sweep; a test inserts an expired session, runs the sweep, and asserts it is gone while live sessions survive (and that a re-run is safe)
 
 ---
 
-## Phase 5: Start tournament: rounds & Swiss pairing
+## Phase 6: Start tournament: rounds & Swiss pairing
 
-**User stories**: As an organizer I start a tournament with ≥2 teams; round 1 tables are assigned (random), later rounds pair by standings; I see tables and assignments per round. Odd team counts are rejected with a clear error until Phase 6 lands.
+**User stories**: As an organizer I start a tournament with ≥2 teams; round 1 tables are assigned (random), later rounds pair by standings; I see tables and assignments per round. Odd team counts are rejected with a clear error until Phase 7 lands.
 
 ### What to build
 
@@ -118,12 +149,12 @@ Tournament status transition `setup → active` (validated: enough teams, correc
 - [ ] Starting twice, starting with too few teams, starting a non-setup tournament → typed errors, no side effects
 - [ ] Round 1 pairing is a uniform random shuffle (test with injected randomness)
 - [ ] Swiss pairing unit tests: sorted-by-VP pairing, rematch avoidance, deterministic given input
-- [ ] Odd team count → explicit "unsupported" error until Phase 6 (test documents the temporary contract)
+- [ ] Odd team count → explicit "unsupported" error until Phase 7 (test documents the temporary contract)
 - [ ] Partial failure rolls back (test: injected failure leaves database unchanged)
 
 ---
 
-## Phase 6: Trio tables (odd team counts)
+## Phase 7: Trio tables (odd team counts)
 
 **User stories**: As an organizer with an uneven number of teams I start the tournament anyway: exactly one table seats 3 teams, the rest pair normally. As a team at the trio table I play 4 of the 6 games played at my table that round and sit out 2, meeting each other team exactly twice.
 
@@ -140,7 +171,7 @@ Extend pairing so odd counts produce exactly one trio table (3 teams) plus norma
 
 ---
 
-## Phase 7: Game scoring
+## Phase 8: Game scoring
 
 **User stories**: As a team member I enter or edit the result of a game (positions, Tichu calls, bombs, base/bonus points) until my table is confirmed; I trust the numbers because the server recomputes everything.
 
@@ -158,7 +189,7 @@ The scoring API with full server-authoritative Tichu validation — this is the 
 
 ---
 
-## Phase 8: Confirmation & completion
+## Phase 9: Confirmation & completion
 
 **User stories**: As a team I review all games at my table and confirm; a normal table needs both teams, a trio table needs all three; I can retract until everyone has confirmed; once complete, games are locked.
 
@@ -176,7 +207,7 @@ Per-table confirmation workflow: status progression `playing → confirming → 
 
 ---
 
-## Phase 9: Standings, next round & finish
+## Phase 10: Standings, next round & finish
 
 **User stories**: As an organizer I advance to the next round when all tables are confirmed, see accurate standings at any time, choose the tournament's total round count, and finish the tournament to get final ranked standings. Finishing is final — no reopen in v2.
 
@@ -194,7 +225,7 @@ Standings computation (sum of VP, tie-break total points) as a pure domain funct
 
 ---
 
-## Phase 10: SSE live events + statistics
+## Phase 11: SSE live events + statistics
 
 **User stories**: As any user (admin, team, public) I see scores, confirmations, and round changes appear without manual refresh; as a spectator I see real statistics instead of a placeholder.
 
@@ -212,7 +243,7 @@ An SSE endpoint authenticated by role (admin/team/public streams scoped to what 
 
 ---
 
-## Phase 11: Frontend foundation
+## Phase 12: Frontend foundation
 
 **User stories**: As a user I get the app shell in German or English, consistent navigation, and typed API access that fails loudly if the contract drifts.
 
@@ -229,24 +260,25 @@ Rebrand the template frontend to the Tichu app: layout/navigation shell, route s
 
 ---
 
-## Phase 12: Admin: auth, dashboard, tournament setup
+## Phase 13: Admin: auth, dashboard, tournament setup
 
-**User stories**: As an organizer I register, log in, land on my dashboard, create a tournament, configure it, and manage teams — getting a copyable magic link + QR per team, with the ability to rotate/revoke it.
+**User stories**: As an organizer I register (and wait to be approved, or use my invite), log in, land on my dashboard, create a tournament, configure it, and manage teams — getting a copyable magic link + QR per team, with the ability to rotate/revoke it. As the platform owner I approve or invite organizers from an admin console.
 
 ### What to build
 
-Admin screens end-to-end on the new API: register/login, dashboard listing my tournaments, create/edit tournament (settings incl. grand Tichu toggle), setup-phase team management (add/edit/delete with server error surfaced nicely), token link generation + QR display + rotate/revoke actions. Forms via react-hook-form + zod, mutations via TanStack Query invalidation.
+Admin screens end-to-end on the new API: register/login including the **pending-approval state** and invite acceptance, dashboard listing my tournaments, create/edit tournament (settings incl. grand Tichu toggle), setup-phase team management (add/edit/delete with server error surfaced nicely), token link generation + QR display + rotate/revoke actions. For owners, an **admin console**: pending requests to approve/reject, existing admins to disable/reactivate, and invite issuance. Forms via react-hook-form + zod, mutations via TanStack Query invalidation.
 
 ### Acceptance criteria
 
 - [ ] Full happy path demoable: register → create tournament → add 4+ teams → see links/QRs
+- [ ] Pending account sees a clear "awaiting approval" state (localized); owner can approve requests and issue invites from the console (component tests)
 - [ ] All v1 validation errors display as localized, field-anchored messages
 - [ ] Component tests for the team-add dialog and validation rendering
-- [ ] No token shown after issuance (rotated token replaces, never re-fetchable) — UI matches Phase 4 contract
+- [ ] No token shown after issuance (rotated token replaces, never re-fetchable) — UI matches Phase 5 contract
 
 ---
 
-## Phase 13: Team: login & match overview
+## Phase 14: Team: login & match overview
 
 **User stories**: As a team member I open my secret link, land in my team's space for the tournament, see my current table, opponents, all games played so far, and the confirmation controls — with live updates when opponents confirm.
 
@@ -263,7 +295,7 @@ Magic-link entry flow (exchange once, keep scoped session, never expose raw toke
 
 ---
 
-## Phase 14: Game entry (scoring form)
+## Phase 15: Game entry (scoring form)
 
 **User stories**: As a team member I enter a game's result with fast controls (finish positions, Tichu calls, bombs, points) and can edit past games until confirmation; on a trio table I pick which of the 6 games I'm entering.
 
@@ -280,7 +312,7 @@ The scoring UI: position entry cycling, Tichu call toggles (grand Tichu hidden w
 
 ---
 
-## Phase 15: Tournament management live
+## Phase 16: Tournament management live
 
 **User stories**: As an organizer I start the tournament, follow every round (tables, scores, confirmations, standings), advance rounds, choose total rounds, finish and reopen — all updating live without refreshing.
 
@@ -297,7 +329,7 @@ Admin tournament detail: status card with guarded actions (start/advance/finish/
 
 ---
 
-## Phase 16: Public views, statistics & ship
+## Phase 17: Public views, statistics & ship
 
 **User stories**: As a spectator I follow a tournament without logging in — standings, matches, statistics — in my language, and everything is deployed so anyone with the URL can use it.
 

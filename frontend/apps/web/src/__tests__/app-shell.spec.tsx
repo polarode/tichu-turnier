@@ -25,16 +25,14 @@ describe('AppShell', () => {
     });
 
     it('switches every visible string to English and updates <html lang>', async () => {
-        renderApp('/admin', { initialLocale: 'de' });
+        renderApp('/login', { initialLocale: 'de' });
 
-        expect(
-            await screen.findByRole('heading', { name: 'Verwaltungsbereich' }),
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Englisch' }));
 
         expect(await screen.findByText('Tichu Tournament')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Admin area' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
         expect(document.documentElement.lang).toBe('en');
         expect(document.title).toBe('Tichu Tournament');

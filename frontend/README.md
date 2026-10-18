@@ -30,9 +30,10 @@ team-api/
 features/            # feature folders: components, hooks, queries
 shared/
   api/               #   shared axios client + typed ApiError (ProblemDetail mapping)
-  components/        #   cross-cutting components (AppShell, PagePlaceholder)
+  components/        #   cross-cutting components (AppShell, PagePlaceholder, FormField)
   constants/         #   centralized query keys
-  i18n/              #   i18n provider, de/en catalogs, language switch
+  forms/             #   react-hook-form helpers (server-error routing)
+  i18n/              #   i18n provider, de/en catalogs, language switch, error messages
   sse/               #   reconnecting SSE client
 routes/              # TanStack Router file-based routes (admin, team, public, login)
 router.ts            # QueryClient + router
@@ -49,14 +50,17 @@ forms and hooks pass domain types (including the `*WriteInput` types).
 The app shell (`shared/components/app-shell.component.tsx`) renders the header,
 navigation and language switch around every screen. Four areas hang off it:
 
-| Area   | Route     |
-| ------ | --------- |
-| Admin  | `/admin`  |
-| Team   | `/team`   |
-| Public | `/public` |
-| Login  | `/login`  |
+| Area    | Route       |
+| ------- | ----------- |
+| Admin   | `/admin`    |
+| Team    | `/team`     |
+| Public  | `/public`   |
+| Login   | `/login`    |
+| Register| `/register` |
 
-`/` redirects to the public area.
+`/` redirects to the public area. The admin area is guarded: unauthenticated visitors
+are redirected to `/login`, and the session is refreshed from the httpOnly cookie on
+load so a returning admin stays signed in.
 
 ## i18n
 

@@ -18,4 +18,7 @@ class InMemoryAdminUserRepository : AdminUserRepository {
         users.values.firstOrNull { it.email == email }
 
     override fun findById(id: AdminUserId): AdminUser? = users[id.value]
+
+    /** Test-only view of everything stored, for assertions the port does not expose. */
+    fun findAll(): List<AdminUser> = users.values.toList()
 }

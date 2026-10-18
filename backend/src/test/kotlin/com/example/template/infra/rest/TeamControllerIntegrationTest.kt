@@ -1,7 +1,9 @@
 package com.example.template.infra.rest
 
+import com.example.template.domain.AdminUserRepository
+import com.example.template.domain.PasswordHasher
 import com.example.template.testsupport.PostgresBackedIntegrationTest
-import com.example.template.testsupport.registerAndLoginAdmin
+import com.example.template.testsupport.loginAsSeededAdmin
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.BeforeEach
@@ -33,6 +35,8 @@ import org.springframework.web.context.WebApplicationContext
 class TeamControllerIntegrationTest(
     @Autowired private val context: WebApplicationContext,
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val adminUsers: AdminUserRepository,
+    @Autowired private val passwordHasher: PasswordHasher,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -44,8 +48,8 @@ class TeamControllerIntegrationTest(
 
     @BeforeEach
     fun authenticate() {
-        sessionCookie = mockMvc.registerAndLoginAdmin(objectMapper)
-        otherAdminCookie = mockMvc.registerAndLoginAdmin(objectMapper)
+        sessionCookie = mockMvc.loginAsSeededAdmin(adminUsers, passwordHasher, objectMapper)
+        otherAdminCookie = mockMvc.loginAsSeededAdmin(adminUsers, passwordHasher, objectMapper)
     }
 
     @Test

@@ -1,8 +1,13 @@
 package com.example.template.infra.rest
 
+import com.example.template.domain.AdminStatus
+import com.example.template.domain.AdminUserRepository
+import com.example.template.domain.PasswordHasher
 import com.example.template.testsupport.ADMIN_SESSION_COOKIE
 import com.example.template.testsupport.PostgresBackedIntegrationTest
-import com.example.template.testsupport.registerAndLoginAdmin
+import com.example.template.testsupport.loginAndCaptureSession
+import com.example.template.testsupport.loginAsSeededAdmin
+import com.example.template.testsupport.seedAdmin
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.Test
@@ -32,6 +37,8 @@ import kotlin.test.assertFalse
 class ApiSessionGuardIntegrationTest(
     @Autowired private val context: WebApplicationContext,
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val adminUsers: AdminUserRepository,
+    @Autowired private val passwordHasher: PasswordHasher,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -42,7 +49,7 @@ class ApiSessionGuardIntegrationTest(
 
     @Test
     fun `unauthenticated request to a protected endpoint returns an RFC 7807 401 without data`() {
-        val cookie = mockMvc.registerAndLoginAdmin(objectMapper)
+        val cookie = mockMvc.loginAsSeededAdmin(adminUsers, passwordHasher, objectMapper)
         val marker = "secret-tournament-${java.util.UUID.randomUUID()}"
         mockMvc.perform(
             post("/api/tournaments")
@@ -78,16 +85,46 @@ class ApiSessionGuardIntegrationTest(
             post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"email":"$email","password":"s3cret-pw"}"""),
-        ).andExpect(status().isOk)
+        )
+            // Reaching the controller is the point: a fresh registration is PENDING, so
+            // login answers ACCOUNT_PENDING (403) rather than the guard's 401.
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.code").value("ACCOUNT_PENDING"))
     }
 
     @Test
     fun `a valid session cookie grants access to a previously public endpoint`() {
-        val cookie = mockMvc.registerAndLoginAdmin(objectMapper)
+        val cookie = mockMvc.loginAsSeededAdmin(adminUsers, passwordHasher, objectMapper)
 
         mockMvc.perform(get("/api/tournaments").cookie(cookie))
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+    }
+
+    @Test
+    fun `a pending account's live session is refused on the next request`() {
+        val email = "pending-${java.util.UUID.randomUUID()}@example.com"
+        seedAdmin(adminUsers, passwordHasher, email)
+        val cookie = mockMvc.loginAndCaptureSession(objectMapper, email)
+
+        adminUsers.save(adminUsers.findByEmail(email)!!.copy(status = AdminStatus.PENDING))
+
+        mockMvc.perform(get("/api/tournaments").cookie(cookie))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    @Test
+    fun `a disabled account's live session is refused on the next request`() {
+        val email = "disabled-${java.util.UUID.randomUUID()}@example.com"
+        seedAdmin(adminUsers, passwordHasher, email)
+        val cookie = mockMvc.loginAndCaptureSession(objectMapper, email)
+
+        adminUsers.save(adminUsers.findByEmail(email)!!.copy(status = AdminStatus.DISABLED))
+
+        mockMvc.perform(get("/api/tournaments").cookie(cookie))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
 
     @Test

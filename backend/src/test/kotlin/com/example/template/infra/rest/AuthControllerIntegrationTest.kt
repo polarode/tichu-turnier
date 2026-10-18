@@ -1,6 +1,10 @@
 package com.example.template.infra.rest
 
+import com.example.template.domain.AdminStatus
+import com.example.template.domain.AdminUserRepository
+import com.example.template.domain.PasswordHasher
 import com.example.template.testsupport.PostgresBackedIntegrationTest
+import com.example.template.testsupport.seedAdmin
 import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,6 +34,8 @@ import kotlin.test.assertTrue
 @SpringBootTest(classes = [com.example.template.main.Application::class])
 class AuthControllerIntegrationTest(
     @Autowired private val context: WebApplicationContext,
+    @Autowired private val adminUsers: AdminUserRepository,
+    @Autowired private val passwordHasher: PasswordHasher,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -83,7 +89,7 @@ class AuthControllerIntegrationTest(
     @Test
     fun `login sets an httpOnly secure same-site cookie and returns no token in the body`() {
         val email = uniqueEmail()
-        register(email)
+        seedAdmin(adminUsers, passwordHasher, email)
 
         val result = login(email).andExpect(status().isOk).andReturn()
 
@@ -103,11 +109,48 @@ class AuthControllerIntegrationTest(
     @Test
     fun `login with a wrong password returns 401 with a stable error code`() {
         val email = uniqueEmail()
+        seedAdmin(adminUsers, passwordHasher, email)
+
+        login(email, password = "wrong-password")
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+    }
+
+    @Test
+    fun `register creates a pending account that cannot log in`() {
+        val email = uniqueEmail()
+        register(email).andExpect(status().isCreated)
+
+        val result = login(email)
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.code").value("ACCOUNT_PENDING"))
+            .andReturn()
+
+        assertTrue(
+            result.response.getHeaders(HttpHeaders.SET_COOKIE).isEmpty(),
+            "a pending account must not be issued a session cookie",
+        )
+    }
+
+    @Test
+    fun `login with a wrong password on a pending account stays invalid credentials`() {
+        val email = uniqueEmail()
         register(email)
 
         login(email, password = "wrong-password")
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+    }
+
+    @Test
+    fun `login on a disabled account is refused with a disabled code`() {
+        val email = uniqueEmail()
+        seedAdmin(adminUsers, passwordHasher, email)
+        adminUsers.save(adminUsers.findByEmail(email)!!.copy(status = AdminStatus.DISABLED))
+
+        login(email)
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.code").value("ACCOUNT_DISABLED"))
     }
 
     @Test
@@ -120,7 +163,7 @@ class AuthControllerIntegrationTest(
     @Test
     fun `refresh rotates the token and rejects the old one`() {
         val email = uniqueEmail()
-        register(email)
+        seedAdmin(adminUsers, passwordHasher, email)
         val first = tokenFrom(login(email).andReturn())
 
         val refreshed = mockMvc.perform(
@@ -144,7 +187,7 @@ class AuthControllerIntegrationTest(
     @Test
     fun `logout clears the cookie and invalidates the session`() {
         val email = uniqueEmail()
-        register(email)
+        seedAdmin(adminUsers, passwordHasher, email)
         val token = tokenFrom(login(email).andReturn())
 
         val logoutResult = mockMvc.perform(

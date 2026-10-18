@@ -47,7 +47,8 @@ class TeamRepositoryPersistenceTest(
         jdbcTemplate.update("DELETE FROM tournaments")
         // tournaments.owner_id is a real FK, so the owner must exist before saving.
         jdbcTemplate.update(
-            "INSERT INTO admin_users (id, email, password_hash, created_at) VALUES (?, ?, ?, now()) ON CONFLICT DO NOTHING",
+            "INSERT INTO admin_users (id, email, password_hash, status, role, created_at) " +
+                "VALUES (?, ?, ?, 'ACTIVE', 'ADMIN', now()) ON CONFLICT DO NOTHING",
             "admin-owner",
             "owner@example.com",
             "irrelevant-hash",

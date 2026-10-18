@@ -10,6 +10,12 @@ enum class ErrorCode {
     INVALID_INPUT,
     EMAIL_ALREADY_REGISTERED,
     INVALID_CREDENTIALS,
+
+    /** Correct credentials on an account that is still awaiting approval. Mapped to HTTP 403. */
+    ACCOUNT_PENDING,
+
+    /** Correct credentials on an account that has been disabled. Mapped to HTTP 403. */
+    ACCOUNT_DISABLED,
     UNAUTHENTICATED,
     FORBIDDEN,
 
@@ -68,6 +74,23 @@ class EmailAlreadyRegisteredException(message: String) :
  */
 class InvalidCredentialsException(message: String) :
     ApiException(ErrorCode.INVALID_CREDENTIALS, message)
+
+/**
+ * Thrown when credentials are correct but the account is still awaiting approval.
+ * Because the password was verified, account existence is already known; the distinct
+ * code lets the frontend show "awaiting approval" instead of a generic failure, without
+ * leaking anything new. Mapped to HTTP 403.
+ */
+class AccountPendingException(message: String) :
+    ApiException(ErrorCode.ACCOUNT_PENDING, message)
+
+/**
+ * Thrown when credentials are correct but the account has been disabled. Mapped to
+ * HTTP 403, distinct from [InvalidCredentialsException] so the frontend can say the
+ * account was disabled rather than that the password is wrong.
+ */
+class AccountDisabledException(message: String) :
+    ApiException(ErrorCode.ACCOUNT_DISABLED, message)
 
 /** Thrown when a session is missing, invalid or expired. Mapped to HTTP 401. */
 class UnauthenticatedException(message: String) :

@@ -31,3 +31,9 @@ app:
     # context, so this still works for local http dev; set false only for a
     # plain-http non-local host.
     session-cookie-secure: true
+    # First platform owner, provisioned idempotently at startup when both members are
+    # set. The credential is a bcrypt hash (never plaintext); see README for how to
+    # generate one. Left blank, no owner is created, which is only useful in tests.
+    owner:
+      email: ${OWNER_EMAIL:}
+      password-hash: ${OWNER_PASSWORD_HASH:}

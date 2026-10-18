@@ -45,7 +45,8 @@ class TournamentRepositoryPersistenceTest(
 
     private fun insertAdmin(id: String, email: String) {
         jdbcTemplate.update(
-            "INSERT INTO admin_users (id, email, password_hash, created_at) VALUES (?, ?, ?, now()) ON CONFLICT DO NOTHING",
+            "INSERT INTO admin_users (id, email, password_hash, status, role, created_at) " +
+                "VALUES (?, ?, ?, 'ACTIVE', 'ADMIN', now()) ON CONFLICT DO NOTHING",
             id,
             email,
             "irrelevant-hash",

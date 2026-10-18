@@ -24,6 +24,10 @@ services:
       SPRING_DATASOURCE_USERNAME: tichu
       SPRING_DATASOURCE_PASSWORD: tichu
       APP_FRONTEND_URL: http://localhost:3000
+      # First platform owner, provisioned idempotently at startup (Phase 4). Leave both
+      # unset to skip owner provisioning. The password is a bcrypt hash, not plaintext.
+      APP_AUTH_OWNER_EMAIL: ${OWNER_EMAIL:-}
+      APP_AUTH_OWNER_PASSWORD_HASH: ${OWNER_PASSWORD_HASH:-}
     ports:
       - "8080:8080"
     depends_on:

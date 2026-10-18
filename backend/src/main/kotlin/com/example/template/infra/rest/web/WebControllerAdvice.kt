@@ -1,6 +1,8 @@
 package com.example.template.infra.rest.web
 
 import com.example.template.vocabulary.ApiException
+import com.example.template.vocabulary.AccountDisabledException
+import com.example.template.vocabulary.AccountPendingException
 import com.example.template.vocabulary.DuplicatePlayerNameException
 import com.example.template.vocabulary.DuplicateTeamNameException
 import com.example.template.vocabulary.DuplicateTeamPlayersException
@@ -51,6 +53,19 @@ class WebControllerAdvice {
     @ExceptionHandler(InvalidCredentialsException::class)
     fun handleInvalidCredentials(ex: InvalidCredentialsException): ProblemDetail =
         problem(HttpStatus.UNAUTHORIZED, ex)
+
+    /**
+     * Correct credentials on a pending account: 403, not 401, so the frontend can show
+     * "awaiting approval" without muddling it with a wrong password.
+     */
+    @ExceptionHandler(AccountPendingException::class)
+    fun handleAccountPending(ex: AccountPendingException): ProblemDetail =
+        problem(HttpStatus.FORBIDDEN, ex)
+
+    /** Correct credentials on a disabled account: 403, distinguishable from a bad password. */
+    @ExceptionHandler(AccountDisabledException::class)
+    fun handleAccountDisabled(ex: AccountDisabledException): ProblemDetail =
+        problem(HttpStatus.FORBIDDEN, ex)
 
     @ExceptionHandler(UnauthenticatedException::class)
     fun handleUnauthenticated(ex: UnauthenticatedException): ProblemDetail =

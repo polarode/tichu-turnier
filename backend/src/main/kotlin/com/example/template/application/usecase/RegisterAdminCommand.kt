@@ -1,6 +1,8 @@
 package com.example.template.application.usecase
 
 import com.example.template.application.api.RegisterAdmin
+import com.example.template.domain.AdminRole
+import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
@@ -30,6 +32,8 @@ class RegisterAdminCommand(
             id = AdminUserId(idGenerator.newId()),
             email = email,
             passwordHash = passwordHasher.hash(command.password),
+            status = AdminStatus.PENDING,
+            role = AdminRole.ADMIN,
             createdAt = clock.instant(),
         )
         return adminUsers.save(user)

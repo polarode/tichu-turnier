@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Import
     PersistenceConfiguration::class,
     SecurityConfiguration::class,
     RestConfiguration::class,
+    BootstrapConfiguration::class,
 )
 class Application
 

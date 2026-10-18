@@ -1,6 +1,8 @@
 package com.example.template.application.usecase
 
+import com.example.template.domain.AdminRole
 import com.example.template.domain.AdminSession
+import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.SessionId
@@ -38,6 +40,8 @@ class AuthenticateSessionTest {
         id = AdminUserId("admin-1"),
         email = "ada@example.com",
         passwordHash = "irrelevant",
+        status = AdminStatus.ACTIVE,
+        role = AdminRole.ADMIN,
         createdAt = now,
     )
 
@@ -100,6 +104,16 @@ class AuthenticateSessionTest {
 
         assertFailsWith<UnauthenticatedException> {
             authenticateSession.authenticate("orphan-token")
+        }
+    }
+
+    @Test
+    fun `rejects a session whose admin is no longer active`() {
+        storeSession("revoked-token")
+        users.save(user.copy(status = AdminStatus.DISABLED))
+
+        assertFailsWith<UnauthenticatedException> {
+            authenticateSession.authenticate("revoked-token")
         }
     }
 }

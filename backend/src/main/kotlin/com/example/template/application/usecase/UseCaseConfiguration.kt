@@ -1,6 +1,7 @@
 package com.example.template.application.usecase
 
 import com.example.template.application.api.AuthenticateSession
+import com.example.template.application.api.BootstrapOwner
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTeam
@@ -36,10 +37,19 @@ import java.time.Duration
 @Configuration
 class UseCaseConfiguration(
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
+    @param:Value("\${app.auth.owner.email:}") private val ownerEmail: String,
+    @param:Value("\${app.auth.owner.password-hash:}") private val ownerPasswordHash: String,
 ) {
 
     @Bean
     fun clock(): Clock = Clock.systemUTC()
+
+    @Bean
+    fun bootstrapOwner(
+        adminUsers: AdminUserRepository,
+        idGenerator: IdGenerator,
+        clock: Clock,
+    ): BootstrapOwner = BootstrapOwnerCommand(adminUsers, idGenerator, clock, ownerEmail, ownerPasswordHash)
 
     @Bean
     fun createTournament(

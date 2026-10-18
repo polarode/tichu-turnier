@@ -2,7 +2,9 @@ package com.example.template.application.usecase
 
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.RegisterAdmin
+import com.example.template.domain.AdminRole
 import com.example.template.domain.AdminSession
+import com.example.template.domain.AdminStatus
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.SessionId
 import com.example.template.domain.SessionTokens
@@ -10,6 +12,8 @@ import com.example.template.infra.security.BcryptPasswordHasher
 import com.example.template.testsupport.InMemoryAdminSessionRepository
 import com.example.template.testsupport.InMemoryAdminUserRepository
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
+import com.example.template.vocabulary.AccountDisabledException
+import com.example.template.vocabulary.AccountPendingException
 import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.UnauthenticatedException
 import org.junit.jupiter.api.Test
@@ -52,6 +56,17 @@ class AdminAuthUseCasesTest {
     private val refreshSession = RefreshSessionCommand(sessions, users, sessionTokens, sessionIssuer, fixedClock)
     private val logoutAdmin = LogoutAdminCommand(sessions, sessionTokens)
 
+    /**
+     * Registers an account and promotes it to ACTIVE. Registration alone now yields a
+     * PENDING account (Phase 4) that cannot log in, so tests of the session flow start
+     * from an approved account.
+     */
+    private fun registerActive(email: String, password: String = "s3cret-pw") =
+        users.save(
+            registerAdmin.register(RegisterAdmin.RegisterAdminRequest(email, password))
+                .copy(status = AdminStatus.ACTIVE),
+        )
+
     @Test
     fun `register stores the account with a hashed password and normalized email`() {
         val user = registerAdmin.register(RegisterAdmin.RegisterAdminRequest("  Ada@Example.com ", "s3cret-pw"))
@@ -60,6 +75,8 @@ class AdminAuthUseCasesTest {
         assertNotEquals("s3cret-pw", user.passwordHash, "the raw password is never stored")
         assertTrue(passwordHasher.matches("s3cret-pw", user.passwordHash), "the stored hash verifies the password")
         assertEquals(now, user.createdAt)
+        assertEquals(AdminStatus.PENDING, user.status, "a new registration awaits approval")
+        assertEquals(AdminRole.ADMIN, user.role, "registration never mints an owner")
     }
 
     @Test
@@ -73,7 +90,7 @@ class AdminAuthUseCasesTest {
 
     @Test
     fun `login issues a session whose raw token is never stored`() {
-        registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
+        registerActive("ada@example.com")
 
         val issued = loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw"))
 
@@ -94,6 +111,34 @@ class AdminAuthUseCasesTest {
 
     @Test
     fun `login with a wrong password fails as invalid credentials`() {
+        registerActive("ada@example.com")
+
+        assertFailsWith<InvalidCredentialsException> {
+            loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "wrong-pw"))
+        }
+    }
+
+    @Test
+    fun `login on a pending account is refused with a pending code`() {
+        registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
+
+        assertFailsWith<AccountPendingException> {
+            loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw"))
+        }
+    }
+
+    @Test
+    fun `login on a disabled account is refused with a disabled code`() {
+        val user = registerActive("ada@example.com")
+        users.save(user.copy(status = AdminStatus.DISABLED))
+
+        assertFailsWith<AccountDisabledException> {
+            loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw"))
+        }
+    }
+
+    @Test
+    fun `login with a wrong password on a pending account stays invalid credentials`() {
         registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
 
         assertFailsWith<InvalidCredentialsException> {
@@ -103,7 +148,7 @@ class AdminAuthUseCasesTest {
 
     @Test
     fun `refresh rotates the token and invalidates the old one`() {
-        registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
+        registerActive("ada@example.com")
         val first = loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw"))
 
         val second = refreshSession.refresh(first.token)
@@ -116,7 +161,7 @@ class AdminAuthUseCasesTest {
 
     @Test
     fun `refresh rejects an expired session`() {
-        registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
+        registerActive("ada@example.com")
         val user = users.findByEmail("ada@example.com")!!
         val rawToken = "expired-token"
         sessions.save(
@@ -139,7 +184,7 @@ class AdminAuthUseCasesTest {
 
     @Test
     fun `logout invalidates the session`() {
-        registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
+        registerActive("ada@example.com")
         val issued = loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw"))
 
         logoutAdmin.logout(issued.token)

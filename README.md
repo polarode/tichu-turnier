@@ -46,6 +46,10 @@ docker compose up        # Postgres + backend + frontend dev server
   regardless of the host port.
 - After changing backend code, rebuild with `docker compose up --build` (compose
   reuses the existing image otherwise).
+- The first platform admin (owner) is provisioned at backend startup from
+  `OWNER_EMAIL` + `OWNER_PASSWORD_HASH` in `.env`; registration alone only creates a
+  pending account that an owner must approve. Copy `.env.example` to `.env` and set a
+  bcrypt hash to get in (see the file for the generation command).
 
 ### Backend (without Docker)
 

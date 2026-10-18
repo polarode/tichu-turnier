@@ -5,7 +5,8 @@ This is a two-app monorepo. Read the relevant section before editing an area.
 ## Plan & tickets
 
 - **Implementation plan**: `docs/plan/tichu-tournament.md` — the authoritative phased plan. When the user references a phase or the overall roadmap, read it there.
-- **Tickets**: `docs/tickets/` — one Markdown file per ticket, zero-padded sequential numbering (`001-…`, `002-…`). Create new tickets there next to the existing ones, following the format of the latest ticket. Mark status (`ready-for-agent`, `done`) and blocking tickets in each file.
+- **Tickets**: GitHub Issues on `polarode/tichu-turnier`, collected in the "Tichu Turnier" project. Each issue carries a *Blocked by* section referencing the blocking issue numbers, and the `ready-for-agent` label marks issues whose blockers are resolved. Done work is closed with the `done` label. Do not create local ticket files in the repo.
+- **Status in the plan**: `docs/plan/tichu-tournament.md` phase headers note which issues delivered them; keep those references current as issues are completed.
 
 ## Conventional Commits
 

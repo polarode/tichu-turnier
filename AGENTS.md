@@ -89,15 +89,19 @@ cd backend
 ```
 frontend/
 ├── apps/web/src/
-│   ├── tournament-api/  # one folder per upstream API:
-│   │   ├── tournament.api.ts        # axios instance (baseURL, interceptors)
-│   │   ├── tournament.repository.ts # functions that call the API and map DTO→domain
+│   ├── <area>-api/      # one folder per upstream API:
+│   │   ├── <area>.repository.ts # calls the API, parses zod, maps DTO→domain
 │   │   ├── dtos/              # zod schemas describing the wire format
 │   │   └── mappers/          # pure DTO↔domain mapping functions
 │   ├── domain/          # plain domain models (framework-free)
-│   ├── vocabulary/      # enums / shared value types
+│   ├── vocabulary/      # enums / shared value types (incl. backend error codes)
 │   ├── features/        # feature folders: components + hooks + queries
-│   ├── shared/          # cross-cutting: stores (zustand), query config, utils, components
+│   ├── shared/
+│   │   ├── api/         # shared axios client + typed ApiError (ProblemDetail mapping)
+│   │   ├── constants/   # centralized query keys
+│   │   ├── i18n/        # de/en catalogs + provider
+│   │   ├── components/  # cross-cutting components (AppShell)
+│   │   └── stores/      # zustand client-state stores
 │   ├── routes/          # TanStack Router file-based routes (routeTree.gen.ts is generated)
 │   ├── router.ts        # QueryClient + router creation
 │   └── main.tsx         # app entry
@@ -105,9 +109,12 @@ frontend/
 ```
 
 Conventions:
-- **Data flow:** component → TanStack Query hook → repository → api client. The
-  repository is the only place that knows about DTOs; everything above it uses
-  domain types. Mappers convert DTO↔domain and are unit-tested in isolation.
+- **Data flow:** component → TanStack Query hook → repository → `shared/api` axios
+  client. The repository is the only place that knows about DTOs; everything above
+  it uses domain types. Mappers convert DTO↔domain and are unit-tested in isolation.
+- **Transport:** all requests go through the shared axios instance (`withCredentials`,
+  so the httpOnly session cookie travels); its interceptor turns every failure into a
+  typed `ApiError` carrying the backend's stable `code` (and `field` when anchored).
 - **Validation:** zod schemas live next to the DTOs and parse every response, so
   the wire format is validated at the boundary.
 - **Server state** lives in TanStack Query (keyed by `shared/constants/query-keys.ts`).

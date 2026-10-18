@@ -44,6 +44,10 @@ class TeamAccessIntegrationTest(
     @Autowired private val sessionTokens: SessionTokens,
     @Autowired private val teamRepository: TeamRepository,
     @Autowired private val tournamentRepository: TournamentRepository,
+    @Autowired private val teamSessions: com.example.template.domain.TeamSessionRepository,
+    @Autowired private val adminSessions: com.example.template.domain.AdminSessionRepository,
+    @Autowired private val expiredSessionSweeper: com.example.template.infra.persistence.ExpiredSessionSweeper,
+    @Autowired private val idGenerator: com.example.template.domain.IdGenerator,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -325,6 +329,97 @@ class TeamAccessIntegrationTest(
 
         mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/reveal"))
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `both session cookies carry SameSite=Lax and are httpOnly`() {
+        authenticate()
+        val adminEmail = "admin-${java.util.UUID.randomUUID()}@example.com"
+        com.example.template.testsupport.seedAdmin(adminUsers, passwordHasher, adminEmail)
+        val adminSetCookie = mockMvc.perform(
+            post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mapOf("email" to adminEmail, "password" to "s3cret-pw"))),
+        ).andExpect(status().isOk).andReturn().response.getHeader(HttpHeaders.SET_COOKIE)!!
+        org.junit.jupiter.api.Assertions.assertTrue(adminSetCookie.contains("SameSite=Lax"), "admin cookie SameSite: $adminSetCookie")
+        org.junit.jupiter.api.Assertions.assertTrue(adminSetCookie.contains("HttpOnly"), "admin cookie HttpOnly: $adminSetCookie")
+
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = reveal(teamId, tournamentId)
+        val teamSetCookie = exchange(raw).response.getHeader(HttpHeaders.SET_COOKIE)!!
+        org.junit.jupiter.api.Assertions.assertTrue(teamSetCookie.contains("SameSite=Lax"), "team cookie SameSite: $teamSetCookie")
+        org.junit.jupiter.api.Assertions.assertTrue(teamSetCookie.contains("HttpOnly"), "team cookie HttpOnly: $teamSetCookie")
+    }
+
+    @Test
+    fun `repeated failed exchanges trip the per-ip limiter with the same generic rejection`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = reveal(teamId, tournamentId)
+        val attackerIp = "203.0.113.10"
+
+        fun failedExchange(token: String, ip: String): MvcResult = mockMvc.perform(
+            post("/api/team/auth/exchange")
+                .header("X-Forwarded-For", ip)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"token":"$token"}"""),
+        ).andReturn()
+
+        repeat(5) {
+            val result = failedExchange("wrong-guess", attackerIp)
+            org.junit.jupiter.api.Assertions.assertEquals(401, result.response.status)
+            org.junit.jupiter.api.Assertions.assertEquals("TEAM_ACCESS_INVALID", field(result.response.contentAsString, "code"))
+        }
+
+        // Blocked: the correct token gets the identical generic rejection...
+        val blocked = failedExchange(raw, attackerIp)
+        org.junit.jupiter.api.Assertions.assertEquals(401, blocked.response.status)
+        org.junit.jupiter.api.Assertions.assertEquals("TEAM_ACCESS_INVALID", field(blocked.response.contentAsString, "code"))
+
+        // ...while another source ip exchanges the same token fine: the limiter is
+        // per ip, never per token, so nobody can lock a specific team out.
+        mockMvc.perform(
+            post("/api/team/auth/exchange")
+                .header("X-Forwarded-For", "198.51.100.5")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"token":"$raw"}"""),
+        ).andExpect(status().isOk)
+    }
+
+    @Test
+    fun `the sweep purges expired sessions and keeps live ones - and is safe to re-run`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = reveal(teamId, tournamentId)
+        val issued = exchange(raw).also { org.junit.jupiter.api.Assertions.assertEquals(200, it.response.status) }
+        val liveTeamSession = teamSessions.findByTokenHash(sessionTokens.hash(teamCookie(issued).value))!!
+
+        // One expired team session next to the live one.
+        val expiredToken = sessionTokens.generate()
+        teamSessions.save(
+            com.example.template.domain.TeamSession(
+                id = com.example.template.domain.SessionId(idGenerator.newId()),
+                teamId = TeamId(teamId),
+                tokenHash = sessionTokens.hash(expiredToken),
+                createdAt = Instant.now().minusSeconds(7200),
+                expiresAt = Instant.now().minusSeconds(3600),
+            ),
+        )
+
+        expiredSessionSweeper.sweep()
+        expiredSessionSweeper.sweep() // re-run is safe
+
+        org.junit.jupiter.api.Assertions.assertNull(
+            teamSessions.findByTokenHash(sessionTokens.hash(expiredToken)),
+            "the expired team session is purged",
+        )
+        org.junit.jupiter.api.Assertions.assertNotNull(
+            teamSessions.findByTokenHash(liveTeamSession.tokenHash),
+            "the live team session survives",
+        )
     }
 
     private fun reveal(teamId: String, tournamentId: String): String =

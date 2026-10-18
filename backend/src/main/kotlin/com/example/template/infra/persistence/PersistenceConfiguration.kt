@@ -12,6 +12,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.scheduling.annotation.EnableScheduling
+import java.time.Clock
 
 /**
  * Wiring for the persistence adapter. The repository ports are implemented by the
@@ -23,6 +25,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 @Configuration
 @EnableJpaRepositories(basePackages = ["com.example.template.infra.persistence"])
 @EntityScan(basePackages = ["com.example.template.infra.persistence"])
+@EnableScheduling
 class PersistenceConfiguration(
     private val springDataTournamentRepository: SpringDataTournamentRepository,
     private val springDataAdminUserRepository: SpringDataAdminUserRepository,
@@ -64,4 +67,11 @@ class PersistenceConfiguration(
 
     @Bean
     fun idGenerator(): IdGenerator = UuidIdGenerator()
+
+    @Bean
+    fun expiredSessionSweeper(
+        adminSessionRepository: AdminSessionRepository,
+        teamSessionRepository: TeamSessionRepository,
+        clock: Clock,
+    ): ExpiredSessionSweeper = ExpiredSessionSweeper(adminSessionRepository, teamSessionRepository, clock)
 }

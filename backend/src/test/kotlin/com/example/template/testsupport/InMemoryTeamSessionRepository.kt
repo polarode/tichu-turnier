@@ -25,4 +25,8 @@ class InMemoryTeamSessionRepository : TeamSessionRepository {
     override fun deleteByTeamId(teamId: TeamId) {
         store.values.removeIf { it.teamId == teamId }
     }
+
+    override fun deleteExpiredBefore(now: java.time.Instant) {
+        store.values.removeIf { it.expiresAt < now }
+    }
 }

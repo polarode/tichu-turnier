@@ -29,4 +29,7 @@ interface AdminSessionRepository {
     fun findByTokenHash(tokenHash: String): AdminSession?
 
     fun deleteByTokenHash(tokenHash: String)
+
+    /** Bulk-deletes every session whose expiry has passed; part of the periodic sweep. */
+    fun deleteExpiredBefore(now: Instant)
 }

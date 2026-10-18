@@ -3,6 +3,7 @@ package com.example.template.infra.persistence
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamSession
 import com.example.template.domain.TeamSessionRepository
+import java.time.Instant
 
 /**
  * Driven adapter implementing [TeamSessionRepository] on top of Spring Data JPA and
@@ -25,5 +26,9 @@ class JpaTeamSessionRepository(
 
     override fun deleteByTeamId(teamId: TeamId) {
         springData.deleteByTeamId(teamId.value)
+    }
+
+    override fun deleteExpiredBefore(now: Instant) {
+        springData.deleteExpiredBefore(now)
     }
 }

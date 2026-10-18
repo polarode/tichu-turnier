@@ -19,4 +19,8 @@ class InMemoryAdminSessionRepository : AdminSessionRepository {
     override fun deleteByTokenHash(tokenHash: String) {
         sessions.values.removeIf { it.tokenHash == tokenHash }
     }
+
+    override fun deleteExpiredBefore(now: java.time.Instant) {
+        sessions.values.removeIf { it.expiresAt < now }
+    }
 }

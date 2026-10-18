@@ -32,6 +32,13 @@ app:
     # Team session lifetime (ISO-8601 duration). 12h — a team session is tied to match day.
     team-session-ttl: PT12H
     team-session-cookie-name: team_session
+    # Failed team-link exchanges are rate-limited in memory, per source IP
+    # (single-instance assumption — see ExchangeRateLimiter). Blocked callers get
+    # the same generic rejection as a wrong guess.
+    exchange-rate-limit:
+      max-failures: 5
+      window: PT15M
+    # Cadence (ms) of the expired-session sweep (hourly).
     # Cookies are marked Secure. Modern browsers treat localhost as a secure
     # context, so this still works for local http dev; set false only for a
     # plain-http non-local host.

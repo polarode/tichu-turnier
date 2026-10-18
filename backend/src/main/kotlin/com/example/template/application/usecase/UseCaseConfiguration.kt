@@ -53,6 +53,8 @@ class UseCaseConfiguration(
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
     @param:Value("\${app.auth.team-session-ttl}") private val teamSessionTtl: Duration,
     @param:Value("\${app.auth.invite-ttl}") private val inviteTtl: Duration,
+    @param:Value("\${app.auth.exchange-rate-limit.max-failures:5}") private val exchangeMaxFailures: Int,
+    @param:Value("\${app.auth.exchange-rate-limit.window:PT15M}") private val exchangeWindow: Duration,
     @param:Value("\${app.auth.owner.email:}") private val ownerEmail: String,
     @param:Value("\${app.auth.owner.password-hash:}") private val ownerPasswordHash: String,
 ) {
@@ -139,7 +141,7 @@ class UseCaseConfiguration(
         teamSessionIssuer: TeamSessionIssuer,
         clock: Clock,
     ): ExchangeTeamAccess =
-        ExchangeTeamAccessCommand(teamTokens, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer, clock)
+        ExchangeTeamAccessCommand(teamTokens, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer, exchangeRateLimiter(), clock)
 
     @Bean
     fun authenticateTeamSession(
@@ -235,6 +237,9 @@ class UseCaseConfiguration(
 
     @Bean
     fun revokeInvite(adminInvites: AdminInviteRepository): RevokeInvite = RevokeInviteCommand(adminInvites)
+
+    @Bean
+    fun exchangeRateLimiter(): ExchangeRateLimiter = ExchangeRateLimiter(clock(), exchangeMaxFailures, exchangeWindow)
 
     @Bean
     fun manageTeamAccessLink(

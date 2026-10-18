@@ -47,15 +47,17 @@ class TeamAccessUseCasesTest {
     }
 
     private val owner = AdminUserId("admin-owner")
-    private val now = Instant.parse("2026-01-01T12:00:00Z")
-    private val clock = Clock.fixed(now, ZoneOffset.UTC)
+    private val clock = com.example.template.testsupport.MutableClock(Instant.parse("2026-01-01T12:00:00Z"))
+    private val now: Instant
+        get() = clock.now
 
     private val createTeam =
         CreateTeamCommand(tournamentRepository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
     private val deleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository, teamTokenRepository)
     private val teamSessionIssuer = TeamSessionIssuer(teamSessionRepository, sessionTokens, idGenerator, Duration.ofHours(12))
     private val exchangeTeamAccess = ExchangeTeamAccessCommand(
-        teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer, clock,
+        teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer,
+        ExchangeRateLimiter(clock, maxFailures = 5, window = Duration.ofMinutes(15)), clock,
     )
     private val getOwnTeam = GetOwnTeamQuery(teamRepository)
     private val accessLinks = ManageTeamAccessLinkCommand(
@@ -257,6 +259,65 @@ class TeamAccessUseCasesTest {
         assertNull(teamSessionRepository.findByTokenHash(sessionTokens.hash(session.token)))
         val token = teamTokenRepository.findByTeamId(team.id)!!
         assertTrue(token.isRevoked(), "the token carries a revocation timestamp")
+    }
+
+    // ------------------------------------------------------------- rate limiting
+
+    @Test
+    fun `five failed exchanges block that ip - and the block is indistinguishable from a wrong guess`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        val raw = accessLinks.reveal(tournamentId, team.id, owner).token
+        val attackerIp = "203.0.113.7"
+
+        repeat(5) {
+            assertGenericRejection { exchangeTeamAccess.exchange("wrong-guess", attackerIp) }
+        }
+
+        // Blocked: even the correct token gets exactly the same generic rejection,
+        // and the limiter never even looks at the token.
+        assertGenericRejection { exchangeTeamAccess.exchange(raw, attackerIp) }
+        val ex = assertFailsWith<TeamAccessException> { exchangeTeamAccess.exchange(raw, attackerIp) }
+        assertEquals(ErrorCode.TEAM_ACCESS_INVALID, ex.code)
+
+        // Per-IP, never per-token: everyone else is unaffected.
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw, "198.51.100.9").teamId)
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw, null).teamId)
+    }
+
+    @Test
+    fun `unknown and revoked tokens count the same towards the block, which recovers after the window`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        val raw = accessLinks.reveal(tournamentId, team.id, owner).token
+        val ip = "203.0.113.7"
+
+        // Revoked failures count exactly like unknown ones.
+        teamTokenRepository.save(
+            teamTokenRepository.findByTeamId(team.id)!!.copy(revokedAt = now, updatedAt = now),
+        )
+        repeat(5) { assertGenericRejection { exchangeTeamAccess.exchange(raw, ip) } }
+        assertGenericRejection { exchangeTeamAccess.exchange("unknown", ip) }
+
+        // After the window passes, the same ip can exchange again.
+        teamTokenRepository.save(
+            teamTokenRepository.findByTeamId(team.id)!!.copy(revokedAt = null, updatedAt = now),
+        )
+        clock.advance(Duration.ofMinutes(16))
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw, ip).teamId)
+
+        // A successful exchange clears the ip's history: one failure does not block.
+        assertGenericRejection { exchangeTeamAccess.exchange("wrong", ip) }
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw, ip).teamId)
+        assertGenericRejection { exchangeTeamAccess.exchange("wrong", ip) }
+        assertGenericRejection { exchangeTeamAccess.exchange("wrong", ip) }
+        assertGenericRejection { exchangeTeamAccess.exchange("wrong", ip) }
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw, ip).teamId)
+    }
+
+    private fun assertGenericRejection(block: () -> Unit) {
+        val ex = assertFailsWith<TeamAccessException> { block() }
+        assertEquals(ErrorCode.TEAM_ACCESS_INVALID, ex.code)
     }
 
     // --------------------------------------------------------------- own-team read

@@ -3,6 +3,7 @@ package com.example.template.application.usecase
 import com.example.template.application.api.ExchangeTeamAccess
 import com.example.template.application.api.IssuedTeamSession
 import com.example.template.domain.SessionTokens
+import com.example.template.domain.Team
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamTokenRepository
 import com.example.template.domain.TournamentRepository
@@ -20,6 +21,10 @@ import java.time.Clock
  * is dead the moment the tournament completes and must be indistinguishable from
  * an unknown one. A valid link is multi-use — both team members may exchange it,
  * each receiving their own team session.
+ *
+ * Failed attempts are counted per source IP by [ExchangeRateLimiter] (#26); a
+ * blocked source is rejected before the token is even looked at, with exactly the
+ * same generic error — being rate-limited discloses nothing about a token.
  */
 class ExchangeTeamAccessCommand(
     private val teamTokens: TeamTokenRepository,
@@ -27,10 +32,25 @@ class ExchangeTeamAccessCommand(
     private val tournamentRepository: TournamentRepository,
     private val sessionTokens: SessionTokens,
     private val teamSessionIssuer: TeamSessionIssuer,
+    private val rateLimiter: ExchangeRateLimiter,
     private val clock: Clock,
 ) : ExchangeTeamAccess {
 
-    override fun exchange(rawToken: String): IssuedTeamSession {
+    override fun exchange(rawToken: String, sourceIp: String?): IssuedTeamSession {
+        // A blocked source gets the generic rejection without any token lookup.
+        if (sourceIp != null && rateLimiter.isBlocked(sourceIp)) throw rejected()
+
+        val token = try {
+            validate(rawToken)
+        } catch (ex: TeamAccessException) {
+            sourceIp?.let { rateLimiter.registerFailure(it) }
+            throw ex
+        }
+        sourceIp?.let { rateLimiter.registerSuccess(it) }
+        return teamSessionIssuer.issue(token, clock.instant())
+    }
+
+    private fun validate(rawToken: String): Team {
         val token = teamTokens.findByTokenHash(sessionTokens.hash(rawToken))
             ?: throw rejected()
         if (token.isRevoked()) throw rejected()
@@ -40,8 +60,7 @@ class ExchangeTeamAccessCommand(
         val team = teamRepository.findById(token.teamId) ?: throw rejected()
         val tournament = tournamentRepository.findById(team.tournamentId) ?: throw rejected()
         if (tournament.status == TournamentStatus.COMPLETED) throw rejected()
-
-        return teamSessionIssuer.issue(team, clock.instant())
+        return team
     }
 
     private fun rejected() = TeamAccessException("This access link is not valid")

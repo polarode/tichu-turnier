@@ -31,9 +31,10 @@ class TeamAuthController(
     @PostMapping("/auth/exchange")
     fun exchange(
         @Valid @RequestBody body: TeamExchangeRequestDto,
+        request: jakarta.servlet.http.HttpServletRequest,
         response: HttpServletResponse,
     ): TeamSessionResponseDto {
-        val issued = exchangeTeamAccess.exchange(body.token)
+        val issued = exchangeTeamAccess.exchange(body.token, sourceIpOf(request))
         response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.session(issued.token).toString())
         return TeamSessionResponseDto(
             teamId = issued.teamId.value,
@@ -45,6 +46,15 @@ class TeamAuthController(
     @GetMapping("/me")
     fun me(@AuthenticationPrincipal principal: AuthenticatedTeam) =
         TeamResponseDto.from(getOwnTeam.get(principal))
+
+    /**
+     * The client address feeding the rate limiter. Behind a proxy (Render routes
+     * through one), the left-most `X-Forwarded-For` entry is the original caller;
+     * without the header, fall back to the direct remote address.
+     */
+    private fun sourceIpOf(request: jakarta.servlet.http.HttpServletRequest): String? =
+        request.getHeader("X-Forwarded-For")?.substringBefore(',')?.trim()?.takeIf { it.isNotEmpty() }
+            ?: request.remoteAddr?.takeIf { it.isNotEmpty() }
 }
 
 data class TeamExchangeRequestDto(

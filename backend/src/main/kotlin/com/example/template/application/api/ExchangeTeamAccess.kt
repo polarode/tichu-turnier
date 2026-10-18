@@ -10,7 +10,13 @@ import com.example.template.domain.TournamentId
  * disclosed; a link is multi-use — both team members share it.
  */
 interface ExchangeTeamAccess {
-    fun exchange(rawToken: String): IssuedTeamSession
+
+    /**
+     * [sourceIp] is the caller's address (from the web adapter); when present it
+     * feeds the failed-exchange rate limiter. Null is allowed so non-web callers
+     * and tests are never rate-limited.
+     */
+    fun exchange(rawToken: String, sourceIp: String? = null): IssuedTeamSession
 }
 
 /** The freshly issued team session: the raw token goes only into the httpOnly cookie. */

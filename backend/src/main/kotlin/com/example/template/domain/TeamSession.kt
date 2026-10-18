@@ -29,4 +29,7 @@ interface TeamSessionRepository {
 
     /** Ends every live session of one team — used by link rotation and revocation. */
     fun deleteByTeamId(teamId: TeamId)
+
+    /** Bulk-deletes every session whose expiry has passed; part of the periodic sweep. */
+    fun deleteExpiredBefore(now: Instant)
 }

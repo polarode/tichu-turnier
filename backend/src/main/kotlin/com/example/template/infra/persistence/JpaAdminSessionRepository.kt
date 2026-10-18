@@ -2,6 +2,7 @@ package com.example.template.infra.persistence
 
 import com.example.template.domain.AdminSession
 import com.example.template.domain.AdminSessionRepository
+import java.time.Instant
 
 /**
  * Driven adapter implementing [AdminSessionRepository] on top of Spring Data JPA and
@@ -20,5 +21,9 @@ class JpaAdminSessionRepository(
 
     override fun deleteByTokenHash(tokenHash: String) {
         springData.findByTokenHash(tokenHash)?.let { springData.delete(it) }
+    }
+
+    override fun deleteExpiredBefore(now: Instant) {
+        springData.deleteExpiredBefore(now)
     }
 }

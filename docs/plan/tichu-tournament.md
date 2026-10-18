@@ -282,7 +282,7 @@ Rebrand the template frontend to the Tichu app: layout/navigation shell, route s
 
 ---
 
-## Phase 13: Admin: auth, dashboard, tournament setup
+## Phase 13: Admin: auth, dashboard, tournament setup (in progress — #14, #16 done; #15, #17–#20 open)
 
 **User stories**: As an organizer I register (and wait to be approved, or use my invite), log in, land on my dashboard, create a tournament, configure it, and manage teams — getting a copyable magic link + QR per team, with the ability to rotate/revoke it. As the platform owner I approve or invite organizers from an admin console.
 

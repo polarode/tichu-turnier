@@ -5,6 +5,7 @@ import com.example.template.application.api.LoginAdmin
 import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.PasswordHasher
+import com.example.template.domain.normalizeEmail
 import com.example.template.vocabulary.AccountDisabledException
 import com.example.template.vocabulary.AccountPendingException
 import com.example.template.vocabulary.InvalidCredentialsException
@@ -24,7 +25,7 @@ class LoginAdminCommand(
 ) : LoginAdmin {
 
     override fun login(command: LoginAdmin.LoginAdminRequest): IssuedSession {
-        val email = command.email.trim().lowercase()
+        val email = normalizeEmail(command.email)
         val user = adminUsers.findByEmail(email)
         if (user == null || !passwordHasher.matches(command.password, user.passwordHash)) {
             throw InvalidCredentialsException("Invalid email or password")

@@ -8,6 +8,7 @@ import com.example.template.domain.TournamentStatus
 import com.example.template.domain.TournamentRepository
 import com.example.template.main.Application
 import com.example.template.testsupport.PostgresBackedIntegrationTest
+import com.example.template.testsupport.insertAdminRow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,18 +40,8 @@ class TournamentRepositoryPersistenceTest(
     fun setUp() {
         jdbcTemplate.update("DELETE FROM tournaments")
         // tournaments.owner_id is a real FK, so the owners must exist before saving.
-        insertAdmin(owner.value, "owner@example.com")
-        insertAdmin(otherOwner.value, "other@example.com")
-    }
-
-    private fun insertAdmin(id: String, email: String) {
-        jdbcTemplate.update(
-            "INSERT INTO admin_users (id, email, password_hash, status, role, created_at) " +
-                "VALUES (?, ?, ?, 'ACTIVE', 'ADMIN', now()) ON CONFLICT DO NOTHING",
-            id,
-            email,
-            "irrelevant-hash",
-        )
+        insertAdminRow(jdbcTemplate, owner.value, "owner@example.com")
+        insertAdminRow(jdbcTemplate, otherOwner.value, "other@example.com")
     }
 
     @Test

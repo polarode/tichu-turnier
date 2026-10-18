@@ -3,7 +3,6 @@ package com.example.template.application.usecase
 import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.AuthenticatedAdmin
 import com.example.template.domain.AdminSessionRepository
-import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.SessionTokens
 import com.example.template.vocabulary.UnauthenticatedException
@@ -30,7 +29,7 @@ class AuthenticateSessionQuery(
         val user = adminUsers.findById(session.adminUserId) ?: throw unauthenticated()
         // Status is re-read on every request, so disabling an admin kills the live
         // session on its very next call rather than only at the next login.
-        if (user.status != AdminStatus.ACTIVE) throw unauthenticated()
+        if (!user.isActive()) throw unauthenticated()
         return AuthenticatedAdmin(adminUserId = user.id, email = user.email)
     }
 

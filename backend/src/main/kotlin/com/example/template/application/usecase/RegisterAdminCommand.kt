@@ -8,6 +8,7 @@ import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
+import com.example.template.domain.normalizeEmail
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import java.time.Clock
 
@@ -23,7 +24,7 @@ class RegisterAdminCommand(
 ) : RegisterAdmin {
 
     override fun register(command: RegisterAdmin.RegisterAdminRequest): AdminUser {
-        val email = command.email.trim().lowercase()
+        val email = normalizeEmail(command.email)
         if (adminUsers.findByEmail(email) != null) {
             throw EmailAlreadyRegisteredException("An account with this email already exists")
         }

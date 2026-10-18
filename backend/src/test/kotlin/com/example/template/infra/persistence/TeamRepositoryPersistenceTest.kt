@@ -13,6 +13,7 @@ import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
 import com.example.template.main.Application
 import com.example.template.testsupport.PostgresBackedIntegrationTest
+import com.example.template.testsupport.insertAdminRow
 import com.example.template.vocabulary.DuplicatePlayerNameException
 import com.example.template.vocabulary.DuplicateTeamNameException
 import java.time.Instant
@@ -46,13 +47,7 @@ class TeamRepositoryPersistenceTest(
     fun setUp() {
         jdbcTemplate.update("DELETE FROM tournaments")
         // tournaments.owner_id is a real FK, so the owner must exist before saving.
-        jdbcTemplate.update(
-            "INSERT INTO admin_users (id, email, password_hash, status, role, created_at) " +
-                "VALUES (?, ?, ?, 'ACTIVE', 'ADMIN', now()) ON CONFLICT DO NOTHING",
-            "admin-owner",
-            "owner@example.com",
-            "irrelevant-hash",
-        )
+        insertAdminRow(jdbcTemplate, "admin-owner", "owner@example.com")
     }
 
     private fun insertTournament(): TournamentId {

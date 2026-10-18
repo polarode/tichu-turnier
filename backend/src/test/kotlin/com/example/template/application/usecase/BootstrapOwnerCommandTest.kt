@@ -11,11 +11,14 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /**
  * Pure unit test: no Spring context. Covers the owner bootstrap's convergence rules —
- * create when absent, promote in place when present, no-op when unconfigured.
+ * create when absent, re-claim only an account carrying the configured credential, and
+ * no-op when unconfigured. A self-registered account that happens to hold the owner
+ * email must never be promoted.
  */
 class BootstrapOwnerCommandTest {
 
@@ -30,6 +33,22 @@ class BootstrapOwnerCommandTest {
 
     private fun bootstrap(email: String = "owner@example.com", hash: String = "hashed-owner-pw") =
         BootstrapOwnerCommand(users, idGenerator, fixedClock, email, hash)
+
+    private fun storedUser(
+        id: String,
+        passwordHash: String,
+        status: AdminStatus = AdminStatus.ACTIVE,
+        role: AdminRole = AdminRole.ADMIN,
+    ) = users.save(
+        AdminUser(
+            id = AdminUserId(id),
+            email = "owner@example.com",
+            passwordHash = passwordHash,
+            status = status,
+            role = role,
+            createdAt = now,
+        ),
+    )
 
     @Test
     fun `provisions an active owner from configuration`() {
@@ -52,24 +71,39 @@ class BootstrapOwnerCommandTest {
     }
 
     @Test
-    fun `promotes an existing account with the configured email instead of duplicating it`() {
-        val existing = users.save(
-            AdminUser(
-                id = AdminUserId("existing"),
-                email = "owner@example.com",
-                passwordHash = "existing-hash",
-                status = AdminStatus.ACTIVE,
-                role = AdminRole.ADMIN,
-                createdAt = now,
-            ),
-        )
+    fun `re-claims an account already provisioned from the configured credential`() {
+        val existing = storedUser(id = "existing", passwordHash = "hashed-owner-pw")
 
         val owner = bootstrap().ensureOwner()!!
 
         assertEquals(existing.id, owner.id)
         assertEquals(AdminRole.OWNER, owner.role)
-        assertEquals("existing-hash", owner.passwordHash, "an existing account's password is left untouched")
+        assertEquals("hashed-owner-pw", owner.passwordHash, "the configured credential is left untouched")
         assertEquals(1, users.findAll().size)
+    }
+
+    @Test
+    fun `refuses to claim an account that holds the email with a different credential`() {
+        storedUser(
+            id = "intruder",
+            passwordHash = "someone-elses-hash",
+            status = AdminStatus.PENDING,
+        )
+
+        assertFailsWith<IllegalStateException> { bootstrap().ensureOwner() }
+
+        val untouched = users.findByEmail("owner@example.com")!!
+        assertEquals(AdminRole.ADMIN, untouched.role, "a foreign account must never be promoted")
+        assertEquals(AdminStatus.PENDING, untouched.status)
+    }
+
+    @Test
+    fun `leaves an already-provisioned owner's lifecycle state alone`() {
+        storedUser(id = "owner", passwordHash = "hashed-owner-pw", status = AdminStatus.DISABLED, role = AdminRole.OWNER)
+
+        val owner = bootstrap().ensureOwner()!!
+
+        assertEquals(AdminStatus.DISABLED, owner.status, "a re-run must not re-activate a disabled owner")
     }
 
     @Test

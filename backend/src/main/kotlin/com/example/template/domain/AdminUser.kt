@@ -17,11 +17,21 @@ data class AdminUser(
     val status: AdminStatus,
     val role: AdminRole,
     val createdAt: Instant,
-)
+) {
+    /** Only an [AdminStatus.ACTIVE] account may log in or authenticate a session. */
+    fun isActive(): Boolean = status == AdminStatus.ACTIVE
+}
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */
 @JvmInline
 value class AdminUserId(val value: String)
+
+/**
+ * Admin emails are matched case-insensitively and stored normalized, so every lookup
+ * and write funnels through this one function — register, login and the owner
+ * bootstrap can never drift apart.
+ */
+fun normalizeEmail(raw: String): String = raw.trim().lowercase()
 
 /**
  * Account lifecycle. A registration starts [PENDING] and only an owner approval (or a

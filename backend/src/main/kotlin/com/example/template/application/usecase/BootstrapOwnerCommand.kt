@@ -7,6 +7,7 @@ import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
+import com.example.template.domain.normalizeEmail
 import java.time.Clock
 
 /**
@@ -15,9 +16,12 @@ import java.time.Clock
  * startup by an `ApplicationRunner`.
  *
  * The owner's credentials come from configuration as a pre-computed password hash, so
- * the bootstrap never handles a plaintext secret. Running it again is safe: an account
- * with the configured email is promoted in place rather than duplicated, and its
- * password is left untouched.
+ * the bootstrap never handles a plaintext secret. An existing account is only claimed
+ * as the owner when its stored hash equals the configured one — that is, it was
+ * provisioned from this same configuration. An account holding the configured email but
+ * a different credential is a conflict the bootstrap refuses to resolve by takeover, so
+ * a self-registered account can never be promoted to owner. Its lifecycle state is left
+ * alone, keeping re-runs idempotent.
  */
 class BootstrapOwnerCommand(
     private val adminUsers: AdminUserRepository,
@@ -28,17 +32,20 @@ class BootstrapOwnerCommand(
 ) : BootstrapOwner {
 
     override fun ensureOwner(): AdminUser? {
-        val email = ownerEmail.trim().lowercase()
+        val email = normalizeEmail(ownerEmail)
         if (email.isEmpty() || ownerPasswordHash.isBlank()) {
             return null
         }
 
         val existing = adminUsers.findByEmail(email)
         if (existing != null) {
-            if (existing.role == AdminRole.OWNER && existing.status == AdminStatus.ACTIVE) {
+            check(existing.passwordHash == ownerPasswordHash) {
+                "Refusing to claim $email as the platform owner: it exists with a different credential"
+            }
+            if (existing.role == AdminRole.OWNER) {
                 return existing
             }
-            return adminUsers.save(existing.copy(role = AdminRole.OWNER, status = AdminStatus.ACTIVE))
+            return adminUsers.save(existing.copy(role = AdminRole.OWNER))
         }
 
         val owner = AdminUser(

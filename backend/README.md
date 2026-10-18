@@ -55,26 +55,40 @@ curl -X POST localhost:8080/api/tournaments \
 
 | Method | Path                 | Description                                        |
 |--------|----------------------|----------------------------------------------------|
-| POST   | `/api/auth/register` | create an admin account with email/password        |
+| POST   | `/api/auth/register` | request an admin account (created `PENDING`)        |
 | POST   | `/api/auth/login`    | exchange credentials for an httpOnly session cookie |
 | POST   | `/api/auth/refresh`  | rotate a valid session cookie                      |
 | POST   | `/api/auth/logout`   | invalidate the session and clear the cookie        |
 
+Registration is a *request*: it creates a `PENDING` account that cannot log in or
+reach any `/api/**` route. Only once an owner approves it does it become `ACTIVE`
+(approval endpoints are Phase 4 follow-up work). Login verifies the password first,
+then the account status: correct credentials on a pending or disabled account answer
+`403 ACCOUNT_PENDING` / `403 ACCOUNT_DISABLED`, while wrong credentials stay the
+generic `401 INVALID_CREDENTIALS`, so account existence is never disclosed. Status is
+re-checked on every request, so disabling an admin stops its live session on the next
+call.
+
+The first platform owner is provisioned idempotently at startup from
+`app.auth.owner.email` + `app.auth.owner.password-hash` (a bcrypt hash — see the root
+README). There is no endpoint that creates or promotes an owner.
+
 Sessions use the `admin_session` httpOnly `Secure` `SameSite=Lax` cookie; the raw
 token is never returned in a response body. Error responses are RFC 7807 problem
-JSON carrying a stable `code` (`EMAIL_ALREADY_REGISTERED`, `INVALID_CREDENTIALS`,
-`UNAUTHENTICATED`, `INVALID_INPUT`, `NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`,
-`DUPLICATE_TEAM_NAME`, `DUPLICATE_PLAYER_NAME`, `DUPLICATE_TEAM_PLAYERS`,
-`TEAM_LIMIT_REACHED`, `MAX_TEAMS_BELOW_TEAM_COUNT`). Cookie
+JSON carrying a stable `code` (`ACCOUNT_PENDING`, `ACCOUNT_DISABLED`,
+`EMAIL_ALREADY_REGISTERED`, `INVALID_CREDENTIALS`, `UNAUTHENTICATED`, `INVALID_INPUT`,
+`NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`, `DUPLICATE_TEAM_NAME`, `DUPLICATE_PLAYER_NAME`,
+`DUPLICATE_TEAM_PLAYERS`, `TEAM_LIMIT_REACHED`, `MAX_TEAMS_BELOW_TEAM_COUNT`). Cookie
 lifetime and the `Secure`
 flag are configured under `app.auth` in `application.yml`.
 
 ```bash
-# register, then log in and keep the session cookie in a jar
+# register a request: the account starts PENDING and cannot log in yet
 curl -X POST localhost:8080/api/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"email":"organizer@example.com","password":"s3cret-pw"}'
 
+# log in as an already-approved admin (e.g. the configured owner)
 curl -c cookies.txt -X POST localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"organizer@example.com","password":"s3cret-pw"}'
@@ -85,12 +99,13 @@ curl -b cookies.txt -c cookies.txt -X POST localhost:8080/api/auth/refresh
 ## Layers
 
 - `domain` — `Tournament`, `TournamentStatus`, `TournamentId`,
-  `TournamentSettings`, `Team`, `Player` and the
-  `TournamentRepository`/`TeamRepository`/`IdGenerator` ports. No Spring.
+  `TournamentSettings`, `Team`, `Player`, `AdminUser`, `AdminStatus`, `AdminRole` and the
+  `TournamentRepository`/`TeamRepository`/`AdminUserRepository`/`AdminSessionRepository`/
+  `IdGenerator` ports. No Spring.
 - `application/api` — inbound ports: `CreateTournament`, `ListTournaments`,
   `GetTournament`, `UpdateTournament`, `DeleteTournament`, `CreateTeam`, `ListTeams`,
-  `GetTeam`, `UpdateTeam`, `DeleteTeam`, `RegisterAdmin`,
-  `LoginAdmin`, `RefreshSession`, `LogoutAdmin`.
+  `GetTeam`, `UpdateTeam`, `DeleteTeam`, `RegisterAdmin`, `LoginAdmin`,
+  `RefreshSession`, `LogoutAdmin`, `AuthenticateSession`, `BootstrapOwner`.
 - `application/usecase` — implementations + `UseCaseConfiguration`.
 - `infra/persistence` — `JpaTournamentRepository`/`JpaTeamRepository`
   (+ their entities and the Spring Data repositories they wrap), `UuidIdGenerator` +
@@ -100,7 +115,8 @@ curl -b cookies.txt -c cookies.txt -X POST localhost:8080/api/auth/refresh
   `SecurityConfiguration` (the crypto ports).
 - `infra/rest` — `TournamentController`, `TeamController`, `AuthController`, DTOs,
   the session-cookie factory, error advice + `RestConfiguration`.
-- `main` — `Application` composition root.
+- `main` — `Application` composition root + `BootstrapConfiguration` (the owner
+  provisioning runner).
 
 The production adapter is JPA over PostgreSQL with the schema managed by Flyway
 (`src/main/resources/db/migration`). To swap the storage technology again, write

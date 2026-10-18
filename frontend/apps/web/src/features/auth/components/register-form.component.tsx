@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 
 import { createRegisterSchema, type RegisterValues } from '@/features/auth/auth-schemas.ts';
 import { useRegisterAdmin } from '@/features/auth/hooks/auth-queries.hook.ts';
+import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { FormField } from '@/shared/components/form-field.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -22,13 +23,21 @@ interface RegisterFormProps {
 export function RegisterForm({ inviteToken }: RegisterFormProps) {
     const { t } = useI18n();
     const navigate = useNavigate();
-    const register = useRegisterAdmin();
+    const registerAdmin = useRegisterAdmin();
     const form = useForm<RegisterValues>({ resolver: zodResolver(createRegisterSchema(t)) });
 
     const onSubmit = form.handleSubmit(async (values) => {
         try {
-            const admin = await register.mutateAsync({ ...values, inviteToken });
-            await navigate({ to: admin ? '/admin' : '/pending-approval' });
+            const outcome = await registerAdmin.mutateAsync({ ...values, inviteToken });
+            if (outcome.kind === 'active') {
+                await navigate({ to: '/admin' });
+            } else if (outcome.kind === 'pending') {
+                await navigate({ to: '/pending-approval' });
+            } else {
+                // The invite activated the account but the follow-up sign-in failed; the
+                // account is usable, so point at sign-in rather than implying it failed.
+                form.setError('root', { type: 'server', message: t('register.signInFailed') });
+            }
         } catch (error) {
             // The backend field-anchors neither of these; attach the address-related
             // ones to the email input and leave the rest as a form-level message.
@@ -51,14 +60,7 @@ export function RegisterForm({ inviteToken }: RegisterFormProps) {
                 </p>
             ) : null}
 
-            {rootError ? (
-                <p
-                    role="alert"
-                    className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                >
-                    {rootError}
-                </p>
-            ) : null}
+            <FormAlert message={rootError} />
 
             <FormField
                 id="email"
@@ -77,8 +79,8 @@ export function RegisterForm({ inviteToken }: RegisterFormProps) {
                 {...form.register('password')}
             />
 
-            <Button type="submit" disabled={register.isPending}>
-                {register.isPending ? t('register.pending') : t('register.submit')}
+            <Button type="submit" disabled={registerAdmin.isPending}>
+                {registerAdmin.isPending ? t('register.pending') : t('register.submit')}
             </Button>
 
             <p className="text-sm text-muted-foreground">

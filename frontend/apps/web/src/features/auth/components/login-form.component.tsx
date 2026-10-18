@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 
 import { createLoginSchema, type LoginValues } from '@/features/auth/auth-schemas.ts';
 import { useLoginAdmin } from '@/features/auth/hooks/auth-queries.hook.ts';
+import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { FormField } from '@/shared/components/form-field.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -29,14 +30,7 @@ export function LoginForm() {
 
     return (
         <form onSubmit={onSubmit} noValidate className="flex max-w-sm flex-col gap-4">
-            {rootError ? (
-                <p
-                    role="alert"
-                    className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                >
-                    {rootError}
-                </p>
-            ) : null}
+            <FormAlert message={rootError} />
 
             <FormField
                 id="email"

@@ -64,6 +64,7 @@ export const en = {
     'register.description': 'Create an organizer account to run tournaments.',
     'register.inviteNotice':
         'You have been invited. Complete registration to activate your account immediately.',
+    'register.signInFailed': 'Your account is active. Please sign in.',
     'register.submit': 'Create account',
     'register.pending': 'Creating account…',
     'register.haveAccount': 'Already have an account?',

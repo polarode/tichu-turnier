@@ -41,25 +41,44 @@ export function useSession() {
 }
 
 /**
+ * Result of a registration. A plain registration is `pending`; an invited one is
+ * `active` when the follow-up sign-in succeeds, or `signInFailed` when the account
+ * activated but the session could not be established.
+ */
+export type RegistrationOutcome =
+    | { kind: 'pending' }
+    | { kind: 'active'; admin: AdminUser }
+    | { kind: 'signInFailed' };
+
+/**
  * Registers an account. Registration is no longer a sign-in: without an invite the
  * backend creates a `PENDING` account and returns no session, so the hook resolves to
- * `null` and the caller sends the user to the awaiting-approval state. With a valid
+ * `pending` and the caller sends the user to the awaiting-approval state. With a valid
  * invite the account is `ACTIVE`; the register endpoint still returns no session, so
- * the UI composes register + login with the same credentials and resolves to the admin.
+ * the UI composes register + login with the same credentials. If that login fails the
+ * account stays active, so the outcome is `signInFailed` rather than an error the user
+ * should retry registration for.
  */
 export function useRegisterAdmin() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (registration: AdminRegistration): Promise<AdminUser | null> => {
+        mutationFn: async (registration: AdminRegistration): Promise<RegistrationOutcome> => {
             await AuthRepository.register(registration);
-            if (!registration.inviteToken) return null;
-            return AuthRepository.login({
-                email: registration.email,
-                password: registration.password,
-            });
+            if (!registration.inviteToken) return { kind: 'pending' };
+            try {
+                const admin = await AuthRepository.login({
+                    email: registration.email,
+                    password: registration.password,
+                });
+                return { kind: 'active', admin };
+            } catch {
+                return { kind: 'signInFailed' };
+            }
         },
-        onSuccess: (admin) => {
-            if (admin) queryClient.setQueryData(sessionQueryKey(), admin);
+        onSuccess: (outcome) => {
+            if (outcome.kind === 'active') {
+                queryClient.setQueryData(sessionQueryKey(), outcome.admin);
+            }
         },
     });
 }

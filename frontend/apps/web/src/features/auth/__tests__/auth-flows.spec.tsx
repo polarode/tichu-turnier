@@ -152,6 +152,30 @@ describe('admin auth flows', () => {
         expect(auth.login).toHaveBeenCalled();
     });
 
+    it('points an invited organizer at sign-in when the follow-up login fails', async () => {
+        auth.register.mockResolvedValue(admin);
+        auth.login.mockRejectedValue(
+            new ApiError({
+                code: 'INVALID_CREDENTIALS',
+                status: 401,
+                field: null,
+                message: 'nope',
+            }),
+        );
+        renderApp('/register?invite=invite-token');
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'invitee@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
+
+        expect(
+            await screen.findByText('Dein Konto ist aktiv. Bitte melde dich an.'),
+        ).toBeInTheDocument();
+        // The account is active, so the form stays put with a sign-in prompt instead of
+        // implying registration failed.
+        expect(screen.getByRole('button', { name: 'Konto erstellen' })).toBeInTheDocument();
+    });
+
     it('anchors an invite email mismatch to the email field', async () => {
         auth.register.mockRejectedValue(
             new ApiError({

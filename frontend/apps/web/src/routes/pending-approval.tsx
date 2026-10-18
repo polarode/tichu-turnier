@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 
+import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 /**
@@ -11,10 +12,10 @@ function PendingApprovalPage() {
 
     return (
         <section className="flex max-w-md flex-col gap-4">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-semibold">{t('pendingApproval.title')}</h1>
-                <p className="text-muted-foreground">{t('pendingApproval.description')}</p>
-            </div>
+            <PageHeader
+                titleKey="pendingApproval.title"
+                descriptionKey="pendingApproval.description"
+            />
             <Link to="/login" className="text-sm text-primary underline-offset-4 hover:underline">
                 {t('pendingApproval.loginLink')}
             </Link>

@@ -62,6 +62,7 @@ export const de: Catalog = {
     'register.description': 'Organisatorenkonto erstellen, um Turniere zu verwalten.',
     'register.inviteNotice':
         'Du wurdest eingeladen. Schließe die Registrierung ab, um dein Konto sofort zu aktivieren.',
+    'register.signInFailed': 'Dein Konto ist aktiv. Bitte melde dich an.',
     'register.submit': 'Konto erstellen',
     'register.pending': 'Konto wird erstellt…',
     'register.haveAccount': 'Bereits ein Konto?',

@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.AdminUserId
 import com.example.template.domain.Task
 import com.example.template.domain.TaskId
 import com.example.template.domain.TaskRepository
@@ -30,13 +31,28 @@ class TaskRepositoryPersistenceTest(
     @Autowired private val jdbcTemplate: JdbcTemplate,
 ) : PostgresBackedIntegrationTest() {
 
+    private val owner = AdminUserId("admin-owner")
+    private val otherOwner = AdminUserId("admin-other")
+
     @BeforeEach
-    fun clearTable() {
+    fun setUp() {
         jdbcTemplate.update("DELETE FROM tasks")
+        // tasks.owner_id is a real FK, so the owners must exist before saving.
+        insertAdmin(owner.value, "owner@example.com")
+        insertAdmin(otherOwner.value, "other@example.com")
+    }
+
+    private fun insertAdmin(id: String, email: String) {
+        jdbcTemplate.update(
+            "INSERT INTO admin_users (id, email, password_hash, created_at) VALUES (?, ?, ?, now()) ON CONFLICT DO NOTHING",
+            id,
+            email,
+            "irrelevant-hash",
+        )
     }
 
     @Test
-    fun `saved task is read back with all fields intact`() {
+    fun `saved task is read back with all fields intact including its owner`() {
         val task = task(id = "t-1", title = "Write docs", description = "for the template")
 
         val stored = taskRepository.save(task)
@@ -44,6 +60,7 @@ class TaskRepositoryPersistenceTest(
 
         assertEquals(task, stored)
         assertEquals(task, loaded)
+        assertEquals(owner, loaded?.ownerId)
     }
 
     @Test
@@ -63,15 +80,16 @@ class TaskRepositoryPersistenceTest(
     }
 
     @Test
-    fun `findAll returns every saved task`() {
-        taskRepository.save(task(id = "t-1", title = "A"))
-        taskRepository.save(task(id = "t-2", title = "B"))
+    fun `findAllByOwner returns only that owner's tasks`() {
+        taskRepository.save(task(id = "t-1", title = "A", ownerId = owner))
+        taskRepository.save(task(id = "t-2", title = "B", ownerId = owner))
+        taskRepository.save(task(id = "t-3", title = "C", ownerId = otherOwner))
 
-        val all = taskRepository.findAll()
+        val mine = taskRepository.findAllByOwner(owner)
 
-        assertEquals(2, all.size)
-        assertTrue(all.any { it.title == "A" })
-        assertTrue(all.any { it.title == "B" })
+        assertEquals(2, mine.size)
+        assertTrue(mine.all { it.ownerId == owner })
+        assertFalse(mine.any { it.id.value == "t-3" })
     }
 
     @Test
@@ -81,7 +99,7 @@ class TaskRepositoryPersistenceTest(
         taskRepository.delete(TaskId("t-1"))
 
         assertNull(taskRepository.findById(TaskId("t-1")))
-        assertFalse(taskRepository.findAll().any { it.id.value == "t-1" })
+        assertFalse(taskRepository.findAllByOwner(owner).any { it.id.value == "t-1" })
     }
 
     @Test
@@ -89,10 +107,10 @@ class TaskRepositoryPersistenceTest(
         taskRepository.save(task(id = "t-1", title = "Before"))
         taskRepository.save(task(id = "t-1", title = "After"))
 
-        val all = taskRepository.findAll()
+        val mine = taskRepository.findAllByOwner(owner)
 
-        assertEquals(1, all.size)
-        assertEquals("After", all.single().title)
+        assertEquals(1, mine.size)
+        assertEquals("After", mine.single().title)
     }
 
     private fun task(
@@ -100,8 +118,10 @@ class TaskRepositoryPersistenceTest(
         title: String,
         description: String = "",
         status: TaskStatus = TaskStatus.TODO,
+        ownerId: AdminUserId = owner,
     ): Task = Task(
         id = TaskId(id),
+        ownerId = ownerId,
         title = title,
         description = description,
         status = status,

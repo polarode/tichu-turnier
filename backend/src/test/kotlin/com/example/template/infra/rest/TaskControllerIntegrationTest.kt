@@ -4,6 +4,8 @@ import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.registerAndLoginAdmin
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,10 +40,12 @@ class TaskControllerIntegrationTest(
         .build()
 
     private lateinit var sessionCookie: Cookie
+    private lateinit var otherAdminCookie: Cookie
 
     @BeforeEach
     fun authenticate() {
         sessionCookie = mockMvc.registerAndLoginAdmin(objectMapper)
+        otherAdminCookie = mockMvc.registerAndLoginAdmin(objectMapper)
     }
 
     @Test
@@ -62,6 +66,7 @@ class TaskControllerIntegrationTest(
         mockMvc.perform(get("/api/tasks").cookie(sessionCookie))
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.length()").value(2))
     }
 
     @Test
@@ -104,11 +109,49 @@ class TaskControllerIntegrationTest(
             .andExpect(status().isNotFound)
     }
 
-    private fun createTask(title: String, description: String): String {
+    @Test
+    fun `a foreign admin cannot read, modify or delete another admin's task`() {
+        val id = createTask("Alice's task", "private")
+
+        mockMvc.perform(get("/api/tasks/$id").cookie(otherAdminCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(
+            put("/api/tasks/$id")
+                .cookie(otherAdminCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"title":"hijacked","description":"","status":"DONE"}"""),
+        ).andExpect(status().isNotFound)
+
+        mockMvc.perform(delete("/api/tasks/$id").cookie(otherAdminCookie))
+            .andExpect(status().isNotFound)
+
+        // The owner's task is untouched throughout.
+        mockMvc.perform(get("/api/tasks/$id").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.title").value("Alice's task"))
+    }
+
+    @Test
+    fun `list returns only the caller's own tasks`() {
+        createTask("alice-only", "")
+        createTaskAs(otherAdminCookie, "bob-only", "")
+
+        mockMvc.perform(get("/api/tasks").cookie(otherAdminCookie))
+            .andExpect(status().isOk)
+            .andExpect(content().string(containsString("bob-only")))
+            .andExpect(content().string(not(containsString("alice-only"))))
+    }
+
+    private fun createTask(title: String, description: String): String =
+        createTaskAs(sessionCookie, title, description)
+
+    private fun createTaskAs(cookie: Cookie, title: String, description: String): String {
         val body = mapOf("title" to title, "description" to description)
         val response = mockMvc.perform(
             post("/api/tasks")
-                .cookie(sessionCookie)
+                .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)),
         )

@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.AdminUserId
 import com.example.template.domain.Task
 import com.example.template.domain.TaskId
 import com.example.template.domain.TaskRepository
@@ -18,7 +19,8 @@ class JpaTaskRepository(
 
     override fun findById(id: TaskId): Task? = springDataTaskRepository.findById(id.value).map { it.toDomain() }.orElse(null)
 
-    override fun findAll(): List<Task> = springDataTaskRepository.findAll().map { it.toDomain() }
+    override fun findAllByOwner(owner: AdminUserId): List<Task> =
+        springDataTaskRepository.findAllByOwnerId(owner.value).map { it.toDomain() }
 
     override fun delete(id: TaskId) {
         springDataTaskRepository.deleteById(id.value)

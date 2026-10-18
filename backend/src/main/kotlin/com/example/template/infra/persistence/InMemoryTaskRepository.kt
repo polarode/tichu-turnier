@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.AdminUserId
 import com.example.template.domain.Task
 import com.example.template.domain.TaskId
 import com.example.template.domain.TaskRepository
@@ -22,7 +23,8 @@ class InMemoryTaskRepository : TaskRepository {
 
     override fun findById(id: TaskId): Task? = store[id.value]
 
-    override fun findAll(): List<Task> = store.values.toList()
+    override fun findAllByOwner(owner: AdminUserId): List<Task> =
+        store.values.filter { it.isOwnedBy(owner) }
 
     override fun delete(id: TaskId) {
         store.remove(id.value)

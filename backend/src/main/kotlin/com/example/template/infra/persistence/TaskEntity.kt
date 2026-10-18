@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.AdminUserId
 import com.example.template.domain.Task
 import com.example.template.domain.TaskId
 import com.example.template.domain.TaskStatus
@@ -16,12 +17,16 @@ import java.time.Instant
  *
  * Mutable fields with private setters: Hibernate needs setters (or field access)
  * to hydrate, while the rest of the app can only go through the domain entity.
+ *
+ * `owner_id` is `NOT NULL` in the database (see `V3__add_task_owner.sql`), so the
+ * domain's non-null owner is a real invariant rather than a convention.
  */
 @Entity
 @Table(name = "tasks")
 class TaskEntity(
     @Id
     val id: String,
+    val ownerId: String,
     title: String,
     description: String,
     status: TaskStatus,
@@ -46,6 +51,7 @@ class TaskEntity(
 
     fun toDomain(): Task = Task(
         id = TaskId(id),
+        ownerId = AdminUserId(ownerId),
         title = title,
         description = description,
         status = status,
@@ -56,6 +62,7 @@ class TaskEntity(
     companion object {
         fun from(task: Task): TaskEntity = TaskEntity(
             id = task.id.value,
+            ownerId = task.ownerId.value,
             title = task.title,
             description = task.description,
             status = task.status,

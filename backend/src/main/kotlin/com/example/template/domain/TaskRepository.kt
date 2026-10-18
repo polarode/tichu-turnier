@@ -10,7 +10,13 @@ interface TaskRepository {
 
     fun findById(id: TaskId): Task?
 
-    fun findAll(): List<Task>
+    /** Only the caller's tasks — the ownership scope is pushed into the query. */
+    fun findAllByOwner(owner: AdminUserId): List<Task>
 
+    /**
+     * Deletes by id without an ownership check. Only call it after verifying the
+     * caller owns the task — use [com.example.template.application.api.DeleteTask]
+     * rather than the port directly.
+     */
     fun delete(id: TaskId)
 }

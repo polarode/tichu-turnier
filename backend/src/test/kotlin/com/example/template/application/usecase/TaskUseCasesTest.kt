@@ -2,6 +2,7 @@ package com.example.template.application.usecase
 
 import com.example.template.application.api.CreateTask
 import com.example.template.application.api.UpdateTask
+import com.example.template.domain.AdminUserId
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.Task
 import com.example.template.domain.TaskId
@@ -21,6 +22,9 @@ import kotlin.test.assertNotNull
  * Pure unit test: no Spring context. The ports are satisfied with a real in-memory
  * repository and tiny fakes for the clock and id generator, so the use cases are
  * exercised in isolation and deterministically.
+ *
+ * The ownership rule is proven here, at the use-case seam: two admins (`owner` and
+ * `intruder`) exercise every verb, and the intruder sees nothing.
  */
 class TaskUseCasesTest {
 
@@ -31,17 +35,24 @@ class TaskUseCasesTest {
         override fun newId(): String = "task-${++counter}"
     }
 
+    private val owner = AdminUserId("admin-owner")
+    private val intruder = AdminUserId("admin-intruder")
+
     private val createTask = CreateTaskCommand(repository, idGenerator, fixedClock)
     private val listTasks = ListTasksQuery(repository)
     private val getTask = GetTaskQuery(repository)
     private val updateTask = UpdateTaskCommand(repository, fixedClock)
     private val deleteTask = DeleteTaskCommand(repository)
 
+    private fun create(title: String = "A", asAdmin: AdminUserId = owner): Task =
+        createTask.create(CreateTask.CreateTaskRequest(title, ""), asAdmin)
+
     @Test
-    fun `creates a task with TODO status and generated id`() {
-        val task = createTask.create(CreateTask.CreateTaskRequest("  Write docs  ", "  details  "))
+    fun `creates a task with TODO status, generated id and the caller as owner`() {
+        val task = createTask.create(CreateTask.CreateTaskRequest("  Write docs  ", "  details  "), owner)
 
         assertEquals(TaskId("task-1"), task.id)
+        assertEquals(owner, task.ownerId, "the creating admin is recorded as owner")
         assertEquals("Write docs", task.title, "title is trimmed")
         assertEquals("details", task.description, "description is trimmed")
         assertEquals(TaskStatus.TODO, task.status)
@@ -52,66 +63,97 @@ class TaskUseCasesTest {
     @Test
     fun `rejects a blank title`() {
         assertFailsWith<InvalidInputException> {
-            createTask.create(CreateTask.CreateTaskRequest("   ", "x"))
+            createTask.create(CreateTask.CreateTaskRequest("   ", "x"), owner)
         }
     }
 
     @Test
-    fun `lists tasks newest first`() {
-        val a = createTask.create(CreateTask.CreateTaskRequest("A", ""))
-        val b = createTask.create(CreateTask.CreateTaskRequest("B", ""))
-        // same timestamp (fixed clock), so insertion is a stable tiebreaker-independent set
-        val ids = listTasks.list().map(Task::id).toSet()
-        assertEquals(setOf(a.id, b.id), ids)
+    fun `owner reads their own task`() {
+        val created = create()
+
+        assertEquals(created, getTask.get(created.id, owner))
     }
 
     @Test
-    fun `gets a task by id`() {
-        val created = createTask.create(CreateTask.CreateTaskRequest("A", ""))
-        assertEquals(created, getTask.get(created.id))
-    }
-
-    @Test
-    fun `getting a missing task fails`() {
-        assertFailsWith<NotFoundException> { getTask.get(TaskId("nope")) }
-    }
-
-    @Test
-    fun `updates title, description and status`() {
-        val created = createTask.create(CreateTask.CreateTaskRequest("A", "a"))
+    fun `owner updates their own task`() {
+        val created = create("A")
 
         val updated = updateTask.update(
             UpdateTask.UpdateTaskRequest(created.id, "B", "b", TaskStatus.IN_PROGRESS),
+            owner,
         )
 
         assertEquals("B", updated.title)
         assertEquals("b", updated.description)
         assertEquals(TaskStatus.IN_PROGRESS, updated.status)
         assertEquals(created.createdAt, updated.createdAt, "createdAt is preserved")
+        assertEquals(owner, updated.ownerId, "ownership is preserved")
+    }
+
+    @Test
+    fun `owner deletes their own task`() {
+        val created = create("A")
+
+        deleteTask.delete(created.id, owner)
+
+        assertEquals(emptyList(), listTasks.list(owner))
+    }
+
+    @Test
+    fun `a foreign admin cannot read another admin's task`() {
+        val created = create("A")
+
+        assertFailsWith<NotFoundException> { getTask.get(created.id, intruder) }
+    }
+
+    @Test
+    fun `a foreign admin cannot update another admin's task`() {
+        val created = create("A")
+
+        assertFailsWith<NotFoundException> {
+            updateTask.update(
+                UpdateTask.UpdateTaskRequest(created.id, "hijacked", "", TaskStatus.DONE),
+                intruder,
+            )
+        }
+        assertEquals("A", getTask.get(created.id, owner).title, "the task is unchanged")
+    }
+
+    @Test
+    fun `a foreign admin cannot delete another admin's task`() {
+        val created = create("A")
+
+        assertFailsWith<NotFoundException> { deleteTask.delete(created.id, intruder) }
+        assertNotNull(repository.findById(created.id), "the task still exists")
+    }
+
+    @Test
+    fun `listing returns only the caller's own tasks`() {
+        val mine = create("mine")
+        val alsoMine = create("also mine")
+        val theirs = create("theirs", asAdmin = intruder)
+
+        val ownerIds = listTasks.list(owner).map(Task::id).toSet()
+        val intruderIds = listTasks.list(intruder).map(Task::id).toSet()
+
+        assertEquals(setOf(mine.id, alsoMine.id), ownerIds)
+        assertEquals(setOf(theirs.id), intruderIds)
+    }
+
+    @Test
+    fun `getting a missing task fails`() {
+        assertFailsWith<NotFoundException> { getTask.get(TaskId("nope"), owner) }
     }
 
     @Test
     fun `updating a missing task fails`() {
         assertFailsWith<NotFoundException> {
-            updateTask.update(UpdateTask.UpdateTaskRequest(TaskId("nope"), "B", "", TaskStatus.DONE))
+            updateTask.update(UpdateTask.UpdateTaskRequest(TaskId("nope"), "B", "", TaskStatus.DONE), owner)
         }
     }
 
     @Test
-    fun `deletes a task`() {
-        val created = createTask.create(CreateTask.CreateTaskRequest("A", ""))
-        deleteTask.delete(created.id)
-        assertEquals(emptyList(), listTasks.list())
-    }
-
-    @Test
     fun `deleting a missing task fails`() {
-        assertFailsWith<NotFoundException> { deleteTask.delete(TaskId("nope")) }
-    }
-
-    @Test
-    fun `smoke - repository returns saved task`() {
-        val created = createTask.create(CreateTask.CreateTaskRequest("A", ""))
-        assertNotNull(repository.findById(created.id))
+        assertFailsWith<NotFoundException> { deleteTask.delete(TaskId("nope"), owner) }
     }
 }

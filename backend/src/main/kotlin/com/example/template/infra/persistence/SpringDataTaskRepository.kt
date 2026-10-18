@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository
  * port is [com.example.template.domain.TaskRepository], implemented by
  * [JpaTaskRepository].
  */
-interface SpringDataTaskRepository : JpaRepository<TaskEntity, String>
+interface SpringDataTaskRepository : JpaRepository<TaskEntity, String> {
+    fun findAllByOwnerId(ownerId: String): List<TaskEntity>
+}

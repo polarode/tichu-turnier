@@ -1,6 +1,14 @@
-import { adminCredentialsToDto, adminDtoToDomain } from '@/auth-api/mappers/auth.mapper.ts';
+import {
+    adminCredentialsToDto,
+    adminDtoToDomain,
+    adminRegistrationToDto,
+} from '@/auth-api/mappers/auth.mapper.ts';
 import { adminDtoSchema } from '@/auth-api/dtos/auth.dto.ts';
-import type { AdminCredentials, AdminUser } from '@/domain/admin-user.domain.ts';
+import type {
+    AdminCredentials,
+    AdminRegistration,
+    AdminUser,
+} from '@/domain/admin-user.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
 /**
@@ -8,10 +16,10 @@ import { apiClient } from '@/shared/api/api-client.ts';
  * response with zod and maps it to a domain `AdminUser`; the session itself lives in an
  * httpOnly cookie the browser attaches automatically.
  */
-async function register(credentials: AdminCredentials): Promise<AdminUser> {
+async function register(registration: AdminRegistration): Promise<AdminUser> {
     const { data } = await apiClient.post<unknown>(
         '/api/auth/register',
-        adminCredentialsToDto(credentials),
+        adminRegistrationToDto(registration),
     );
     return adminDtoToDomain(adminDtoSchema.parse(data));
 }

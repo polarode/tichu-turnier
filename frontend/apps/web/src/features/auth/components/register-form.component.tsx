@@ -9,8 +9,17 @@ import { FormField } from '@/shared/components/form-field.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
-/** Account creation: validates locally, then registers and signs in, landing in the admin area. */
-export function RegisterForm() {
+interface RegisterFormProps {
+    /** Raw token from an invite link (`/register?invite=…`); activates the account on success. */
+    inviteToken?: string;
+}
+
+/**
+ * Account creation. A plain registration creates a pending account and lands on the
+ * awaiting-approval state; an invited registration is activated immediately and signs
+ * the organizer straight in.
+ */
+export function RegisterForm({ inviteToken }: RegisterFormProps) {
     const { t } = useI18n();
     const navigate = useNavigate();
     const register = useRegisterAdmin();
@@ -18,12 +27,16 @@ export function RegisterForm() {
 
     const onSubmit = form.handleSubmit(async (values) => {
         try {
-            await register.mutateAsync(values);
-            await navigate({ to: '/admin' });
+            const admin = await register.mutateAsync({ ...values, inviteToken });
+            await navigate({ to: admin ? '/admin' : '/pending-approval' });
         } catch (error) {
-            // The backend does not field-anchor EMAIL_ALREADY_REGISTERED; attach it to email.
+            // The backend field-anchors neither of these; attach the address-related
+            // ones to the email input and leave the rest as a form-level message.
             applyServerError(form.setError, error, t, {
-                codes: { EMAIL_ALREADY_REGISTERED: 'email' },
+                codes: {
+                    EMAIL_ALREADY_REGISTERED: 'email',
+                    INVITE_EMAIL_MISMATCH: 'email',
+                },
             });
         }
     });
@@ -32,6 +45,12 @@ export function RegisterForm() {
 
     return (
         <form onSubmit={onSubmit} noValidate className="flex max-w-sm flex-col gap-4">
+            {inviteToken ? (
+                <p className="rounded-md bg-accent px-3 py-2 text-sm text-accent-foreground">
+                    {t('register.inviteNotice')}
+                </p>
+            ) : null}
+
             {rootError ? (
                 <p
                     role="alert"

@@ -1,5 +1,9 @@
-import type { AdminCredentials, AdminUser } from '@/domain/admin-user.domain.ts';
-import type { AdminDto, CredentialsRequestDto } from '@/auth-api/dtos/auth.dto.ts';
+import type { AdminCredentials, AdminRegistration, AdminUser } from '@/domain/admin-user.domain.ts';
+import type {
+    AdminDto,
+    CredentialsRequestDto,
+    RegistrationRequestDto,
+} from '@/auth-api/dtos/auth.dto.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
 export function adminDtoToDomain(dto: AdminDto): AdminUser {
@@ -14,5 +18,17 @@ export function adminCredentialsToDto(credentials: AdminCredentials): Credential
     return {
         email: credentials.email,
         password: credentials.password,
+    };
+}
+
+/**
+ * Domain registration → wire payload. The invite token is omitted entirely when absent
+ * so a plain registration never carries an `inviteToken` field.
+ */
+export function adminRegistrationToDto(registration: AdminRegistration): RegistrationRequestDto {
+    return {
+        email: registration.email,
+        password: registration.password,
+        ...(registration.inviteToken ? { inviteToken: registration.inviteToken } : {}),
     };
 }

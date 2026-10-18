@@ -28,6 +28,8 @@ export const de: Catalog = {
     'error.invalidInput': 'Bitte die Eingaben prüfen.',
     'error.emailAlreadyRegistered': 'Es existiert bereits ein Konto mit dieser E-Mail-Adresse.',
     'error.invalidCredentials': 'E-Mail oder Passwort ist falsch.',
+    'error.accountPending': 'Dieses Konto wartet noch auf Freigabe.',
+    'error.accountDisabled': 'Dieses Konto wurde deaktiviert.',
     'error.unauthenticated': 'Bitte anmelden, um fortzufahren.',
     'error.forbidden': 'Du hast keine Berechtigung für diese Aktion.',
     'error.tournamentNotEditable': 'Dieses Turnier kann nicht mehr bearbeitet werden.',
@@ -36,6 +38,12 @@ export const de: Catalog = {
     'error.duplicateTeamPlayers': 'Die beiden Spieler müssen unterschiedlich sein.',
     'error.teamLimitReached': 'Dieses Turnier hat bereits die maximale Teamanzahl erreicht.',
     'error.maxTeamsBelowTeamCount': 'Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.',
+    'error.adminStatusConflict': 'Das Konto ist nicht in einem Zustand, der diese Aktion erlaubt.',
+    'error.inviteInvalid': 'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
+    'error.inviteExpired': 'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
+    'error.inviteEmailMismatch':
+        'Diese Einladung wurde für eine andere E-Mail-Adresse ausgestellt.',
+    'error.inviteStatusConflict': 'Diese Einladung kann nicht mehr geändert werden.',
 
     'auth.email': 'E-Mail',
     'auth.password': 'Passwort',
@@ -52,10 +60,17 @@ export const de: Catalog = {
 
     'register.title': 'Konto erstellen',
     'register.description': 'Organisatorenkonto erstellen, um Turniere zu verwalten.',
+    'register.inviteNotice':
+        'Du wurdest eingeladen. Schließe die Registrierung ab, um dein Konto sofort zu aktivieren.',
     'register.submit': 'Konto erstellen',
     'register.pending': 'Konto wird erstellt…',
     'register.haveAccount': 'Bereits ein Konto?',
     'register.loginLink': 'Anmelden',
+
+    'pendingApproval.title': 'Warte auf Freigabe',
+    'pendingApproval.description':
+        'Dein Konto wurde erstellt. Ein Owner prüft es in Kürze; sobald es freigegeben ist, kannst du dich anmelden.',
+    'pendingApproval.loginLink': 'Zurück zur Anmeldung',
 
     'admin.title': 'Verwaltungsbereich',
     'admin.description': 'Turniere, Teams und Runden anlegen und verwalten.',

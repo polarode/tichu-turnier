@@ -15,3 +15,12 @@ export interface AdminCredentials {
     email: string;
     password: string;
 }
+
+/**
+ * A registration request. Without an invite the backend creates a `PENDING` account
+ * that an owner must approve; with a valid [inviteToken] the account is activated
+ * immediately and the invite is consumed.
+ */
+export interface AdminRegistration extends AdminCredentials {
+    inviteToken?: string;
+}

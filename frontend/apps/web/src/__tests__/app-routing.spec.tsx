@@ -33,6 +33,7 @@ describe('app routing', () => {
         ['/team', 'Teambereich'],
         ['/public', 'Öffentlicher Bereich'],
         ['/login', 'Anmelden'],
+        ['/pending-approval', 'Warte auf Freigabe'],
     ])('renders %s with its German heading', async (path, heading) => {
         renderApp(path);
 

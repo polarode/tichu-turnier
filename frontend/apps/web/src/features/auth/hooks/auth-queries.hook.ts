@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
-import type { AdminCredentials, AdminUser } from '@/domain/admin-user.domain.ts';
+import type {
+    AdminCredentials,
+    AdminRegistration,
+    AdminUser,
+} from '@/domain/admin-user.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { sessionQueryKey } from '@/shared/constants/query-keys.ts';
 
@@ -37,18 +41,26 @@ export function useSession() {
 }
 
 /**
- * Registers an account and signs it straight in. The register endpoint deliberately
- * returns no session (Phase 2), so the UI composes register + login; when invite-gated
- * onboarding (Phase 4) makes registration asynchronous this becomes a pending state.
+ * Registers an account. Registration is no longer a sign-in: without an invite the
+ * backend creates a `PENDING` account and returns no session, so the hook resolves to
+ * `null` and the caller sends the user to the awaiting-approval state. With a valid
+ * invite the account is `ACTIVE`; the register endpoint still returns no session, so
+ * the UI composes register + login with the same credentials and resolves to the admin.
  */
 export function useRegisterAdmin() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (credentials: AdminCredentials) => {
-            await AuthRepository.register(credentials);
-            return AuthRepository.login(credentials);
+        mutationFn: async (registration: AdminRegistration): Promise<AdminUser | null> => {
+            await AuthRepository.register(registration);
+            if (!registration.inviteToken) return null;
+            return AuthRepository.login({
+                email: registration.email,
+                password: registration.password,
+            });
         },
-        onSuccess: (admin) => queryClient.setQueryData(sessionQueryKey(), admin),
+        onSuccess: (admin) => {
+            if (admin) queryClient.setQueryData(sessionQueryKey(), admin);
+        },
     });
 }
 

@@ -115,17 +115,124 @@ describe('admin auth flows', () => {
         expect(screen.getByLabelText('E-Mail')).toHaveAttribute('aria-invalid', 'true');
     });
 
-    it('registers, signs in and lands in the admin area', async () => {
+    it('registers a pending account and lands on the awaiting-approval state', async () => {
         auth.register.mockResolvedValue(admin);
-        auth.login.mockResolvedValue(admin);
         renderApp('/register');
 
         await userEvent.type(await screen.findByLabelText('E-Mail'), 'organizer@example.com');
         await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
         await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
 
+        expect(
+            await screen.findByRole('heading', { name: 'Warte auf Freigabe' }),
+        ).toBeInTheDocument();
+        // A pending account gets no session, so registration must not attempt a login.
+        expect(auth.login).not.toHaveBeenCalled();
+    });
+
+    it('activates an invited registration and signs the organizer straight in', async () => {
+        auth.register.mockResolvedValue(admin);
+        auth.login.mockResolvedValue(admin);
+        renderApp('/register?invite=invite-token');
+
+        expect(
+            await screen.findByText(
+                'Du wurdest eingeladen. Schließe die Registrierung ab, um dein Konto sofort zu aktivieren.',
+            ),
+        ).toBeInTheDocument();
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'invitee@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
+
         expect(await screen.findByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
+        expect(auth.register).toHaveBeenCalledWith(
+            expect.objectContaining({ inviteToken: 'invite-token' }),
+        );
         expect(auth.login).toHaveBeenCalled();
+    });
+
+    it('anchors an invite email mismatch to the email field', async () => {
+        auth.register.mockRejectedValue(
+            new ApiError({
+                code: 'INVITE_EMAIL_MISMATCH',
+                status: 400,
+                field: null,
+                message: 'wrong address',
+            }),
+        );
+        renderApp('/register?invite=invite-token');
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'someone-else@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
+
+        expect(
+            await screen.findByText(
+                'Diese Einladung wurde für eine andere E-Mail-Adresse ausgestellt.',
+            ),
+        ).toBeInTheDocument();
+        expect(screen.getByLabelText('E-Mail')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('shows a localized error when an invite link has expired', async () => {
+        auth.register.mockRejectedValue(
+            new ApiError({
+                code: 'INVITE_EXPIRED',
+                status: 409,
+                field: null,
+                message: 'expired',
+            }),
+        );
+        renderApp('/register?invite=stale-token');
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'invitee@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
+
+        expect(
+            await screen.findByText(
+                'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
+            ),
+        ).toBeInTheDocument();
+    });
+
+    it('shows a distinct message when a pending account tries to log in', async () => {
+        auth.login.mockRejectedValue(
+            new ApiError({
+                code: 'ACCOUNT_PENDING',
+                status: 403,
+                field: null,
+                message: 'pending',
+            }),
+        );
+        renderApp('/login');
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'organizer@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
+
+        expect(
+            await screen.findByText('Dieses Konto wartet noch auf Freigabe.'),
+        ).toBeInTheDocument();
+    });
+
+    it('shows a distinct message when a disabled account tries to log in', async () => {
+        auth.login.mockRejectedValue(
+            new ApiError({
+                code: 'ACCOUNT_DISABLED',
+                status: 403,
+                field: null,
+                message: 'disabled',
+            }),
+        );
+        renderApp('/login');
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'organizer@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
+
+        expect(await screen.findByText('Dieses Konto wurde deaktiviert.')).toBeInTheDocument();
     });
 
     it('logs out from the admin area and returns to login', async () => {

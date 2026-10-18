@@ -33,6 +33,50 @@ describe('AuthRepository', () => {
         });
     });
 
+    it('includes the invite token when registering from an invite link', async () => {
+        mock.onPost('/api/auth/register').reply(201, adminDto);
+
+        await AuthRepository.register({
+            email: 'invitee@example.com',
+            password: 's3cret-pw',
+            inviteToken: 'raw-invite-token',
+        });
+
+        expect(JSON.parse(mock.history.post[0]!.data)).toEqual({
+            email: 'invitee@example.com',
+            password: 's3cret-pw',
+            inviteToken: 'raw-invite-token',
+        });
+    });
+
+    it('never sends an invite field for plain registration', async () => {
+        mock.onPost('/api/auth/register').reply(201, adminDto);
+
+        await AuthRepository.register({
+            email: 'organizer@example.com',
+            password: 's3cret-pw',
+        });
+
+        expect(JSON.parse(mock.history.post[0]!.data)).not.toHaveProperty('inviteToken');
+    });
+
+    it('surfaces an invite error code as a typed ApiError', async () => {
+        mock.onPost('/api/auth/register').reply(409, {
+            status: 409,
+            code: 'INVITE_EXPIRED',
+            detail: 'this invite has expired',
+        });
+
+        const error = await AuthRepository.register({
+            email: 'invitee@example.com',
+            password: 's3cret-pw',
+            inviteToken: 'stale',
+        }).catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ApiError);
+        expect((error as ApiError).code).toBe('INVITE_EXPIRED');
+    });
+
     it('logs in and maps the response to the domain', async () => {
         mock.onPost('/api/auth/login').reply(200, adminDto);
 

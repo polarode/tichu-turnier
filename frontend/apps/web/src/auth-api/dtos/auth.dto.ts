@@ -20,3 +20,11 @@ export interface CredentialsRequestDto {
     email: string;
     password: string;
 }
+
+/**
+ * Registration extends the credentials shape with the optional raw invite token from
+ * an invite link. The token is only ever sent to the backend; nothing persists it.
+ */
+export interface RegistrationRequestDto extends CredentialsRequestDto {
+    inviteToken?: string;
+}

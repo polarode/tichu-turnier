@@ -31,6 +31,8 @@ export const en = {
     'error.invalidInput': 'Please check your input.',
     'error.emailAlreadyRegistered': 'An account with this email already exists.',
     'error.invalidCredentials': 'Email or password is incorrect.',
+    'error.accountPending': 'This account is still awaiting approval.',
+    'error.accountDisabled': 'This account has been disabled.',
     'error.unauthenticated': 'Please sign in to continue.',
     'error.forbidden': 'You do not have permission to do that.',
     'error.tournamentNotEditable': 'This tournament can no longer be edited.',
@@ -39,6 +41,11 @@ export const en = {
     'error.duplicateTeamPlayers': 'The two players must be different.',
     'error.teamLimitReached': 'This tournament already has the maximum number of teams.',
     'error.maxTeamsBelowTeamCount': 'The maximum cannot be lower than the current number of teams.',
+    'error.adminStatusConflict': 'The account is not in a state that allows this action.',
+    'error.inviteInvalid': 'This invite link is not valid. Please request a new one.',
+    'error.inviteExpired': 'This invite link has expired. Please request a new one.',
+    'error.inviteEmailMismatch': 'This invite was issued for a different email address.',
+    'error.inviteStatusConflict': 'This invite can no longer be changed.',
 
     'auth.email': 'Email',
     'auth.password': 'Password',
@@ -55,10 +62,17 @@ export const en = {
 
     'register.title': 'Create account',
     'register.description': 'Create an organizer account to run tournaments.',
+    'register.inviteNotice':
+        'You have been invited. Complete registration to activate your account immediately.',
     'register.submit': 'Create account',
     'register.pending': 'Creating account…',
     'register.haveAccount': 'Already have an account?',
     'register.loginLink': 'Sign in',
+
+    'pendingApproval.title': 'Awaiting approval',
+    'pendingApproval.description':
+        'Your account has been created. An owner will review it shortly; you can sign in once it is approved.',
+    'pendingApproval.loginLink': 'Back to sign in',
 
     'admin.title': 'Admin area',
     'admin.description': 'Create and manage tournaments, teams and rounds.',

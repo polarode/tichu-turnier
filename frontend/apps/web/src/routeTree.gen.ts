@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PublicRouteImport } from './routes/public'
+import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PublicRoute = PublicRouteImport.update({
   id: '/public',
   path: '/public',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendingApprovalRoute = PendingApprovalRouteImport.update({
+  id: '/pending-approval',
+  path: '/pending-approval',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/pending-approval': typeof PendingApprovalRoute
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/pending-approval': typeof PendingApprovalRoute
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/pending-approval': typeof PendingApprovalRoute
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/pending-approval'
     | '/public'
     | '/register'
     | '/team'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/pending-approval'
     | '/public'
     | '/register'
     | '/team'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/pending-approval'
     | '/public'
     | '/register'
     | '/team'
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PendingApprovalRoute: typeof PendingApprovalRoute
   PublicRoute: typeof PublicRoute
   RegisterRoute: typeof RegisterRoute
   TeamRoute: typeof TeamRoute
@@ -164,6 +177,13 @@ declare module '@tanstack/react-router' {
       path: '/public'
       fullPath: '/public'
       preLoaderRoute: typeof PublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pending-approval': {
+      id: '/pending-approval'
+      path: '/pending-approval'
+      fullPath: '/pending-approval'
+      preLoaderRoute: typeof PendingApprovalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -229,6 +249,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
+  PendingApprovalRoute: PendingApprovalRoute,
   PublicRoute: PublicRoute,
   RegisterRoute: RegisterRoute,
   TeamRoute: TeamRoute,

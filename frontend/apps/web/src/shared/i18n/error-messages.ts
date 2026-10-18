@@ -12,6 +12,8 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     INVALID_INPUT: 'error.invalidInput',
     EMAIL_ALREADY_REGISTERED: 'error.emailAlreadyRegistered',
     INVALID_CREDENTIALS: 'error.invalidCredentials',
+    ACCOUNT_PENDING: 'error.accountPending',
+    ACCOUNT_DISABLED: 'error.accountDisabled',
     UNAUTHENTICATED: 'error.unauthenticated',
     FORBIDDEN: 'error.forbidden',
     TOURNAMENT_NOT_EDITABLE: 'error.tournamentNotEditable',
@@ -20,6 +22,11 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     DUPLICATE_TEAM_PLAYERS: 'error.duplicateTeamPlayers',
     TEAM_LIMIT_REACHED: 'error.teamLimitReached',
     MAX_TEAMS_BELOW_TEAM_COUNT: 'error.maxTeamsBelowTeamCount',
+    ADMIN_STATUS_CONFLICT: 'error.adminStatusConflict',
+    INVITE_INVALID: 'error.inviteInvalid',
+    INVITE_EXPIRED: 'error.inviteExpired',
+    INVITE_EMAIL_MISMATCH: 'error.inviteEmailMismatch',
+    INVITE_STATUS_CONFLICT: 'error.inviteStatusConflict',
 };
 
 /** The catalog key for a backend error code; never returns a missing key. */

@@ -11,10 +11,13 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -30,6 +33,7 @@ import org.springframework.web.context.WebApplicationContext
 class TournamentControllerIntegrationTest(
     @Autowired private val context: WebApplicationContext,
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val jdbcTemplate: JdbcTemplate,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -152,6 +156,166 @@ class TournamentControllerIntegrationTest(
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
+
+    @Test
+    fun `update replaces the tournament fields and persists them`() {
+        val id = createTournament("Original", "old", allowGrandTichu = true)
+
+        mockMvc.perform(
+            put("/api/tournaments/$id")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        mapOf(
+                            "name" to "Renamed",
+                            "description" to "new description",
+                            "maxTeams" to 8,
+                            "settings" to mapOf("allowGrandTichu" to false),
+                        ),
+                    ),
+                ),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(id))
+            .andExpect(jsonPath("$.name").value("Renamed"))
+            .andExpect(jsonPath("$.description").value("new description"))
+            .andExpect(jsonPath("$.maxTeams").value(8))
+            .andExpect(jsonPath("$.settings.allowGrandTichu").value(false))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.name").value("Renamed"))
+            .andExpect(jsonPath("$.settings.allowGrandTichu").value(false))
+    }
+
+    @Test
+    fun `update rejects invalid fields with a field-anchored 400`() {
+        val id = createTournament("Original")
+
+        mockMvc.perform(
+            put("/api/tournaments/$id")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"  ","maxTeams":16}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+            .andExpect(jsonPath("$.field").value("name"))
+
+        mockMvc.perform(
+            put("/api/tournaments/$id")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Classic","maxTeams":0}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.field").value("maxTeams"))
+    }
+
+    @Test
+    fun `update is rejected once the tournament has started`() {
+        val id = createTournament("Started")
+        setStatus(id, "ACTIVE")
+
+        mockMvc.perform(
+            put("/api/tournaments/$id")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validUpdateBody("too late")),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("TOURNAMENT_NOT_EDITABLE"))
+    }
+
+    @Test
+    fun `a foreign admin cannot update another admin's tournament`() {
+        val id = createTournament("Alice's tournament")
+
+        mockMvc.perform(
+            put("/api/tournaments/$id")
+                .cookie(otherAdminCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validUpdateBody("hijacked")),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.name").value("Alice's tournament"))
+    }
+
+    @Test
+    fun `update of an unknown tournament returns 404`() {
+        mockMvc.perform(
+            put("/api/tournaments/does-not-exist")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validUpdateBody("nowhere")),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
+
+    @Test
+    fun `delete removes the caller's tournament`() {
+        val id = createTournament("Doomed")
+
+        mockMvc.perform(delete("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isNoContent)
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `a foreign admin cannot delete another admin's tournament`() {
+        val id = createTournament("Alice's tournament")
+
+        mockMvc.perform(delete("/api/tournaments/$id").cookie(otherAdminCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `delete of an unknown tournament returns 404`() {
+        mockMvc.perform(delete("/api/tournaments/does-not-exist").cookie(sessionCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
+
+    @Test
+    fun `unauthenticated update and delete get 401`() {
+        mockMvc.perform(
+            put("/api/tournaments/any")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validUpdateBody("any")),
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+
+        mockMvc.perform(delete("/api/tournaments/any"))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
+    private fun setStatus(id: String, status: String) {
+        jdbcTemplate.update("UPDATE tournaments SET status = ? WHERE id = ?", status, id)
+    }
+
+    private fun validUpdateBody(name: String): String = objectMapper.writeValueAsString(
+        mapOf(
+            "name" to name,
+            "description" to "",
+            "maxTeams" to 16,
+            "settings" to mapOf("allowGrandTichu" to true),
+        ),
+    )
 
     private fun createTournament(
         name: String,

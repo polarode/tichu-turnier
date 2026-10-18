@@ -12,6 +12,9 @@ enum class ErrorCode {
     INVALID_CREDENTIALS,
     UNAUTHENTICATED,
     FORBIDDEN,
+
+    /** The requested mutation conflicts with the resource's current lifecycle state. */
+    TOURNAMENT_NOT_EDITABLE,
 }
 
 /**
@@ -54,3 +57,12 @@ class InvalidCredentialsException(message: String) :
 /** Thrown when a session is missing, invalid or expired. Mapped to HTTP 401. */
 class UnauthenticatedException(message: String) :
     ApiException(ErrorCode.UNAUTHENTICATED, message)
+
+/**
+ * Thrown when a tournament edit is attempted in a lifecycle state that does not allow
+ * it. The tournament status machine is `setup → active → completed`; the configuration
+ * is frozen once the tournament has started, so the conflict is a state problem rather
+ * than invalid input. Mapped to HTTP 409.
+ */
+class TournamentNotEditableException(message: String) :
+    ApiException(ErrorCode.TOURNAMENT_NOT_EDITABLE, message)

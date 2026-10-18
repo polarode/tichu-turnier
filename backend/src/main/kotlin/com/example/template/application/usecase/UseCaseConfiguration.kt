@@ -2,8 +2,10 @@ package com.example.template.application.usecase
 
 import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
@@ -47,6 +49,14 @@ class UseCaseConfiguration(
     @Bean
     fun getTournament(repository: TournamentRepository): GetTournament =
         GetTournamentQuery(repository)
+
+    @Bean
+    fun updateTournament(repository: TournamentRepository, clock: Clock): UpdateTournament =
+        UpdateTournamentCommand(repository, clock)
+
+    @Bean
+    fun deleteTournament(repository: TournamentRepository): DeleteTournament =
+        DeleteTournamentCommand(repository)
 
     @Bean
     fun adminSessionIssuer(

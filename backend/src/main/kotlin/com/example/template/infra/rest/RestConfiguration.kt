@@ -1,8 +1,10 @@
 package com.example.template.infra.rest
 
 import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
@@ -32,7 +34,10 @@ class RestConfiguration(
         createTournament: CreateTournament,
         listTournaments: ListTournaments,
         getTournament: GetTournament,
-    ): TournamentController = TournamentController(createTournament, listTournaments, getTournament)
+        updateTournament: UpdateTournament,
+        deleteTournament: DeleteTournament,
+    ): TournamentController =
+        TournamentController(createTournament, listTournaments, getTournament, updateTournament, deleteTournament)
 
     @Bean
     fun sessionCookieFactory(): SessionCookieFactory =

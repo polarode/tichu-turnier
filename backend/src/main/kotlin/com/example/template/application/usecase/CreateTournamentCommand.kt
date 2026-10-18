@@ -1,13 +1,13 @@
 package com.example.template.application.usecase
 
 import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.TournamentWriteRequest
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.Tournament
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
 import com.example.template.domain.TournamentStatus
-import com.example.template.vocabulary.InvalidFieldException
 import java.time.Clock
 
 /**
@@ -20,17 +20,9 @@ class CreateTournamentCommand(
     private val clock: Clock,
 ) : CreateTournament {
 
-    override fun create(command: CreateTournament.CreateTournamentRequest, owner: AdminUserId): Tournament {
+    override fun create(command: TournamentWriteRequest, owner: AdminUserId): Tournament {
         val name = command.name.trim()
-        if (name.isBlank()) {
-            throw InvalidFieldException("name", "Tournament name must not be blank")
-        }
-        if (name.length > MAX_NAME_LENGTH) {
-            throw InvalidFieldException("name", "Tournament name must be at most $MAX_NAME_LENGTH characters")
-        }
-        if (command.maxTeams <= 0) {
-            throw InvalidFieldException("maxTeams", "Tournament max teams must be a positive number")
-        }
+        TournamentInputValidator.validate(name, command.maxTeams)
 
         val now = clock.instant()
         val tournament = Tournament(
@@ -46,9 +38,5 @@ class CreateTournamentCommand(
             updatedAt = now,
         )
         return repository.save(tournament)
-    }
-
-    private companion object {
-        const val MAX_NAME_LENGTH = 255
     }
 }

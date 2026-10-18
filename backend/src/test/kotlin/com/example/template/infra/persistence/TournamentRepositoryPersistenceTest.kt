@@ -111,6 +111,20 @@ class TournamentRepositoryPersistenceTest(
         assertFalse(mine.any { it.id.value == "t-3" })
     }
 
+    @Test
+    fun `delete removes the row from the database`() {
+        tournamentRepository.save(tournament(id = "t-1"))
+
+        tournamentRepository.delete(TournamentId("t-1"))
+
+        assertNull(tournamentRepository.findById(TournamentId("t-1")))
+        val rowCount = jdbcTemplate.queryForObject(
+            "SELECT count(*) FROM tournaments WHERE id = 't-1'",
+            Long::class.java,
+        )
+        assertEquals(0L, rowCount, "the delete is committed to Postgres")
+    }
+
     private fun tournament(
         id: String,
         name: String = "Spring Classic",

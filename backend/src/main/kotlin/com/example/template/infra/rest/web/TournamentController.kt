@@ -2,16 +2,21 @@ package com.example.template.infra.rest.web
 
 import com.example.template.application.api.AuthenticatedAdmin
 import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.TournamentWriteRequest
+import com.example.template.application.api.UpdateTournament
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentSettings
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -32,25 +37,18 @@ class TournamentController(
     private val createTournament: CreateTournament,
     private val listTournaments: ListTournaments,
     private val getTournament: GetTournament,
+    private val updateTournament: UpdateTournament,
+    private val deleteTournament: DeleteTournament,
 ) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        @Valid @RequestBody body: CreateTournamentRequestBody,
+        @Valid @RequestBody body: TournamentWriteRequestBody,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse {
-        val tournament = createTournament.create(
-            CreateTournament.CreateTournamentRequest(
-                name = body.name,
-                description = body.description,
-                maxTeams = body.maxTeams,
-                settings = TournamentSettings(allowGrandTichu = body.settings.allowGrandTichu),
-            ),
-            principal.adminUserId,
-        )
-        return TournamentResponse.from(tournament)
-    }
+    ): TournamentResponse = TournamentResponse.from(
+        createTournament.create(body.toWriteRequest(), principal.adminUserId),
+    )
 
     @GetMapping
     fun list(@AuthenticationPrincipal principal: AuthenticatedAdmin): List<TournamentResponse> =
@@ -63,4 +61,31 @@ class TournamentController(
     ): TournamentResponse = TournamentResponse.from(
         getTournament.get(TournamentId(id), principal.adminUserId),
     )
+
+    @PutMapping("/{id}")
+    fun update(
+        @PathVariable id: String,
+        @Valid @RequestBody body: TournamentWriteRequestBody,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentResponse = TournamentResponse.from(
+        updateTournament.update(TournamentId(id), body.toWriteRequest(), principal.adminUserId),
+    )
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ) {
+        deleteTournament.delete(TournamentId(id), principal.adminUserId)
+    }
+
+    /** One wire-body -> application-payload mapping, shared by create and update. */
+    private fun TournamentWriteRequestBody.toWriteRequest(): TournamentWriteRequest =
+        TournamentWriteRequest(
+            name = name,
+            description = description,
+            maxTeams = maxTeams,
+            settings = TournamentSettings(allowGrandTichu = settings.allowGrandTichu),
+        )
 }

@@ -22,4 +22,8 @@ class JpaTournamentRepository(
 
     override fun findAllByOwner(owner: AdminUserId): List<Tournament> =
         springDataTournamentRepository.findAllByOwnerId(owner.value).map { it.toDomain() }
+
+    override fun delete(id: TournamentId) {
+        springDataTournamentRepository.deleteById(id.value)
+    }
 }

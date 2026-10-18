@@ -7,6 +7,7 @@ import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
 import com.example.template.vocabulary.NotFoundException
+import com.example.template.vocabulary.TournamentNotEditableException
 import com.example.template.vocabulary.UnauthenticatedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -49,6 +50,11 @@ class WebControllerAdvice {
     @ExceptionHandler(UnauthenticatedException::class)
     fun handleUnauthenticated(ex: UnauthenticatedException): ProblemDetail =
         problem(HttpStatus.UNAUTHORIZED, ex)
+
+    /** The resource exists and is owned, but its state forbids the mutation: HTTP 409. */
+    @ExceptionHandler(TournamentNotEditableException::class)
+    fun handleTournamentNotEditable(ex: TournamentNotEditableException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {

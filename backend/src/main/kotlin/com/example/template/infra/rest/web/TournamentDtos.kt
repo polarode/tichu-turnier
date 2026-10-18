@@ -46,7 +46,12 @@ data class TournamentSettingsResponse(
     }
 }
 
-data class CreateTournamentRequestBody(
+/**
+ * The editable tournament representation, shared by `POST /api/tournaments` and
+ * `PUT /api/tournaments/{id}`: both send every editable field. The use case re-runs
+ * the same validation and the status gate.
+ */
+data class TournamentWriteRequestBody(
     @field:NotBlank val name: String,
     val description: String = "",
     @field:NotNull @field:Positive val maxTeams: Int,

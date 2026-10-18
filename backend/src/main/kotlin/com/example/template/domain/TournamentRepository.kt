@@ -12,4 +12,11 @@ interface TournamentRepository {
 
     /** Only the caller's tournaments — the ownership scope is pushed into the query. */
     fun findAllByOwner(owner: AdminUserId): List<Tournament>
+
+    /**
+     * Removes the tournament. Every tournament-scoped child table added later must
+     * reference `tournaments` with `ON DELETE CASCADE`, so deleting a tournament also
+     * removes its teams, players, rounds and games.
+     */
+    fun delete(id: TournamentId)
 }

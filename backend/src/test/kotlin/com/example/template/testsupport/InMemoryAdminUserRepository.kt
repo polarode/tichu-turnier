@@ -1,5 +1,6 @@
 package com.example.template.testsupport
 
+import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
@@ -19,6 +20,12 @@ class InMemoryAdminUserRepository : AdminUserRepository {
 
     override fun findById(id: AdminUserId): AdminUser? = users[id.value]
 
-    /** Test-only view of everything stored, for assertions the port does not expose. */
-    fun findAll(): List<AdminUser> = users.values.toList()
+    override fun findAll(): List<AdminUser> = users.values.toList()
+
+    override fun findAllByStatus(status: AdminStatus): List<AdminUser> =
+        users.values.filter { it.status == status }
+
+    override fun deleteById(id: AdminUserId) {
+        users.remove(id.value)
+    }
 }

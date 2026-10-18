@@ -53,7 +53,7 @@ class OwnerBootstrapIntegrationTest(
     fun `a bootstrap re-run keeps exactly one owner`() {
         bootstrapOwner.ensureOwner()
 
-        assertEquals(1, ownerCount())
+        assertEquals(1, configuredOwnerCount(), "a re-run must not create a second owner for the configured email")
     }
 
     @Test
@@ -69,8 +69,17 @@ class OwnerBootstrapIntegrationTest(
         assertEquals(AdminRole.ADMIN, adminUsers.findByEmail(email)!!.role)
     }
 
-    private fun ownerCount(): Int =
-        jdbcTemplate.queryForObject("SELECT count(*) FROM admin_users WHERE role = 'OWNER'", Int::class.java)!!
+    /**
+     * Scoped to the configured identity: the invariant the bootstrap owns is "one owner
+     * for this email", while other tests may legitimately seed owner rows for their own
+     * fixtures in the shared test database.
+     */
+    private fun configuredOwnerCount(): Int =
+        jdbcTemplate.queryForObject(
+            "SELECT count(*) FROM admin_users WHERE role = 'OWNER' AND email = ?",
+            Int::class.java,
+            OWNER_EMAIL,
+        )!!
 
     companion object {
         const val OWNER_EMAIL = "owner-bootstrap@example.com"

@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
@@ -19,4 +20,14 @@ class JpaAdminUserRepository(
 
     override fun findById(id: AdminUserId): AdminUser? =
         springData.findById(id.value).map { it.toDomain() }.orElse(null)
+
+    override fun findAll(): List<AdminUser> =
+        springData.findAll().map { it.toDomain() }
+
+    override fun findAllByStatus(status: AdminStatus): List<AdminUser> =
+        springData.findByStatus(status.name).map { it.toDomain() }
+
+    override fun deleteById(id: AdminUserId) {
+        springData.deleteById(id.value)
+    }
 }

@@ -30,7 +30,7 @@ class AuthenticateSessionQuery(
         // Status is re-read on every request, so disabling an admin kills the live
         // session on its very next call rather than only at the next login.
         if (!user.isActive()) throw unauthenticated()
-        return AuthenticatedAdmin(adminUserId = user.id, email = user.email)
+        return AuthenticatedAdmin(adminUserId = user.id, email = user.email, role = user.role)
     }
 
     private fun unauthenticated() = UnauthenticatedException("Session is invalid or has expired")

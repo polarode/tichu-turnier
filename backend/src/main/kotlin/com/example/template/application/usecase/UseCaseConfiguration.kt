@@ -1,15 +1,20 @@
 package com.example.template.application.usecase
 
+import com.example.template.application.api.ApproveAdmin
 import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.BootstrapOwner
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.DeleteTournament
+import com.example.template.application.api.DisableAdmin
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
+import com.example.template.application.api.ListAdmins
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.ReactivateAdmin
+import com.example.template.application.api.RejectAdmin
 import com.example.template.application.api.UpdateTeam
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
@@ -147,4 +152,20 @@ class UseCaseConfiguration(
         sessions: AdminSessionRepository,
         sessionTokens: SessionTokens,
     ): LogoutAdmin = LogoutAdminCommand(sessions, sessionTokens)
+
+    @Bean
+    fun listAdmins(adminUsers: AdminUserRepository): ListAdmins = ListAdminsQuery(adminUsers)
+
+    @Bean
+    fun approveAdmin(adminUsers: AdminUserRepository, clock: Clock): ApproveAdmin =
+        ApproveAdminCommand(adminUsers, clock)
+
+    @Bean
+    fun rejectAdmin(adminUsers: AdminUserRepository): RejectAdmin = RejectAdminCommand(adminUsers)
+
+    @Bean
+    fun disableAdmin(adminUsers: AdminUserRepository): DisableAdmin = DisableAdminCommand(adminUsers)
+
+    @Bean
+    fun reactivateAdmin(adminUsers: AdminUserRepository): ReactivateAdmin = ReactivateAdminCommand(adminUsers)
 }

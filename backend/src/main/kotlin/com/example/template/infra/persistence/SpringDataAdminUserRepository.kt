@@ -9,4 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository
  */
 interface SpringDataAdminUserRepository : JpaRepository<AdminUserEntity, String> {
     fun findByEmail(email: String): AdminUserEntity?
+
+    fun findByStatus(status: String): List<AdminUserEntity>
 }

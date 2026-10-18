@@ -24,6 +24,10 @@ class AdminUserEntity(
     val status: String,
     val role: String,
     val createdAt: Instant,
+    /** Null until a pending request is approved; then the approving owner's id. */
+    val approvedBy: String?,
+    /** Null until approval; recorded together with [approvedBy]. */
+    val approvedAt: Instant?,
 ) {
     fun toDomain(): AdminUser = AdminUser(
         id = AdminUserId(id),
@@ -32,6 +36,8 @@ class AdminUserEntity(
         status = AdminStatus.valueOf(status),
         role = AdminRole.valueOf(role),
         createdAt = createdAt,
+        approvedBy = approvedBy?.let(::AdminUserId),
+        approvedAt = approvedAt,
     )
 
     companion object {
@@ -42,6 +48,8 @@ class AdminUserEntity(
             status = user.status.name,
             role = user.role.name,
             createdAt = user.createdAt,
+            approvedBy = user.approvedBy?.value,
+            approvedAt = user.approvedAt,
         )
     }
 }

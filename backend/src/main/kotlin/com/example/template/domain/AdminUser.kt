@@ -17,6 +17,10 @@ data class AdminUser(
     val status: AdminStatus,
     val role: AdminRole,
     val createdAt: Instant,
+    /** The owner who approved this account, recorded when a PENDING request is approved. */
+    val approvedBy: AdminUserId? = null,
+    /** When approval happened, recorded together with [approvedBy]. */
+    val approvedAt: Instant? = null,
 ) {
     /** Only an [AdminStatus.ACTIVE] account may log in or authenticate a session. */
     fun isActive(): Boolean = status == AdminStatus.ACTIVE
@@ -62,4 +66,13 @@ interface AdminUserRepository {
     fun findByEmail(email: String): AdminUser?
 
     fun findById(id: AdminUserId): AdminUser?
+
+    /** Every account, newest or oldest order unspecified. Used by the owner console. */
+    fun findAll(): List<AdminUser>
+
+    /** Only the accounts currently in [status], for the owner console's status tabs. */
+    fun findAllByStatus(status: AdminStatus): List<AdminUser>
+
+    /** Removes a rejected registration request. No-op for an unknown id. */
+    fun deleteById(id: AdminUserId)
 }

@@ -61,8 +61,8 @@ curl -X POST localhost:8080/api/tournaments \
 | POST   | `/api/auth/logout`   | invalidate the session and clear the cookie        |
 
 Registration is a *request*: it creates a `PENDING` account that cannot log in or
-reach any `/api/**` route. Only once an owner approves it does it become `ACTIVE`
-(approval endpoints are Phase 4 follow-up work). Login verifies the password first,
+reach any `/api/**` route. Only once an owner approves it (see *Admin management*
+below) does it become `ACTIVE`. Login verifies the password first,
 then the account status: correct credentials on a pending or disabled account answer
 `403 ACCOUNT_PENDING` / `403 ACCOUNT_DISABLED`, while wrong credentials stay the
 generic `401 INVALID_CREDENTIALS`, so account existence is never disclosed. Status is
@@ -79,7 +79,7 @@ JSON carrying a stable `code` (`ACCOUNT_PENDING`, `ACCOUNT_DISABLED`,
 `EMAIL_ALREADY_REGISTERED`, `INVALID_CREDENTIALS`, `UNAUTHENTICATED`, `FORBIDDEN`,
 `INVALID_INPUT`, `NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`, `DUPLICATE_TEAM_NAME`,
 `DUPLICATE_PLAYER_NAME`, `DUPLICATE_TEAM_PLAYERS`, `TEAM_LIMIT_REACHED`,
-`MAX_TEAMS_BELOW_TEAM_COUNT`). Cookie
+`MAX_TEAMS_BELOW_TEAM_COUNT`, `ADMIN_STATUS_CONFLICT`). Cookie
 lifetime and the `Secure`
 flag are configured under `app.auth` in `application.yml`.
 
@@ -97,6 +97,32 @@ curl -c cookies.txt -X POST localhost:8080/api/auth/login \
 curl -b cookies.txt -c cookies.txt -X POST localhost:8080/api/auth/refresh
 ```
 
+### Admin management (owner-only)
+
+| Method | Path                            | Description                                          |
+|--------|---------------------------------|------------------------------------------------------|
+| GET    | `/api/admins`                   | list accounts, optionally `?status=PENDING\|ACTIVE\|DISABLED` |
+| POST   | `/api/admins/{id}/approve`      | activate a pending request, recording approver + time |
+| POST   | `/api/admins/{id}/reject`       | delete a pending request                             |
+| POST   | `/api/admins/{id}/disable`      | disable an active admin (kills its live session)     |
+| POST   | `/api/admins/{id}/reactivate`   | restore a disabled admin to active                   |
+
+Every endpoint is owner-only. The role is enforced in the use-case layer from the
+session principal: a signed-in non-owner answers `403 FORBIDDEN`, while an anonymous
+caller answers `401 UNAUTHENTICATED` — the two stay distinct. Mutations that do not
+match the target's current status answer `409 ADMIN_STATUS_CONFLICT`; an unknown
+target answers `404 NOT_FOUND`; the platform owner account itself cannot be disabled.
+Responses are built from a read model with no password-hash field, so no listing can
+ever return credential material.
+
+```bash
+# list the pending registration requests
+curl -b cookies.txt 'localhost:8080/api/admins?status=PENDING'
+
+# approve one
+curl -b cookies.txt -X POST localhost:8080/api/admins/<id>/approve
+```
+
 ## Layers
 
 - `domain` — `Tournament`, `TournamentStatus`, `TournamentId`,
@@ -106,7 +132,8 @@ curl -b cookies.txt -c cookies.txt -X POST localhost:8080/api/auth/refresh
 - `application/api` — inbound ports: `CreateTournament`, `ListTournaments`,
   `GetTournament`, `UpdateTournament`, `DeleteTournament`, `CreateTeam`, `ListTeams`,
   `GetTeam`, `UpdateTeam`, `DeleteTeam`, `RegisterAdmin`, `LoginAdmin`,
-  `RefreshSession`, `LogoutAdmin`, `AuthenticateSession`, `BootstrapOwner`.
+  `RefreshSession`, `LogoutAdmin`, `AuthenticateSession`, `BootstrapOwner`,
+  `ListAdmins`, `ApproveAdmin`, `RejectAdmin`, `DisableAdmin`, `ReactivateAdmin`.
 - `application/usecase` — implementations + `UseCaseConfiguration`.
 - `infra/persistence` — `JpaTournamentRepository`/`JpaTeamRepository`
   (+ their entities and the Spring Data repositories they wrap), `UuidIdGenerator` +
@@ -114,8 +141,9 @@ curl -b cookies.txt -c cookies.txt -X POST localhost:8080/api/auth/refresh
   `InMemoryTeamRepository` remain as fast fakes for use-case unit tests.
 - `infra/security` — `BcryptPasswordHasher`, `SecureSessionTokens` +
   `SecurityConfiguration` (the crypto ports).
-- `infra/rest` — `TournamentController`, `TeamController`, `AuthController`, DTOs,
-  the session-cookie factory, error advice + `RestConfiguration`.
+- `infra/rest` — `TournamentController`, `TeamController`, `AuthController`,
+  `AdminController`, DTOs, the session-cookie factory, error advice +
+  `RestConfiguration`.
 - `main` — `Application` composition root + `BootstrapConfiguration` (the owner
   provisioning runner).
 

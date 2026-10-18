@@ -1,5 +1,6 @@
 package com.example.template.infra.rest.web
 
+import com.example.template.vocabulary.AdminStatusConflictException
 import com.example.template.vocabulary.ApiException
 import com.example.template.vocabulary.AccountDisabledException
 import com.example.template.vocabulary.AccountPendingException
@@ -8,6 +9,7 @@ import com.example.template.vocabulary.DuplicateTeamNameException
 import com.example.template.vocabulary.DuplicateTeamPlayersException
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import com.example.template.vocabulary.ErrorCode
+import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
@@ -70,6 +72,20 @@ class WebControllerAdvice {
     @ExceptionHandler(UnauthenticatedException::class)
     fun handleUnauthenticated(ex: UnauthenticatedException): ProblemDetail =
         problem(HttpStatus.UNAUTHORIZED, ex)
+
+    /**
+     * Authenticated but not authorized: a signed-in non-owner hitting an owner-only
+     * use case. 403, kept distinct from the 401 the security chain returns when no
+     * valid session is present at all.
+     */
+    @ExceptionHandler(ForbiddenException::class)
+    fun handleForbidden(ex: ForbiddenException): ProblemDetail =
+        problem(HttpStatus.FORBIDDEN, ex)
+
+    /** An admin-management mutation that contradicts the target's current status: 409. */
+    @ExceptionHandler(AdminStatusConflictException::class)
+    fun handleAdminStatusConflict(ex: AdminStatusConflictException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
 
     /** The resource exists and is owned, but its state forbids the mutation: HTTP 409. */
     @ExceptionHandler(TournamentNotEditableException::class)

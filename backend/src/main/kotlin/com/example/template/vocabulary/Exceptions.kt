@@ -36,6 +36,12 @@ enum class ErrorCode {
 
     /** A tournament edit would drop `max_teams` below the number of teams already registered. */
     MAX_TEAMS_BELOW_TEAM_COUNT,
+
+    /**
+     * An admin-management mutation conflicts with the target account's current lifecycle
+     * state (approving a non-pending request, reactivating a non-disabled account, ...).
+     */
+    ADMIN_STATUS_CONFLICT,
 }
 
 /**
@@ -95,6 +101,22 @@ class AccountDisabledException(message: String) :
 /** Thrown when a session is missing, invalid or expired. Mapped to HTTP 401. */
 class UnauthenticatedException(message: String) :
     ApiException(ErrorCode.UNAUTHENTICATED, message)
+
+/**
+ * Thrown when an authenticated admin lacks the role an operation requires. Kept distinct
+ * from [UnauthenticatedException] so a signed-in non-owner answers 403 `FORBIDDEN` while
+ * an anonymous caller still gets 401 `UNAUTHENTICATED`. Mapped to HTTP 403.
+ */
+class ForbiddenException(message: String) :
+    ApiException(ErrorCode.FORBIDDEN, message)
+
+/**
+ * Thrown when an admin-management mutation does not match the target account's current
+ * status, e.g. approving an already-active account or disabling one that is not active.
+ * Mapped to HTTP 409.
+ */
+class AdminStatusConflictException(message: String) :
+    ApiException(ErrorCode.ADMIN_STATUS_CONFLICT, message)
 
 /**
  * Thrown when a tournament edit is attempted in a lifecycle state that does not allow

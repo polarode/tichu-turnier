@@ -1,5 +1,6 @@
 package com.example.template.application.api
 
+import com.example.template.domain.AdminRole
 import com.example.template.domain.AdminUserId
 
 /**
@@ -16,4 +17,10 @@ interface AuthenticateSession {
 data class AuthenticatedAdmin(
     val adminUserId: AdminUserId,
     val email: String,
+    /**
+     * The account's role, re-read from the database on every request alongside its
+     * status. Use cases enforce owner-only operations from this value rather than
+     * trusting the caller or the client.
+     */
+    val role: AdminRole,
 )

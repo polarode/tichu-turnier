@@ -8,6 +8,7 @@ import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.normalizeEmail
+import org.slf4j.LoggerFactory
 import java.time.Clock
 
 /**
@@ -17,11 +18,13 @@ import java.time.Clock
  *
  * The owner's credentials come from configuration as a pre-computed password hash, so
  * the bootstrap never handles a plaintext secret. An existing account is only claimed
- * as the owner when its stored hash equals the configured one — that is, it was
- * provisioned from this same configuration. An account holding the configured email but
- * a different credential is a conflict the bootstrap refuses to resolve by takeover, so
- * a self-registered account can never be promoted to owner. Its lifecycle state is left
- * alone, keeping re-runs idempotent.
+ * when it already has the `OWNER` role: since no endpoint can create or promote to
+ * `OWNER`, such a row can only have come from this bootstrap, so converging its
+ * credential from configuration is safe (that is how the owner password is rotated) and
+ * its lifecycle state is left untouched. Any other account holding the configured email
+ * — for instance a self-registered `PENDING` request — is somebody else's: it is never
+ * promoted and never has its password overwritten. That conflict is logged rather than
+ * thrown, so a squatter cannot stop the application from starting.
  */
 class BootstrapOwnerCommand(
     private val adminUsers: AdminUserRepository,
@@ -31,6 +34,8 @@ class BootstrapOwnerCommand(
     private val ownerPasswordHash: String,
 ) : BootstrapOwner {
 
+    private val log = LoggerFactory.getLogger(BootstrapOwnerCommand::class.java)
+
     override fun ensureOwner(): AdminUser? {
         val email = normalizeEmail(ownerEmail)
         if (email.isEmpty() || ownerPasswordHash.isBlank()) {
@@ -39,13 +44,16 @@ class BootstrapOwnerCommand(
 
         val existing = adminUsers.findByEmail(email)
         if (existing != null) {
-            check(existing.passwordHash == ownerPasswordHash) {
-                "Refusing to claim $email as the platform owner: it exists with a different credential"
+            if (existing.role != AdminRole.OWNER) {
+                log.error(
+                    "Refusing to claim {} as the platform owner: an account with that email exists without the " +
+                        "OWNER role. Remove it or configure a different owner email.",
+                    email,
+                )
+                return null
             }
-            if (existing.role == AdminRole.OWNER) {
-                return existing
-            }
-            return adminUsers.save(existing.copy(role = AdminRole.OWNER))
+            val converged = existing.copy(passwordHash = ownerPasswordHash, role = AdminRole.OWNER)
+            return if (converged == existing) existing else adminUsers.save(converged)
         }
 
         val owner = AdminUser(

@@ -76,9 +76,10 @@ README). There is no endpoint that creates or promotes an owner.
 Sessions use the `admin_session` httpOnly `Secure` `SameSite=Lax` cookie; the raw
 token is never returned in a response body. Error responses are RFC 7807 problem
 JSON carrying a stable `code` (`ACCOUNT_PENDING`, `ACCOUNT_DISABLED`,
-`EMAIL_ALREADY_REGISTERED`, `INVALID_CREDENTIALS`, `UNAUTHENTICATED`, `INVALID_INPUT`,
-`NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`, `DUPLICATE_TEAM_NAME`, `DUPLICATE_PLAYER_NAME`,
-`DUPLICATE_TEAM_PLAYERS`, `TEAM_LIMIT_REACHED`, `MAX_TEAMS_BELOW_TEAM_COUNT`). Cookie
+`EMAIL_ALREADY_REGISTERED`, `INVALID_CREDENTIALS`, `UNAUTHENTICATED`, `FORBIDDEN`,
+`INVALID_INPUT`, `NOT_FOUND`, `TOURNAMENT_NOT_EDITABLE`, `DUPLICATE_TEAM_NAME`,
+`DUPLICATE_PLAYER_NAME`, `DUPLICATE_TEAM_PLAYERS`, `TEAM_LIMIT_REACHED`,
+`MAX_TEAMS_BELOW_TEAM_COUNT`). Cookie
 lifetime and the `Secure`
 flag are configured under `app.auth` in `application.yml`.
 

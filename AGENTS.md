@@ -2,6 +2,11 @@
 
 This is a two-app monorepo. Read the relevant section before editing an area.
 
+## Plan & tickets
+
+- **Implementation plan**: `docs/plan/tichu-tournament.md` — the authoritative phased plan. When the user references a phase or the overall roadmap, read it there.
+- **Tickets**: `docs/tickets/` — one Markdown file per ticket, zero-padded sequential numbering (`001-…`, `002-…`). Create new tickets there next to the existing ones, following the format of the latest ticket. Mark status (`ready-for-agent`, `done`) and blocking tickets in each file.
+
 ## Conventional Commits
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) for all git commits:

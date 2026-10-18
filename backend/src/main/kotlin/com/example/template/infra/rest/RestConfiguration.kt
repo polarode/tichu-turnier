@@ -1,8 +1,11 @@
 package com.example.template.infra.rest
 
+import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTournament
+import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
+import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
@@ -11,6 +14,7 @@ import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
 import com.example.template.infra.rest.web.AuthController
 import com.example.template.infra.rest.web.SessionCookieFactory
+import com.example.template.infra.rest.web.TeamController
 import com.example.template.infra.rest.web.TournamentController
 import com.example.template.infra.rest.web.WebControllerAdvice
 import org.springframework.beans.factory.annotation.Value
@@ -38,6 +42,13 @@ class RestConfiguration(
         deleteTournament: DeleteTournament,
     ): TournamentController =
         TournamentController(createTournament, listTournaments, getTournament, updateTournament, deleteTournament)
+
+    @Bean
+    fun teamController(
+        createTeam: CreateTeam,
+        listTeams: ListTeams,
+        getTeam: GetTeam,
+    ): TeamController = TeamController(createTeam, listTeams, getTeam)
 
     @Bean
     fun sessionCookieFactory(): SessionCookieFactory =

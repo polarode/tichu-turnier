@@ -1,6 +1,9 @@
 package com.example.template.infra.rest.web
 
 import com.example.template.vocabulary.ApiException
+import com.example.template.vocabulary.DuplicatePlayerNameException
+import com.example.template.vocabulary.DuplicateTeamNameException
+import com.example.template.vocabulary.DuplicateTeamPlayersException
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InvalidCredentialsException
@@ -55,6 +58,31 @@ class WebControllerAdvice {
     @ExceptionHandler(TournamentNotEditableException::class)
     fun handleTournamentNotEditable(ex: TournamentNotEditableException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
+
+    /** Uniqueness violations of teams/players: 409, field-anchored like InvalidFieldException. */
+    @ExceptionHandler(DuplicateTeamNameException::class)
+    fun handleDuplicateTeamName(ex: DuplicateTeamNameException): ProblemDetail =
+        anchoredConflict(ex)
+
+    @ExceptionHandler(DuplicatePlayerNameException::class)
+    fun handleDuplicatePlayerName(ex: DuplicatePlayerNameException): ProblemDetail =
+        anchoredConflict(ex)
+
+    @ExceptionHandler(DuplicateTeamPlayersException::class)
+    fun handleDuplicateTeamPlayers(ex: DuplicateTeamPlayersException): ProblemDetail =
+        anchoredConflict(ex)
+
+    private fun anchoredConflict(ex: ApiException): ProblemDetail {
+        val problem = problem(HttpStatus.CONFLICT, ex)
+        val field = when (ex) {
+            is DuplicateTeamNameException -> ex.field
+            is DuplicatePlayerNameException -> ex.field
+            is DuplicateTeamPlayersException -> ex.field
+            else -> null
+        }
+        field?.let { problem.setProperty("field", it) }
+        return problem
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {

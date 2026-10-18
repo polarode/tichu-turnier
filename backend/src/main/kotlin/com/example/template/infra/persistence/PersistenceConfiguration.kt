@@ -3,6 +3,7 @@ package com.example.template.infra.persistence
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
+import com.example.template.domain.TeamRepository
 import com.example.template.domain.TournamentRepository
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.context.annotation.Bean
@@ -23,11 +24,17 @@ class PersistenceConfiguration(
     private val springDataTournamentRepository: SpringDataTournamentRepository,
     private val springDataAdminUserRepository: SpringDataAdminUserRepository,
     private val springDataAdminSessionRepository: SpringDataAdminSessionRepository,
+    private val springDataTeamRepository: SpringDataTeamRepository,
+    private val springDataPlayerRepository: SpringDataPlayerRepository,
 ) {
 
     @Bean
     fun tournamentRepository(): TournamentRepository =
         JpaTournamentRepository(springDataTournamentRepository)
+
+    @Bean
+    fun teamRepository(): TeamRepository =
+        JpaTeamRepository(springDataTeamRepository, springDataPlayerRepository)
 
     @Bean
     fun adminUserRepository(): AdminUserRepository =

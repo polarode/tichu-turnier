@@ -1,0 +1,94 @@
+package com.example.template.application.usecase
+
+import com.example.template.application.api.CreateTeam
+import com.example.template.application.api.TeamWriteRequest
+import com.example.template.domain.AdminUserId
+import com.example.template.domain.IdGenerator
+import com.example.template.domain.Player
+import com.example.template.domain.PlayerId
+import com.example.template.domain.Team
+import com.example.template.domain.TeamId
+import com.example.template.domain.TeamRepository
+import com.example.template.domain.TournamentId
+import com.example.template.domain.TournamentRepository
+import com.example.template.vocabulary.DuplicatePlayerNameException
+import com.example.template.vocabulary.DuplicateTeamNameException
+import com.example.template.vocabulary.DuplicateTeamPlayersException
+import org.springframework.transaction.annotation.Transactional
+
+/**
+ * Creates a team (name + exactly two named players) in the caller's tournament.
+ *
+ * All rules are enforced here so the validation matrix is testable at the
+ * use-case seam without Spring:
+ *
+ * 1. ownership: a foreign or missing tournament id fails as not-found (`findOwnedOrThrow`);
+ * 2. field rules: blank / overlong names (see [TeamInputValidator]);
+ * 3. the two players of one team must be different people (typed, field-anchored);
+ * 4. the team name must be free within the tournament (typed, field-anchored);
+ * 5. each player name must be free within the tournament — a player may not sit on
+ *    two teams of one tournament (typed, field-anchored).
+ *
+ * Names are compared case-insensitively after trimming, mirroring how emails are
+ * matched for uniqueness. Identical team/player names in *different* tournaments
+ * of the same organizer are accepted because every check is scoped to one
+ * tournament id.
+ *
+ * Saving touches two tables (teams + players), so the use case is transactional.
+ */
+@Transactional
+class CreateTeamCommand(
+    private val tournamentRepository: TournamentRepository,
+    private val teamRepository: TeamRepository,
+    private val idGenerator: IdGenerator,
+) : CreateTeam {
+
+    override fun create(tournamentId: TournamentId, command: TeamWriteRequest, owner: AdminUserId): Team {
+        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+
+        val name = command.name.trim()
+        val playerOneName = command.playerOneName.trim()
+        val playerTwoName = command.playerTwoName.trim()
+        TeamInputValidator.validate(name, playerOneName, playerTwoName)
+
+        val existingTeams = teamRepository.findAllByTournament(tournamentId)
+        if (playerOneName.equals(playerTwoName, ignoreCase = true)) {
+            throw DuplicateTeamPlayersException(
+                "playerTwoName",
+                "The two players of a team must be different people",
+            )
+        }
+        if (existingTeams.any { it.name.equals(name, ignoreCase = true) }) {
+            throw DuplicateTeamNameException("name", "Team name \"$name\" is already taken in this tournament")
+        }
+        listOf("playerOneName" to playerOneName, "playerTwoName" to playerTwoName)
+            .firstOrNull { (field, playerName) ->
+                existingTeams.any { team -> team.players.any { it.name.equals(playerName, ignoreCase = true) } }
+            }
+            ?.let { (field, playerName) ->
+                throw DuplicatePlayerNameException(field, "Player \"$playerName\" is already on a team in this tournament")
+            }
+
+        val teamId = TeamId(idGenerator.newId())
+        val playerOne = Player(
+            id = PlayerId(idGenerator.newId()),
+            tournamentId = tournamentId,
+            teamId = teamId,
+            name = playerOneName,
+        )
+        val playerTwo = Player(
+            id = PlayerId(idGenerator.newId()),
+            tournamentId = tournamentId,
+            teamId = teamId,
+            name = playerTwoName,
+        )
+        return teamRepository.save(
+            Team(
+                id = teamId,
+                tournamentId = tournamentId,
+                name = name,
+                players = listOf(playerOne, playerTwo),
+            ),
+        )
+    }
+}

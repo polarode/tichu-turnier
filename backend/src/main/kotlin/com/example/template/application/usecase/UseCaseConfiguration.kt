@@ -1,9 +1,12 @@
 package com.example.template.application.usecase
 
 import com.example.template.application.api.AuthenticateSession
+import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTournament
+import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
+import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
@@ -15,6 +18,7 @@ import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
+import com.example.template.domain.TeamRepository
 import com.example.template.domain.TournamentRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -57,6 +61,21 @@ class UseCaseConfiguration(
     @Bean
     fun deleteTournament(repository: TournamentRepository): DeleteTournament =
         DeleteTournamentCommand(repository)
+
+    @Bean
+    fun createTeam(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        idGenerator: IdGenerator,
+    ): CreateTeam = CreateTeamCommand(tournamentRepository, teamRepository, idGenerator)
+
+    @Bean
+    fun listTeams(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListTeams =
+        ListTeamsQuery(tournamentRepository, teamRepository)
+
+    @Bean
+    fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =
+        GetTeamQuery(tournamentRepository, teamRepository)
 
     @Bean
     fun adminSessionIssuer(

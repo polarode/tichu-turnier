@@ -15,6 +15,15 @@ enum class ErrorCode {
 
     /** The requested mutation conflicts with the resource's current lifecycle state. */
     TOURNAMENT_NOT_EDITABLE,
+
+    /** A team name is already taken within the same tournament. */
+    DUPLICATE_TEAM_NAME,
+
+    /** A player name is already taken within the same tournament. */
+    DUPLICATE_PLAYER_NAME,
+
+    /** The two players of one team are the same player. */
+    DUPLICATE_TEAM_PLAYERS,
 }
 
 /**
@@ -66,3 +75,31 @@ class UnauthenticatedException(message: String) :
  */
 class TournamentNotEditableException(message: String) :
     ApiException(ErrorCode.TOURNAMENT_NOT_EDITABLE, message)
+
+/**
+ * Thrown when a team name clashes with an existing team of the same tournament.
+ * Field-anchored to the team `name` so the frontend can highlight the input.
+ * Mapped to HTTP 409.
+ */
+class DuplicateTeamNameException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.DUPLICATE_TEAM_NAME, message)
+
+/**
+ * Thrown when a player name is already taken within the same tournament (by another
+ * team). Field-anchored to the offending player input field. Mapped to HTTP 409.
+ */
+class DuplicatePlayerNameException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.DUPLICATE_PLAYER_NAME, message)
+
+/**
+ * Thrown when the two players of one team are the same player (same name).
+ * Field-anchored to the offending player input field. Mapped to HTTP 409.
+ */
+class DuplicateTeamPlayersException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.DUPLICATE_TEAM_PLAYERS, message)

@@ -2,6 +2,7 @@ package com.example.template.application.usecase
 
 import com.example.template.application.api.ApproveAdmin
 import com.example.template.application.api.AuthenticateSession
+import com.example.template.application.api.AuthenticateTeamSession
 import com.example.template.application.api.BootstrapOwner
 import com.example.template.application.api.CreateInvite
 import com.example.template.application.api.CreateTeam
@@ -9,6 +10,8 @@ import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.DisableAdmin
+import com.example.template.application.api.ExchangeTeamAccess
+import com.example.template.application.api.GetOwnTeam
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListAdmins
@@ -31,6 +34,8 @@ import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
 import com.example.template.domain.TeamRepository
+import com.example.template.domain.TeamSessionRepository
+import com.example.template.domain.TeamTokenRepository
 import com.example.template.domain.TournamentRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -46,6 +51,7 @@ import java.time.Duration
 @Configuration
 class UseCaseConfiguration(
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
+    @param:Value("\${app.auth.team-session-ttl}") private val teamSessionTtl: Duration,
     @param:Value("\${app.auth.invite-ttl}") private val inviteTtl: Duration,
     @param:Value("\${app.auth.owner.email:}") private val ownerEmail: String,
     @param:Value("\${app.auth.owner.password-hash:}") private val ownerPasswordHash: String,
@@ -91,8 +97,12 @@ class UseCaseConfiguration(
     fun createTeam(
         tournamentRepository: TournamentRepository,
         teamRepository: TeamRepository,
+        teamTokenRepository: TeamTokenRepository,
+        sessionTokens: SessionTokens,
         idGenerator: IdGenerator,
-    ): CreateTeam = CreateTeamCommand(tournamentRepository, teamRepository, idGenerator)
+        clock: Clock,
+    ): CreateTeam =
+        CreateTeamCommand(tournamentRepository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
 
     @Bean
     fun listTeams(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListTeams =
@@ -107,8 +117,41 @@ class UseCaseConfiguration(
         UpdateTeamCommand(tournamentRepository, teamRepository)
 
     @Bean
-    fun deleteTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): DeleteTeam =
-        DeleteTeamCommand(tournamentRepository, teamRepository)
+    fun deleteTeam(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        teamTokenRepository: TeamTokenRepository,
+    ): DeleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository, teamTokenRepository)
+
+    @Bean
+    fun teamSessionIssuer(
+        teamSessions: TeamSessionRepository,
+        sessionTokens: SessionTokens,
+        idGenerator: IdGenerator,
+    ): TeamSessionIssuer = TeamSessionIssuer(teamSessions, sessionTokens, idGenerator, teamSessionTtl)
+
+    @Bean
+    fun exchangeTeamAccess(
+        teamTokens: TeamTokenRepository,
+        teamRepository: TeamRepository,
+        tournamentRepository: TournamentRepository,
+        sessionTokens: SessionTokens,
+        teamSessionIssuer: TeamSessionIssuer,
+        clock: Clock,
+    ): ExchangeTeamAccess =
+        ExchangeTeamAccessCommand(teamTokens, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer, clock)
+
+    @Bean
+    fun authenticateTeamSession(
+        teamSessions: TeamSessionRepository,
+        teamRepository: TeamRepository,
+        sessionTokens: SessionTokens,
+        clock: Clock,
+    ): AuthenticateTeamSession =
+        AuthenticateTeamSessionQuery(teamSessions, teamRepository, sessionTokens, clock)
+
+    @Bean
+    fun getOwnTeam(teamRepository: TeamRepository): GetOwnTeam = GetOwnTeamQuery(teamRepository)
 
     @Bean
     fun adminSessionIssuer(

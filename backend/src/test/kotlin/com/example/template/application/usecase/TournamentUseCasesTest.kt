@@ -9,6 +9,8 @@ import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
 import com.example.template.testsupport.InMemoryTeamRepository
+import com.example.template.testsupport.InMemoryTeamTokenRepository
+import com.example.template.testsupport.RecordingSessionTokens
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
@@ -51,7 +53,9 @@ class TournamentUseCasesTest {
     private val getTournament = GetTournamentQuery(repository)
     private val updateTournament = UpdateTournamentCommand(repository, teamRepository, laterClock)
     private val deleteTournament = DeleteTournamentCommand(repository)
-    private val createTeam = CreateTeamCommand(repository, teamRepository, idGenerator)
+    private val teamTokenRepository = InMemoryTeamTokenRepository()
+    private val sessionTokens = RecordingSessionTokens()
+    private val createTeam = CreateTeamCommand(repository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
 
     private fun create(name: String = "Spring Classic", asAdmin: AdminUserId = owner) =
         createTournament.create(

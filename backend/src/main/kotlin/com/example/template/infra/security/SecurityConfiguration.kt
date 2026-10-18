@@ -1,6 +1,7 @@
 package com.example.template.infra.security
 
 import com.example.template.application.api.AuthenticateSession
+import com.example.template.application.api.AuthenticateTeamSession
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
 import com.example.template.infra.rest.web.SessionCookieFactory
@@ -55,12 +56,15 @@ class SecurityConfiguration(
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        sessionCookie: SessionCookieFactory,
+        adminSessionCookieFactory: SessionCookieFactory,
+        teamSessionCookieFactory: SessionCookieFactory,
         authenticateSession: AuthenticateSession,
+        authenticateTeamSession: AuthenticateTeamSession,
         corsConfigurationSource: CorsConfigurationSource,
         objectMapper: ObjectMapper,
     ): SecurityFilterChain {
-        val authenticationFilter = AdminSessionAuthenticationFilter(sessionCookie, authenticateSession)
+        val authenticationFilter = AdminSessionAuthenticationFilter(adminSessionCookieFactory, authenticateSession)
+        val teamAuthenticationFilter = TeamSessionAuthenticationFilter(teamSessionCookieFactory, authenticateTeamSession)
 
         return http
             // Stateless cookie auth: no server-side HttpSession, no default logout handler.
@@ -73,24 +77,33 @@ class SecurityConfiguration(
             .authorizeHttpRequests { authorize ->
                 // Otherwise a failed request re-enters the chain and turns into a 401.
                 authorize.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                // Credential entry points only; refresh/logout validate their own cookie
-                // and everything else under /api/** requires a valid session.
+                // Credential entry points only; refresh/logout validate their own cookie.
                 authorize.requestMatchers(
                     HttpMethod.POST,
                     "/api/auth/register",
                     "/api/auth/login",
+                    "/api/team/auth/exchange",
                 ).permitAll()
-                // Deny by default: the API lives under /api/**, and any future
-                // endpoint is protected unless it is deliberately opened above.
-                authorize.anyRequest().authenticated()
+                // Team endpoints accept only a team session — an admin session is
+                // rejected here, before any controller runs.
+                authorize.requestMatchers("/api/team/**")
+                    .hasAuthority(TEAM_SESSION_AUTHORITY)
+                // Everything else (all admin endpoints) requires an admin session —
+                // a team principal lacks this authority and is rejected likewise.
+                // Deny by default: any future endpoint is protected unless it is
+                // deliberately opened above.
+                authorize.anyRequest().hasAuthority(ADMIN_SESSION_AUTHORITY)
             }
             .exceptionHandling { exceptions ->
                 exceptions.authenticationEntryPoint(ProblemDetailAuthenticationEntryPoint(objectMapper))
                 exceptions.accessDeniedHandler(ProblemDetailAccessDeniedHandler(objectMapper))
             }
             // Must run before the anonymous filter, otherwise an anonymous token is
-            // already in the context and the cookie would never be considered.
+            // already in the context and the cookie would never be considered. The
+            // team filter runs second, so an already-established admin authentication
+            // is not overwritten.
             .addFilterBefore(authenticationFilter, AnonymousAuthenticationFilter::class.java)
+            .addFilterBefore(teamAuthenticationFilter, AnonymousAuthenticationFilter::class.java)
             .build()
     }
 }

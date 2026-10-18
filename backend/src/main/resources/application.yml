@@ -29,6 +29,9 @@ app:
     # Admin invite lifetime (ISO-8601 duration). 168h = 7 days.
     invite-ttl: PT168H
     session-cookie-name: admin_session
+    # Team session lifetime (ISO-8601 duration). 12h — a team session is tied to match day.
+    team-session-ttl: PT12H
+    team-session-cookie-name: team_session
     # Cookies are marked Secure. Modern browsers treat localhost as a secure
     # context, so this still works for local http dev; set false only for a
     # plain-http non-local host.

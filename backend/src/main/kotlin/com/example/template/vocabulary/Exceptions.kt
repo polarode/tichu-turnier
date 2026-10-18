@@ -54,6 +54,12 @@ enum class ErrorCode {
 
     /** An invite-management mutation conflicts with the invite's current state (revoking a spent/revoked invite). */
     INVITE_STATUS_CONFLICT,
+
+    /**
+     * A team access token is unknown, revoked, its team is gone, or its tournament
+     * has completed. All four are deliberately indistinguishable.
+     */
+    TEAM_ACCESS_INVALID,
 }
 
 /**
@@ -160,6 +166,13 @@ class InviteEmailMismatchException(message: String) :
  */
 class InviteStatusConflictException(message: String) :
     InviteException(ErrorCode.INVITE_STATUS_CONFLICT, message)
+
+/**
+ * Thrown when a team access link cannot be exchanged. Unknown, revoked and
+ * completed-tournament tokens all produce this one exception, so a caller cannot
+ * learn whether a guessed token ever existed. Mapped to HTTP 401.
+ */
+class TeamAccessException(message: String) : ApiException(ErrorCode.TEAM_ACCESS_INVALID, message)
 
 /**
  * Thrown when a tournament edit is attempted in a lifecycle state that does not allow

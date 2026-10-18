@@ -7,6 +7,8 @@ import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.DisableAdmin
+import com.example.template.application.api.ExchangeTeamAccess
+import com.example.template.application.api.GetOwnTeam
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListAdmins
@@ -26,6 +28,7 @@ import com.example.template.infra.rest.web.AdminController
 import com.example.template.infra.rest.web.AuthController
 import com.example.template.infra.rest.web.InviteController
 import com.example.template.infra.rest.web.SessionCookieFactory
+import com.example.template.infra.rest.web.TeamAuthController
 import com.example.template.infra.rest.web.TeamController
 import com.example.template.infra.rest.web.TournamentController
 import com.example.template.infra.rest.web.WebControllerAdvice
@@ -43,6 +46,8 @@ class RestConfiguration(
     @param:Value("\${app.auth.session-cookie-name}") private val sessionCookieName: String,
     @param:Value("\${app.auth.session-cookie-secure}") private val sessionCookieSecure: Boolean,
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
+    @param:Value("\${app.auth.team-session-cookie-name}") private val teamSessionCookieName: String,
+    @param:Value("\${app.auth.team-session-ttl}") private val teamSessionTtl: Duration,
     @param:Value("\${app.frontend-url}") private val frontendUrl: String,
 ) {
 
@@ -66,8 +71,12 @@ class RestConfiguration(
     ): TeamController = TeamController(createTeam, listTeams, getTeam, updateTeam, deleteTeam)
 
     @Bean
-    fun sessionCookieFactory(): SessionCookieFactory =
+    fun adminSessionCookieFactory(): SessionCookieFactory =
         SessionCookieFactory(sessionCookieName, sessionCookieSecure, sessionTtl)
+
+    @Bean
+    fun teamSessionCookieFactory(): SessionCookieFactory =
+        SessionCookieFactory(teamSessionCookieName, sessionCookieSecure, teamSessionTtl)
 
     @Bean
     fun authController(
@@ -75,9 +84,17 @@ class RestConfiguration(
         loginAdmin: LoginAdmin,
         refreshSession: RefreshSession,
         logoutAdmin: LogoutAdmin,
-        sessionCookie: SessionCookieFactory,
+        adminSessionCookieFactory: SessionCookieFactory,
     ): AuthController =
-        AuthController(registerAdmin, loginAdmin, refreshSession, logoutAdmin, sessionCookie)
+        AuthController(registerAdmin, loginAdmin, refreshSession, logoutAdmin, adminSessionCookieFactory)
+
+    @Bean
+    fun teamAuthController(
+        exchangeTeamAccess: ExchangeTeamAccess,
+        getOwnTeam: GetOwnTeam,
+        teamSessionCookieFactory: SessionCookieFactory,
+    ): TeamAuthController =
+        TeamAuthController(exchangeTeamAccess, getOwnTeam, teamSessionCookieFactory)
 
     @Bean
     fun adminController(

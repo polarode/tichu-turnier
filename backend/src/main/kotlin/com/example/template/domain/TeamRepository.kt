@@ -27,6 +27,13 @@ interface TeamRepository {
     /** Exact id lookup inside one tournament — returns null for foreign/missing ids. */
     fun findById(teamId: TeamId, tournamentId: TournamentId): Team?
 
+    /**
+     * Unscoped exact lookup by id. Not an ownership path: callers must have already
+     * validated a secret or an ownership claim that pins the team. Used by the
+     * team-token exchange, which resolves the token's own team after validating it.
+     */
+    fun findById(teamId: TeamId): Team?
+
     /** Removes the team; its players go with it (ON DELETE CASCADE in the schema). */
     fun delete(teamId: TeamId, tournamentId: TournamentId)
 }

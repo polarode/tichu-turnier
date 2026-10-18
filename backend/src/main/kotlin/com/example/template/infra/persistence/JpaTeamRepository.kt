@@ -95,6 +95,11 @@ class JpaTeamRepository(
             ?.let { withPlayers(listOf(it)) }
             ?.firstOrNull()
 
+    override fun findById(teamId: TeamId): Team? =
+        springDataTeamRepository.findById(teamId.value).orElse(null)
+            ?.let { withPlayers(listOf(it)) }
+            ?.firstOrNull()
+
     override fun delete(teamId: TeamId, tournamentId: TournamentId) {
         springDataTeamRepository.deleteByIdAndTournamentId(teamId.value, tournamentId.value)
     }

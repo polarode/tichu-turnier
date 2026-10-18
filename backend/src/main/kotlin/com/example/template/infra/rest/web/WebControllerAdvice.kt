@@ -19,6 +19,7 @@ import com.example.template.vocabulary.InviteInvalidException
 import com.example.template.vocabulary.InviteStatusConflictException
 import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
+import com.example.template.vocabulary.TeamAccessException
 import com.example.template.vocabulary.TeamLimitReachedException
 import com.example.template.vocabulary.TournamentNotEditableException
 import com.example.template.vocabulary.UnauthenticatedException
@@ -110,6 +111,11 @@ class WebControllerAdvice {
     @ExceptionHandler(InviteStatusConflictException::class)
     fun handleInviteStatusConflict(ex: InviteStatusConflictException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
+
+    /** An unknown, revoked or completed-tournament team access token: 401, no existence disclosure. */
+    @ExceptionHandler(TeamAccessException::class)
+    fun handleTeamAccess(ex: TeamAccessException): ProblemDetail =
+        problem(HttpStatus.UNAUTHORIZED, ex)
 
     /** The resource exists and is owned, but its state forbids the mutation: HTTP 409. */
     @ExceptionHandler(TournamentNotEditableException::class)

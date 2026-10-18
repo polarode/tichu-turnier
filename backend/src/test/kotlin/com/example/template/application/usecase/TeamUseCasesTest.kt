@@ -6,6 +6,8 @@ import com.example.template.domain.IdGenerator
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
 import com.example.template.testsupport.InMemoryTeamRepository
+import com.example.template.testsupport.InMemoryTeamTokenRepository
+import com.example.template.testsupport.RecordingSessionTokens
 import com.example.template.infra.persistence.InMemoryTournamentRepository
 import com.example.template.vocabulary.DuplicatePlayerNameException
 import com.example.template.vocabulary.DuplicateTeamNameException
@@ -34,6 +36,8 @@ class TeamUseCasesTest {
 
     private val tournamentRepository = InMemoryTournamentRepository()
     private val teamRepository = InMemoryTeamRepository()
+    private val teamTokenRepository = InMemoryTeamTokenRepository()
+    private val sessionTokens = RecordingSessionTokens()
     private val idGenerator = object : IdGenerator {
         private var counter = 0
         override fun newId(): String = "id-${++counter}"
@@ -44,11 +48,11 @@ class TeamUseCasesTest {
 
     private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T12:00:00Z"), java.time.ZoneOffset.UTC)
     private val createTournament = CreateTournamentCommand(tournamentRepository, idGenerator, clock)
-    private val createTeam = CreateTeamCommand(tournamentRepository, teamRepository, idGenerator)
+    private val createTeam = CreateTeamCommand(tournamentRepository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
     private val listTeams = ListTeamsQuery(tournamentRepository, teamRepository)
     private val getTeam = GetTeamQuery(tournamentRepository, teamRepository)
     private val updateTeam = UpdateTeamCommand(tournamentRepository, teamRepository)
-    private val deleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository)
+    private val deleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository, teamTokenRepository)
 
     private fun createTournament(name: String, asAdmin: AdminUserId = owner, maxTeams: Int = 16) =
         createTournament.create(

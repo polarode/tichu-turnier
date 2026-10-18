@@ -6,13 +6,17 @@ import com.example.template.domain.AdminUserId
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.Player
 import com.example.template.domain.PlayerId
+import com.example.template.domain.SessionTokens
 import com.example.template.domain.Team
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
+import com.example.template.domain.TeamToken
+import com.example.template.domain.TeamTokenRepository
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
 import com.example.template.vocabulary.TeamLimitReachedException
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 
 /**
  * Creates a team (name + exactly two named players) in the caller's tournament.
@@ -34,13 +38,18 @@ import org.springframework.transaction.annotation.Transactional
  * *different* tournaments of the same organizer are accepted because every check is
  * scoped to one tournament id.
  *
- * Saving touches two tables (teams + players), so the use case is transactional.
+ * Saving touches several tables (teams + players + the team's access token), so the
+ * use case is transactional: the team and its token are provisioned together and a
+ * failure cannot leave one without the other.
  */
 @Transactional
 class CreateTeamCommand(
     private val tournamentRepository: TournamentRepository,
     private val teamRepository: TeamRepository,
+    private val teamTokenRepository: TeamTokenRepository,
+    private val sessionTokens: SessionTokens,
     private val idGenerator: IdGenerator,
+    private val clock: Clock,
 ) : CreateTeam {
 
     override fun create(tournamentId: TournamentId, command: TeamWriteRequest, owner: AdminUserId): Team {
@@ -72,7 +81,7 @@ class CreateTeamCommand(
             teamId = teamId,
             name = playerTwoName,
         )
-        return teamRepository.save(
+        val savedTeam = teamRepository.save(
             Team(
                 id = teamId,
                 tournamentId = tournamentId,
@@ -80,5 +89,21 @@ class CreateTeamCommand(
                 players = listOf(playerOne, playerTwo),
             ),
         )
+
+        // Auto-provision the team access token in the same transaction. The raw
+        // token is generated, hashed and discarded: it is never persisted, never
+        // returned by this (or any) response — the organizer reveals it later
+        // through the dedicated reveal flow (#25).
+        val now = clock.instant()
+        teamTokenRepository.save(
+            TeamToken(
+                teamId = teamId,
+                tokenHash = sessionTokens.hash(sessionTokens.generate()),
+                revealed = false,
+                createdAt = now,
+                updatedAt = now,
+            ),
+        )
+        return savedTeam
     }
 }

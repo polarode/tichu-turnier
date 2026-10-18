@@ -7,6 +7,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 
@@ -32,8 +33,11 @@ class AdminSessionAuthenticationFilter(
             sessionCookie.read(request)?.let { token ->
                 try {
                     val admin = authenticateSession.authenticate(token)
-                    val authentication =
-                        UsernamePasswordAuthenticationToken(admin, null, emptyList())
+                    val authentication = UsernamePasswordAuthenticationToken(
+                        admin,
+                        null,
+                        listOf(SimpleGrantedAuthority(ADMIN_SESSION_AUTHORITY)),
+                    )
                     SecurityContextHolder.getContext().authentication = authentication
                 } catch (_: UnauthenticatedException) {
                     // Leave the request anonymous; the entry point answers with 401.

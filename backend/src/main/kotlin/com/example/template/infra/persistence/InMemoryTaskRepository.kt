@@ -6,11 +6,10 @@ import com.example.template.domain.TaskRepository
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Driven adapter implementing the [TaskRepository] port with an in-memory store.
- *
- * Swap this for a JPA/MongoDB/JDBC adapter without touching the domain or use
- * cases — they depend only on the port. This is a plain class; it is turned into
- * a bean by [PersistenceConfiguration].
+ * In-memory implementation of the [TaskRepository] port, kept as a fast fake for
+ * unit tests (see `TaskUseCasesTest`). The production adapter is
+ * [JpaTaskRepository] on PostgreSQL; swapping it never touches the domain or use
+ * cases — they depend only on the port.
  */
 class InMemoryTaskRepository : TaskRepository {
 

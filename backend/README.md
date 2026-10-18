@@ -38,11 +38,13 @@ curl -X POST localhost:8080/api/tasks \
 - `application/api` — inbound ports: `CreateTask`, `ListTasks`, `GetTask`,
   `UpdateTask`, `DeleteTask`.
 - `application/usecase` — implementations + `UseCaseConfiguration`.
-- `infra/persistence` — `InMemoryTaskRepository`, `UuidIdGenerator` +
-  `PersistenceConfiguration`.
+- `infra/persistence` — `JpaTaskRepository` (+ `TaskEntity` and the Spring Data
+  repository it wraps), `UuidIdGenerator` + `PersistenceConfiguration`.
+  `InMemoryTaskRepository` remains as a fast fake for use-case unit tests.
 - `infra/rest` — `TaskController`, DTOs, error advice + `RestConfiguration`.
 - `main` — `Application` composition root.
 
-To persist to a real database, add e.g. `spring-boot-starter-data-jpa`, write a
-`JpaTaskRepository` adapter implementing `TaskRepository`, and swap the bean in
+The production adapter is JPA over PostgreSQL with the schema managed by Flyway
+(`src/main/resources/db/migration`). To swap the storage technology again, write
+a new adapter implementing `TaskRepository` and change the bean in
 `PersistenceConfiguration`. Nothing else changes.

@@ -143,16 +143,20 @@ Close open registration. Admin accounts gain a lifecycle — `status` (`PENDING`
 
 ### What to build
 
-Cryptographically secure team tokens (long, random, stored hashed), issuance/rotation/revocation endpoints, a team login exchange: link opens → server validates token → returns a scoped team session credential used in headers thereafter (token never persists in URLs or localStorage history). Rate limiting on guessing attempts; tokens never exposed in any listing API (fixes v1's public `access_token` leak).
+*Refined in a design session 2026-10-18 — the decisions below are settled (see `CONTEXT.md` for the language).*
 
-Credential-lifecycle hygiene: expired admin and team sessions are removed by a scheduled, idempotent sweep (`DELETE FROM … WHERE expires_at < now`) backed by an index on `expires_at`, so the session tables do not grow without bound. The sweep is safe to run concurrently on every instance.
+- **Team access link**: exactly one per team, **multi-use** — both team members share it as a bearer secret; no per-player identity exists. Auto-provisioned (hashed) when the team is created; the organizer **reveals** it (raw link shown exactly once, with QR on the frontend side), **rotates** it (old link dies immediately, new one revealed once — the documented recovery for a lost link) or **revokes** it. The link stops working once the tournament is `COMPLETED`. Deleting a team removes its token. Tokens are 256-bit random via the existing `SessionTokens` port, stored hashed (`findByTokenHash` only) and never returned by any API other than the one-time reveal — never in any listing (fixes v1's public `access_token` leak).
+- **Team login exchange**: the link opens a public route (`/team/login?token=…`), the client exchanges it for an **httpOnly session cookie** (`Secure`, `SameSite=Lax`, set on all cookies via the one shared `SessionCookieFactory`) and strips the token from the address bar. Subsequent team endpoints accept only that cookie — never raw tokens in query strings or headers-as-storage. Team sessions expire after **12h**; admin sessions keep their existing TTL (7d).
+- **Team session scope**: the principal is the team (`teamId`, `tournamentId`), authorized for its own team's reads and (once Phase 9 lands) its own confirmations — never other teams' data, never admin endpoints.
+- **Rate limiting**: in-memory, per source IP, counting **failed exchange attempts** (e.g. 5 failures / 15 min → temporary block). It must not reveal whether a token exists (identical response for unknown, revoked and rate-limited guesses) and must not be per-token (that would let an attacker lock a team out). Documented as a single-instance assumption (Render free tier is one container); revisit if deployment ever scales out.
+- **Credential-lifecycle hygiene**: expired admin and team sessions are removed by an hourly scheduled, idempotent sweep (`DELETE FROM … WHERE expires_at < now`) backed by an index on `expires_at`, so the session tables do not grow without bound. The sweep is safe to run concurrently on every instance.
 
 ### Acceptance criteria
 
-- [ ] Tokens are high-entropy, stored hashed, and never returned by any API other than at issuance
-- [ ] Exchange endpoint sets an httpOnly session cookie (`Secure`, `SameSite=Lax`); subsequent team endpoints accept only that cookie, never raw tokens in query strings
-- [ ] Rotation invalidates the old link immediately; revoked token gets 401/403
-- [ ] Rate limiting kicks in on repeated failed attempts (test)
+- [ ] Tokens are high-entropy, stored hashed, and never returned by any API other than the one-time reveal (test)
+- [ ] Exchange endpoint sets an httpOnly session cookie (`Secure`, `SameSite=Lax`); subsequent team endpoints accept only that cookie, never raw tokens in query strings (test)
+- [ ] A link is multi-use: both members of a team can exchange it; rotation invalidates the old link immediately; a revoked (or unknown) token gets the same generic rejection; a link no longer exchanges once the tournament is completed (tests)
+- [ ] Rate limiting kicks in on repeated failed attempts, does not discriminate unknown vs revoked tokens, and cannot be triggered against one team's token alone (test)
 - [ ] Team session cannot access another team's data or admin endpoints (tests)
 - [ ] Expired admin and team sessions are purged by a periodic sweep; a test inserts an expired session, runs the sweep, and asserts it is gone while live sessions survive (and that a re-run is safe)
 

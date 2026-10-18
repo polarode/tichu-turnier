@@ -1,5 +1,5 @@
 {
-    "name": "@template/web",
+    "name": "@tichu/web",
     "version": "0.0.0",
     "private": true,
     "type": "module",
@@ -18,7 +18,7 @@
         "@tailwindcss/vite": "catalog:",
         "@tanstack/react-query": "catalog:",
         "@tanstack/react-router": "catalog:",
-        "@template/ui": "workspace:*",
+        "@tichu/ui": "workspace:*",
         "axios": "catalog:",
         "lucide-react": "catalog:",
         "react": "catalog:",

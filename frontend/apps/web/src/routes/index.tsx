@@ -1,7 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { TasksPage } from '@/features/tasks/tasks-page.component.tsx';
-
+/** There is no separate landing page: the public area is the entry point. */
 export const Route = createFileRoute('/')({
-    component: TasksPage,
+    beforeLoad: () => {
+        throw redirect({ to: '/public' });
+    },
 });

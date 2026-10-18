@@ -1,4 +1,4 @@
-@import '@template/ui/index.css';
+@import '@tichu/ui/index.css';
 
 /* Make Tailwind scan the UI package sources for class names used there. */
 @source "../../../packages/ui/src";

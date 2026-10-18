@@ -128,7 +128,7 @@ importers:
       '@tanstack/react-router':
         specifier: 'catalog:'
         version: 1.131.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      '@template/ui':
+      '@tichu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       axios:

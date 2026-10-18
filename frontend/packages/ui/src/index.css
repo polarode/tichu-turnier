@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens shared by every app that consumes @template/ui.
+ * Design tokens shared by every app that consumes @tichu/ui.
  * Tailwind v4 reads these via the `@theme` block to generate utilities
  * like `bg-primary`, `text-muted-foreground`, etc.
  */

@@ -89,9 +89,9 @@ cd backend
 ```
 frontend/
 ├── apps/web/src/
-│   ├── task-api/        # one folder per upstream API:
-│   │   ├── task.api.ts        # axios instance (baseURL, interceptors)
-│   │   ├── task.repository.ts # functions that call the API and map DTO→domain
+│   ├── tournament-api/  # one folder per upstream API:
+│   │   ├── tournament.api.ts        # axios instance (baseURL, interceptors)
+│   │   ├── tournament.repository.ts # functions that call the API and map DTO→domain
 │   │   ├── dtos/              # zod schemas describing the wire format
 │   │   └── mappers/          # pure DTO↔domain mapping functions
 │   ├── domain/          # plain domain models (framework-free)
@@ -113,7 +113,9 @@ Conventions:
 - **Server state** lives in TanStack Query (keyed by `shared/constants/query-keys.ts`).
   **Client/UI state** lives in Zustand stores under `shared/stores`.
 - **Forms** use react-hook-form + `@hookform/resolvers/zod`.
-- **Styling** is Tailwind CSS; shared primitives come from `@template/ui`.
+- **Styling** is Tailwind CSS; shared primitives come from `@tichu/ui`.
+- **i18n:** all user-facing strings live in `shared/i18n/catalogs` (de + en);
+  hardcoded JSX text is rejected by lint and catalog parity is enforced by a test.
 - File naming: `*.component.tsx`, `*.hook.ts`, `*.repository.ts`, `*.mapper.ts`,
   `*.dto.ts`, `*.domain.ts`, `*.store.ts`, tests `*.spec.ts(x)` under `__tests__`.
 

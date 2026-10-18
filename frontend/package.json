@@ -1,10 +1,10 @@
 {
-    "name": "template-frontend",
+    "name": "tichu-frontend",
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "dev": "pnpm --filter @template/web dev",
-        "build": "pnpm --filter @template/web build",
+        "dev": "pnpm --filter @tichu/web dev",
+        "build": "pnpm --filter @tichu/web build",
         "typecheck": "pnpm -r typecheck",
         "lint": "pnpm -r --no-bail lint",
         "test": "pnpm -r test"

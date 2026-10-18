@@ -2,6 +2,28 @@
 
 > Source: Requirements gathered 2026-10-17/18 from analysis of v1 (`~/dev/github/backend`, `~/dev/github/frontend`) and decisions made with the user. v1 reference: Supabase-based Tichu tournament manager (German UI), rebuilt fresh — same concept, new architecture.
 
+## Phase overview
+
+- [x] **Phase 1** — Scaffold + persistence + CI
+- [x] **Phase 2** — Admin auth & ownership
+- [ ] **Phase 3** — Tournament & team setup
+- [ ] **Phase 4** — Invite-gated admin onboarding
+- [ ] **Phase 5** — Team magic-link access
+- [ ] **Phase 6** — Start tournament: rounds & Swiss pairing
+- [ ] **Phase 7** — Trio tables (odd team counts)
+- [ ] **Phase 8** — Game scoring
+- [ ] **Phase 9** — Confirmation & completion
+- [ ] **Phase 10** — Standings, next round & finish
+- [ ] **Phase 11** — SSE live events + statistics
+- [ ] **Phase 12** — Frontend foundation
+- [ ] **Phase 13** — Admin: auth, dashboard, tournament setup
+- [ ] **Phase 14** — Team: login & match overview
+- [ ] **Phase 15** — Game entry (scoring form)
+- [ ] **Phase 16** — Tournament management live
+- [ ] **Phase 17** — Public views, statistics & ship
+
+---
+
 ## Architectural decisions
 
 Durable decisions that apply across all phases:
@@ -70,7 +92,24 @@ Introduce admin accounts (email/password) with Spring Security token sessions, w
 
 ---
 
-## Phase 3: Invite-gated admin onboarding
+## Phase 3: Tournament & team setup
+
+**User stories**: As an organizer I create a tournament, describe it, set limits and settings (incl. grand Tichu toggle); I add teams with two named players each, catching duplicates and rule violations with clear, field-anchored error messages (stable server error codes, localized in the frontend).
+
+### What to build
+
+Full setup-phase CRUD: tournaments (name, description, max teams, settings, status `setup`), teams and their two players — players scoped to the tournament (no global player table), server-side validation ported from v1: unique team name per tournament, no player on two teams in one tournament, distinct players per team, no more than max teams. All mutations ownership-checked and transactional.
+
+### Acceptance criteria
+
+- [ ] Create/edit/delete tournament and teams via API, all returning typed validation errors
+- [ ] Duplicate player / duplicate team name / over-capacity violations rejected server-side with tests for each
+- [ ] Players are tournament-scoped: identical names allowed in different tournaments, impossible within one
+- [ ] Use-case unit tests cover the rule matrix; integration tests cover the endpoints
+
+---
+
+## Phase 4: Invite-gated admin onboarding
 
 **User stories**: As the platform owner I decide who becomes a tournament admin — I approve or reject registration requests and can invite someone directly; as a prospective organizer I register, wait to be approved (or use my invite), and only then can log in.
 
@@ -95,23 +134,6 @@ Close open registration. Admin accounts gain a lifecycle — `status` (`PENDING`
 - [ ] Bootstrap produces exactly one owner and offers no open owner-creation path (test)
 - [ ] Invite tokens are high-entropy, stored hashed, and never returned by any listing API (test)
 - [ ] Role/status checks live in the use-case layer; wiring stays `@Configuration` + `@Bean`
-
----
-
-## Phase 4: Tournament & team setup
-
-**User stories**: As an organizer I create a tournament, describe it, set limits and settings (incl. grand Tichu toggle); I add teams with two named players each, catching duplicates and rule violations with clear, field-anchored error messages (stable server error codes, localized in the frontend).
-
-### What to build
-
-Full setup-phase CRUD: tournaments (name, description, max teams, settings, status `setup`), teams and their two players — players scoped to the tournament (no global player table), server-side validation ported from v1: unique team name per tournament, no player on two teams in one tournament, distinct players per team, no more than max teams. All mutations ownership-checked and transactional.
-
-### Acceptance criteria
-
-- [ ] Create/edit/delete tournament and teams via API, all returning typed validation errors
-- [ ] Duplicate player / duplicate team name / over-capacity violations rejected server-side with tests for each
-- [ ] Players are tournament-scoped: identical names allowed in different tournaments, impossible within one
-- [ ] Use-case unit tests cover the rule matrix; integration tests cover the endpoints
 
 ---
 

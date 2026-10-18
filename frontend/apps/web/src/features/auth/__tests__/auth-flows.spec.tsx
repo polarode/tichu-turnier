@@ -197,6 +197,28 @@ describe('admin auth flows', () => {
         ).toBeInTheDocument();
     });
 
+    it('shows a localized error for a spent or revoked invite', async () => {
+        auth.register.mockRejectedValue(
+            new ApiError({
+                code: 'INVITE_INVALID',
+                status: 400,
+                field: null,
+                message: 'no longer valid',
+            }),
+        );
+        renderApp('/register?invite=spent-token');
+
+        await userEvent.type(await screen.findByLabelText('E-Mail'), 'invitee@example.com');
+        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
+        await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
+
+        expect(
+            await screen.findByText(
+                'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
+            ),
+        ).toBeInTheDocument();
+    });
+
     it('shows a distinct message when a pending account tries to log in', async () => {
         auth.login.mockRejectedValue(
             new ApiError({

@@ -40,12 +40,20 @@ docker compose up        # Postgres + backend + frontend dev server
 - Backend on http://localhost:8080, frontend on http://localhost:3000
 - PostgreSQL data persists in the `pgdata` volume; the backend applies Flyway
   migrations on startup
+- Postgres is published on `localhost:${POSTGRES_PORT:-5432}`. If 5432 is
+  already taken on your machine, `cp .env.example .env` and set `POSTGRES_PORT`
+  (e.g. `5433`) — the app containers reach the database over the compose network
+  regardless of the host port.
+- After changing backend code, rebuild with `docker compose up --build` (compose
+  reuses the existing image otherwise).
 
 ### Backend (without Docker)
 
 Needs PostgreSQL on `localhost:5432` (database `tichu_turnier`, user `tichu`,
 password `tichu`) — e.g. start only the database with
-`docker compose up postgres`. Then:
+`docker compose up postgres`. (If you published Postgres on a different host port
+via `POSTGRES_PORT`, point the backend at it with
+`SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:<port>/tichu_turnier`.) Then:
 
 ```bash
 cd backend

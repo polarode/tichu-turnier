@@ -5,7 +5,7 @@ import com.example.template.domain.AdminUserId
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
-import com.example.template.infra.persistence.InMemoryTeamRepository
+import com.example.template.testsupport.InMemoryTeamRepository
 import com.example.template.infra.persistence.InMemoryTournamentRepository
 import com.example.template.vocabulary.DuplicatePlayerNameException
 import com.example.template.vocabulary.DuplicateTeamNameException

@@ -1,4 +1,4 @@
-package com.example.template.infra.persistence
+package com.example.template.testsupport
 
 import com.example.template.domain.Team
 import com.example.template.domain.TeamId
@@ -26,7 +26,7 @@ class InMemoryTeamRepository : TeamRepository {
     override fun findById(teamId: TeamId, tournamentId: TournamentId): Team? =
         store[teamId.value]?.takeIf { it.tournamentId == tournamentId }
 
-    override fun delete(teamId: TeamId) {
-        store.remove(teamId.value)
+    override fun delete(teamId: TeamId, tournamentId: TournamentId) {
+        store.entries.removeIf { it.value.id == teamId && it.value.tournamentId == tournamentId }
     }
 }

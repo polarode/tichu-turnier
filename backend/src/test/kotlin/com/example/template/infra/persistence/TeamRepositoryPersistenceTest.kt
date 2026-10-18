@@ -13,12 +13,13 @@ import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
 import com.example.template.main.Application
 import com.example.template.testsupport.PostgresBackedIntegrationTest
+import com.example.template.vocabulary.DuplicatePlayerNameException
+import com.example.template.vocabulary.DuplicateTeamNameException
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -147,7 +148,7 @@ class TeamRepositoryPersistenceTest(
         teamRepository.save(team("t5-team-1", tournamentId, name = "Team Alpha"))
 
         val duplicate = team("t5-team-2", tournamentId, name = "Team Alpha", playerOneName = "Carol", playerTwoName = "Dave")
-        assertFailsWith<DataIntegrityViolationException> { teamRepository.save(duplicate) }
+        assertFailsWith<DuplicateTeamNameException> { teamRepository.save(duplicate) }
     }
 
     @Test
@@ -156,7 +157,8 @@ class TeamRepositoryPersistenceTest(
         teamRepository.save(team("t6-team-1", tournamentId, name = "Team Alpha", playerOneName = "Alice", playerTwoName = "Bob"))
 
         val duplicate = team("t6-team-2", tournamentId, name = "Team Beta", playerOneName = "Carol", playerTwoName = "Alice")
-        assertFailsWith<DataIntegrityViolationException> { teamRepository.save(duplicate) }
+        val ex = assertFailsWith<DuplicatePlayerNameException> { teamRepository.save(duplicate) }
+        assertEquals("playerTwoName", ex.field)
     }
 
     @Test
@@ -176,7 +178,7 @@ class TeamRepositoryPersistenceTest(
         val tournamentId = insertTournament()
         teamRepository.save(team("t8-team-1", tournamentId))
 
-        teamRepository.delete(TeamId("t8-team-1"))
+        teamRepository.delete(TeamId("t8-team-1"), tournamentId)
 
         assertEquals(0L, jdbcTemplate.queryForObject("SELECT count(*) FROM teams", Long::class.java))
         assertEquals(0L, jdbcTemplate.queryForObject("SELECT count(*) FROM players", Long::class.java))

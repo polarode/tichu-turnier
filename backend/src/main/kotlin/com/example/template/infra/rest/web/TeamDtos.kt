@@ -4,7 +4,6 @@ import com.example.template.application.api.TeamWriteRequest
 import com.example.template.domain.Player
 import com.example.template.domain.Team
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
 
 /**
  * Wire format of the team endpoints. The DTO carries the validation annotations;
@@ -13,13 +12,10 @@ import jakarta.validation.constraints.Size
  */
 data class TeamRequestDto(
     @field:NotBlank(message = "must not be blank")
-    @field:Size(max = 255, message = "must be at most 255 characters")
     val name: String,
     @field:NotBlank(message = "must not be blank")
-    @field:Size(max = 255, message = "must be at most 255 characters")
     val playerOneName: String,
     @field:NotBlank(message = "must not be blank")
-    @field:Size(max = 255, message = "must be at most 255 characters")
     val playerTwoName: String,
 ) {
     fun toWriteRequest(): TeamWriteRequest = TeamWriteRequest(

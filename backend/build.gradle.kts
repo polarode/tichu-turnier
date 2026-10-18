@@ -32,6 +32,10 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    // The persistence adapter reads PostgreSQL-specific server error details (unique
+    // constraint races) but must not hard-depend on the driver at runtime; it is already
+    // a runtime dependency below.
+    compileOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

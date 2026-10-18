@@ -21,5 +21,5 @@ interface TeamRepository {
     fun findById(teamId: TeamId, tournamentId: TournamentId): Team?
 
     /** Removes the team; its players go with it (ON DELETE CASCADE in the schema). */
-    fun delete(teamId: TeamId)
+    fun delete(teamId: TeamId, tournamentId: TournamentId)
 }

@@ -21,6 +21,10 @@ data class AdminUser(
     val approvedBy: AdminUserId? = null,
     /** When approval happened, recorded together with [approvedBy]. */
     val approvedAt: Instant? = null,
+    /** The owner who issued the invite this account was activated with, when it was not approved. */
+    val invitedBy: AdminUserId? = null,
+    /** When the invite was accepted, recorded together with [invitedBy]. */
+    val invitedAt: Instant? = null,
 ) {
     /** Only an [AdminStatus.ACTIVE] account may log in or authenticate a session. */
     fun isActive(): Boolean = status == AdminStatus.ACTIVE

@@ -1,6 +1,7 @@
 package com.example.template.infra.rest
 
 import com.example.template.application.api.ApproveAdmin
+import com.example.template.application.api.CreateInvite
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTeam
@@ -9,10 +10,12 @@ import com.example.template.application.api.DisableAdmin
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListAdmins
+import com.example.template.application.api.ListInvites
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.ReactivateAdmin
 import com.example.template.application.api.RejectAdmin
+import com.example.template.application.api.RevokeInvite
 import com.example.template.application.api.UpdateTeam
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
@@ -21,6 +24,7 @@ import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
 import com.example.template.infra.rest.web.AdminController
 import com.example.template.infra.rest.web.AuthController
+import com.example.template.infra.rest.web.InviteController
 import com.example.template.infra.rest.web.SessionCookieFactory
 import com.example.template.infra.rest.web.TeamController
 import com.example.template.infra.rest.web.TournamentController
@@ -39,6 +43,7 @@ class RestConfiguration(
     @param:Value("\${app.auth.session-cookie-name}") private val sessionCookieName: String,
     @param:Value("\${app.auth.session-cookie-secure}") private val sessionCookieSecure: Boolean,
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
+    @param:Value("\${app.frontend-url}") private val frontendUrl: String,
 ) {
 
     @Bean
@@ -83,6 +88,13 @@ class RestConfiguration(
         reactivateAdmin: ReactivateAdmin,
     ): AdminController =
         AdminController(listAdmins, approveAdmin, rejectAdmin, disableAdmin, reactivateAdmin)
+
+    @Bean
+    fun inviteController(
+        createInvite: CreateInvite,
+        listInvites: ListInvites,
+        revokeInvite: RevokeInvite,
+    ): InviteController = InviteController(createInvite, listInvites, revokeInvite, frontendUrl)
 
     @Bean
     fun webControllerAdvice(): WebControllerAdvice = WebControllerAdvice()

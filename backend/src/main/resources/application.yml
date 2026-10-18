@@ -26,6 +26,8 @@ app:
   auth:
     # Admin session lifetime (ISO-8601 duration). 168h = 7 days.
     session-ttl: PT168H
+    # Admin invite lifetime (ISO-8601 duration). 168h = 7 days.
+    invite-ttl: PT168H
     session-cookie-name: admin_session
     # Cookies are marked Secure. Modern browsers treat localhost as a secure
     # context, so this still works for local http dev; set false only for a

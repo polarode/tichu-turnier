@@ -13,6 +13,10 @@ import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
+import com.example.template.vocabulary.InviteEmailMismatchException
+import com.example.template.vocabulary.InviteExpiredException
+import com.example.template.vocabulary.InviteInvalidException
+import com.example.template.vocabulary.InviteStatusConflictException
 import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
 import com.example.template.vocabulary.TeamLimitReachedException
@@ -85,6 +89,26 @@ class WebControllerAdvice {
     /** An admin-management mutation that contradicts the target's current status: 409. */
     @ExceptionHandler(AdminStatusConflictException::class)
     fun handleAdminStatusConflict(ex: AdminStatusConflictException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** An unknown, spent or revoked invite presented at registration: 400. */
+    @ExceptionHandler(InviteInvalidException::class)
+    fun handleInviteInvalid(ex: InviteInvalidException): ProblemDetail =
+        problem(HttpStatus.BAD_REQUEST, ex)
+
+    /** A valid invite used with a different email than it was issued for: 400. */
+    @ExceptionHandler(InviteEmailMismatchException::class)
+    fun handleInviteEmailMismatch(ex: InviteEmailMismatchException): ProblemDetail =
+        problem(HttpStatus.BAD_REQUEST, ex)
+
+    /** A known invite whose lifetime has passed: 409, a state conflict rather than bad input. */
+    @ExceptionHandler(InviteExpiredException::class)
+    fun handleInviteExpired(ex: InviteExpiredException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Revoking an invite that is no longer pending: 409. */
+    @ExceptionHandler(InviteStatusConflictException::class)
+    fun handleInviteStatusConflict(ex: InviteStatusConflictException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
     /** The resource exists and is owned, but its state forbids the mutation: HTTP 409. */

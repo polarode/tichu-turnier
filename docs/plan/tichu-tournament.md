@@ -7,7 +7,7 @@
 - [x] **Phase 1** — Scaffold + persistence + CI
 - [x] **Phase 2** — Admin auth & ownership
 - [x] **Phase 3** — Tournament & team setup
-- [ ] **Phase 4** — Invite-gated admin onboarding
+- [x] **Phase 4** — Invite-gated admin onboarding
 - [ ] **Phase 5** — Team magic-link access
 - [ ] **Phase 6** — Start tournament: rounds & Swiss pairing
 - [ ] **Phase 7** — Trio tables (odd team counts)
@@ -109,7 +109,7 @@ Full setup-phase CRUD: tournaments (name, description, max teams, settings, stat
 
 ---
 
-## Phase 4: Invite-gated admin onboarding (in progress — #21, #22 done; #23 open)
+## Phase 4: Invite-gated admin onboarding ✅ (done — tickets #21, #22, #23)
 
 **User stories**: As the platform owner I decide who becomes a tournament admin — I approve or reject registration requests and can invite someone directly; as a prospective organizer I register, wait to be approved (or use my invite), and only then can log in.
 
@@ -129,10 +129,10 @@ Close open registration. Admin accounts gain a lifecycle — `status` (`PENDING`
 
 - [x] A newly registered account starts `PENDING` and cannot log in or reach any `/api/**` route until approved (test) — #21 + #22
 - [x] Owner can approve/reject/disable/reactivate admins; a disabled admin's existing session stops working on the next request (tests) — #21 + #22
-- [ ] Registering with a valid invite activates immediately; the invite is single-use, expiring and revocable (tests) — pending #23
+- [x] Registering with a valid invite activates immediately; the invite is single-use, expiring and revocable (tests) — #23
 - [x] Non-owner admin calling an owner-only endpoint gets 403 `ProblemDetail`; unauthenticated gets 401 — the two stay distinct (test) — #22
 - [x] Bootstrap produces exactly one owner and offers no open owner-creation path (test) — #21
-- [ ] Invite tokens are high-entropy, stored hashed, and never returned by any listing API (test) — pending #23
+- [x] Invite tokens are high-entropy, stored hashed, and never returned by any listing API (test) — #23
 - [x] Role/status checks live in the use-case layer; wiring stays `@Configuration` + `@Bean` — #21 + #22
 
 ---

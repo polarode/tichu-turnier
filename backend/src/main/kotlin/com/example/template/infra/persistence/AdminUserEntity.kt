@@ -28,6 +28,10 @@ class AdminUserEntity(
     val approvedBy: String?,
     /** Null until approval; recorded together with [approvedBy]. */
     val approvedAt: Instant?,
+    /** Null unless the account was activated by an invite; then the issuing owner's id. */
+    val invitedBy: String?,
+    /** Null unless the account was activated by an invite; recorded together with [invitedBy]. */
+    val invitedAt: Instant?,
 ) {
     fun toDomain(): AdminUser = AdminUser(
         id = AdminUserId(id),
@@ -38,6 +42,8 @@ class AdminUserEntity(
         createdAt = createdAt,
         approvedBy = approvedBy?.let(::AdminUserId),
         approvedAt = approvedAt,
+        invitedBy = invitedBy?.let(::AdminUserId),
+        invitedAt = invitedAt,
     )
 
     companion object {
@@ -50,6 +56,8 @@ class AdminUserEntity(
             createdAt = user.createdAt,
             approvedBy = user.approvedBy?.value,
             approvedAt = user.approvedAt,
+            invitedBy = user.invitedBy?.value,
+            invitedAt = user.invitedAt,
         )
     }
 }

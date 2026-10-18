@@ -3,6 +3,7 @@ package com.example.template.application.usecase
 import com.example.template.application.api.ApproveAdmin
 import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.BootstrapOwner
+import com.example.template.application.api.CreateInvite
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTeam
@@ -11,16 +12,19 @@ import com.example.template.application.api.DisableAdmin
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListAdmins
+import com.example.template.application.api.ListInvites
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.ReactivateAdmin
 import com.example.template.application.api.RejectAdmin
+import com.example.template.application.api.RevokeInvite
 import com.example.template.application.api.UpdateTeam
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
+import com.example.template.domain.AdminInviteRepository
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
@@ -42,6 +46,7 @@ import java.time.Duration
 @Configuration
 class UseCaseConfiguration(
     @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
+    @param:Value("\${app.auth.invite-ttl}") private val inviteTtl: Duration,
     @param:Value("\${app.auth.owner.email:}") private val ownerEmail: String,
     @param:Value("\${app.auth.owner.password-hash:}") private val ownerPasswordHash: String,
 ) {
@@ -115,10 +120,13 @@ class UseCaseConfiguration(
     @Bean
     fun registerAdmin(
         adminUsers: AdminUserRepository,
+        adminInvites: AdminInviteRepository,
         passwordHasher: PasswordHasher,
+        sessionTokens: SessionTokens,
         idGenerator: IdGenerator,
         clock: Clock,
-    ): RegisterAdmin = RegisterAdminCommand(adminUsers, passwordHasher, idGenerator, clock)
+    ): RegisterAdmin =
+        RegisterAdminCommand(adminUsers, adminInvites, passwordHasher, sessionTokens, idGenerator, clock)
 
     @Bean
     fun authenticateSession(
@@ -168,4 +176,20 @@ class UseCaseConfiguration(
 
     @Bean
     fun reactivateAdmin(adminUsers: AdminUserRepository): ReactivateAdmin = ReactivateAdminCommand(adminUsers)
+
+    @Bean
+    fun createInvite(
+        adminInvites: AdminInviteRepository,
+        adminUsers: AdminUserRepository,
+        sessionTokens: SessionTokens,
+        idGenerator: IdGenerator,
+        clock: Clock,
+    ): CreateInvite =
+        CreateInviteCommand(adminInvites, adminUsers, sessionTokens, idGenerator, clock, inviteTtl)
+
+    @Bean
+    fun listInvites(adminInvites: AdminInviteRepository): ListInvites = ListInvitesQuery(adminInvites)
+
+    @Bean
+    fun revokeInvite(adminInvites: AdminInviteRepository): RevokeInvite = RevokeInviteCommand(adminInvites)
 }

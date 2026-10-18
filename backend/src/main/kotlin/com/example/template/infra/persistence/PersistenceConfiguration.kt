@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.AdminInviteRepository
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
@@ -23,6 +24,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 class PersistenceConfiguration(
     private val springDataTournamentRepository: SpringDataTournamentRepository,
     private val springDataAdminUserRepository: SpringDataAdminUserRepository,
+    private val springDataAdminInviteRepository: SpringDataAdminInviteRepository,
     private val springDataAdminSessionRepository: SpringDataAdminSessionRepository,
     private val springDataTeamRepository: SpringDataTeamRepository,
     private val springDataPlayerRepository: SpringDataPlayerRepository,
@@ -39,6 +41,10 @@ class PersistenceConfiguration(
     @Bean
     fun adminUserRepository(): AdminUserRepository =
         JpaAdminUserRepository(springDataAdminUserRepository)
+
+    @Bean
+    fun adminInviteRepository(): AdminInviteRepository =
+        JpaAdminInviteRepository(springDataAdminInviteRepository)
 
     @Bean
     fun adminSessionRepository(): AdminSessionRepository =

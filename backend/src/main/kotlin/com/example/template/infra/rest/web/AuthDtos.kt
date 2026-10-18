@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size
 data class RegisterAdminRequestBody(
     @field:NotBlank @field:Email val email: String,
     @field:NotBlank @field:Size(min = 8, max = 100) val password: String,
+    /** Raw token from an invite link; when present and valid the account activates immediately. */
+    val inviteToken: String? = null,
 )
 
 data class LoginRequestBody(

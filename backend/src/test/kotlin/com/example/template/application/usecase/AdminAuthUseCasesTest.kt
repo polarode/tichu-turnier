@@ -9,6 +9,7 @@ import com.example.template.domain.IdGenerator
 import com.example.template.domain.SessionId
 import com.example.template.domain.SessionTokens
 import com.example.template.infra.security.BcryptPasswordHasher
+import com.example.template.testsupport.InMemoryAdminInviteRepository
 import com.example.template.testsupport.InMemoryAdminSessionRepository
 import com.example.template.testsupport.InMemoryAdminUserRepository
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
@@ -38,6 +39,7 @@ class AdminAuthUseCasesTest {
     private val ttl = Duration.ofDays(7)
 
     private val users = InMemoryAdminUserRepository()
+    private val invites = InMemoryAdminInviteRepository()
     private val sessions = InMemoryAdminSessionRepository()
     private val passwordHasher = BcryptPasswordHasher()
     private val sessionTokens = object : SessionTokens {
@@ -51,7 +53,7 @@ class AdminAuthUseCasesTest {
     }
 
     private val sessionIssuer = AdminSessionIssuer(sessions, sessionTokens, idGenerator, ttl)
-    private val registerAdmin = RegisterAdminCommand(users, passwordHasher, idGenerator, fixedClock)
+    private val registerAdmin = RegisterAdminCommand(users, invites, passwordHasher, sessionTokens, idGenerator, fixedClock)
     private val loginAdmin = LoginAdminCommand(users, passwordHasher, sessionIssuer, fixedClock)
     private val refreshSession = RefreshSessionCommand(sessions, users, sessionTokens, sessionIssuer, fixedClock)
     private val logoutAdmin = LogoutAdminCommand(sessions, sessionTokens)

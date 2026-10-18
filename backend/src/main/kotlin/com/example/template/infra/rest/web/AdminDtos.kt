@@ -18,6 +18,8 @@ data class AdminAccountResponse(
     val createdAt: Instant,
     val approvedBy: String?,
     val approvedAt: Instant?,
+    val invitedBy: String?,
+    val invitedAt: Instant?,
 ) {
     companion object {
         fun from(view: AdminAccountView): AdminAccountResponse = AdminAccountResponse(
@@ -28,6 +30,8 @@ data class AdminAccountResponse(
             createdAt = view.createdAt,
             approvedBy = view.approvedBy?.value,
             approvedAt = view.approvedAt,
+            invitedBy = view.invitedBy?.value,
+            invitedAt = view.invitedAt,
         )
     }
 }

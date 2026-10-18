@@ -20,6 +20,10 @@ data class AdminAccountView(
     val createdAt: Instant,
     val approvedBy: AdminUserId?,
     val approvedAt: Instant?,
+    /** The owner who invited this account, when it was activated by an invite rather than an approval. */
+    val invitedBy: AdminUserId?,
+    /** When the invite was accepted, recorded together with [invitedBy]. */
+    val invitedAt: Instant?,
 )
 
 /** The single projection point; every admin-management use case returns through it. */
@@ -31,4 +35,6 @@ fun AdminUser.toView(): AdminAccountView = AdminAccountView(
     createdAt = createdAt,
     approvedBy = approvedBy,
     approvedAt = approvedAt,
+    invitedBy = invitedBy,
+    invitedAt = invitedAt,
 )

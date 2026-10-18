@@ -5,6 +5,7 @@ import com.example.template.domain.AdminRole
 import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
+import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.NotFoundException
 
@@ -27,3 +28,13 @@ internal fun AuthenticatedAdmin.requireOwner() {
  */
 internal fun AdminUserRepository.requireById(id: AdminUserId): AdminUser =
     findById(id) ?: throw NotFoundException("Admin account not found")
+
+/**
+ * Refuses an email that already has an account. Registration and invite issuance share
+ * the rule so neither can create a second account (or a dead invite) for a taken email.
+ */
+internal fun AdminUserRepository.requireEmailFree(email: String) {
+    if (findByEmail(email) != null) {
+        throw EmailAlreadyRegisteredException("An account with this email already exists")
+    }
+}

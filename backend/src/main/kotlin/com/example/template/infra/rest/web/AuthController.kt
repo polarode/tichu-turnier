@@ -35,7 +35,11 @@ class AuthController(
     @ResponseStatus(HttpStatus.CREATED)
     fun register(@Valid @RequestBody body: RegisterAdminRequestBody): AdminResponse {
         val user = registerAdmin.register(
-            RegisterAdmin.RegisterAdminRequest(email = body.email, password = body.password),
+            RegisterAdmin.RegisterAdminRequest(
+                email = body.email,
+                password = body.password,
+                inviteToken = body.inviteToken,
+            ),
         )
         return AdminResponse(id = user.id.value, email = user.email)
     }

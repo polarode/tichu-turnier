@@ -42,6 +42,18 @@ enum class ErrorCode {
      * state (approving a non-pending request, reactivating a non-disabled account, ...).
      */
     ADMIN_STATUS_CONFLICT,
+
+    /** An invite token is unknown, or names an invite that is already spent or revoked. */
+    INVITE_INVALID,
+
+    /** An invite token is known but its expiry has passed. */
+    INVITE_EXPIRED,
+
+    /** An invite token is valid, but the registering email does not match the address it was issued for. */
+    INVITE_EMAIL_MISMATCH,
+
+    /** An invite-management mutation conflicts with the invite's current state (revoking a spent/revoked invite). */
+    INVITE_STATUS_CONFLICT,
 }
 
 /**
@@ -117,6 +129,37 @@ class ForbiddenException(message: String) :
  */
 class AdminStatusConflictException(message: String) :
     ApiException(ErrorCode.ADMIN_STATUS_CONFLICT, message)
+
+/**
+ * Base for invite rejections. Each concrete subtype carries its own stable [ErrorCode] so
+ * the frontend can tell a stale link from a wrong email; the web adapter maps them to
+ * statuses.
+ */
+open class InviteException(code: ErrorCode, message: String) : ApiException(code, message)
+
+/**
+ * Thrown when an invite token is unknown, or names an invite that has already been
+ * spent or revoked. The three are deliberately indistinguishable so a guessed token
+ * reveals nothing about whether it ever existed. Mapped to HTTP 400.
+ */
+class InviteInvalidException(message: String) : InviteException(ErrorCode.INVITE_INVALID, message)
+
+/** Thrown when a known, usable invite's expiry has passed. Mapped to HTTP 409. */
+class InviteExpiredException(message: String) : InviteException(ErrorCode.INVITE_EXPIRED, message)
+
+/**
+ * Thrown when a valid invite is presented for a registration with a different email
+ * than the address it was issued for. Mapped to HTTP 400.
+ */
+class InviteEmailMismatchException(message: String) :
+    InviteException(ErrorCode.INVITE_EMAIL_MISMATCH, message)
+
+/**
+ * Thrown when an owner tries to revoke an invite that is no longer pending. Mapped to
+ * HTTP 409.
+ */
+class InviteStatusConflictException(message: String) :
+    InviteException(ErrorCode.INVITE_STATUS_CONFLICT, message)
 
 /**
  * Thrown when a tournament edit is attempted in a lifecycle state that does not allow

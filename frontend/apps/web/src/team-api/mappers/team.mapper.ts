@@ -1,5 +1,5 @@
 import type { Player } from '@/domain/player.domain.ts';
-import type { Team } from '@/domain/team.domain.ts';
+import type { Team, TeamWriteInput } from '@/domain/team.domain.ts';
 import type { PlayerDto, TeamDto, TeamWriteRequestDto } from '@/team-api/dtos/team.dto.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
@@ -20,11 +20,20 @@ export function teamDtoToDomain(dto: TeamDto): Team {
     };
 }
 
-/** Domain → write payload, used when a form edits an existing team. */
-export function teamToWriteRequestDto(team: Team): TeamWriteRequestDto {
+/** Domain team → editable input, used prefill an edit form. */
+export function teamToWriteInput(team: Team): TeamWriteInput {
     return {
         name: team.name,
         playerOneName: team.players[0].name,
         playerTwoName: team.players[1].name,
+    };
+}
+
+/** Domain write input → wire payload; keeps the DTO out of the hooks. */
+export function teamWriteInputToDto(input: TeamWriteInput): TeamWriteRequestDto {
+    return {
+        name: input.name,
+        playerOneName: input.playerOneName,
+        playerTwoName: input.playerTwoName,
     };
 }

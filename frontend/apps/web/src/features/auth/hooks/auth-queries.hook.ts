@@ -1,19 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
-import type { CredentialsRequestDto } from '@/auth-api/dtos/auth.dto.ts';
-import type { AdminUser } from '@/domain/admin-user.domain.ts';
+import type { AdminCredentials, AdminUser } from '@/domain/admin-user.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
-import { QueryKeys } from '@/shared/constants/query-keys.ts';
+import { sessionQueryKey } from '@/shared/constants/query-keys.ts';
 
 /**
  * Resolves the current admin by rotating the session cookie server-side. A 401 is a
  * normal "not signed in" outcome, not an error: it resolves to null so guarded screens
- * can redirect instead of showing a failure.
+ * can redirect instead of showing a failure. The long `staleTime` keeps the rotating
+ * refresh from firing on every mount.
  */
 export function useSession() {
     return useQuery({
-        queryKey: [QueryKeys.SESSION],
+        queryKey: sessionQueryKey(),
         queryFn: async (): Promise<AdminUser | null> => {
             try {
                 return await AuthRepository.refresh();
@@ -23,20 +23,21 @@ export function useSession() {
             }
         },
         retry: false,
+        staleTime: 5 * 60_000,
     });
 }
 
 export function useRegisterAdmin() {
     return useMutation({
-        mutationFn: (request: CredentialsRequestDto) => AuthRepository.register(request),
+        mutationFn: (credentials: AdminCredentials) => AuthRepository.register(credentials),
     });
 }
 
 export function useLoginAdmin() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (request: CredentialsRequestDto) => AuthRepository.login(request),
-        onSuccess: (admin) => queryClient.setQueryData([QueryKeys.SESSION], admin),
+        mutationFn: (credentials: AdminCredentials) => AuthRepository.login(credentials),
+        onSuccess: (admin) => queryClient.setQueryData(sessionQueryKey(), admin),
     });
 }
 
@@ -44,6 +45,6 @@ export function useLogoutAdmin() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: () => AuthRepository.logout(),
-        onSuccess: () => queryClient.setQueryData([QueryKeys.SESSION], null),
+        onSuccess: () => queryClient.setQueryData(sessionQueryKey(), null),
     });
 }

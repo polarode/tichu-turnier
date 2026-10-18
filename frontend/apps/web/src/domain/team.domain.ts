@@ -11,3 +11,13 @@ export interface Team {
     name: string;
     players: readonly [Player, Player];
 }
+
+/**
+ * The editable fields of a team, as forms produce them. A domain-level input so the
+ * layers above the repository never see the wire DTO.
+ */
+export interface TeamWriteInput {
+    name: string;
+    playerOneName: string;
+    playerTwoName: string;
+}

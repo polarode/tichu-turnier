@@ -4,6 +4,7 @@ import {
     tournamentDtoToDomain,
     tournamentSettingsDtoToDomain,
     tournamentSettingsToDto,
+    tournamentWriteInputToDto,
 } from '@/tournament-api/mappers/tournament.mapper.ts';
 import type { TournamentDto } from '@/tournament-api/dtos/tournament.dto.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
@@ -44,6 +45,24 @@ describe('tournament settings mapping', () => {
     it('maps settings domain → DTO', () => {
         expect(tournamentSettingsToDto({ allowGrandTichu: false })).toEqual({
             allowGrandTichu: false,
+        });
+    });
+});
+
+describe('tournamentWriteInputToDto', () => {
+    it('maps a domain write input to the wire payload', () => {
+        expect(
+            tournamentWriteInputToDto({
+                name: 'Spring Classic',
+                description: 'annual invitational',
+                maxTeams: 16,
+                settings: { allowGrandTichu: true },
+            }),
+        ).toEqual({
+            name: 'Spring Classic',
+            description: 'annual invitational',
+            maxTeams: 16,
+            settings: { allowGrandTichu: true },
         });
     });
 });

@@ -6,3 +6,12 @@ export interface AdminUser {
     id: string;
     email: string;
 }
+
+/**
+ * Credentials an organizer submits. A domain-level input type so the layers above the
+ * repository never see the wire DTO; the repository maps it at the boundary.
+ */
+export interface AdminCredentials {
+    email: string;
+    password: string;
+}

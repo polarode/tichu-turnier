@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
  * zod schemas describing the tournament wire format. Every response is parsed through
@@ -19,11 +19,7 @@ export const tournamentDtoSchema = z.object({
     description: z.string(),
     maxTeams: z.number(),
     settings: tournamentSettingsDtoSchema,
-    status: z.enum([
-        TournamentStatus.SETUP,
-        TournamentStatus.ACTIVE,
-        TournamentStatus.COMPLETED,
-    ]),
+    status: z.enum(TOURNAMENT_STATUSES),
     createdAt: z.string(),
     updatedAt: z.string(),
 });

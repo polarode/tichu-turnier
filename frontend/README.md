@@ -22,23 +22,27 @@ VITE_API_URL=http://localhost:9000 pnpm dev
 ## Structure (`apps/web/src`)
 
 ```
-domain/              # framework-free domain models
-vocabulary/          # enums / shared value types
+domain/              # framework-free domain models + write inputs
+vocabulary/          # enums / shared value types (status, backend error codes)
+auth-api/            # one folder per upstream API: repository + dtos/ + mappers/
+tournament-api/
+team-api/
 features/            # feature folders: components, hooks, queries
 shared/
+  api/               #   shared axios client + typed ApiError (ProblemDetail mapping)
   components/        #   cross-cutting components (AppShell, PagePlaceholder)
+  constants/         #   centralized query keys
   i18n/              #   i18n provider, de/en catalogs, language switch
+  sse/               #   reconnecting SSE client
 routes/              # TanStack Router file-based routes (admin, team, public, login)
 router.ts            # QueryClient + router
 main.tsx             # entry
 test-helpers/        # shared test setup, render-with-providers, renderApp
 ```
 
-The API layer (`*-api/`) is added in a later step, following the template's
-`api client → repository → zod DTO → mapper → domain` shape. `domain/`,
-`vocabulary/` and `features/` are likewise conventions for later slices; today
-`src/` holds the shell under `shared/components`, the i18n setup under
-`shared/i18n`, and the routes.
+The data layer follows the template's `api client → repository → zod DTO → mapper →
+domain` shape. Each `*-api/` folder is the only place that knows its wire DTOs;
+forms and hooks pass domain types (including the `*WriteInput` types).
 
 ## Areas and routes
 
@@ -73,8 +77,7 @@ component → TanStack Query hook → repository → axios client → backend
                                      └─ zod parse + DTO→domain mapping
 ```
 
-- **Server state:** TanStack Query, keyed by `shared/constants/query-keys.ts`
-  (introduced with the API layer).
+- **Server state:** TanStack Query, keyed by `shared/constants/query-keys.ts`.
 - **Client/UI state:** Zustand (`shared/stores`), added when the first store is needed.
 - **Forms:** react-hook-form + zod resolver.
 - **Styling:** Tailwind CSS v4, primitives from `@tichu/ui`.

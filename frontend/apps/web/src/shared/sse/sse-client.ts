@@ -1,5 +1,7 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 
+import { resolveApiUrl } from '@/shared/api/api-client.ts';
+
 /**
  * The subset of the browser `EventSource` the client relies on, so tests can supply a
  * fake and so a future transport can be swapped without touching the client.
@@ -21,7 +23,7 @@ export interface SseSubscription {
 }
 
 export interface SseClientOptions {
-    /** Stream URL, e.g. `/api/tournaments/{id}/events`. */
+    /** Stream path or URL; a relative path is resolved against the API base. */
     url: string;
     queryClient: Pick<QueryClient, 'invalidateQueries'>;
     subscriptions: readonly SseSubscription[];
@@ -31,15 +33,13 @@ export interface SseClientOptions {
     initialRetryDelayMs?: number;
     /** Upper bound for the exponential backoff. */
     maxRetryDelayMs?: number;
-    setTimeoutFn?: (handler: () => void, delayMs: number) => ReturnType<typeof setTimeout>;
-    clearTimeoutFn?: (handle: ReturnType<typeof setTimeout>) => void;
 }
 
 const DEFAULT_INITIAL_RETRY_DELAY_MS = 1_000;
 const DEFAULT_MAX_RETRY_DELAY_MS = 30_000;
 
 function defaultEventSourceFactory(url: string): ServerEventSource {
-    return new EventSource(url, { withCredentials: true });
+    return new EventSource(resolveApiUrl(url), { withCredentials: true });
 }
 
 /**
@@ -52,10 +52,6 @@ function defaultEventSourceFactory(url: string): ServerEventSource {
  * subscriptions, so live wiring is a one-line change once it does.
  */
 export class SseClient {
-    private readonly eventSourceFactory: (url: string) => ServerEventSource;
-    private readonly setTimeoutFn: (handler: () => void, delayMs: number) => ReturnType<typeof setTimeout>;
-    private readonly clearTimeoutFn: (handle: ReturnType<typeof setTimeout>) => void;
-
     private source: ServerEventSource | null = null;
     private retryHandle: ReturnType<typeof setTimeout> | null = null;
     private retryDelayMs: number;
@@ -63,9 +59,6 @@ export class SseClient {
     private listeners: Array<{ event: string; listener: (event: MessageEvent) => void }> = [];
 
     constructor(private readonly options: SseClientOptions) {
-        this.eventSourceFactory = options.eventSourceFactory ?? defaultEventSourceFactory;
-        this.setTimeoutFn = options.setTimeoutFn ?? setTimeout;
-        this.clearTimeoutFn = options.clearTimeoutFn ?? clearTimeout;
         this.retryDelayMs = options.initialRetryDelayMs ?? DEFAULT_INITIAL_RETRY_DELAY_MS;
     }
 
@@ -81,7 +74,7 @@ export class SseClient {
     disconnect(): void {
         this.stopped = true;
         if (this.retryHandle !== null) {
-            this.clearTimeoutFn(this.retryHandle);
+            clearTimeout(this.retryHandle);
             this.retryHandle = null;
         }
         this.closeSource();
@@ -91,13 +84,9 @@ export class SseClient {
         return this.source !== null;
     }
 
-    /** The delay the next reconnect will use; exposed for diagnostics and tests. */
-    get nextRetryDelayMs(): number {
-        return this.retryDelayMs;
-    }
-
     private open(): void {
-        const source = this.eventSourceFactory(this.options.url);
+        const factory = this.options.eventSourceFactory ?? defaultEventSourceFactory;
+        const source = factory(this.options.url);
         this.source = source;
 
         source.onopen = () => {
@@ -124,7 +113,7 @@ export class SseClient {
         this.closeSource();
 
         const maxDelay = this.options.maxRetryDelayMs ?? DEFAULT_MAX_RETRY_DELAY_MS;
-        this.retryHandle = this.setTimeoutFn(() => {
+        this.retryHandle = setTimeout(() => {
             this.retryHandle = null;
             if (this.stopped) return;
             this.open();

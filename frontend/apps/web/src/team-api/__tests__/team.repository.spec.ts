@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ApiError } from '@/shared/api/api-error.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
-import type { TeamWriteRequestDto } from '@/team-api/dtos/team.dto.ts';
+import type { TeamWriteInput } from '@/domain/team.domain.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 
 const teamDto = {
@@ -16,7 +16,7 @@ const teamDto = {
     ],
 };
 
-const writeRequest: TeamWriteRequestDto = {
+const writeRequest: TeamWriteInput = {
     name: 'The Aces',
     playerOneName: 'Alice',
     playerTwoName: 'Bob',

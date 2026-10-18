@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ApiError, UNKNOWN_ERROR_CODE } from '@/shared/api/api-error.ts';
-import { apiClient } from '@/shared/api/api-client.ts';
+import { apiClient, resolveApiUrl } from '@/shared/api/api-client.ts';
 
 describe('apiClient', () => {
     let mock: MockAdapter;
@@ -17,6 +17,10 @@ describe('apiClient', () => {
 
     it('sends the httpOnly session cookie', () => {
         expect(apiClient.defaults.withCredentials).toBe(true);
+    });
+
+    it('resolves relative paths against the API base', () => {
+        expect(resolveApiUrl('/api/tournaments')).toMatch(/^https?:\/\/.+\/api\/tournaments$/);
     });
 
     it('maps a problem response to a typed ApiError with its code', async () => {

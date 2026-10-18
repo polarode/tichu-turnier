@@ -5,6 +5,9 @@ export const QueryKeys = {
     TEAMS: 'teams',
 } as const;
 
+/** Key for the current admin session. */
+export const sessionQueryKey = () => [QueryKeys.SESSION] as const;
+
 /** Key for a single tournament; the list key is `[QueryKeys.TOURNAMENTS]`. */
 export const tournamentQueryKey = (id: string) => [QueryKeys.TOURNAMENTS, id] as const;
 

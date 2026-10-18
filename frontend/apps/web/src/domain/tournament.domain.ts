@@ -19,3 +19,14 @@ export interface Tournament {
     createdAt: Date;
     updatedAt: Date;
 }
+
+/**
+ * The editable fields of a tournament, as forms produce them. A domain-level input so
+ * the layers above the repository never see the wire DTO.
+ */
+export interface TournamentWriteInput {
+    name: string;
+    description: string;
+    maxTeams: number;
+    settings: TournamentSettings;
+}

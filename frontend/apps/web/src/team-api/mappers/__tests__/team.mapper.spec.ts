@@ -4,7 +4,8 @@ import type { PlayerDto, TeamDto } from '@/team-api/dtos/team.dto.ts';
 import {
     playerDtoToDomain,
     teamDtoToDomain,
-    teamToWriteRequestDto,
+    teamToWriteInput,
+    teamWriteInputToDto,
 } from '@/team-api/mappers/team.mapper.ts';
 
 const playerOne: PlayerDto = { id: 'p-1', teamId: 'team-1', name: 'Alice' };
@@ -40,9 +41,25 @@ describe('teamDtoToDomain', () => {
     });
 });
 
-describe('teamToWriteRequestDto', () => {
-    it('maps a domain team back to the create/update payload', () => {
-        expect(teamToWriteRequestDto(teamDtoToDomain(team))).toEqual({
+describe('teamToWriteInput', () => {
+    it('maps a domain team back to editable input', () => {
+        expect(teamToWriteInput(teamDtoToDomain(team))).toEqual({
+            name: 'The Aces',
+            playerOneName: 'Alice',
+            playerTwoName: 'Bob',
+        });
+    });
+});
+
+describe('teamWriteInputToDto', () => {
+    it('maps domain write input to the wire payload', () => {
+        expect(
+            teamWriteInputToDto({
+                name: 'The Aces',
+                playerOneName: 'Alice',
+                playerTwoName: 'Bob',
+            }),
+        ).toEqual({
             name: 'The Aces',
             playerOneName: 'Alice',
             playerTwoName: 'Bob',

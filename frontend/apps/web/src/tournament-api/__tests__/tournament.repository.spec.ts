@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ApiError } from '@/shared/api/api-error.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
-import type { TournamentWriteRequestDto } from '@/tournament-api/dtos/tournament.dto.ts';
+import type { TournamentWriteInput } from '@/domain/tournament.domain.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
@@ -18,7 +18,7 @@ const dto = {
     updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-const writeRequest: TournamentWriteRequestDto = {
+const writeRequest: TournamentWriteInput = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { TeamWriteInput } from '@/domain/team.domain.ts';
 import { teamQueryKey, teamsQueryKey } from '@/shared/constants/query-keys.ts';
-import type { TeamWriteRequestDto } from '@/team-api/dtos/team.dto.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 
 /**
@@ -25,8 +25,7 @@ export function useTeam(tournamentId: string, teamId: string) {
 export function useCreateTeam(tournamentId: string) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (request: TeamWriteRequestDto) =>
-            TeamRepository.create(tournamentId, request),
+        mutationFn: (input: TeamWriteInput) => TeamRepository.create(tournamentId, input),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: teamsQueryKey(tournamentId) }),
     });
 }
@@ -34,8 +33,8 @@ export function useCreateTeam(tournamentId: string) {
 export function useUpdateTeam(tournamentId: string) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ teamId, request }: { teamId: string; request: TeamWriteRequestDto }) =>
-            TeamRepository.update(tournamentId, teamId, request),
+        mutationFn: ({ teamId, input }: { teamId: string; input: TeamWriteInput }) =>
+            TeamRepository.update(tournamentId, teamId, input),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: teamsQueryKey(tournamentId) }),
     });
 }

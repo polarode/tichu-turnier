@@ -4,7 +4,13 @@ import com.example.template.application.api.CreateTask
 import com.example.template.application.api.DeleteTask
 import com.example.template.application.api.GetTask
 import com.example.template.application.api.ListTasks
+import com.example.template.application.api.LoginAdmin
+import com.example.template.application.api.LogoutAdmin
+import com.example.template.application.api.RefreshSession
+import com.example.template.application.api.RegisterAdmin
 import com.example.template.application.api.UpdateTask
+import com.example.template.infra.rest.web.AuthController
+import com.example.template.infra.rest.web.SessionCookieFactory
 import com.example.template.infra.rest.web.TaskController
 import com.example.template.infra.rest.web.WebControllerAdvice
 import org.springframework.beans.factory.annotation.Value
@@ -12,6 +18,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import java.time.Duration
 
 /**
  * Wires the web adapters as beans. Controllers receive inbound ports as
@@ -20,6 +27,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 @Configuration
 class RestConfiguration(
     @param:Value("\${app.frontend-url}") private val frontendUrl: String,
+    @param:Value("\${app.auth.session-cookie-name}") private val sessionCookieName: String,
+    @param:Value("\${app.auth.session-cookie-secure}") private val sessionCookieSecure: Boolean,
+    @param:Value("\${app.auth.session-ttl}") private val sessionTtl: Duration,
 ) {
 
     @Bean
@@ -32,6 +42,20 @@ class RestConfiguration(
     ): TaskController = TaskController(createTask, listTasks, getTask, updateTask, deleteTask)
 
     @Bean
+    fun sessionCookieFactory(): SessionCookieFactory =
+        SessionCookieFactory(sessionCookieName, sessionCookieSecure, sessionTtl)
+
+    @Bean
+    fun authController(
+        registerAdmin: RegisterAdmin,
+        loginAdmin: LoginAdmin,
+        refreshSession: RefreshSession,
+        logoutAdmin: LogoutAdmin,
+        sessionCookie: SessionCookieFactory,
+    ): AuthController =
+        AuthController(registerAdmin, loginAdmin, refreshSession, logoutAdmin, sessionCookie)
+
+    @Bean
     fun webControllerAdvice(): WebControllerAdvice = WebControllerAdvice()
 
     @Bean
@@ -40,6 +64,7 @@ class RestConfiguration(
             registry.addMapping("/api/**")
                 .allowedOrigins(frontendUrl)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowCredentials(true)
         }
     }
 }

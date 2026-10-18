@@ -3,6 +3,7 @@ package com.example.template.main
 import com.example.template.application.usecase.UseCaseConfiguration
 import com.example.template.infra.persistence.PersistenceConfiguration
 import com.example.template.infra.rest.RestConfiguration
+import com.example.template.infra.security.SecurityConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Configuration
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Import
 @Import(
     UseCaseConfiguration::class,
     PersistenceConfiguration::class,
+    SecurityConfiguration::class,
     RestConfiguration::class,
 )
 class Application

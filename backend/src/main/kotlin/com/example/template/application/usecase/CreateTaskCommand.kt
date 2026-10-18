@@ -4,6 +4,7 @@ import com.example.template.application.api.CreateTask
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.Task
 import com.example.template.domain.TaskRepository
+import com.example.template.domain.TaskId
 import com.example.template.domain.TaskStatus
 import com.example.template.vocabulary.InvalidInputException
 import java.time.Clock
@@ -24,7 +25,7 @@ class CreateTaskCommand(
         }
         val now = clock.instant()
         val task = Task(
-            id = idGenerator.newId(),
+            id = TaskId(idGenerator.newId()),
             title = command.title.trim(),
             description = command.description.trim(),
             status = TaskStatus.TODO,

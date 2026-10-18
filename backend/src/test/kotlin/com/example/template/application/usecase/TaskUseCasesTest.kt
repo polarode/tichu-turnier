@@ -28,7 +28,7 @@ class TaskUseCasesTest {
     private val repository = InMemoryTaskRepository()
     private val idGenerator = object : IdGenerator {
         private var counter = 0
-        override fun newId(): TaskId = TaskId("task-${++counter}")
+        override fun newId(): String = "task-${++counter}"
     }
 
     private val createTask = CreateTaskCommand(repository, idGenerator, fixedClock)

@@ -22,3 +22,12 @@ server:
 app:
   # Origin allowed by CORS; the frontend dev server runs here.
   frontend-url: http://localhost:3000
+
+  auth:
+    # Admin session lifetime (ISO-8601 duration). 168h = 7 days.
+    session-ttl: PT168H
+    session-cookie-name: admin_session
+    # Cookies are marked Secure. Modern browsers treat localhost as a secure
+    # context, so this still works for local http dev; set false only for a
+    # plain-http non-local host.
+    session-cookie-secure: true

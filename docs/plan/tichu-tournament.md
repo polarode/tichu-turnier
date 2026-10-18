@@ -92,7 +92,7 @@ Introduce admin accounts (email/password) with Spring Security token sessions, w
 
 ---
 
-## Phase 3: Tournament & team setup
+## Phase 3: Tournament & team setup (in progress — ticket 005 done; tickets 006–008 open)
 
 **User stories**: As an organizer I create a tournament, describe it, set limits and settings (incl. grand Tichu toggle); I add teams with two named players each, catching duplicates and rule violations with clear, field-anchored error messages (stable server error codes, localized in the frontend).
 

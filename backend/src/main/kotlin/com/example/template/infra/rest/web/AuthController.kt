@@ -41,7 +41,7 @@ class AuthController(
                 inviteToken = body.inviteToken,
             ),
         )
-        return AdminResponse(id = user.id.value, email = user.email)
+        return AdminResponse(id = user.id.value, email = user.email, role = user.role)
     }
 
     @PostMapping("/login")
@@ -53,7 +53,7 @@ class AuthController(
             LoginAdmin.LoginAdminRequest(email = body.email, password = body.password),
         )
         response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.session(issued.token).toString())
-        return AdminResponse(id = issued.adminUserId.value, email = issued.email)
+        return AdminResponse(id = issued.adminUserId.value, email = issued.email, role = issued.role)
     }
 
     @PostMapping("/refresh")
@@ -66,7 +66,7 @@ class AuthController(
 
         val issued = refreshSession.refresh(token)
         response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.session(issued.token).toString())
-        return AdminResponse(id = issued.adminUserId.value, email = issued.email)
+        return AdminResponse(id = issued.adminUserId.value, email = issued.email, role = issued.role)
     }
 
     @PostMapping("/logout")

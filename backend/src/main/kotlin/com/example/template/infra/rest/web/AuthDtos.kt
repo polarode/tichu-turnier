@@ -1,5 +1,6 @@
 package com.example.template.infra.rest.web
 
+import com.example.template.domain.AdminRole
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -21,4 +22,6 @@ data class LoginRequestBody(
 data class AdminResponse(
     val id: String,
     val email: String,
+    /** The account's role, so the client can gate an owner-only console. */
+    val role: AdminRole,
 )

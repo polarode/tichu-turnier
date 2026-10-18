@@ -35,6 +35,7 @@ class AdminSessionIssuer(
         return IssuedSession(
             adminUserId = user.id,
             email = user.email,
+            role = user.role,
             token = rawToken,
             expiresAt = session.expiresAt,
         )

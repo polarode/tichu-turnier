@@ -1,5 +1,6 @@
 package com.example.template.infra.rest
 
+import com.example.template.domain.AdminRole
 import com.example.template.domain.AdminStatus
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.PasswordHasher
@@ -175,6 +176,28 @@ class AuthControllerIntegrationTest(
 
         mockMvc.perform(post("/api/auth/refresh").cookie(withSessionCookie(first)))
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `the session view carries the account role`() {
+        val email = uniqueEmail()
+        seedAdmin(adminUsers, passwordHasher, email, role = AdminRole.OWNER)
+
+        val loginResult = login(email)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.role").value("OWNER"))
+            .andReturn()
+
+        mockMvc.perform(post("/api/auth/refresh").cookie(withSessionCookie(tokenFrom(loginResult))))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.role").value("OWNER"))
+    }
+
+    @Test
+    fun `registration reports the non-owner role it created`() {
+        register(uniqueEmail())
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.role").value("ADMIN"))
     }
 
     @Test

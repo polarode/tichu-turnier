@@ -2,6 +2,42 @@
 
 This is a two-app monorepo. Read the relevant section before editing an area.
 
+## Conventional Commits
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for all git commits:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types**:
+- `feat`: new feature (triggers minor version bump)
+- `fix`: bug fix (triggers patch version bump)
+- `docs`: documentation changes only
+- `refactor`: code change that neither fixes a bug nor adds a feature
+- `test`: adding or updating tests only
+- `chore`: maintenance tasks (build, CI, deps)
+- `ci`: CI configuration changes
+- `build`: build system changes
+
+**Scope**: optional area in parentheses (e.g., `backend`, `frontend`, `plan`, `ci`)
+
+**Examples**:
+- `ci: Add GitHub Actions workflows for backend and frontend`
+- `feat(backend): replace in-memory repo with Postgres + Flyway`
+- `fix(frontend): resolve team token leak in magic link flow`
+- `refactor(backend): extract Swiss pairing logic to domain layer`
+
+Body/footer format:
+- Use **imperative mood** in body: "add" not "added", "fix" not "fixed"
+- Reference issues with `#<number>` (e.g., `refs #23`)
+
+Commit messages should be **descriptive**, especially for the first commit of a PR.
+
 ## Backend (`backend/`) — Kotlin + Spring Boot
 
 Hexagonal (ports & adapters). Dependencies point inward: `infra` → `application`

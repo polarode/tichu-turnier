@@ -368,7 +368,10 @@ class TeamAccessIntegrationTest(
         ).andReturn()
 
         repeat(5) {
-            val result = failedExchange("wrong-guess", attackerIp)
+            // Left-most XFF entries are client-controlled spoofing space; only the
+            // right-most (our proxy's addition) may count, so rotating fake left
+            // entries must not dodge the limiter.
+            val result = failedExchange("wrong-guess", "spoof-$it, $attackerIp")
             org.junit.jupiter.api.Assertions.assertEquals(401, result.response.status)
             org.junit.jupiter.api.Assertions.assertEquals("TEAM_ACCESS_INVALID", field(result.response.contentAsString, "code"))
         }

@@ -45,7 +45,7 @@ class ManageTeamAccessLinkCommand(
 ) : RevealTeamAccessLink, RotateTeamAccessLink, RevokeTeamAccessLink {
 
     override fun reveal(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId): RevealedTeamAccessLink {
-        val team = resolve(tournamentId, teamId, owner)
+        val team = requireOwnedTeam(tournamentId, teamId, owner)
         val token = requireToken(team)
         if (token.revealed) {
             throw TeamAccessLinkConflictException(
@@ -63,7 +63,7 @@ class ManageTeamAccessLinkCommand(
     }
 
     override fun rotate(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId) {
-        val team = resolve(tournamentId, teamId, owner)
+        val team = requireOwnedTeam(tournamentId, teamId, owner)
         val token = requireToken(team)
         val rawToken = sessionTokens.generate()
         teamTokens.save(
@@ -78,7 +78,7 @@ class ManageTeamAccessLinkCommand(
     }
 
     override fun revoke(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId) {
-        val team = resolve(tournamentId, teamId, owner)
+        val team = requireOwnedTeam(tournamentId, teamId, owner)
         val token = requireToken(team)
         if (!token.isRevoked()) {
             teamTokens.save(token.copy(revokedAt = clock.instant(), updatedAt = clock.instant()))
@@ -86,7 +86,7 @@ class ManageTeamAccessLinkCommand(
         teamSessions.deleteByTeamId(team.id)
     }
 
-    private fun resolve(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId): Team {
+    private fun requireOwnedTeam(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId): Team {
         tournamentRepository.findOwnedOrThrow(tournamentId, owner)
         return teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")

@@ -1,6 +1,5 @@
 package com.example.template.application.usecase
 
-import org.springframework.beans.factory.annotation.Value
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -20,11 +19,14 @@ import java.util.concurrent.ConcurrentHashMap
  * Single-instance assumption: the counters live in one JVM's memory (Render free
  * tier is one container). If deployment ever scales out, replace with a shared
  * store behind the same shape — call sites do not change.
+ *
+ * A plain class wired via [UseCaseConfiguration] — thresholds are constructor
+ * arguments resolved from configuration there, never Spring annotations here.
  */
 class ExchangeRateLimiter(
     private val clock: Clock,
-    @param:Value("\${app.auth.exchange-rate-limit.max-failures:5}") private val maxFailures: Int,
-    @param:Value("\${app.auth.exchange-rate-limit.window:PT15M}") private val window: Duration,
+    private val maxFailures: Int,
+    private val window: Duration,
 ) {
 
     private val failures = ConcurrentHashMap<String, ArrayDeque<Instant>>()

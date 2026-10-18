@@ -137,7 +137,7 @@ Close open registration. Admin accounts gain a lifecycle — `status` (`PENDING`
 
 ---
 
-## Phase 5: Team magic-link access (tickets #24–#26)
+## Phase 5: Team magic-link access (in progress — #24 done; #25–#26 open)
 
 **User stories**: As an organizer I issue each team a secret link (and QR), and can revoke/rotate it; as a team member I open the link once and get access to my team's matches for that tournament — and no one else can use or enumerate my token.
 

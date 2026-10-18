@@ -5,6 +5,10 @@ import com.example.template.application.api.DeleteTeam
 import com.example.template.application.api.GetTeam
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.AuthenticatedAdmin
+import com.example.template.application.api.RevealedTeamAccessLink
+import com.example.template.application.api.RotateTeamAccessLink
+import com.example.template.application.api.RevealTeamAccessLink
+import com.example.template.application.api.RevokeTeamAccessLink
 import com.example.template.application.api.UpdateTeam
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
@@ -35,6 +39,10 @@ class TeamController(
     private val getTeam: GetTeam,
     private val updateTeam: UpdateTeam,
     private val deleteTeam: DeleteTeam,
+    private val revealAccessLink: RevealTeamAccessLink,
+    private val rotateAccessLink: RotateTeamAccessLink,
+    private val revokeAccessLink: RevokeTeamAccessLink,
+    private val frontendUrl: String,
 ) {
 
     @PostMapping
@@ -86,5 +94,38 @@ class TeamController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ) {
         deleteTeam.delete(TournamentId(tournamentId), TeamId(teamId), principal.adminUserId)
+    }
+
+    // ------------------------------------------------------- access link lifecycle
+
+    /** The one response that carries raw link material — returned exactly once. */
+    @PostMapping("/{teamId}/access-link/reveal")
+    fun revealAccessLink(
+        @PathVariable tournamentId: String,
+        @PathVariable teamId: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TeamAccessLinkResponseDto = TeamAccessLinkResponseDto.from(
+        revealAccessLink.reveal(TournamentId(tournamentId), TeamId(teamId), principal.adminUserId),
+        frontendUrl,
+    )
+
+    @PostMapping("/{teamId}/access-link/rotate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun rotateAccessLink(
+        @PathVariable tournamentId: String,
+        @PathVariable teamId: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ) {
+        rotateAccessLink.rotate(TournamentId(tournamentId), TeamId(teamId), principal.adminUserId)
+    }
+
+    @PostMapping("/{teamId}/access-link/revoke")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun revokeAccessLink(
+        @PathVariable tournamentId: String,
+        @PathVariable teamId: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ) {
+        revokeAccessLink.revoke(TournamentId(tournamentId), TeamId(teamId), principal.adminUserId)
     }
 }

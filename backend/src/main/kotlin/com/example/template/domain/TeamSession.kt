@@ -26,4 +26,7 @@ interface TeamSessionRepository {
     fun findByTokenHash(tokenHash: String): TeamSession?
 
     fun deleteByTokenHash(tokenHash: String)
+
+    /** Ends every live session of one team — used by link rotation and revocation. */
+    fun deleteByTeamId(teamId: TeamId)
 }

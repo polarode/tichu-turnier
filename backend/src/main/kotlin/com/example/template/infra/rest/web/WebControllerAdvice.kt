@@ -20,6 +20,7 @@ import com.example.template.vocabulary.InviteStatusConflictException
 import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
 import com.example.template.vocabulary.TeamAccessException
+import com.example.template.vocabulary.TeamAccessLinkConflictException
 import com.example.template.vocabulary.TeamLimitReachedException
 import com.example.template.vocabulary.TournamentNotEditableException
 import com.example.template.vocabulary.UnauthenticatedException
@@ -116,6 +117,11 @@ class WebControllerAdvice {
     @ExceptionHandler(TeamAccessException::class)
     fun handleTeamAccess(ex: TeamAccessException): ProblemDetail =
         problem(HttpStatus.UNAUTHORIZED, ex)
+
+    /** The team access link was already revealed once or is revoked: 409; rotation is the recovery. */
+    @ExceptionHandler(TeamAccessLinkConflictException::class)
+    fun handleTeamAccessLinkConflict(ex: TeamAccessLinkConflictException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
 
     /** The resource exists and is owned, but its state forbids the mutation: HTTP 409. */
     @ExceptionHandler(TournamentNotEditableException::class)

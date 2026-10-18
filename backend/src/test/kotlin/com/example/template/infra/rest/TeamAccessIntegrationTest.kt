@@ -236,4 +236,102 @@ class TeamAccessIntegrationTest(
                 .content("""{"token":""}"""),
         ).andExpect(status().isBadRequest)
     }
+
+    // ------------------------------------------------------- access link lifecycle
+
+    @Test
+    fun `reveal returns the copyable link exactly once - a second reveal is rejected`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+
+        val result = mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/reveal").cookie(adminCookie))
+            .andExpect(status().isOk)
+            .andReturn()
+        val body = result.response.contentAsString
+        val raw = field(body, "token")
+        org.junit.jupiter.api.Assertions.assertTrue(
+            field(body, "link").endsWith("/team/login?token=" + java.net.URLEncoder.encode(raw, "UTF-8")),
+            "the response carries the copyable login URL: ${field(body, "link")}",
+        )
+
+        // The raw material exists only here; the stored row keeps only its digest.
+        val stored = teamTokens.findByTeamId(TeamId(teamId))!!
+        org.junit.jupiter.api.Assertions.assertEquals(sessionTokens.hash(raw), stored.tokenHash)
+        org.junit.jupiter.api.Assertions.assertTrue(stored.revealed)
+
+        mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/reveal").cookie(adminCookie))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("LINK_ALREADY_REVEALED"))
+    }
+
+    @Test
+    fun `rotate kills the old link and its live sessions - the new link is shown once and works`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val oldRaw = reveal(teamId, tournamentId)
+        val oldCookie = teamCookie(exchange(oldRaw).also { org.junit.jupiter.api.Assertions.assertEquals(200, it.response.status) })
+
+        mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/rotate").cookie(adminCookie))
+            .andExpect(status().isNoContent)
+
+        // Old link dead, old session dead.
+        org.junit.jupiter.api.Assertions.assertEquals(401, exchange(oldRaw).response.status)
+        mockMvc.perform(get("/api/team/me").cookie(oldCookie)).andExpect(status().isUnauthorized)
+
+        // Reveal was reset: the new link is shown once and exchanges.
+        val newRaw = reveal(teamId, tournamentId)
+        org.junit.jupiter.api.Assertions.assertNotEquals(oldRaw, newRaw)
+        org.junit.jupiter.api.Assertions.assertEquals(200, exchange(newRaw).response.status)
+    }
+
+    @Test
+    fun `revoke stops exchanges and kills live sessions - idempotently`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = reveal(teamId, tournamentId)
+        val cookie = teamCookie(exchange(raw).also { org.junit.jupiter.api.Assertions.assertEquals(200, it.response.status) })
+
+        mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/revoke").cookie(adminCookie))
+            .andExpect(status().isNoContent)
+        mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/revoke").cookie(adminCookie))
+            .andExpect(status().isNoContent)
+
+        org.junit.jupiter.api.Assertions.assertEquals(401, exchange(raw).response.status)
+        mockMvc.perform(get("/api/team/me").cookie(cookie)).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `no endpoint other than reveal returns token material and unauthenticated reveal is rejected`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val createResponse = mockMvc.perform(
+            post("/api/tournaments/$tournamentId/teams")
+                .cookie(adminCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mapOf("name" to "Team Alpha", "playerOneName" to "Alice", "playerTwoName" to "Bob"))),
+        ).andReturn().response.contentAsString
+        val teamId = field(createResponse, "id")
+
+        org.junit.jupiter.api.Assertions.assertFalse(createResponse.contains("token"))
+        val list = mockMvc.perform(get("/api/tournaments/$tournamentId/teams").cookie(adminCookie))
+            .andExpect(status().isOk).andReturn().response.contentAsString
+        org.junit.jupiter.api.Assertions.assertFalse(list.contains("token"))
+        val detail = mockMvc.perform(get("/api/tournaments/$tournamentId/teams/$teamId").cookie(adminCookie))
+            .andExpect(status().isOk).andReturn().response.contentAsString
+        org.junit.jupiter.api.Assertions.assertFalse(detail.contains("token"))
+
+        mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/reveal"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    private fun reveal(teamId: String, tournamentId: String): String =
+        field(
+            mockMvc.perform(post("/api/tournaments/$tournamentId/teams/$teamId/access-link/reveal").cookie(adminCookie))
+                .andExpect(status().isOk)
+                .andReturn().response.contentAsString,
+            "token",
+        )
 }

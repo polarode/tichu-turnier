@@ -1,5 +1,6 @@
 package com.example.template.infra.persistence
 
+import com.example.template.domain.TeamId
 import com.example.template.domain.TeamSession
 import com.example.template.domain.TeamSessionRepository
 
@@ -20,5 +21,9 @@ class JpaTeamSessionRepository(
 
     override fun deleteByTokenHash(tokenHash: String) {
         springData.findByTokenHash(tokenHash)?.let { springData.delete(it) }
+    }
+
+    override fun deleteByTeamId(teamId: TeamId) {
+        springData.deleteByTeamId(teamId.value)
     }
 }

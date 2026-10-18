@@ -1,5 +1,6 @@
 package com.example.template.testsupport
 
+import com.example.template.domain.TeamId
 import com.example.template.domain.TeamSession
 import com.example.template.domain.TeamSessionRepository
 import java.util.concurrent.ConcurrentHashMap
@@ -19,5 +20,9 @@ class InMemoryTeamSessionRepository : TeamSessionRepository {
 
     override fun deleteByTokenHash(tokenHash: String) {
         store.values.removeIf { it.tokenHash == tokenHash }
+    }
+
+    override fun deleteByTeamId(teamId: TeamId) {
+        store.values.removeIf { it.teamId == teamId }
     }
 }

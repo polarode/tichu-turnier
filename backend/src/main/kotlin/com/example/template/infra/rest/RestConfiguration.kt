@@ -18,6 +18,9 @@ import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.ReactivateAdmin
 import com.example.template.application.api.RejectAdmin
 import com.example.template.application.api.RevokeInvite
+import com.example.template.application.api.RevealTeamAccessLink
+import com.example.template.application.api.RotateTeamAccessLink
+import com.example.template.application.api.RevokeTeamAccessLink
 import com.example.template.application.api.UpdateTeam
 import com.example.template.application.api.UpdateTournament
 import com.example.template.application.api.LoginAdmin
@@ -68,7 +71,20 @@ class RestConfiguration(
         getTeam: GetTeam,
         updateTeam: UpdateTeam,
         deleteTeam: DeleteTeam,
-    ): TeamController = TeamController(createTeam, listTeams, getTeam, updateTeam, deleteTeam)
+        revealTeamAccessLink: RevealTeamAccessLink,
+        rotateTeamAccessLink: RotateTeamAccessLink,
+        revokeTeamAccessLink: RevokeTeamAccessLink,
+    ): TeamController = TeamController(
+        createTeam,
+        listTeams,
+        getTeam,
+        updateTeam,
+        deleteTeam,
+        revealTeamAccessLink,
+        rotateTeamAccessLink,
+        revokeTeamAccessLink,
+        frontendUrl,
+    )
 
     @Bean
     fun adminSessionCookieFactory(): SessionCookieFactory =

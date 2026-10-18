@@ -4,6 +4,7 @@ import com.example.template.application.api.TeamWriteRequest
 import com.example.template.application.api.AuthenticatedTeam
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.IdGenerator
+import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentStatus
 import com.example.template.infra.persistence.InMemoryTournamentRepository
@@ -14,6 +15,7 @@ import com.example.template.testsupport.RecordingSessionTokens
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.NotFoundException
 import com.example.template.vocabulary.TeamAccessException
+import com.example.template.vocabulary.TeamAccessLinkConflictException
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -56,6 +58,9 @@ class TeamAccessUseCasesTest {
         teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer, clock,
     )
     private val getOwnTeam = GetOwnTeamQuery(teamRepository)
+    private val accessLinks = ManageTeamAccessLinkCommand(
+        tournamentRepository, teamRepository, teamTokenRepository, teamSessionRepository, sessionTokens, clock,
+    )
 
     private fun createTournament(name: String, status: TournamentStatus = TournamentStatus.SETUP): TournamentId {
         val tournamentId = CreateTournamentCommand(tournamentRepository, idGenerator, clock)
@@ -173,6 +178,85 @@ class TeamAccessUseCasesTest {
         teamTokenRepository.save(teamTokenRepository.findByTeamId(team.id)!!.copy(revokedAt = null, updatedAt = now))
         tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = TournamentStatus.COMPLETED))
         assertGenericRejection(raw)
+    }
+
+    // ---------------------------------------------------------- link lifecycle
+
+    @Test
+    fun `reveal shows the raw link exactly once and flips the flag`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        val provisionedHash = teamTokenRepository.findByTeamId(team.id)!!.tokenHash
+
+        val revealed = accessLinks.reveal(tournamentId, team.id, owner)
+
+        // The raw material exists only in the response; the database keeps the digest.
+        val token = teamTokenRepository.findByTeamId(team.id)!!
+        assertEquals(sessionTokens.hash(revealed.token), token.tokenHash, "the stored hash matches the revealed token")
+        assertNotEquals(provisionedHash, token.tokenHash, "reveal mints fresh material for the one-time view")
+        assertTrue(token.revealed, "the token is marked revealed")
+        assertNull(token.revokedAt, "reveal does not touch the revocation state")
+    }
+
+    @Test
+    fun `a second reveal is rejected with LINK_ALREADY_REVEALED`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        accessLinks.reveal(tournamentId, team.id, owner)
+
+        val ex = assertFailsWith<TeamAccessLinkConflictException> {
+            accessLinks.reveal(tournamentId, team.id, owner)
+        }
+        assertEquals(ErrorCode.LINK_ALREADY_REVEALED, ex.code)
+    }
+
+    @Test
+    fun `reveal of a foreign or unknown team fails as not-found`() {
+        val tournamentId = createTournament("Spring Classic")
+        createTeam(tournamentId)
+
+        assertFailsWith<NotFoundException> { accessLinks.reveal(tournamentId, TeamId("no-such-team"), owner) }
+        assertFailsWith<NotFoundException> {
+            accessLinks.reveal(tournamentId, teamRepository.findAllByTournament(tournamentId).first().id, AdminUserId("foreign-admin"))
+        }
+    }
+
+    @Test
+    fun `rotate invalidates the old link immediately and ends live sessions`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        val oldRaw = accessLinks.reveal(tournamentId, team.id, owner).token
+        val oldSession = exchangeTeamAccess.exchange(oldRaw)
+
+        accessLinks.rotate(tournamentId, team.id, owner)
+
+        // The old link is dead: exchange fails generically and the live session is gone.
+        assertFailsWith<TeamAccessException> { exchangeTeamAccess.exchange(oldRaw) }
+        assertNull(
+            teamSessionRepository.findByTokenHash(sessionTokens.hash(oldSession.token)),
+            "rotation ends the team's live sessions on their next request",
+        )
+
+        // The reveal flag was reset: the new link is shown exactly once and works.
+        val newRaw = accessLinks.reveal(tournamentId, team.id, owner).token
+        assertNotEquals(oldRaw, newRaw)
+        assertEquals(team.id, exchangeTeamAccess.exchange(newRaw).teamId)
+    }
+
+    @Test
+    fun `revoke disables the link and kills live sessions - idempotently`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        val raw = accessLinks.reveal(tournamentId, team.id, owner).token
+        val session = exchangeTeamAccess.exchange(raw)
+
+        accessLinks.revoke(tournamentId, team.id, owner)
+        accessLinks.revoke(tournamentId, team.id, owner) // revoking twice is a no-op
+
+        assertFailsWith<TeamAccessException> { exchangeTeamAccess.exchange(raw) }
+        assertNull(teamSessionRepository.findByTokenHash(sessionTokens.hash(session.token)))
+        val token = teamTokenRepository.findByTeamId(team.id)!!
+        assertTrue(token.isRevoked(), "the token carries a revocation timestamp")
     }
 
     // --------------------------------------------------------------- own-team read

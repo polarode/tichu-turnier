@@ -235,4 +235,22 @@ class UseCaseConfiguration(
 
     @Bean
     fun revokeInvite(adminInvites: AdminInviteRepository): RevokeInvite = RevokeInviteCommand(adminInvites)
+
+    @Bean
+    fun manageTeamAccessLink(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        teamTokenRepository: TeamTokenRepository,
+        teamSessionRepository: TeamSessionRepository,
+        sessionTokens: SessionTokens,
+        clock: Clock,
+    ): ManageTeamAccessLinkCommand =
+        ManageTeamAccessLinkCommand(
+            tournamentRepository,
+            teamRepository,
+            teamTokenRepository,
+            teamSessionRepository,
+            sessionTokens,
+            clock,
+        )
 }

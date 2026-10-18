@@ -60,6 +60,9 @@ enum class ErrorCode {
      * has completed. All four are deliberately indistinguishable.
      */
     TEAM_ACCESS_INVALID,
+
+    /** The organizer already saw the team access link once (or it is revoked); rotation is the recovery. */
+    LINK_ALREADY_REVEALED,
 }
 
 /**
@@ -173,6 +176,13 @@ class InviteStatusConflictException(message: String) :
  * learn whether a guessed token ever existed. Mapped to HTTP 401.
  */
 class TeamAccessException(message: String) : ApiException(ErrorCode.TEAM_ACCESS_INVALID, message)
+
+/**
+ * Thrown when a team access link cannot be shown: it was already revealed once, or
+ * it is revoked and dead as-is. Rotation is the documented recovery in both cases.
+ * Mapped to HTTP 409.
+ */
+class TeamAccessLinkConflictException(message: String) : ApiException(ErrorCode.LINK_ALREADY_REVEALED, message)
 
 /**
  * Thrown when a tournament edit is attempted in a lifecycle state that does not allow

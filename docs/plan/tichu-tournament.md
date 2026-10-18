@@ -15,7 +15,7 @@
 - [ ] **Phase 9** — Confirmation & completion
 - [ ] **Phase 10** — Standings, next round & finish
 - [ ] **Phase 11** — SSE live events + statistics
-- [ ] **Phase 12** — Frontend foundation
+- [x] **Phase 12** — Frontend foundation
 - [ ] **Phase 13** — Admin: auth, dashboard, tournament setup
 - [ ] **Phase 14** — Team: login & match overview
 - [ ] **Phase 15** — Game entry (scoring form)
@@ -265,7 +265,7 @@ An SSE endpoint authenticated by role (admin/team/public streams scoped to what 
 
 ---
 
-## Phase 12: Frontend foundation (in progress — #9 done, #10–#13 open)
+## Phase 12: Frontend foundation ✅ (done — tickets #9–#13)
 
 **User stories**: As a user I get the app shell in German or English, consistent navigation, and typed API access that fails loudly if the contract drifts.
 
@@ -275,10 +275,10 @@ Rebrand the template frontend to the Tichu app: layout/navigation shell, route s
 
 ### Acceptance criteria
 
-- [ ] All routes reachable in dev; language switch de/en updates every visible string (catalog coverage test/lint rule)
-- [ ] Repository tests: zod boundary parse rejects a malformed response (template's existing test pattern)
-- [ ] SSE client reconnects after server restart without user action (test)
-- [ ] `pnpm typecheck && pnpm lint && pnpm test` green in CI alongside backend
+- [x] All routes reachable in dev; language switch de/en updates every visible string (catalog coverage test/lint rule)
+- [x] Repository tests: zod boundary parse rejects a malformed response (template's existing test pattern)
+- [x] SSE client reconnects after server restart without user action (test)
+- [x] `pnpm typecheck && pnpm lint && pnpm test` green in CI alongside backend
 
 ---
 

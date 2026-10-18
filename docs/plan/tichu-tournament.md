@@ -265,7 +265,7 @@ An SSE endpoint authenticated by role (admin/team/public streams scoped to what 
 
 ---
 
-## Phase 12: Frontend foundation
+## Phase 12: Frontend foundation (in progress — #9 done, #10–#13 open)
 
 **User stories**: As a user I get the app shell in German or English, consistent navigation, and typed API access that fails loudly if the contract drifts.
 

@@ -34,7 +34,7 @@ Durable decisions that apply across all phases:
 
 ---
 
-## Phase 1: Scaffold + persistence + CI ✅ (done — shipped 2026-10-18; CI green)
+## Phase 1: Scaffold + persistence + CI ✅ (done — ticket 001)
 
 **User stories**: As a developer I can clone one repo and run the whole stack locally with a real database, and CI proves every change is green.
 
@@ -44,15 +44,15 @@ Create the new monorepo from the template, rebrand from the template's Task exam
 
 ### Acceptance criteria
 
-- [ ] Fresh clone: `docker compose up` yields running backend on Postgres and frontend dev server, documented in README
-- [ ] Flyway migration applies cleanly on empty database; Task data survives restart (real persistence, no in-memory fallback in the default profile)
-- [ ] At least one repository integration test runs against Testcontainers Postgres in CI
-- [ ] GitHub Actions workflow runs build + full test suite and is green
-- [ ] Template conventions (AGENTS.md) carried over unchanged; no `@Service`/`@Autowired` in production code
+- [x] Fresh clone: `docker compose up` yields running backend on Postgres and frontend dev server, documented in README
+- [x] Flyway migration applies cleanly on empty database; Task data survives restart (real persistence, no in-memory fallback in the default profile)
+- [x] At least one repository integration test runs against Testcontainers Postgres in CI
+- [x] GitHub Actions workflow runs build + full test suite and is green
+- [x] Template conventions (AGENTS.md) carried over unchanged; no `@Service`/`@Autowired` in production code
 
 ---
 
-## Phase 2: Admin auth & ownership ✅ (done — tickets 002–004; backend suite green, CI to confirm on push)
+## Phase 2: Admin auth & ownership ✅ (done — tickets 002–004)
 
 **User stories**: As a tournament organizer I register and log in; I only ever see and change my own tournaments; nobody can touch my data with someone else's session or no session at all.
 
@@ -62,11 +62,11 @@ Introduce admin accounts (email/password) with Spring Security token sessions, w
 
 ### Acceptance criteria
 
-- [ ] Register, login, logout, session refresh endpoints work and are documented
-- [ ] Unauthenticated requests to protected endpoints get 401; foreign-resource access gets 403/404, never data
-- [ ] Ownership check is exercised by tests (user A cannot read/modify user B's tournament)
-- [ ] Password handling follows current security practice (no plaintext, proper hashing)
-- [ ] CORS restricted to the configured frontend origin
+- [x] Register, login, logout, session refresh endpoints work and are documented
+- [x] Unauthenticated requests to protected endpoints get 401; foreign-resource access gets 403/404, never data
+- [x] Ownership check is exercised by tests (user A cannot read/modify user B's tournament)
+- [x] Password handling follows current security practice (no plaintext, proper hashing)
+- [x] CORS restricted to the configured frontend origin
 
 ---
 

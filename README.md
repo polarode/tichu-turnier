@@ -3,10 +3,9 @@
 A generic fullstack monorepo template demonstrating a clean, layered architecture
 across a Kotlin/Spring Boot backend and a React/TanStack frontend.
 
-It implements a small **Task tracker** example domain (create / list / update /
-delete tasks, each with a status) end to end, so the architecture is exercised by
-real code rather than described in the abstract. Swap the `Task` domain for your
-own and the structure carries over.
+It implements the **Tichu tournament** domain (tournament setup: create / list /
+get tournaments) end to end, so the architecture is exercised by real code rather
+than described in the abstract.
 
 ## Layout
 
@@ -46,7 +45,7 @@ cd backend
 ```
 
 The schema is owned by Flyway (`backend/src/main/resources/db/migration`); the
-Task data lives in PostgreSQL and survives restarts.
+Tournament data lives in PostgreSQL and survives restarts.
 
 ### Frontend
 

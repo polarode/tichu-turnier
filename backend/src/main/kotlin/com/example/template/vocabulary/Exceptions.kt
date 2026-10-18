@@ -30,6 +30,16 @@ class NotFoundException(message: String) : ApiException(ErrorCode.NOT_FOUND, mes
 /** Thrown when input fails a domain-level validation rule. Mapped to HTTP 400. */
 class InvalidInputException(message: String) : ApiException(ErrorCode.INVALID_INPUT, message)
 
+/**
+ * Thrown when a specific field of the input fails a validation rule. Carries the
+ * offending field so the REST layer can anchor the problem response to it — the
+ * frontend shows the message next to that field. Mapped to HTTP 400.
+ */
+class InvalidFieldException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.INVALID_INPUT, message)
+
 /** Thrown when a registration clashes with an existing account. Mapped to HTTP 409. */
 class EmailAlreadyRegisteredException(message: String) :
     ApiException(ErrorCode.EMAIL_ALREADY_REGISTERED, message)

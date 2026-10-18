@@ -15,20 +15,21 @@ Requires a JDK 21+ on the machine; the Gradle wrapper handles the rest.
 
 ## API
 
-| Method | Path             | Description        |
-|--------|------------------|--------------------|
-| GET    | `/api/tasks`     | list tasks         |
-| GET    | `/api/tasks/{id}`| get one task       |
-| POST   | `/api/tasks`     | create a task      |
-| PUT    | `/api/tasks/{id}`| update a task      |
-| DELETE | `/api/tasks/{id}`| delete a task      |
+| Method | Path                     | Description                            |
+|--------|--------------------------|----------------------------------------|
+| GET    | `/api/tournaments`       | list the caller's tournaments          |
+| GET    | `/api/tournaments/{id}`  | get one tournament (404 for foreign ids) |
+| POST   | `/api/tournaments`       | create a tournament                    |
+
+All tournament endpoints require a valid admin session. New tournaments start in
+status `setup` (the machine is `setup → active → completed`, final).
 
 Example:
 
 ```bash
-curl -X POST localhost:8080/api/tasks \
+curl -X POST localhost:8080/api/tournaments \
   -H 'Content-Type: application/json' \
-  -d '{"title":"Write docs","description":"for the template"}'
+  -d '{"name":"Spring Classic","description":"annual invitational","maxTeams":16,"settings":{"allowGrandTichu":true}}'
 ```
 
 ### Auth (admin accounts)

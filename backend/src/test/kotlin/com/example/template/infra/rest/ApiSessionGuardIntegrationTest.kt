@@ -24,7 +24,7 @@ import org.springframework.web.context.WebApplicationContext
 import kotlin.test.assertFalse
 /**
  * Integration test: drives the real security filter chain (not controller-level checks)
- * over the existing Task API, so the guard is proven against a genuine endpoint rather
+ * over the existing Tournament API, so the guard is proven against a genuine endpoint rather
  * than a stub. The auth entry points stay reachable, everything else under `/api/`
  * demands a valid session cookie.
  */
@@ -43,15 +43,15 @@ class ApiSessionGuardIntegrationTest(
     @Test
     fun `unauthenticated request to a protected endpoint returns an RFC 7807 401 without data`() {
         val cookie = mockMvc.registerAndLoginAdmin(objectMapper)
-        val marker = "secret-task-${java.util.UUID.randomUUID()}"
+        val marker = "secret-tournament-${java.util.UUID.randomUUID()}"
         mockMvc.perform(
-            post("/api/tasks")
+            post("/api/tournaments")
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(mapOf("title" to marker, "description" to "private"))),
+                .content(objectMapper.writeValueAsString(mapOf("name" to marker, "maxTeams" to 16))),
         ).andExpect(status().isCreated)
 
-        val result = mockMvc.perform(get("/api/tasks"))
+        val result = mockMvc.perform(get("/api/tournaments"))
             .andExpect(status().isUnauthorized)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
@@ -60,7 +60,7 @@ class ApiSessionGuardIntegrationTest(
         // The error body is a stable problem document; no resource data leaks with it.
         assertFalse(
             result.response.contentAsString.contains(marker),
-            "task data must not leak into the 401 body",
+            "tournament data must not leak into the 401 body",
         )
     }
 
@@ -85,14 +85,14 @@ class ApiSessionGuardIntegrationTest(
     fun `a valid session cookie grants access to a previously public endpoint`() {
         val cookie = mockMvc.registerAndLoginAdmin(objectMapper)
 
-        mockMvc.perform(get("/api/tasks").cookie(cookie))
+        mockMvc.perform(get("/api/tournaments").cookie(cookie))
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
     }
 
     @Test
     fun `an unknown session cookie does not grant access`() {
-        mockMvc.perform(get("/api/tasks").cookie(Cookie(ADMIN_SESSION_COOKIE, "not-a-real-token")))
+        mockMvc.perform(get("/api/tournaments").cookie(Cookie(ADMIN_SESSION_COOKIE, "not-a-real-token")))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
@@ -100,7 +100,7 @@ class ApiSessionGuardIntegrationTest(
     @Test
     fun `CORS allows only the configured frontend origin`() {
         mockMvc.perform(
-            options("/api/tasks")
+            options("/api/tournaments")
                 .header(HttpHeaders.ORIGIN, frontendOrigin)
                 .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
                 .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Content-Type"),
@@ -113,7 +113,7 @@ class ApiSessionGuardIntegrationTest(
     @Test
     fun `CORS rejects a foreign origin`() {
         mockMvc.perform(
-            options("/api/tasks")
+            options("/api/tournaments")
                 .header(HttpHeaders.ORIGIN, "http://evil.example")
                 .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"),
         ).andExpect(status().isForbidden)

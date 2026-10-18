@@ -1,17 +1,15 @@
 package com.example.template.infra.rest
 
-import com.example.template.application.api.CreateTask
-import com.example.template.application.api.DeleteTask
-import com.example.template.application.api.GetTask
-import com.example.template.application.api.ListTasks
+import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.GetTournament
+import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
-import com.example.template.application.api.UpdateTask
 import com.example.template.infra.rest.web.AuthController
 import com.example.template.infra.rest.web.SessionCookieFactory
-import com.example.template.infra.rest.web.TaskController
+import com.example.template.infra.rest.web.TournamentController
 import com.example.template.infra.rest.web.WebControllerAdvice
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -30,13 +28,11 @@ class RestConfiguration(
 ) {
 
     @Bean
-    fun taskController(
-        createTask: CreateTask,
-        listTasks: ListTasks,
-        getTask: GetTask,
-        updateTask: UpdateTask,
-        deleteTask: DeleteTask,
-    ): TaskController = TaskController(createTask, listTasks, getTask, updateTask, deleteTask)
+    fun tournamentController(
+        createTournament: CreateTournament,
+        listTournaments: ListTournaments,
+        getTournament: GetTournament,
+    ): TournamentController = TournamentController(createTournament, listTournaments, getTournament)
 
     @Bean
     fun sessionCookieFactory(): SessionCookieFactory =

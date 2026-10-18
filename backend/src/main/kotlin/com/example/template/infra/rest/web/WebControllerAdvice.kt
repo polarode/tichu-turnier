@@ -4,6 +4,7 @@ import com.example.template.vocabulary.ApiException
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InvalidCredentialsException
+import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
 import com.example.template.vocabulary.NotFoundException
 import com.example.template.vocabulary.UnauthenticatedException
@@ -29,6 +30,14 @@ class WebControllerAdvice {
     fun handleInvalidInput(ex: InvalidInputException): ProblemDetail =
         problem(HttpStatus.BAD_REQUEST, ex)
 
+    /** Field-anchored validation failure: the offending field travels as a member. */
+    @ExceptionHandler(InvalidFieldException::class)
+    fun handleInvalidField(ex: InvalidFieldException): ProblemDetail {
+        val problem = problem(HttpStatus.BAD_REQUEST, ex)
+        problem.setProperty("field", ex.field)
+        return problem
+    }
+
     @ExceptionHandler(EmailAlreadyRegisteredException::class)
     fun handleEmailAlreadyRegistered(ex: EmailAlreadyRegisteredException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
@@ -43,10 +52,14 @@ class WebControllerAdvice {
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
-        val message = ex.bindingResult.fieldErrors
+        val fieldErrors = ex.bindingResult.fieldErrors
+        val message = fieldErrors
             .joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
             .ifBlank { "Validation failed" }
-        return problemDetail(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
+        val problem = problemDetail(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
+        // Bean-validation failures are field-anchored too, same as InvalidFieldException.
+        fieldErrors.firstOrNull()?.field?.let { problem.setProperty("field", it) }
+        return problem
     }
 
     private fun problem(status: HttpStatus, ex: ApiException): ProblemDetail =

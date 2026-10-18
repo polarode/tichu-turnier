@@ -1,21 +1,19 @@
 package com.example.template.application.usecase
 
 import com.example.template.application.api.AuthenticateSession
-import com.example.template.application.api.CreateTask
-import com.example.template.application.api.DeleteTask
-import com.example.template.application.api.GetTask
-import com.example.template.application.api.ListTasks
+import com.example.template.application.api.CreateTournament
+import com.example.template.application.api.GetTournament
+import com.example.template.application.api.ListTournaments
 import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
-import com.example.template.application.api.UpdateTask
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
-import com.example.template.domain.TaskRepository
+import com.example.template.domain.TournamentRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -36,24 +34,19 @@ class UseCaseConfiguration(
     fun clock(): Clock = Clock.systemUTC()
 
     @Bean
-    fun createTask(
-        repository: TaskRepository,
+    fun createTournament(
+        repository: TournamentRepository,
         idGenerator: IdGenerator,
         clock: Clock,
-    ): CreateTask = CreateTaskCommand(repository, idGenerator, clock)
+    ): CreateTournament = CreateTournamentCommand(repository, idGenerator, clock)
 
     @Bean
-    fun listTasks(repository: TaskRepository): ListTasks = ListTasksQuery(repository)
+    fun listTournaments(repository: TournamentRepository): ListTournaments =
+        ListTournamentsQuery(repository)
 
     @Bean
-    fun getTask(repository: TaskRepository): GetTask = GetTaskQuery(repository)
-
-    @Bean
-    fun updateTask(repository: TaskRepository, clock: Clock): UpdateTask =
-        UpdateTaskCommand(repository, clock)
-
-    @Bean
-    fun deleteTask(repository: TaskRepository): DeleteTask = DeleteTaskCommand(repository)
+    fun getTournament(repository: TournamentRepository): GetTournament =
+        GetTournamentQuery(repository)
 
     @Bean
     fun adminSessionIssuer(

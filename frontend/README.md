@@ -60,7 +60,9 @@ navigation and language switch around every screen. Four areas hang off it:
 
 `/` redirects to the public area. The admin area is guarded: unauthenticated visitors
 are redirected to `/login`, and the session is refreshed from the httpOnly cookie on
-load so a returning admin stays signed in.
+load so a returning admin stays signed in. Inside it, `/admin` is the tournament
+dashboard, with `/admin/tournaments/new` and `/admin/tournaments/$tournamentId` as the
+create and detail entry points.
 
 ## i18n
 

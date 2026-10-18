@@ -69,6 +69,11 @@ export const de: Catalog = {
     'dashboard.empty.description': 'Erstelle dein erstes Turnier, um zu starten.',
     'dashboard.error': 'Die Turniere konnten nicht geladen werden.',
 
+    'tournament.new.title': 'Neues Turnier',
+    'tournament.new.description': 'Name, Beschreibung und Regeln festlegen.',
+    'tournament.detail.title': 'Turnier',
+    'tournament.detail.description': 'Teams und Einstellungen verwalten.',
+
     'tournament.status.setup': 'Vorbereitung',
     'tournament.status.active': 'Läuft',
     'tournament.status.completed': 'Beendet',

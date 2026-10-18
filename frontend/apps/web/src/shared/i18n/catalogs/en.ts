@@ -72,6 +72,11 @@ export const en = {
     'dashboard.empty.description': 'Create your first tournament to get started.',
     'dashboard.error': 'The tournaments could not be loaded.',
 
+    'tournament.new.title': 'New tournament',
+    'tournament.new.description': 'Set the name, description and rules.',
+    'tournament.detail.title': 'Tournament',
+    'tournament.detail.description': 'Manage teams and settings.',
+
     'tournament.status.setup': 'Setup',
     'tournament.status.active': 'Active',
     'tournament.status.completed': 'Completed',

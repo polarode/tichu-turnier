@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
@@ -15,7 +16,18 @@ vi.mock('@/auth-api/auth.repository.ts', () => ({
     },
 }));
 
+vi.mock('@/tournament-api/tournament.repository.ts', () => ({
+    TournamentRepository: {
+        list: vi.fn().mockResolvedValue([]),
+        get: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        remove: vi.fn(),
+    },
+}));
+
 const auth = vi.mocked(AuthRepository);
+const tournamentRepo = vi.mocked(TournamentRepository);
 const admin = { id: 'admin-1', email: 'organizer@example.com' };
 
 const noSession = () =>
@@ -25,6 +37,8 @@ describe('admin auth flows', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         auth.refresh.mockRejectedValue(noSession());
+        // The admin dashboard fetches tournaments as soon as it mounts.
+        tournamentRepo.list.mockResolvedValue([]);
     });
 
     it('validates the login form before submitting', async () => {
@@ -63,9 +77,7 @@ describe('admin auth flows', () => {
         await userEvent.type(await screen.findByLabelText('Passwort'), 'correct-password');
         await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
 
-        expect(
-            await screen.findByRole('heading', { name: 'Verwaltungsbereich' }),
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
         expect(screen.getByText('organizer@example.com')).toBeInTheDocument();
     });
 
@@ -112,9 +124,7 @@ describe('admin auth flows', () => {
         await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
         await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
 
-        expect(
-            await screen.findByRole('heading', { name: 'Verwaltungsbereich' }),
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
         expect(auth.login).toHaveBeenCalled();
     });
 

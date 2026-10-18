@@ -46,7 +46,7 @@ Durable decisions that apply across all phases:
 
 **Tournament** (the complete event) → **round** (one of multiple rounds in the tournament) → **game** (one of the games played by two teams during a round). Tables are the organizational construct inside a round (seating 2 or 3 teams); a round is completed when all its tables are confirmed.
 - **Frontend stack**: per template — React 19 / Vite / TanStack Router (file-based) + Query / Tailwind v4 / Zustand / react-hook-form + zod / axios with response interceptor for auth, strict layering `component → query hook → repository → axios → zod parse → mapper → domain`; shared primitives in `packages/ui`; Vitest + Testing Library; pnpm workspace.
-- **Delivery**: Docker image for the backend, docker-compose for local dev (Postgres + backend + frontend), GitHub Actions CI (build, lint, test), deployed to a free-tier combo (container platform + managed free Postgres).
+- **Delivery**: Docker image for the backend, docker-compose for local dev (Postgres + backend + frontend), GitHub Actions CI (build, lint, test), deployed to a free-tier combo (container platform + managed free Postgres). The concrete, phased hosting plan is [`deployment.md`](./deployment.md): a single origin (Spring Boot serves the built SPA) on Render + Neon.
 
 ### Key domain vocabulary (shared across phases)
 
@@ -362,7 +362,7 @@ Admin tournament detail: status card with guarded actions (start/advance/finish/
 
 ### What to build
 
-Public tournament pages: standings, per-round matches (normal + trio tables), live statistics (Tichu success, bombs, double wins, player highlights), live badge via SSE; public home listing active tournaments (scoped public data only). Game results are shown as soon as entered as finished, including before table confirmation. Final i18n sweep (v1's mixed German/English leftovers must not recur — enforced by catalog coverage), accessibility and responsive pass on core flows, and the delivery pipeline: production build, Docker image, CI deploy to the free-tier combo (container platform + managed free Postgres) with environment documentation.
+Public tournament pages: standings, per-round matches (normal + trio tables), live statistics (Tichu success, bombs, double wins, player highlights), live badge via SSE; public home listing active tournaments (scoped public data only). Game results are shown as soon as entered as finished, including before table confirmation. Final i18n sweep (v1's mixed German/English leftovers must not recur — enforced by catalog coverage), accessibility and responsive pass on core flows, and the delivery pipeline: production build, Docker image, CI deploy to the free-tier combo (container platform + managed free Postgres) with environment documentation. Hosting and delivery are broken out step by step in [`deployment.md`](./deployment.md).
 
 ### Acceptance criteria
 

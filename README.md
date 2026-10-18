@@ -53,16 +53,26 @@ docker compose up        # Postgres + backend + frontend dev server
 
 ### Backend (without Docker)
 
-Needs PostgreSQL on `localhost:5432` (database `tichu_turnier`, user `tichu`,
-password `tichu`) — e.g. start only the database with
-`docker compose up postgres`. (If you published Postgres on a different host port
-via `POSTGRES_PORT`, point the backend at it with
-`SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:<port>/tichu_turnier`.) Then:
+The easy path is the dev script, which reads the repo's `.env` (owner credentials,
+`POSTGRES_PORT`), un-escapes the compose `$$` escaping, points the datasource at
+`localhost:${POSTGRES_PORT}`, and starts Postgres via compose if nothing is listening:
+
+```bash
+scripts/dev-backend.sh   # http://localhost:8080
+```
+
+Manual equivalent (mind the differences from the docker setup): `.env` is only read
+by compose — Spring needs the owner credentials as real environment variables with
+**single** `$` in the bcrypt hash, and the datasource must be pointed at the port
+Postgres is actually published on:
 
 ```bash
 cd backend
-./gradlew bootRun        # http://localhost:8080
-./gradlew test           # unit + integration tests (Testcontainers)
+export OWNER_EMAIL='owner@example.com'
+export OWNER_PASSWORD_HASH='$2y$10$…'   # single $ — undo the .env $$ escaping
+export SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5433/tichu_turnier'
+./gradlew bootRun
+./gradlew test                          # unit + integration tests (Testcontainers)
 ```
 
 The schema is owned by Flyway (`backend/src/main/resources/db/migration`); data
@@ -108,3 +118,32 @@ default.
 GitHub Actions runs the backend (`./gradlew build`) and the frontend
 (`pnpm typecheck && pnpm lint && pnpm test && pnpm build`) on every push and pull
 request.
+
+## Troubleshooting
+
+### "Refusing to claim … as the platform owner" in the startup log
+
+The owner bootstrap only converges credentials into an account that already has the
+`OWNER` role (that row can only have come from an earlier bootstrap). If someone
+self-registered with the configured `OWNER_EMAIL` before it was configured, that row
+exists without the `OWNER` role and is deliberately never promoted or overwritten.
+Fix it once, then restart — the bootstrap converges the password hash from config:
+
+```bash
+docker compose exec postgres psql -U tichu -d tichu_turnier -c \
+  "update admin_users set role='OWNER' where email='<owner-email>';"
+```
+
+(Or delete the row instead, if that account was never wanted.)
+
+### Sign-in fails although the owner is configured
+
+Check, in order:
+
+- The startup log shows the owner bootstrap acting on your email (convergence or
+  refusal — see above).
+- The hash handed to Spring contains **single** `$`: a `$$…` value is compose's
+  `.env` escaping and is not a valid bcrypt hash. `scripts/dev-backend.sh` handles
+  this; a manual `export` must undo the escaping itself.
+- The datasource URL points at the port Postgres is actually published on
+  (`POSTGRES_PORT` from `.env`, not necessarily 5432).

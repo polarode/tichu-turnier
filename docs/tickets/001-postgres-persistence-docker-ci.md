@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done (verified green in CI)
 
-- [ ] Flyway migration applies cleanly on an empty database; Task data survives a backend restart (no in-memory repository in the default profile)
-- [ ] Repository integration test runs against Testcontainers Postgres (locally and in CI)
-- [ ] `docker compose up` starts Postgres + backend + frontend dev server from a fresh clone, documented in the README
-- [ ] Existing CI keeps running build + full test suite green, now including the Testcontainers test
-- [ ] Template conventions hold: wiring via `@Configuration` + `@Bean` only, no `@Service`/`@Autowired` in production code, hexagonal dependency direction intact (domain unchanged, adapter in infra/persistence)
+- [x] Flyway migration applies cleanly on an empty database; Task data survives a backend restart (no in-memory repository in the default profile) — verified live via `docker compose up --force-recreate backend`
+- [x] Repository integration test runs against Testcontainers Postgres (locally and in CI)
+- [x] `docker compose up` starts Postgres + backend + frontend dev server from a fresh clone, documented in the README
+- [x] Existing CI keeps running build + full test suite green, now including the Testcontainers test
+- [x] Template conventions hold: wiring via `@Configuration` + `@Bean` only, no `@Service`/`@Autowired` in production code, hexagonal dependency direction intact (domain unchanged, adapter in infra/persistence)

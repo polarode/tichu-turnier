@@ -34,7 +34,7 @@ Durable decisions that apply across all phases:
 
 ---
 
-## Phase 1: Scaffold + persistence + CI
+## Phase 1: Scaffold + persistence + CI ✅ (done — shipped 2026-10-18; CI green)
 
 **User stories**: As a developer I can clone one repo and run the whole stack locally with a real database, and CI proves every change is green.
 

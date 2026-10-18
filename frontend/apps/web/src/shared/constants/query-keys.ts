@@ -2,7 +2,15 @@
 export const QueryKeys = {
     SESSION: 'session',
     TOURNAMENTS: 'tournaments',
+    TEAMS: 'teams',
 } as const;
 
 /** Key for a single tournament; the list key is `[QueryKeys.TOURNAMENTS]`. */
 export const tournamentQueryKey = (id: string) => [QueryKeys.TOURNAMENTS, id] as const;
+
+/** Key for a tournament's team list. */
+export const teamsQueryKey = (tournamentId: string) => [QueryKeys.TEAMS, tournamentId] as const;
+
+/** Key for a single team within a tournament. */
+export const teamQueryKey = (tournamentId: string, teamId: string) =>
+    [QueryKeys.TEAMS, tournamentId, teamId] as const;

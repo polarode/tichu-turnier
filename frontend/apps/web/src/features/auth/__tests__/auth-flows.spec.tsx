@@ -28,7 +28,7 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
 
 const auth = vi.mocked(AuthRepository);
 const tournamentRepo = vi.mocked(TournamentRepository);
-const admin = { id: 'admin-1', email: 'organizer@example.com' };
+const admin = { id: 'admin-1', email: 'organizer@example.com', role: 'ADMIN' as const };
 
 const noSession = () =>
     new ApiError({ code: 'UNAUTHENTICATED', status: 401, field: null, message: 'no session' });

@@ -5,7 +5,7 @@ import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
-const adminDto = { id: 'admin-1', email: 'organizer@example.com' };
+const adminDto = { id: 'admin-1', email: 'organizer@example.com', role: 'ADMIN' };
 
 describe('AuthRepository', () => {
     let mock: MockAdapter;

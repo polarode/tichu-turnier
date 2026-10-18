@@ -35,7 +35,7 @@ const auth = vi.mocked(AuthRepository);
 const tournaments = vi.mocked(TournamentRepository);
 const teams = vi.mocked(TeamRepository);
 
-const admin = { id: 'admin-1', email: 'organizer@example.com' };
+const admin = { id: 'admin-1', email: 'organizer@example.com', role: 'ADMIN' as const };
 
 function tournament(id: string, name: string, status: Tournament['status']): Tournament {
     return {

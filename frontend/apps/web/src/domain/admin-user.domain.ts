@@ -1,10 +1,15 @@
+import type { AdminRole } from '@/vocabulary/admin.enum.ts';
+
 /**
  * The authenticated organizer as the UI knows them. Deliberately minimal: the wire
  * response never carries password or token material, so neither does the domain model.
+ * The [role] lets the UI show an owner-only console; it is never a security boundary —
+ * the backend re-checks the role on every request.
  */
 export interface AdminUser {
     id: string;
     email: string;
+    role: AdminRole;
 }
 
 /**

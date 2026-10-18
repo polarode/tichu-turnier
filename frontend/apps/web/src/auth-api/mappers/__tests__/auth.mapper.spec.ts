@@ -8,9 +8,13 @@ import {
 
 describe('adminDtoToDomain', () => {
     it('maps an admin DTO to the domain model', () => {
-        const admin = adminDtoToDomain({ id: 'admin-1', email: 'organizer@example.com' });
+        const admin = adminDtoToDomain({
+            id: 'admin-1',
+            email: 'organizer@example.com',
+            role: 'OWNER',
+        });
 
-        expect(admin).toEqual({ id: 'admin-1', email: 'organizer@example.com' });
+        expect(admin).toEqual({ id: 'admin-1', email: 'organizer@example.com', role: 'OWNER' });
     });
 });
 

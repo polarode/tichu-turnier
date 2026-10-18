@@ -76,6 +76,50 @@ export const de: Catalog = {
     'admin.title': 'Verwaltungsbereich',
     'admin.description': 'Turniere, Teams und Runden anlegen und verwalten.',
 
+    'ownerConsole.link': 'Owner-Konsole',
+    'ownerConsole.title': 'Owner-Konsole',
+    'ownerConsole.description':
+        'Organisatoren freigeben, Admins verwalten und Einladungen ausstellen.',
+    'ownerConsole.error': 'Die Owner-Konsole konnte nicht geladen werden.',
+    'ownerConsole.forbidden.title': 'Nicht verfügbar',
+    'ownerConsole.forbidden.description': 'Dieser Bereich ist nur für Plattform-Owner verfügbar.',
+
+    'ownerConsole.pending.title': 'Offene Anfragen',
+    'ownerConsole.pending.description': 'Konten, die auf deine Freigabe warten.',
+    'ownerConsole.pending.empty': 'Keine offenen Anfragen.',
+    'ownerConsole.pending.approve': 'Freigeben',
+    'ownerConsole.pending.reject': 'Ablehnen',
+
+    'ownerConsole.admins.title': 'Admins',
+    'ownerConsole.admins.description': 'Bestehende Organisatoren deaktivieren oder reaktivieren.',
+    'ownerConsole.admins.empty': 'Noch keine weiteren Admins.',
+    'ownerConsole.admins.disable': 'Deaktivieren',
+    'ownerConsole.admins.reactivate': 'Reaktivieren',
+
+    'ownerConsole.invites.title': 'Einladungen',
+    'ownerConsole.invites.description':
+        'Organisator per E-Mail einladen. Der Link wird einmal angezeigt.',
+    'ownerConsole.invites.email': 'E-Mail',
+    'ownerConsole.invites.issue': 'Einladung erstellen',
+    'ownerConsole.invites.issuing': 'Wird erstellt…',
+    'ownerConsole.invites.issued.title': 'Einladungslink',
+    'ownerConsole.invites.issued.description':
+        'Jetzt kopieren — der Link wird nur einmal angezeigt.',
+    'ownerConsole.invites.copy': 'Link kopieren',
+    'ownerConsole.invites.copied': 'Kopiert',
+    'ownerConsole.invites.revoke': 'Zurückziehen',
+    'ownerConsole.invites.empty': 'Noch keine Einladungen.',
+    'ownerConsole.invites.expires': 'Läuft ab',
+
+    'ownerConsole.status.pending': 'Offen',
+    'ownerConsole.status.active': 'Aktiv',
+    'ownerConsole.status.disabled': 'Deaktiviert',
+    'ownerConsole.role.owner': 'Owner',
+    'ownerConsole.role.admin': 'Admin',
+    'ownerConsole.inviteStatus.pending': 'Offen',
+    'ownerConsole.inviteStatus.spent': 'Eingelöst',
+    'ownerConsole.inviteStatus.revoked': 'Zurückgezogen',
+
     'dashboard.title': 'Meine Turniere',
     'dashboard.description': 'Die Turniere, die du organisierst.',
     'dashboard.create': 'Neues Turnier',

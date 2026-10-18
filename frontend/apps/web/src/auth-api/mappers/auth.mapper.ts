@@ -10,6 +10,7 @@ export function adminDtoToDomain(dto: AdminDto): AdminUser {
     return {
         id: dto.id,
         email: dto.email,
+        role: dto.role,
     };
 }
 

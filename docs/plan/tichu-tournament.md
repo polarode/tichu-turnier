@@ -282,7 +282,7 @@ Rebrand the template frontend to the Tichu app: layout/navigation shell, route s
 
 ---
 
-## Phase 13: Admin: auth, dashboard, tournament setup (in progress — #14–#16 done; #17–#20 open)
+## Phase 13: Admin: auth, dashboard, tournament setup (in progress — #14–#16, #20 done; #17–#19 open)
 
 **User stories**: As an organizer I register (and wait to be approved, or use my invite), log in, land on my dashboard, create a tournament, configure it, and manage teams — getting a copyable magic link + QR per team, with the ability to rotate/revoke it. As the platform owner I approve or invite organizers from an admin console.
 
@@ -295,7 +295,7 @@ Admin screens end-to-end on the new API: register/login including the **pending-
 - [ ] Full happy path demoable: register → create tournament → add 4+ teams → see links/QRs  
       _partial: register + dashboard done (#14, #16); create/edit (#17), teams (#18) and links/QR (#19) pending_
 - [ ] Pending account sees a clear "awaiting approval" state (localized); owner can approve requests and issue invites from the console (component tests)  
-      _partial: pending/invite states and login gating done (#15); owner console pending #20_
+      _partial: pending/invite states and login gating done (#15); owner console done (#20)_
 - [ ] All v1 validation errors display as localized, field-anchored messages  
       _partial: error-code→de/en mapping, `applyServerError` field/code anchoring and auth messages done (#14); tournament/team errors pending #17/#18_
 - [ ] Component tests for the team-add dialog and validation rendering  

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { ADMIN_ROLES } from '@/vocabulary/admin.enum.ts';
+
 /**
  * zod schemas describing the auth wire format. Responses are parsed at the repository
  * boundary so a contract drift fails loudly instead of leaking `any` through the app.
@@ -7,6 +9,7 @@ import { z } from 'zod';
 export const adminDtoSchema = z.object({
     id: z.string(),
     email: z.string(),
+    role: z.enum(ADMIN_ROLES),
 });
 
 export type AdminDto = z.infer<typeof adminDtoSchema>;

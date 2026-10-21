@@ -215,6 +215,8 @@ export const de: Catalog = {
     'teamLogin.errorDescription':
         'Dieser Zugriffslink ist ungültig oder nicht mehr aktiv. Bitte wende dich an deinen Turnier-Organisator.',
     'teamLogin.backLink': 'Zur Startseite',
+    'error.teamAccessInvalid':
+        'Dieser Zugriffslink ist ungültig oder nicht mehr aktiv. Bitte wende dich an deinen Turnier-Organisator.',
 
     'public.title': 'Öffentlicher Bereich',
     'public.description': 'Turniere, Ranglisten und Live-Statistiken ansehen.',

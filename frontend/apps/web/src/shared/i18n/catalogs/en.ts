@@ -214,6 +214,8 @@ export const en = {
     'teamLogin.errorDescription':
         'This access link is invalid or no longer active. Please contact your tournament organizer.',
     'teamLogin.backLink': 'Back to the start page',
+    'error.teamAccessInvalid':
+        'This access link is invalid or no longer active. Please contact your tournament organizer.',
 
     'public.title': 'Public area',
     'public.description': 'Browse tournaments, standings and live statistics.',

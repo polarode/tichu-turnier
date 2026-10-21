@@ -219,10 +219,12 @@ class TeamAccessIntegrationTest(
             .andExpect(jsonPath("$.teamId").value(teamId))
 
         // Admin endpoints (list/get teams, tournaments) reject the team principal.
+        // The team filter only ever authenticates inside /api/team/, so outside it
+        // the request is unauthenticated for admin purposes (401).
         mockMvc.perform(get("/api/tournaments/$tournamentId/teams").cookie(teamCookie))
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
         mockMvc.perform(get("/api/tournaments").cookie(teamCookie))
-            .andExpect(status().isForbidden)
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
@@ -230,6 +232,26 @@ class TeamAccessIntegrationTest(
         authenticate()
         mockMvc.perform(get("/api/team/me").cookie(adminCookie))
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `a browser holding both an admin and a team session reaches team endpoints as the team`() {
+        // One browser is routinely both organizer and team member (demo): when the
+        // request carries a team session, it must win on team endpoints even though
+        // the admin filter established an authentication first.
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = seedKnownToken(teamId)
+        val teamCookie = teamCookie(exchange(raw).also { org.junit.jupiter.api.Assertions.assertEquals(200, it.response.status) })
+
+        mockMvc.perform(get("/api/team/me").cookie(adminCookie, teamCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.teamId").value(teamId))
+
+        // The same combined browser still reaches admin endpoints as the admin.
+        mockMvc.perform(get("/api/tournaments").cookie(adminCookie, teamCookie))
+            .andExpect(status().isOk)
     }
 
     @Test

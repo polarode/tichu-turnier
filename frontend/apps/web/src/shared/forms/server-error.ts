@@ -8,8 +8,9 @@ import type { I18n } from '@/shared/i18n/i18n.context.tsx';
 interface ServerErrorAnchors<TValues extends FieldValues> {
     /** Backend problem `field` name → form field, for field-anchored problems. */
     fields?: Partial<Record<string, Path<TValues>>>;
-    /** Backend error code → form field, for codes that carry no `field` of their own. */
-    codes?: Partial<Record<ApiErrorCode, Path<TValues>>>;
+    /** Backend error code → form field, for codes that carry no `field` of their own.
+     * `root` routes the code to the form-level message instead of any input. */
+    codes?: Partial<Record<ApiErrorCode, Path<TValues> | 'root'>>;
 }
 
 /**

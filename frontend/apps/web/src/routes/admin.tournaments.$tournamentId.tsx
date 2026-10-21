@@ -2,6 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router';
 import { Badge } from '@tichu/ui/badge.tsx';
 import { buttonVariants } from '@tichu/ui/button.tsx';
 
+import { TeamsSection } from '@/features/teams/components/teams-section.component.tsx';
 import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
@@ -76,6 +77,12 @@ function TournamentDetailComponent() {
                         {tournament.settings.allowGrandTichu ? t('common.yes') : t('common.no')}
                     </p>
                 </div>
+
+                <TeamsSection
+                    tournamentId={tournament.id}
+                    maxTeams={tournament.maxTeams}
+                    editable={editable}
+                />
         </section>
     );
 }

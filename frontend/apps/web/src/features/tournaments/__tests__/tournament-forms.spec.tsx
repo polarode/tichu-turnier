@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
@@ -41,6 +42,7 @@ vi.mock('@/team-api/team.repository.ts', () => ({
 }));
 
 const tournamentRepo = vi.mocked(TournamentRepository);
+const teamRepo = vi.mocked(TeamRepository);
 const authRepo = vi.mocked(AuthRepository);
 
 const adminSession = {
@@ -88,6 +90,8 @@ describe('tournament create/edit forms', () => {
         // admin route guard would fail on an undefined session. Re-seed it every test.
         authRepo.refresh.mockResolvedValue(adminSession);
         tournamentRepo.list.mockResolvedValue([]);
+        // The tournament detail screen renders the teams section; seed its list too.
+        teamRepo.list.mockResolvedValue([]);
     });
 
     it('validates the create form before submitting', async () => {

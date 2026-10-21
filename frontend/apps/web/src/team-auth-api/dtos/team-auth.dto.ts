@@ -29,7 +29,9 @@ export const teamOverviewDtoSchema = z.object({
             teamId: z.string(),
             name: z.string(),
         })
-        .array(),
+        .array()
+        // A team is exactly two named players, server-enforced since S1.
+        .length(2),
 });
 
 export type TeamOverviewDto = z.infer<typeof teamOverviewDtoSchema>;

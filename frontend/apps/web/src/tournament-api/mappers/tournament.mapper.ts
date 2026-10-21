@@ -36,6 +36,24 @@ export function tournamentSettingsToDto(settings: TournamentSettings): Tournamen
     };
 }
 
+/**
+ * Flattened tournament form values → domain write input. Shared by the create and edit
+ * routes so the settings bundling (and thus the write-contract shape) lives in one place.
+ */
+export function tournamentFormToWriteInput(values: {
+    name: string;
+    description: string;
+    maxTeams: number;
+    allowGrandTichu: boolean;
+}): TournamentWriteInput {
+    return {
+        name: values.name,
+        description: values.description,
+        maxTeams: values.maxTeams,
+        settings: { allowGrandTichu: values.allowGrandTichu },
+    };
+}
+
 /** Domain write input → wire payload; keeps the DTO out of the hooks. */
 export function tournamentWriteInputToDto(
     input: TournamentWriteInput,

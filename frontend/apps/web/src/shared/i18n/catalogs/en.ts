@@ -19,12 +19,23 @@ export const en = {
     'language.en': 'English',
 
     'common.loading': 'Loading…',
+    'common.yes': 'Yes',
+    'common.no': 'No',
     'common.retry': 'Try again',
 
     'validation.email.required': 'Email is required.',
     'validation.email.invalid': 'Enter a valid email address.',
     'validation.password.required': 'Password is required.',
     'validation.password.min': 'The password must be at least 8 characters long.',
+
+    'validation.tournamentName.required': 'The name is required.',
+    'validation.tournamentName.max': 'The name may be at most 100 characters long.',
+    'validation.tournamentDescription.max':
+        'The description may be at most 500 characters long.',
+    'validation.tournamentMaxTeams.required': 'The max team count is required.',
+    'validation.tournamentMaxTeams.integer': 'The max team count must be a whole number.',
+    'validation.tournamentMaxTeams.min': 'The tournament needs at least 2 teams.',
+    'validation.tournamentMaxTeams.max': 'The max team count may be at most 64.',
 
     'error.unknown': 'Something went wrong. Please try again.',
     'error.notFound': 'Not found.',
@@ -130,8 +141,19 @@ export const en = {
 
     'tournament.new.title': 'New tournament',
     'tournament.new.description': 'Set the name, description and rules.',
+    'tournament.new.submit': 'Create tournament',
+    'tournament.new.pending': 'Creating tournament…',
+    'tournament.edit.title': 'Edit tournament',
+    'tournament.edit.description': 'Adjust the name, description and rules.',
+    'tournament.edit.submit': 'Save changes',
+    'tournament.edit.pending': 'Saving changes…',
     'tournament.detail.title': 'Tournament',
     'tournament.detail.description': 'Manage teams and settings.',
+    'tournament.detail.edit': 'Edit',
+    'tournament.form.name': 'Name',
+    'tournament.form.description': 'Description',
+    'tournament.form.maxTeams': 'Max team count',
+    'tournament.form.allowGrandTichu': 'Allow grand Tichu',
 
     'tournament.status.setup': 'Setup',
     'tournament.status.active': 'Active',

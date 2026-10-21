@@ -16,12 +16,23 @@ export const de: Catalog = {
     'language.en': 'Englisch',
 
     'common.loading': 'Wird geladen…',
+    'common.yes': 'Ja',
+    'common.no': 'Nein',
     'common.retry': 'Erneut versuchen',
 
     'validation.email.required': 'E-Mail ist erforderlich.',
     'validation.email.invalid': 'Bitte eine gültige E-Mail-Adresse eingeben.',
     'validation.password.required': 'Passwort ist erforderlich.',
     'validation.password.min': 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+
+    'validation.tournamentName.required': 'Der Name ist erforderlich.',
+    'validation.tournamentName.max': 'Der Name darf höchstens 100 Zeichen lang sein.',
+    'validation.tournamentDescription.max':
+        'Die Beschreibung darf höchstens 500 Zeichen lang sein.',
+    'validation.tournamentMaxTeams.required': 'Die maximale Teamanzahl ist erforderlich.',
+    'validation.tournamentMaxTeams.integer': 'Die maximale Teamanzahl muss eine ganze Zahl sein.',
+    'validation.tournamentMaxTeams.min': 'Das Turnier benötigt mindestens 2 Teams.',
+    'validation.tournamentMaxTeams.max': 'Die maximale Teamanzahl darf höchstens 64 betragen.',
 
     'error.unknown': 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
     'error.notFound': 'Nicht gefunden.',
@@ -131,6 +142,17 @@ export const de: Catalog = {
 
     'tournament.new.title': 'Neues Turnier',
     'tournament.new.description': 'Name, Beschreibung und Regeln festlegen.',
+    'tournament.new.submit': 'Turnier erstellen',
+    'tournament.new.pending': 'Turnier wird erstellt…',
+    'tournament.edit.title': 'Turnier bearbeiten',
+    'tournament.edit.description': 'Name, Beschreibung und Regeln anpassen.',
+    'tournament.edit.submit': 'Änderungen speichern',
+    'tournament.edit.pending': 'Änderungen werden gespeichert…',
+    'tournament.detail.edit': 'Bearbeiten',
+    'tournament.form.name': 'Name',
+    'tournament.form.description': 'Beschreibung',
+    'tournament.form.maxTeams': 'Maximale Teamanzahl',
+    'tournament.form.allowGrandTichu': 'Grand Tichu erlauben',
     'tournament.detail.title': 'Turnier',
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',
 

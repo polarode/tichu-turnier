@@ -206,6 +206,16 @@ export const de: Catalog = {
     'team.title': 'Teambereich',
     'team.description': 'Verfolge deinen Tisch und trage deine Spielergebnisse ein.',
 
+    'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',
+    'teamLogin.exchangingDescription': 'Dein Zugriffslink wird geprüft. Einen Moment bitte.',
+    'teamLogin.neutralTitle': 'Zugriffslink prüfen',
+    'teamLogin.neutralDescription':
+        'Öffne den persönlichen Zugriffslink aus der Nachricht deines Turnier-Organisators.',
+    'teamLogin.errorTitle': 'Dieser Zugriffslink ist ungültig',
+    'teamLogin.errorDescription':
+        'Dieser Zugriffslink ist ungültig oder nicht mehr aktiv. Bitte wende dich an deinen Turnier-Organisator.',
+    'teamLogin.backLink': 'Zur Startseite',
+
     'public.title': 'Öffentlicher Bereich',
     'public.description': 'Turniere, Ranglisten und Live-Statistiken ansehen.',
 };

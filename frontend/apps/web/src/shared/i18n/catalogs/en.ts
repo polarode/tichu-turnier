@@ -205,6 +205,16 @@ export const en = {
     'team.title': 'Team area',
     'team.description': 'Follow your table and enter your game results.',
 
+    'teamLogin.exchangingTitle': 'Opening your team area',
+    'teamLogin.exchangingDescription': 'Your access link is being validated. One moment, please.',
+    'teamLogin.neutralTitle': 'Check your access link',
+    'teamLogin.neutralDescription':
+        'Open the personal access link from the message of your tournament organizer.',
+    'teamLogin.errorTitle': 'This access link is not valid',
+    'teamLogin.errorDescription':
+        'This access link is invalid or no longer active. Please contact your tournament organizer.',
+    'teamLogin.backLink': 'Back to the start page',
+
     'public.title': 'Public area',
     'public.description': 'Browse tournaments, standings and live statistics.',
 } as const satisfies Record<string, string>;

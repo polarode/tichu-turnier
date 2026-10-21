@@ -24,6 +24,9 @@ export const ERROR_CODES = [
     'INVITE_EMAIL_MISMATCH',
     'INVITE_STATUS_CONFLICT',
     'LINK_ALREADY_REVEALED',
+
+    /** A team access link cannot be exchanged; all causes share this one code (ADR 0001). */
+    'TEAM_ACCESS_INVALID',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

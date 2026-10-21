@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as TeamLoginRouteImport } from './routes/team_.login'
 import { Route as AdminConsoleRouteImport } from './routes/admin.console'
 import { Route as AdminTournamentsNewRouteImport } from './routes/admin.tournaments.new'
 import { Route as AdminTournamentsTournamentIdRouteImport } from './routes/admin.tournaments.$tournamentId'
@@ -62,6 +63,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const TeamLoginRoute = TeamLoginRouteImport.update({
+  id: '/team_/login',
+  path: '/team/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminConsoleRoute = AdminConsoleRouteImport.update({
   id: '/console',
   path: '/console',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
   '/admin/console': typeof AdminConsoleRoute
+  '/team/login': typeof TeamLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/tournaments/$tournamentId': typeof AdminTournamentsTournamentIdRoute
   '/admin/tournaments/new': typeof AdminTournamentsNewRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
   '/admin/console': typeof AdminConsoleRoute
+  '/team/login': typeof TeamLoginRoute
   '/admin': typeof AdminIndexRoute
   '/admin/tournaments/$tournamentId': typeof AdminTournamentsTournamentIdRoute
   '/admin/tournaments/new': typeof AdminTournamentsNewRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
   '/admin/console': typeof AdminConsoleRoute
+  '/team_/login': typeof TeamLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/tournaments/$tournamentId': typeof AdminTournamentsTournamentIdRoute
   '/admin/tournaments/new': typeof AdminTournamentsNewRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/team'
     | '/admin/console'
+    | '/team/login'
     | '/admin/'
     | '/admin/tournaments/$tournamentId'
     | '/admin/tournaments/new'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/team'
     | '/admin/console'
+    | '/team/login'
     | '/admin'
     | '/admin/tournaments/$tournamentId'
     | '/admin/tournaments/new'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/team'
     | '/admin/console'
+    | '/team_/login'
     | '/admin/'
     | '/admin/tournaments/$tournamentId'
     | '/admin/tournaments/new'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   PublicRoute: typeof PublicRoute
   RegisterRoute: typeof RegisterRoute
   TeamRoute: typeof TeamRoute
+  TeamLoginRoute: typeof TeamLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/team_/login': {
+      id: '/team_/login'
+      path: '/team/login'
+      fullPath: '/team/login'
+      preLoaderRoute: typeof TeamLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/console': {
       id: '/admin/console'
       path: '/console'
@@ -296,6 +316,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicRoute: PublicRoute,
   RegisterRoute: RegisterRoute,
   TeamRoute: TeamRoute,
+  TeamLoginRoute: TeamLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
+import { ApiError } from '@/shared/api/api-error.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
@@ -61,6 +62,34 @@ describe('/team/login', () => {
         expect(router.state.location.pathname).toBe('/team');
         expect(mockedExchange).toHaveBeenCalledWith('raw-secret-token');
         expect(router.state.location.search).not.toContain('raw-secret-token');
+    });
+
+    it('refetches /me after a successful exchange even when a previous failed check is cached', async () => {
+        // First visit without a session: /team bounces to the neutral prompt and the
+        // failed check lands in the query cache.
+        mockedMe.mockRejectedValueOnce(
+            new ApiError({
+                code: 'UNAUTHENTICATED',
+                status: 401,
+                field: null,
+                message: 'no session',
+            }),
+        );
+        const { router } = renderApp('/team');
+        await screen.findByRole('heading', { name: 'Zugriffslink prüfen' });
+
+        // Then the access link is redeemed: the stale failed entry must not keep
+        // /team from fetching the fresh overview.
+        mockedExchange.mockResolvedValue({
+            teamId: 'team-1',
+            tournamentId: 't-1',
+            expiresAt: new Date('2026-01-01T10:00:00Z'),
+        });
+        await router.navigate({ to: '/team/login', search: { token: 'raw-secret-token' } });
+
+        await screen.findByText('Spring Classic');
+        expect(mockedMe).toHaveBeenCalledTimes(2);
+        expect(router.state.location.pathname).toBe('/team');
     });
 
     it('shows the same dead-end error screen for any rejected link, with a way back to the start page', async () => {

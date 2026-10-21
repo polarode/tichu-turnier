@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
@@ -12,8 +12,15 @@ import type { TeamSession } from '@/domain/team-session.domain.ts';
  * so callers treat errors uniformly and never retry.
  */
 export function useExchangeAccessLink() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (token: string): Promise<TeamSession> => TeamAuthRepository.exchange(token),
+        onSuccess: () => {
+            // A successful exchange changes the session state: a previously cached
+            // overview (or a failed check) is stale by definition, so drop it and
+            // let the /team guard fetch /me fresh.
+            queryClient.removeQueries({ queryKey: teamOverviewQueryKey() });
+        },
     });
 }
 

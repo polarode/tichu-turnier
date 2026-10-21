@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 
 import { useExchangeAccessLink } from '@/features/teams/hooks/team-auth-queries.hook.ts';
@@ -36,43 +36,43 @@ function BackLink() {
 }
 
 /**
- * The access-link redemption flow (see ADR 0001). On mount the raw token is stripped
- * from the address bar *before* the exchange runs, so the secret never persists in
- * the URL or browser history; the token is carried only in memory. On success the
- * session cookie is set and the team lands on `/team` (replace). Any rejection —
- * unknown, revoked, expired or rate-limited — shows the same localized dead-end
- * screen; the UI cannot and must not distinguish causes. `/team/login` without a
- * token shows the neutral "check your access link" prompt; there is no paste box.
+ * The access-link redemption flow (see ADR 0001). The raw token is stripped from the
+ * address bar *before* the exchange runs, so the secret never persists in the URL or
+ * browser history; the token is carried only in memory. On success the session cookie
+ * is set and the team lands on `/team` (replace). Any rejection — unknown, revoked,
+ * expired or rate-limited — shows the same localized dead-end screen; the UI cannot
+ * and must not distinguish causes. Without a token the screen shows the neutral
+ * "check your access link" prompt; there is no paste box.
  */
 export function TeamLogin({ token }: { token?: string }) {
     const navigate = useNavigate();
     const exchange = useExchangeAccessLink();
-    const tokenRef = useRef<string | undefined>(token);
+    // The token being redeemed lives in memory only — never in the URL, history or
+    // any store. `redeemedRef` pins exactly-one-exchange per token, including the
+    // case where the screen was already mounted (neutral prompt) when the token
+    // arrives via a redirect.
+    const [redeemedToken, setRedeemedToken] = useState<string | undefined>(undefined);
     const [phase, setPhase] = useState<Phase>('exchanging');
-    const exchangedRef = useRef(false);
 
     useEffect(() => {
-        const rawToken = tokenRef.current;
-        if (!rawToken || exchangedRef.current) return;
-        exchangedRef.current = true;
+        if (!token || redeemedToken === token) return;
+        setRedeemedToken(token);
 
         // Strip first — even a failing exchange must leave no token in the URL.
         void navigate({ to: '/team/login', search: {}, replace: true });
 
-        exchange.mutate(rawToken, {
+        exchange.mutate(token, {
             onSuccess: () => {
-                tokenRef.current = undefined;
                 void navigate({ to: '/team', replace: true });
             },
             onError: () => {
-                tokenRef.current = undefined;
                 setPhase('failed');
             },
         });
-        // Runs once per mount: the redemption must happen exactly once, so the
+        // Runs once per token: the redemption must happen exactly once, so the
         // mutation instance is deliberately excluded from the dependencies.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [navigate]);
+    }, [token, navigate]);
 
     if (phase === 'failed') {
         return (
@@ -82,21 +82,21 @@ export function TeamLogin({ token }: { token?: string }) {
         );
     }
 
-    if (!tokenRef.current) {
+    if (redeemedToken) {
         return (
             <Screen
-                titleKey="teamLogin.neutralTitle"
-                descriptionKey="teamLogin.neutralDescription"
-            >
-                <BackLink />
-            </Screen>
+                titleKey="teamLogin.exchangingTitle"
+                descriptionKey="teamLogin.exchangingDescription"
+            />
         );
     }
 
     return (
         <Screen
-            titleKey="teamLogin.exchangingTitle"
-            descriptionKey="teamLogin.exchangingDescription"
-        />
+            titleKey="teamLogin.neutralTitle"
+            descriptionKey="teamLogin.neutralDescription"
+        >
+            <BackLink />
+        </Screen>
     );
 }

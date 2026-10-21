@@ -8,6 +8,7 @@ import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TeamFormDialog } from '@/features/teams/components/team-form-dialog.component.tsx';
 import { AccessLinkDialog } from '@/features/teams/components/access-link-dialog.component.tsx';
+import { ConfirmDialog } from '@/features/teams/components/confirm-dialog.component.tsx';
 
 interface TeamsSectionProps {
     tournamentId: string;
@@ -149,40 +150,23 @@ export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionP
             )}
 
             {confirmDeleteTeam ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={t('teams.delete.title')}
-                        className="w-full max-w-sm rounded-md border border-border bg-background p-6 shadow-lg"
-                    >
-                        <h2 className="mb-2 text-lg font-semibold">{t('teams.delete.title')}</h2>
-                        <p className="mb-4 text-sm text-muted-foreground">
+                <ConfirmDialog
+                    titleKey="teams.delete.title"
+                    description={
+                        <>
                             {t('teams.delete.description')}{' '}
                             <strong className="font-medium text-foreground">
                                 {confirmDeleteTeam.name}
                             </strong>
                             ?
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setConfirmDeleteTeam(null)}
-                            >
-                                {t('common.cancel')}
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                disabled={deleteTeam.isPending}
-                                onClick={() => remove(confirmDeleteTeam)}
-                            >
-                                {t('teams.delete.confirm')}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                        </>
+                    }
+                    confirmLabelKey="teams.delete.confirm"
+                    destructive
+                    disabled={deleteTeam.isPending}
+                    onConfirm={() => remove(confirmDeleteTeam)}
+                    onCancel={() => setConfirmDeleteTeam(null)}
+                />
             ) : null}
 
             {accessLinkTeam ? (

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Button } from '@tichu/ui/button.tsx';
 import { Dialog } from '@tichu/ui/dialog.tsx';
 
@@ -6,7 +7,9 @@ import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 
 interface ConfirmDialogProps {
     titleKey: TranslationKey;
-    descriptionKey: TranslationKey;
+    descriptionKey?: TranslationKey;
+    /** Rich description overriding `descriptionKey` (e.g. text interpolating a name). */
+    description?: ReactNode;
     confirmLabelKey: TranslationKey;
     destructive: boolean;
     disabled: boolean;
@@ -18,6 +21,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
     titleKey,
     descriptionKey,
+    description,
     confirmLabelKey,
     destructive,
     disabled,
@@ -28,7 +32,9 @@ export function ConfirmDialog({
     return (
         <Dialog open label={t(titleKey)}>
             <h2 className="mb-2 text-lg font-semibold">{t(titleKey)}</h2>
-            <p className="mb-4 text-sm text-muted-foreground">{t(descriptionKey)}</p>
+            <p className="mb-4 text-sm text-muted-foreground">
+                {description ?? (descriptionKey ? t(descriptionKey) : null)}
+            </p>
             <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={onCancel}>
                     {t('common.cancel')}

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Architecture review for tichu-turnier</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+</script>
+<style>
+  .seam { border-left: 3px dashed #94a3b8; }
+  .leak { color: #dc2626; }
+  .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+</style>
+</head>
+<body class="bg-stone-50 text-slate-900 font-sans">
+<main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+
+  <header class="space-y-3">
+    <h1 class="font-serif text-3xl font-semibold">Architecture review — <span class="text-indigo-700">tichu-turnier</span></h1>
+    <p class="text-sm text-slate-500">2026-10-19 · deepening opportunities, vocabulary from /codebase-design</p>
+    <div class="flex gap-6 text-xs text-slate-600 pt-2">
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 border-2 border-slate-400 rounded-sm"></span> module</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 border-l-2 border-dashed border-slate-400"></span> seam</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 bg-red-600 rounded-sm"></span> leakage</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 deep rounded-sm"></span> deep module</span>
+    </div>
+  </header>
+
+  <section id="candidates" class="space-y-10">
+
+    <!-- CANDIDATE 1 -->
+    <article id="c1" class="rounded-xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h2 class="font-serif text-xl font-semibold">1 · Put the admin account lifecycle in one deep module</h2>
+        <div class="flex gap-2 shrink-0">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium uppercase tracking-wide">Strong</span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">in-process</span>
+        </div>
+      </div>
+      <p class="font-mono text-sm text-slate-600">application/usecase/ApproveAdminCommand.kt · DisableAdminCommand.kt · ReactivateAdminCommand.kt · RejectAdminCommand.kt · AdminManagementSupport.kt · domain/AdminUser.kt</p>
+      <p><strong>Problem.</strong> Four shallow twin commands each wrap the same 3-step shape; the legal status transitions, audit stamps and the “owner is not disableable” rule are enforced by callers, so the AdminUser module has no depth and understanding the lifecycle means bouncing across five files — poor locality.</p>
+      <p><strong>Solution.</strong> Give AdminUser a deep <code class="font-mono text-sm">transition(target, by, at)</code> that knows the legal transitions and stamps audit fields; collapse the four commands into one ManageAdminAccount use case behind a single inbound port. The REST adapter maps verb → operation. Keep <code class="font-mono text-sm">requireOwner()</code> — that guard is a real shared seam.</p>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — rules scattered across four shallow callers</p>
+          <pre class="mermaid">
+flowchart TB
+  A[ApproveAdminCommand] --> D[AdminUser]
+  B[DisableAdminCommand] --> D
+  C[ReactivateAdminCommand] --> D
+  E[RejectAdminCommand] --> D
+  A -.leak.-> F[transition rules]
+  B -.leak.-> F
+  C -.leak.-> F
+  E -.leak.-> F
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class D,F leak
+          </pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one deep AdminUser module</p>
+          <pre class="mermaid">
+flowchart TB
+  M[ManageAdminAccount] --> D[("AdminUser<br/>transition() knows all rules")]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+  class D deep
+          </pre>
+        </div>
+      </div>
+      <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+        <li>Transition rules concentrated next to the domain type</li>
+        <li>Deletion test passes: complexity concentrates</li>
+        <li>One test suite covers the whole state machine</li>
+      </ul>
+    </article>
+
+    <!-- CANDIDATE 2 -->
+    <article id="c2" class="rounded-xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h2 class="font-serif text-xl font-semibold">2 · Merge parallel admin/team session twins</h2>
+        <div class="flex gap-2 shrink-0">
+          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium uppercase tracking-wide">Worth exploring</span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">local-substitutable</span>
+        </div>
+      </div>
+      <p class="font-mono text-sm text-slate-600">application/usecase/AdminSessionIssuer.kt · TeamSessionIssuer.kt · AuthenticateSessionQuery.kt · AuthenticateTeamSessionQuery.kt · domain/SessionTokens.kt</p>
+      <p><strong>Problem.</strong> Two parallel shallow trees nearly identical modulo <code class="font-mono text-sm">adminUserId ↔ teamId</code>; “hash on write, compare on read” and expiry semantics exist twice with slight wording — a drift risk. <code class="font-mono text-sm">SessionTokens</code> is already a good seam.</p>
+      <p><strong>Solution.</strong> Extract one SessionMaterializer behind the existing SessionTokens seam, parameterized by a SessionRecord interface both session types implement; one sweeper path for both. Do not merge the authenticators’ business rules (admin status re-read is admin-specific).</p>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — duplicated choreography</p>
+          <pre class="mermaid">
+flowchart TB
+  A[AdminSessionIssuer] --> T[SessionTokens]
+  B[TeamSessionIssuer] --> T
+  A -.copy of mint/hash logic.-> B
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class A,B leak
+          </pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one deep materializer</p>
+          <pre class="mermaid">
+flowchart TB
+  A[AdminSessionIssuer] --> M[("SessionMaterializer")]
+  B[TeamSessionIssuer] --> M
+  M --> T[SessionTokens]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+  class M deep
+          </pre>
+        </div>
+      </div>
+      <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+        <li>Token mint/hash choreography in one place</li>
+        <li>Two aggregate types stay legitimately distinct</li>
+        <li>Partial concentration — proceed with care</li>
+      </ul>
+    </article>
+
+    <!-- CANDIDATE 3 -->
+    <article id="c3" class="rounded-xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h2 class="font-serif text-xl font-semibold">3 · One seam for “owned team of an owned tournament”</h2>
+        <div class="flex gap-2 shrink-0">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium uppercase tracking-wide">Strong</span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">in-process</span>
+        </div>
+      </div>
+      <p class="font-mono text-sm text-slate-600">application/usecase/OwnedTournamentLookup.kt · ManageTeamAccessLinkCommand.kt · CreateTeamCommand.kt · 9 further command files calling findOwnedOrThrow</p>
+      <p><strong>Problem.</strong> The most repeated rule in the app lives as an incantation at the top of every command; the compound “owned tournament AND team belongs to it” check is re-implemented in two places — callers can drift, and any policy change means a shotgun edit.</p>
+      <p><strong>Solution.</strong> One deep helper <code class="font-mono text-sm">OwnedTeamAccess.requireOwnedTeam(tournamentId, teamId, owner): Team</code> used by every team verb; treat the tournament lookup as its private detail. Test that seam once instead of re-asserting ownership per command.</p>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — policy repeated at 12 call sites</p>
+          <pre class="mermaid">
+flowchart TB
+  C1[CreateTeam] -.leak.-> P[ownership rule]
+  C2[UpdateTeam] -.leak.-> P
+  C3[DeleteTeam] -.leak.-> P
+  C4[ManageTeamAccessLink] -.leak.-> P
+  C5[9 other commands] -.leak.-> P
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class P leak
+          </pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one deep seam</p>
+          <pre class="mermaid">
+flowchart TB
+  C1[CreateTeam] --> O[("OwnedTeamAccess<br/>requireOwnedTeam()")]
+  C2[UpdateTeam] --> O
+  C3[DeleteTeam] --> O
+  C4[ManageTeamAccessLink] --> O
+  C5[9 other commands] --> O
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+  class O deep
+          </pre>
+        </div>
+      </div>
+      <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+        <li>Policy change = one edit, fixed everywhere</li>
+        <li>Ownership tested once, not 12 times</li>
+        <li>Deletion test clearly concentrates complexity</li>
+      </ul>
+    </article>
+
+    <!-- CANDIDATE 4 -->
+    <article id="c4" class="rounded-xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h2 class="font-serif text-xl font-semibold">4 · Group verbs per aggregate instead of one file per use case</h2>
+        <div class="flex gap-2 shrink-0">
+          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium uppercase tracking-wide">Worth exploring</span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">in-process</span>
+        </div>
+      </div>
+      <p class="font-mono text-sm text-slate-600">application/api/ (36 interface files) · application/usecase/ (~36 command classes) · UseCaseConfiguration.kt (261 lines of @Bean wiring)</p>
+      <p><strong>Problem.</strong> Maximum granularity: simple verbs get shallow interface/implementation pairs, and the 261-line configuration is the symptom — it stitches ~36 beans whose wiring carries no information. Every new verb costs three new files plus a bean.</p>
+      <p><strong>Solution.</strong> Group cohesive verbs into one port + one use-case class per area (TeamCommands, TournamentCommands, AdminAccountLifecycle…). <code class="font-mono text-sm">ManageTeamAccessLinkCommand</code> is the model to copy: three interfaces in 97 lines, reads well. Do it opportunistically per aggregate, not big-bang.</p>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — interface ≈ implementation everywhere</p>
+          <div class="space-y-1.5">
+            <div class="flex gap-1"><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">CreateTeam interface</div><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">CreateTeam impl</div></div>
+            <div class="flex gap-1"><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">UpdateTeam interface</div><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">UpdateTeam impl</div></div>
+            <div class="flex gap-1"><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">GetTeam interface</div><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">GetTeam impl</div></div>
+            <div class="flex gap-1"><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">ListTeams interface</div><div class="h-6 flex-1 border-l-4 border-slate-300 flex items-center justify-center text-xs uppercase tracking-wider">ListTeams impl</div></div>
+          </div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — deep module per aggregate</p>
+          <div class="rounded-lg deep text-white h-full p-4 flex flex-col justify-center">
+            <p class="text-xs uppercase tracking-wider text-slate-300 mb-2">TeamCommands — one port, one implementation</p>
+            <p class="text-sm text-slate-300">create · update · delete · list · get — all behind one small interface</p>
+          </div>
+        </div>
+      </div>
+      <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+        <li>Locality: “what can happen to a team” is one file</li>
+        <li>Bean wiring collapses in bulk</li>
+        <li>Hexagonal rule preserved — just coarser modules</li>
+      </ul>
+    </article>
+
+    <!-- CANDIDATE 5 -->
+    <article id="c5" class="rounded-xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h2 class="font-serif text-xl font-semibold">5 · One deep mutation hook for the owner console</h2>
+        <div class="flex gap-2 shrink-0">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium uppercase tracking-wide">Strong</span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">local-substitutable</span>
+        </div>
+      </div>
+      <p class="font-mono text-sm text-slate-600">features/owner-console/hooks/owner-console-queries.hook.ts (8 clone hooks) · use-console-action.hook.ts · admin-api/admin.repository.ts (module singleton)</p>
+      <p><strong>Problem.</strong> Eight shallow hooks differing only in repository function and key, plus a second, parallel error-capture mechanism in <code class="font-mono text-sm">useConsoleAction</code> — components carry two error paths and the bug-prone wiring lives in each component, not in the tested helper. The repository singleton is not injectable, so the seam can’t be stubbed without module mocking.</p>
+      <p><strong>Solution.</strong> One factory hook <code class="font-mono text-sm">useAdminAction(fn, queryKey)</code> returning <code class="font-mono text-sm">{ run, error, isPending }</code>, folding useConsoleAction into it so TanStack mutation state is the single error source. Make the repository injectable once, centrally, in test-helpers.</p>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — 8 hooks × 2 error paths</p>
+          <pre class="mermaid">
+flowchart TB
+  H1[useApproveAdmin] --> R[AdminRepository]
+  H2[useRejectAdmin] --> R
+  H3[useDisableAdmin] --> R
+  H4[useReactivateAdmin] --> R
+  H5[useCreateInvite] --> R
+  H6[useRevokeInvite] --> R
+  U[useConsoleAction<br/>parallel error state] -.leak.-> H1
+  U -.leak.-> H2
+  U -.leak.-> H3
+  U -.leak.-> H4
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class U leak
+          </pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one deep factory hook</p>
+          <pre class="mermaid">
+flowchart TB
+  F[("useAdminAction<br/>run · error · isPending")] --> R[AdminRepository]
+  C1[components] --> F
+  C2[components] --> F
+  C3[components] --> F
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+  class F deep
+          </pre>
+        </div>
+      </div>
+      <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+        <li>Single error source — mutation state</li>
+        <li>Invalidation concentrated in one place</li>
+        <li>Stubbing the repository becomes trivial</li>
+      </ul>
+    </article>
+
+    <!-- CANDIDATE 6 -->
+    <article id="c6" class="rounded-xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h2 class="font-serif text-xl font-semibold">6 · One typed-request helper across the four API slices</h2>
+        <div class="flex gap-2 shrink-0">
+          <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium uppercase tracking-wide">Worth exploring</span>
+          <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">ports & adapters</span>
+        </div>
+      </div>
+      <p class="font-mono text-sm text-slate-600">admin-api/ · auth-api/ · team-api/ · tournament-api/ (each: repository + dtos + mappers) · shared/api/api-client.ts</p>
+      <p><strong>Problem.</strong> Every repository function repeats the identical 3-line choreography <code class="font-mono text-sm">get → zod parse → mapper</code>; the pattern is enforced by convention only, so one slice could silently forget <code class="font-mono text-sm">parse</code> or mishandle a status. The mappers themselves are appropriately deep and tested — keep those.</p>
+      <p><strong>Solution.</strong> One <code class="font-mono text-sm">request(path, schema, mapper)</code> helper in shared/api; each slice becomes a table of endpoint configs. Per-slice files stay for locality of DTOs/mappers — only the call choreography collapses.</p>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before — choreography repeated per slice</p>
+          <pre class="mermaid">
+flowchart TB
+  R1[admin.repository] -.get→parse→map.-> C[apiClient]
+  R2[auth.repository] -.get→parse→map.-> C
+  R3[team.repository] -.get→parse→map.-> C
+  R4[tournament.repository] -.get→parse→map.-> C
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class R1,R2,R3,R4 leak
+          </pre>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After — one helper, config tables</p>
+          <pre class="mermaid">
+flowchart TB
+  R1[admin slice] --> H[("typed-request<br/>request(url, schema, map)")]
+  R2[auth slice] --> H
+  R3[team slice] --> H
+  R4[tournament slice] --> H
+  H --> C[apiClient]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a;
+  class H deep
+          </pre>
+        </div>
+      </div>
+      <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+        <li>Transport contract enforced in code, not convention</li>
+        <li>Mappers and schemas keep their locality</li>
+        <li>New slices become a config entry</li>
+      </ul>
+    </article>
+
+  </section>
+
+  <section id="top-recommendation" class="rounded-xl border-2 border-emerald-600 bg-emerald-50 p-6 space-y-3">
+    <h2 class="font-serif text-2xl font-semibold text-emerald-900">Top recommendation</h2>
+    <p class="text-slate-800">Start with <strong>Candidate 1 — the admin account lifecycle</strong>. It is the smallest change with the highest concentration of currently scattered domain rules: the legal transitions, audit stamps and owner-guard all move next to the domain type they govern. It passes the deletion test cleanly (complexity concentrates, nothing just moves), and it composes with Candidate 4’s grouping — the merged ManageAdminAccount is the first aggregate to group. Pair it with the frontend Candidate 5 if you want one backend and one frontend deepening in the same pass.</p>
+    <p class="text-sm text-slate-600">No GLOSSARY.md or ADRs exist yet; whichever candidate you pick should become the first ADR so the shape isn’t re-litigated later.</p>
+  </section>
+
+</main>
+</body>
+</html>

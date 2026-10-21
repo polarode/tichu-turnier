@@ -8,9 +8,9 @@ This is a two-app monorepo. Read the relevant section before editing an area.
 
 ## Plan & tickets
 
-- **Implementation plan**: `docs/plan/tichu-tournament.md` — the authoritative phased plan. When the user references a phase or the overall roadmap, read it there.
+- **Wayfinder map**: issue #27 on `polarode/tichu-turnier` — the authoritative plan. Work is organized as feature slices (S1–S11), each a child issue of the map with the full spec in its body. Invoke the wayfinder skill with the map to work through it.
 - **Tickets**: GitHub Issues on `polarode/tichu-turnier`, collected in the "Tichu Turnier" project. Each issue carries a *Blocked by* section referencing the blocking issue numbers, and the `ready-for-agent` label marks issues whose blockers are resolved. Done work is closed with the `done` label. Do not create local ticket files in the repo.
-- **Status in the plan**: `docs/plan/tichu-tournament.md` phase headers note which issues delivered them; keep those references current as issues are completed.
+- **Status in the plan**: the map's Decisions-so-far section records what is done; keep it current as slices close.
 
 ## Conventional Commits
 

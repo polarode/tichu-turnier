@@ -27,6 +27,7 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     INVITE_EXPIRED: 'error.inviteExpired',
     INVITE_EMAIL_MISMATCH: 'error.inviteEmailMismatch',
     INVITE_STATUS_CONFLICT: 'error.inviteStatusConflict',
+    LINK_ALREADY_REVEALED: 'error.linkAlreadyRevealed',
 };
 
 /** The catalog key for a backend error code; never returns a missing key. */

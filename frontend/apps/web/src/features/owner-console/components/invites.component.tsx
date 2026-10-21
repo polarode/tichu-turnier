@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import type { AdminInvite, IssuedInvite } from '@/domain/admin-account.domain.ts';
 import { ConsoleRow } from '@/features/owner-console/components/console-row.component.tsx';
 import { ConsoleSection } from '@/features/owner-console/components/console-section.component.tsx';
-import { CopyButton } from '@/features/owner-console/components/copy-button.component.tsx';
+import { CopyButton } from '@tichu/ui/copy-button.tsx';
 import {
     useCreateInvite,
     useRevokeInvite,
@@ -83,7 +83,12 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
                             aria-label={t('ownerConsole.invites.issued.title')}
                             className="max-w-md flex-1"
                         />
-                        <CopyButton value={issued.link} />
+                        <CopyButton
+                            value={issued.link}
+                            copyLabel={t('ownerConsole.invites.copy')}
+                            copiedLabel={t('ownerConsole.invites.copied')}
+                            size="sm"
+                        />
                     </div>
                 </div>
             ) : null}

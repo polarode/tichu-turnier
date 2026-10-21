@@ -58,6 +58,8 @@ export const de: Catalog = {
     'error.inviteEmailMismatch':
         'Diese Einladung wurde für eine andere E-Mail-Adresse ausgestellt.',
     'error.inviteStatusConflict': 'Diese Einladung kann nicht mehr geändert werden.',
+    'error.linkAlreadyRevealed':
+        'Dieser Zugangs-Link wurde bereits angezeigt oder ist deaktiviert. Rotiere ihn, um einen neuen zu erhalten.',
 
     'auth.email': 'E-Mail',
     'auth.password': 'Passwort',
@@ -176,6 +178,26 @@ export const de: Catalog = {
     'teams.delete.title': 'Team löschen',
     'teams.delete.description': 'Das Team löschen',
     'teams.delete.confirm': 'Löschen',
+    'teams.accessLink.action': 'Zugangs-Link',
+    'teams.accessLink.title': 'Zugangs-Link',
+    'teams.accessLink.linkLabel': 'Link',
+    'teams.accessLink.copy': 'Kopieren',
+    'teams.accessLink.copied': 'Kopiert!',
+    'teams.accessLink.oneTime':
+        'Dieser Link wird nur einmal angezeigt. Kopiere ihn oder scanne den QR-Code, bevor du das Fenster schließt.',
+    'teams.accessLink.qr': 'QR-Code für den Zugangs-Link',
+    'teams.accessLink.rotate': 'Rotieren',
+    'teams.accessLink.rotateTitle': 'Zugangs-Link rotieren?',
+    'teams.accessLink.rotateDescription':
+        'Der alte Link und alle aktiven Team-Sitzungen werden sofort ungültig. Der neue Link wird danach einmalig angezeigt.',
+    'teams.accessLink.rotateConfirm': 'Rotieren',
+    'teams.accessLink.rotatePending': 'Rotieren…',
+    'teams.accessLink.revoke': 'Widerrufen',
+    'teams.accessLink.revokeTitle': 'Zugangs-Link widerrufen?',
+    'teams.accessLink.revokeDescription':
+        'Das Team kann sich ab sofort nicht mehr anmelden. Rotieren stellt den Zugang wieder her.',
+    'teams.accessLink.revokeConfirm': 'Widerrufen',
+    'teams.accessLink.revokePending': 'Wird widerrufen…',
 
     'tournament.status.setup': 'Vorbereitung',
     'tournament.status.active': 'Läuft',

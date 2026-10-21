@@ -21,6 +21,7 @@
         "@tichu/ui": "workspace:*",
         "axios": "catalog:",
         "lucide-react": "catalog:",
+        "qrcode.react": "^4.2.0",
         "react": "catalog:",
         "react-dom": "catalog:",
         "react-hook-form": "catalog:",

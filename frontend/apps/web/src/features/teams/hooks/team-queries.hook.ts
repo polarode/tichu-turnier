@@ -52,3 +52,23 @@ export function useDeleteTeam(tournamentId: string) {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: teamsQueryKey(tournamentId) }),
     });
 }
+
+export function useRevealAccessLink(tournamentId: string) {
+    return useMutation({
+        mutationFn: (teamId: string) => TeamRepository.revealAccessLink(tournamentId, teamId),
+    });
+}
+
+export function useRotateAccessLink(tournamentId: string) {
+    return useMutation({
+        mutationFn: (teamId: string) => TeamRepository.rotateAccessLink(tournamentId, teamId),
+    });
+}
+
+export function useRevokeAccessLink(tournamentId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (teamId: string) => TeamRepository.revokeAccessLink(tournamentId, teamId),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: teamsQueryKey(tournamentId) }),
+    });
+}

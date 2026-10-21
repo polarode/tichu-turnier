@@ -22,6 +22,11 @@ _Avoid_: group, pair
 A named participant belonging to exactly one team of a tournament.
 _Avoid_: member, user
 
+**Access Link**:
+The secret per-team link that lets a team's players log in. Its token is shown
+to the organizer exactly once (Reveal), replaced by Rotate, disabled by Revoke.
+_Avoid_: invite, share link
+
 **Team Capacity**:
 The tournament-level maximum number of teams (`maxTeams`). Reaching it only prevents
 adding teams; editing and deleting remain possible.

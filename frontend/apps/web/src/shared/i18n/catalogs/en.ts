@@ -60,6 +60,8 @@ export const en = {
     'error.inviteExpired': 'This invite link has expired. Please request a new one.',
     'error.inviteEmailMismatch': 'This invite was issued for a different email address.',
     'error.inviteStatusConflict': 'This invite can no longer be changed.',
+    'error.linkAlreadyRevealed':
+        'This access link was already shown or is disabled. Rotate it to get a new one.',
 
     'auth.email': 'Email',
     'auth.password': 'Password',
@@ -175,6 +177,26 @@ export const en = {
     'teams.delete.title': 'Delete team',
     'teams.delete.description': 'Delete the team',
     'teams.delete.confirm': 'Delete',
+    'teams.accessLink.action': 'Access link',
+    'teams.accessLink.title': 'Access link',
+    'teams.accessLink.linkLabel': 'Link',
+    'teams.accessLink.copy': 'Copy',
+    'teams.accessLink.copied': 'Copied!',
+    'teams.accessLink.oneTime':
+        'This link is shown only once. Copy it or scan the QR code before closing this window.',
+    'teams.accessLink.qr': 'QR code for the access link',
+    'teams.accessLink.rotate': 'Rotate',
+    'teams.accessLink.rotateTitle': 'Rotate access link?',
+    'teams.accessLink.rotateDescription':
+        'The old link and all active team sessions stop working immediately. The new link is then shown once.',
+    'teams.accessLink.rotateConfirm': 'Rotate',
+    'teams.accessLink.rotatePending': 'Rotating…',
+    'teams.accessLink.revoke': 'Revoke',
+    'teams.accessLink.revokeTitle': 'Revoke access link?',
+    'teams.accessLink.revokeDescription':
+        'The team can no longer log in with this link. Rotating restores access.',
+    'teams.accessLink.revokeConfirm': 'Revoke',
+    'teams.accessLink.revokePending': 'Revoking…',
 
     'tournament.status.setup': 'Setup',
     'tournament.status.active': 'Active',

@@ -7,6 +7,7 @@ import { useCreateTeam, useDeleteTeam, useTeams, useUpdateTeam } from '@/feature
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TeamFormDialog } from '@/features/teams/components/team-form-dialog.component.tsx';
+import { AccessLinkDialog } from '@/features/teams/components/access-link-dialog.component.tsx';
 
 interface TeamsSectionProps {
     tournamentId: string;
@@ -36,6 +37,7 @@ export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionP
 
     const [dialog, setDialog] = useState<DialogState | null>(null);
     const [confirmDeleteTeam, setConfirmDeleteTeam] = useState<Team | null>(null);
+    const [accessLinkTeam, setAccessLinkTeam] = useState<Team | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
 
     const teams = teamsQuery.data ?? [];
@@ -116,6 +118,13 @@ export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionP
                                     {team.players.map((player) => player.name).join(' & ')}
                                 </span>
                             </div>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setAccessLinkTeam(team)}
+                            >
+                                {t('teams.accessLink.action')}
+                            </Button>
                             {editable ? (
                                 <div className="flex items-center gap-2">
                                     <Button
@@ -174,6 +183,14 @@ export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionP
                         </div>
                     </div>
                 </div>
+            ) : null}
+
+            {accessLinkTeam ? (
+                <AccessLinkDialog
+                    tournamentId={tournamentId}
+                    team={accessLinkTeam}
+                    onClose={() => setAccessLinkTeam(null)}
+                />
             ) : null}
 
             {dialog ? (

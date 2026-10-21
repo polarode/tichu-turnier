@@ -23,6 +23,7 @@ export const ERROR_CODES = [
     'INVITE_EXPIRED',
     'INVITE_EMAIL_MISMATCH',
     'INVITE_STATUS_CONFLICT',
+    'LINK_ALREADY_REVEALED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -168,13 +168,14 @@ class TeamAccessIntegrationTest(
 
         val firstMe = mockMvc.perform(get("/api/team/me").cookie(first))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(teamId))
-            .andExpect(jsonPath("$.name").value("Team Alpha"))
+            .andExpect(jsonPath("$.teamId").value(teamId))
+            .andExpect(jsonPath("$.teamName").value("Team Alpha"))
+            .andExpect(jsonPath("$.tournamentName").value("Spring Classic"))
         org.junit.jupiter.api.Assertions.assertNotNull(firstMe)
 
         mockMvc.perform(get("/api/team/me").cookie(second))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(teamId))
+            .andExpect(jsonPath("$.teamId").value(teamId))
     }
 
     @Test
@@ -215,7 +216,7 @@ class TeamAccessIntegrationTest(
         // to name another team id at all.
         mockMvc.perform(get("/api/team/me").cookie(teamCookie))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(teamId))
+            .andExpect(jsonPath("$.teamId").value(teamId))
 
         // Admin endpoints (list/get teams, tournaments) reject the team principal.
         mockMvc.perform(get("/api/tournaments/$tournamentId/teams").cookie(teamCookie))

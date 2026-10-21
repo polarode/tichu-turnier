@@ -45,7 +45,7 @@ class TeamAuthController(
 
     @GetMapping("/me")
     fun me(@AuthenticationPrincipal principal: AuthenticatedTeam) =
-        TeamResponseDto.from(getOwnTeam.get(principal))
+        TeamOverviewResponseDto.from(getOwnTeam.get(principal))
 
     /**
      * The client address feeding the rate limiter. Behind a proxy (Render routes

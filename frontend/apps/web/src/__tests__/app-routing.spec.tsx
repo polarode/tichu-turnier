@@ -30,7 +30,6 @@ describe('app routing', () => {
     });
 
     it.each([
-        ['/team', 'Teambereich'],
         ['/public', 'Öffentlicher Bereich'],
         ['/login', 'Anmelden'],
         ['/pending-approval', 'Warte auf Freigabe'],
@@ -38,6 +37,14 @@ describe('app routing', () => {
         renderApp(path);
 
         expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+    });
+
+    it('redirects unauthenticated /team visitors to the neutral login prompt', async () => {
+        renderApp('/team');
+
+        expect(
+            await screen.findByRole('heading', { name: 'Zugriffslink prüfen' }),
+        ).toBeInTheDocument();
     });
 
     it('redirects the root path to the public area', async () => {

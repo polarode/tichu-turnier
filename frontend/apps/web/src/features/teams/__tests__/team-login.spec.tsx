@@ -8,14 +8,29 @@ import { renderApp } from '@/test-helpers/render-app.tsx';
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     TeamAuthRepository: {
         exchange: vi.fn(),
+        me: vi.fn(),
     },
 }));
 
 const mockedExchange = vi.mocked(TeamAuthRepository.exchange);
+const mockedMe = vi.mocked(TeamAuthRepository.me);
+
+const overview = {
+    teamId: 'team-1',
+    tournamentId: 't-1',
+    tournamentName: 'Spring Classic',
+    teamName: 'Team Alpha',
+    players: [
+        { id: 'p-1', name: 'Alice' },
+        { id: 'p-2', name: 'Bob' },
+    ],
+};
 
 describe('/team/login', () => {
     beforeEach(() => {
         mockedExchange.mockReset();
+        mockedMe.mockReset();
+        mockedMe.mockResolvedValue(overview);
     });
 
     it('strips the token from the URL immediately and redirects to /team after a successful exchange', async () => {

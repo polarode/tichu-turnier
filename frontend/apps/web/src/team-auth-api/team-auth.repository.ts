@@ -1,5 +1,6 @@
-import { teamSessionDtoSchema } from '@/team-auth-api/dtos/team-auth.dto.ts';
-import { teamSessionDtoToDomain } from '@/team-auth-api/mappers/team-auth.mapper.ts';
+import { teamOverviewDtoSchema, teamSessionDtoSchema } from '@/team-auth-api/dtos/team-auth.dto.ts';
+import { teamOverviewDtoToDomain, teamSessionDtoToDomain } from '@/team-auth-api/mappers/team-auth.mapper.ts';
+import type { TeamOverview } from '@/domain/team-overview.domain.ts';
 import type { TeamSession } from '@/domain/team-session.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
@@ -17,6 +18,17 @@ async function exchange(token: string): Promise<TeamSession> {
     return teamSessionDtoToDomain(teamSessionDtoSchema.parse(data));
 }
 
+/**
+ * The session-guarded read of the team's own data. Scoping comes from the httpOnly
+ * cookie alone; a 401 here is the "session expired/gone" signal the UI reacts to
+ * with a bounce to `/team/login`.
+ */
+async function me(): Promise<TeamOverview> {
+    const { data } = await apiClient.get<unknown>('/api/team/me');
+    return teamOverviewDtoToDomain(teamOverviewDtoSchema.parse(data));
+}
+
 export const TeamAuthRepository = {
     exchange,
+    me,
 };

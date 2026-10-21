@@ -153,7 +153,8 @@ class UseCaseConfiguration(
         AuthenticateTeamSessionQuery(teamSessions, teamRepository, sessionTokens, clock)
 
     @Bean
-    fun getOwnTeam(teamRepository: TeamRepository): GetOwnTeam = GetOwnTeamQuery(teamRepository)
+    fun getOwnTeam(teamRepository: TeamRepository, tournamentRepository: TournamentRepository): GetOwnTeam =
+        GetOwnTeamQuery(teamRepository, tournamentRepository)
 
     @Bean
     fun adminSessionIssuer(

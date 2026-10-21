@@ -218,6 +218,12 @@ export const de: Catalog = {
     'error.teamAccessInvalid':
         'Dieser Zugriffslink ist ungültig oder nicht mehr aktiv. Bitte wende dich an deinen Turnier-Organisator.',
 
+    'teamOverview.tournament': 'Turnier',
+    'teamOverview.teamName': 'Team',
+    'teamOverview.playerOne': 'Spieler 1',
+    'teamOverview.playerTwo': 'Spieler 2',
+    'teamOverview.scheduleNote': 'Der Spielplan erscheint, sobald das Turnier gestartet ist.',
+
     'public.title': 'Öffentlicher Bereich',
     'public.description': 'Turniere, Ranglisten und Live-Statistiken ansehen.',
 };

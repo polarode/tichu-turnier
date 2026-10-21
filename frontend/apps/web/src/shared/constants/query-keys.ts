@@ -5,6 +5,7 @@ export const QueryKeys = {
     TEAMS: 'teams',
     ADMIN_ACCOUNTS: 'admin-accounts',
     ADMIN_INVITES: 'admin-invites',
+    TEAM_ME: 'team-me',
 } as const;
 
 /** Key for the current admin session. */
@@ -25,3 +26,6 @@ export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;
 
 /** Key for the owner console's invite list. */
 export const adminInvitesQueryKey = () => [QueryKeys.ADMIN_INVITES] as const;
+
+/** Key for the team session's own overview (`GET /api/team/me`). */
+export const teamOverviewQueryKey = () => [QueryKeys.TEAM_ME] as const;

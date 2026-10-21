@@ -59,7 +59,7 @@ class TeamAccessUseCasesTest {
         teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer,
         ExchangeRateLimiter(clock, maxFailures = 5, window = Duration.ofMinutes(15)), clock,
     )
-    private val getOwnTeam = GetOwnTeamQuery(teamRepository)
+    private val getOwnTeam = GetOwnTeamQuery(teamRepository, tournamentRepository)
     private val accessLinks = ManageTeamAccessLinkCommand(
         tournamentRepository, teamRepository, teamTokenRepository, teamSessionRepository, sessionTokens, clock,
     )
@@ -323,12 +323,14 @@ class TeamAccessUseCasesTest {
     // --------------------------------------------------------------- own-team read
 
     @Test
-    fun `a team session can read its own team`() {
+    fun `a team session can read its own team with its tournament name`() {
         val tournamentId = createTournament("Spring Classic")
         val team = createTeam(tournamentId)
 
         val principal = AuthenticatedTeam(teamId = team.id, tournamentId = tournamentId)
-        assertEquals(team.id, getOwnTeam.get(principal).id)
+        val overview = getOwnTeam.get(principal)
+        assertEquals(team.id, overview.team.id)
+        assertEquals("Spring Classic", overview.tournamentName)
     }
 
     @Test
@@ -343,7 +345,7 @@ class TeamAccessUseCasesTest {
             teamId = teamRepository.findAllByTournament(tournamentId).first { it.name == "Team Beta" }.id,
             tournamentId = tournamentId,
         )
-        assertEquals("Team Beta", getOwnTeam.get(foreign).name)
+        assertEquals("Team Beta", getOwnTeam.get(foreign).team.name)
 
         // The real guard: a principal whose tournament doesn't match the team's.
         val mismatched = AuthenticatedTeam(teamId = team.id, tournamentId = TournamentId("other-tournament"))

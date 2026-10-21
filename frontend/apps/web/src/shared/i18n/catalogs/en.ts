@@ -217,6 +217,12 @@ export const en = {
     'error.teamAccessInvalid':
         'This access link is invalid or no longer active. Please contact your tournament organizer.',
 
+    'teamOverview.tournament': 'Tournament',
+    'teamOverview.teamName': 'Team',
+    'teamOverview.playerOne': 'Player 1',
+    'teamOverview.playerTwo': 'Player 2',
+    'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
+
     'public.title': 'Public area',
     'public.description': 'Browse tournaments, standings and live statistics.',
 } as const satisfies Record<string, string>;

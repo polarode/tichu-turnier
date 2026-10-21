@@ -1,6 +1,7 @@
 package com.example.template.infra.rest.web
 
 import com.example.template.application.api.RevealedTeamAccessLink
+import com.example.template.application.api.TeamOverview
 import com.example.template.application.api.TeamWriteRequest
 import com.example.template.domain.Player
 import com.example.template.domain.Team
@@ -75,6 +76,29 @@ data class TeamResponseDto(
             tournamentId = team.tournamentId.value,
             name = team.name,
             players = team.players.map(PlayerResponseDto::from),
+        )
+    }
+}
+
+/**
+ * Wire format of `GET /api/team/me` — the session-guarded team overview. Unlike
+ * [TeamResponseDto] it carries the tournament's display name so the team space
+ * needs no second, admin-scoped call.
+ */
+data class TeamOverviewResponseDto(
+    val teamId: String,
+    val tournamentId: String,
+    val tournamentName: String,
+    val teamName: String,
+    val players: List<PlayerResponseDto>,
+) {
+    companion object {
+        fun from(overview: TeamOverview): TeamOverviewResponseDto = TeamOverviewResponseDto(
+            teamId = overview.team.id.value,
+            tournamentId = overview.team.tournamentId.value,
+            tournamentName = overview.tournamentName,
+            teamName = overview.team.name,
+            players = overview.team.players.map(PlayerResponseDto::from),
         )
     }
 }

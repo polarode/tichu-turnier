@@ -1,0 +1,7 @@
+# Keeps the deploy/Dockerfile build context small (built from the repo root).
+**/node_modules
+**/.git
+**/build
+**/dist
+**/.gradle
+**/.env

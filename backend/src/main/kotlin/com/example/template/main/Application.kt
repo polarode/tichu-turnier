@@ -3,6 +3,7 @@ package com.example.template.main
 import com.example.template.application.usecase.UseCaseConfiguration
 import com.example.template.infra.persistence.PersistenceConfiguration
 import com.example.template.infra.rest.RestConfiguration
+import com.example.template.infra.rest.SpaWebConfiguration
 import com.example.template.infra.security.SecurityConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
@@ -26,6 +27,7 @@ import org.springframework.context.annotation.Import
     PersistenceConfiguration::class,
     SecurityConfiguration::class,
     RestConfiguration::class,
+    SpaWebConfiguration::class,
     BootstrapConfiguration::class,
 )
 class Application

@@ -29,6 +29,7 @@ import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 /**
  * Translates domain/application exceptions into RFC 7807 problem responses, so the
@@ -41,6 +42,15 @@ class WebControllerAdvice {
     @ExceptionHandler(NotFoundException::class)
     fun handleNotFound(ex: NotFoundException): ProblemDetail =
         problem(HttpStatus.NOT_FOUND, ex)
+
+    /**
+     * No route matched (unknown API path, missing asset). Routed requests that fall
+     * through to the resource handler under the API namespace must still be answered
+     * with a JSON ProblemDetail, never HTML — and never the SPA fallback.
+     */
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFound(ex: NoResourceFoundException): ProblemDetail =
+        problem(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, "No resource at this path.")
 
     @ExceptionHandler(InvalidInputException::class)
     fun handleInvalidInput(ex: InvalidInputException): ProblemDetail =
@@ -163,12 +173,15 @@ class WebControllerAdvice {
         val message = fieldErrors
             .joinToString(", ") { "${it.field}: ${it.defaultMessage}" }
             .ifBlank { "Validation failed" }
-        val problem = problemDetail(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
+        val problem = problem(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
         // Bean-validation failures are field-anchored too, same as InvalidFieldException.
         fieldErrors.firstOrNull()?.field?.let { problem.setProperty("field", it) }
         return problem
     }
 
     private fun problem(status: HttpStatus, ex: ApiException): ProblemDetail =
-        problemDetail(status, ex.code, ex.message ?: status.reasonPhrase)
+        problem(status, ex.code, ex.message ?: status.reasonPhrase)
+
+    private fun problem(status: HttpStatus, code: ErrorCode, message: String): ProblemDetail =
+        problemDetail(status, code, message)
 }

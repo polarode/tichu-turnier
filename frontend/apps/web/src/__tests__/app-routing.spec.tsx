@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
+import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
@@ -14,12 +15,28 @@ vi.mock('@/auth-api/auth.repository.ts', () => ({
     },
 }));
 
+vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
+    TeamAuthRepository: {
+        exchange: vi.fn(),
+        me: vi.fn(),
+    },
+}));
+
 const auth = vi.mocked(AuthRepository);
+const teamAuth = vi.mocked(TeamAuthRepository);
 
 describe('app routing', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         auth.refresh.mockRejectedValue(
+            new ApiError({
+                code: 'UNAUTHENTICATED',
+                status: 401,
+                field: null,
+                message: 'no session',
+            }),
+        );
+        teamAuth.me.mockRejectedValue(
             new ApiError({
                 code: 'UNAUTHENTICATED',
                 status: 401,

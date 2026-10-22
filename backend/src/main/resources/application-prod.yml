@@ -1,0 +1,73 @@
+# =============================================================================
+# Production profile — the app must boot from environment variables alone.
+# Activate with SPRING_PROFILES_ACTIVE=prod; no secrets are baked into the image.
+#
+# Environment variables (all required unless a default is shown):
+#
+#   PORT                      HTTP port for the embedded server.
+#                             Default: 8080. Render injects this.
+#
+#   SPRING_DATASOURCE_URL     JDBC URL of the *pooled* runtime datasource
+#                             (Neon transaction pooler endpoint). Add
+#                             sslmode=require and, for the Neon pooler,
+#                             prepareThreshold=0 to the URL itself:
+#                             e.g. jdbc:postgresql://ep-…-pooler…/db?sslmode=require&prepareThreshold=0
+#
+#   SPRING_DATASOURCE_USERNAME  Role for the pooled runtime datasource.
+#   SPRING_DATASOURCE_PASSWORD  Password for the pooled runtime datasource.
+#
+#   SPRING_FLYWAY_URL         JDBC URL for Flyway's *own* connection — required,
+#                             never defaulted: schema migrations must use the
+#                             Neon *direct* endpoint (e.g. ep-….aws.neon.tech),
+#                             not the pooler. If the variable is missing the
+#                             app fails fast at boot rather than migrating (or
+#                             not migrating) through the wrong connection.
+#
+#   SPRING_FLYWAY_USERNAME    Flyway credentials, optional: they default to the
+#   SPRING_FLYWAY_PASSWORD    runtime datasource credentials, which is correct
+#                             for Neon (direct and pooled share one role).
+#
+#   APP_FRONTEND_URL          Absolute origin the frontend is served from.
+#                             Required, no default — prod must never fall back
+#                             to a dev origin (CORS + redirect target).
+#
+#   OWNER_EMAIL               First platform owner, provisioned idempotently at
+#   OWNER_PASSWORD_HASH       startup (bcrypt hash, never plaintext). Optional:
+#                             when unset, no owner is created. Defined and
+#                             documented in the base application.yml; listed
+#                             here because production boots need them.
+# =============================================================================
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    # The schema belongs to Flyway; Hibernate must never create or alter it.
+    # With validate, a drifted schema fails loudly at boot.
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    # Direct (non-pooled) connection for migrations only; see header notes.
+    url: ${SPRING_FLYWAY_URL}
+    user: ${SPRING_FLYWAY_USERNAME:${SPRING_DATASOURCE_USERNAME}}
+    password: ${SPRING_FLYWAY_PASSWORD:${SPRING_DATASOURCE_PASSWORD}}
+
+server:
+  # Render injects PORT; keep 8080 as the default for plain Docker runs.
+  port: ${PORT:8080}
+  # Behind the TLS-terminating proxy, trust X-Forwarded-* so redirects, cookie
+  # Secure flags and generated URLs use the real scheme/host.
+  forward-headers-strategy: framework
+
+app:
+  frontend-url: ${APP_FRONTEND_URL}
+
+  auth:
+    # Explicit, not inherited: prod cookies must be Secure. We serve HTTPS
+    # behind the proxy; forward-headers-strategy makes the cookie writer see
+    # the real request scheme.
+    session-cookie-secure: true

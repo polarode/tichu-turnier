@@ -30,7 +30,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  */
 @Configuration
 class SecurityConfiguration(
-    @param:Value("\${app.frontend-url}") private val frontendUrl: String,
+    // The allowed cross-origin origin: the frontend dev server's origin in dev, the
+    // public origin in the single-origin image (see application.yml). An empty value
+    // means no CORS registration at all.
+    @param:Value("\${app.frontend-url:}") private val frontendUrl: String,
 ) {
 
     @Bean
@@ -41,6 +44,11 @@ class SecurityConfiguration(
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
+        val source = UrlBasedCorsConfigurationSource()
+        // Single-origin deployment (empty frontend-url): same-origin requests carry
+        // no cross-origin concern, so no CORS rules are registered at all.
+        if (frontendUrl.isBlank()) return source
+
         val configuration = CorsConfiguration().apply {
             allowedOrigins = listOf(frontendUrl)
             allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
@@ -48,9 +56,8 @@ class SecurityConfiguration(
             allowedHeaders = listOf("Content-Type")
             allowCredentials = true
         }
-        return UrlBasedCorsConfigurationSource().apply {
-            registerCorsConfiguration("/api/**", configuration)
-        }
+        source.registerCorsConfiguration("/api/**", configuration)
+        return source
     }
 
     @Bean
@@ -88,11 +95,15 @@ class SecurityConfiguration(
                 // rejected here, before any controller runs.
                 authorize.requestMatchers("/api/team/**")
                     .hasAuthority(TEAM_SESSION_AUTHORITY)
-                // Everything else (all admin endpoints) requires an admin session —
+                // The whole API namespace defaults to requiring an admin session —
                 // a team principal lacks this authority and is rejected likewise.
-                // Deny by default: any future endpoint is protected unless it is
-                // deliberately opened above.
-                authorize.anyRequest().hasAuthority(ADMIN_SESSION_AUTHORITY)
+                // Deny by default: any future endpoint lands under /api and is
+                // protected unless it is deliberately opened above.
+                authorize.requestMatchers("/api/**").hasAuthority(ADMIN_SESSION_AUTHORITY)
+                // Everything outside the API namespace is the single-origin SPA
+                // (routes, static assets) plus the health endpoint — all anonymous
+                // by design (ADR 0002). No protected surface exists out here.
+                authorize.anyRequest().permitAll()
             }
             .exceptionHandling { exceptions ->
                 exceptions.authenticationEntryPoint(ProblemDetailAuthenticationEntryPoint(objectMapper))

@@ -19,9 +19,28 @@ spring:
 server:
   port: 8080
 
+management:
+  endpoints:
+    web:
+      # Expose the health endpoint at GET /health — outside the API namespace, so the
+      # deploy target's health check needs no session and no CORS (see ADR 0002).
+      base-path: /
+  endpoint:
+    health:
+      # Readiness probe: the DataSource check makes /health fail (503) when the DB is
+      # unreachable. Details stay hidden; only {"status":"UP"|"DOWN"} is exposed.
+      show-details: never
+  health:
+    defaults:
+      enabled: true
+
 app:
-  # Origin allowed by CORS; the frontend dev server runs here.
-  frontend-url: http://localhost:3000
+  # Public origin of the app. In dev this is the frontend dev server (it doubles as
+  # the CORS allowed origin). In the single-origin production image it is set to the
+  # public URL via APP_FRONTEND_URL: it is the base for absolute invite links, and
+  # the CORS rule then allows exactly that same origin. An empty value disables CORS
+  # registration entirely.
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
 
   auth:
     # Admin session lifetime (ISO-8601 duration). 168h = 7 days.

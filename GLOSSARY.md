@@ -31,3 +31,17 @@ _Avoid_: invite, share link
 The tournament-level maximum number of teams (`maxTeams`). Reaching it only prevents
 adding teams; editing and deleting remain possible.
 _Avoid_: limit, team limit
+
+### Serving
+
+**SPA Fallback**:
+Serving `index.html` for any unmatched non-API path, so client-side routes survive
+a browser refresh. Unknown API paths never fall back; they keep returning a JSON
+problem response.
+_Avoid_: catch-all route, rewrites
+
+**Health Endpoint**:
+The unauthenticated `GET /health` outside the API namespace that reports whether
+the app is up and can reach its database. A failing database yields an error
+status without revealing internals.
+_Avoid_: status page, ping

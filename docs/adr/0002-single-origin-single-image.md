@@ -18,6 +18,13 @@ correct, and lets every later slice be verified at one real URL after one deploy
   non-`/api` paths.
 - `GET /health` lives outside `/api/**` (unauthenticated) so the host can health
   check it without session concerns.
+- Everything outside `/api/**` is public surface (SPA routes, static assets,
+  `/health`): the security chain protects the API namespace and permits the rest.
+  There is no protected surface outside `/api/**`; any protected endpoint must be
+  added under the API namespace.
+- The app's public origin (`APP_FRONTEND_URL`) is still configured at runtime: it
+  is the base for absolute invite links, and the CORS rule allows exactly that
+  same origin. An empty value disables CORS registration entirely.
 - Any change to either half rebuilds and redeploys the single image; there is no
   independent frontend release channel.
 - Scaling the frontend independently of the API is not possible; if the app ever

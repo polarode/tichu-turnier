@@ -43,11 +43,7 @@ class WebControllerAdvice {
     fun handleNotFound(ex: NotFoundException): ProblemDetail =
         problem(HttpStatus.NOT_FOUND, ex)
 
-    /**
-     * No route matched (unknown API path, missing asset). Routed requests that fall
-     * through to the resource handler under the API namespace must still be answered
-     * with a JSON ProblemDetail, never HTML — and never the SPA fallback.
-     */
+    /** No route matched: JSON ProblemDetail, never HTML. */
     @ExceptionHandler(NoResourceFoundException::class)
     fun handleNoResourceFound(ex: NoResourceFoundException): ProblemDetail =
         problem(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, "No resource at this path.")

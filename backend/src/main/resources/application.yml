@@ -22,24 +22,19 @@ server:
 management:
   endpoints:
     web:
-      # Expose the health endpoint at GET /health — outside the API namespace, so the
-      # deploy target's health check needs no session and no CORS (see ADR 0002).
+      # Health endpoint at GET /health, outside the API namespace (ADR 0002).
       base-path: /
   endpoint:
     health:
-      # Readiness probe: the DataSource check makes /health fail (503) when the DB is
-      # unreachable. Details stay hidden; only {"status":"UP"|"DOWN"} is exposed.
+      # DataSource check included: unreachable DB yields 503; internals stay hidden.
       show-details: never
   health:
     defaults:
       enabled: true
 
 app:
-  # Public origin of the app. In dev this is the frontend dev server (it doubles as
-  # the CORS allowed origin). In the single-origin production image it is set to the
-  # public URL via APP_FRONTEND_URL: it is the base for absolute invite links, and
-  # the CORS rule then allows exactly that same origin. An empty value disables CORS
-  # registration entirely.
+  # Public origin: the frontend dev server in dev, set via APP_FRONTEND_URL in the
+  # single-origin image (base for invite links and the CORS allowed origin).
   frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
 
   auth:

@@ -6,8 +6,7 @@
 # Run it (see deploy/README.md for the full walkthrough):
 #   docker run -p 8080:8080 -e SPRING_DATASOURCE_URL=... tichu-turnier
 
-# Stage 1: build the SPA bundle. VITE_API_URL=/ makes the bundle talk to its own
-# origin — the whole point of the single-image deployment.
+# Stage 1: build the SPA bundle; VITE_API_URL=/ makes it talk to its own origin.
 FROM node:22-alpine AS frontend
 WORKDIR /fe
 RUN corepack enable
@@ -18,8 +17,7 @@ RUN pnpm install --frozen-lockfile
 ENV VITE_API_URL=/
 RUN pnpm --filter @tichu/web build
 
-# Stage 2: build the backend boot jar with the SPA on the classpath, so Spring Boot
-# serves the frontend from classpath:/static (see SpaWebConfiguration).
+# Stage 2: backend boot jar with the SPA dist on the classpath.
 FROM gradle:9-jdk21 AS backend
 WORKDIR /app
 COPY backend/settings.gradle.kts backend/build.gradle.kts ./
@@ -27,7 +25,7 @@ COPY backend/src ./src
 COPY --from=frontend /fe/apps/web/dist ./src/main/resources/static
 RUN gradle bootJar --no-daemon
 
-# Stage 3: JRE runtime, the boot jar plus nothing else.
+# Stage 3: JRE runtime — the boot jar plus nothing else.
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=backend /app/build/libs/app.jar app.jar

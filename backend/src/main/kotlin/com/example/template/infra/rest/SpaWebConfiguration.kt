@@ -8,17 +8,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.resource.PathResourceResolver
 
 /**
- * Single-origin SPA serving (ADR 0002): the API keeps its `/api` namespace under
- * controller mappings, and every other path is served from `classpath:/static` —
- * the built frontend. Unmatched non-API paths fall back to `index.html` so client
- * routes (e.g. admin deep links) survive a browser refresh.
- *
- * The namespace split lives in the handler mapping itself: the more specific
- * `/api/…` registration outranks the SPA catch-all within the same handler
- * mapping, so unknown API paths never reach the SPA resolver. That registration
- * serves nothing — its resolver rejects every request — which makes Spring throw
- * `NoResourceFoundException`, answered with a JSON ProblemDetail 404 by
- * `WebControllerAdvice`, never with `index.html`.
+ * Single-origin SPA serving (ADR 0002): static assets from `classpath:/static`,
+ * with an `index.html` fallback for unmatched non-API paths so client routes
+ * survive a refresh. The API namespace is excluded at the handler-mapping
+ * level: an empty `/api` catch-all outranks the SPA handler below and serves
+ * nothing, so unknown API paths yield a JSON ProblemDetail 404
+ * (`NoResourceFoundException`), never the SPA.
  */
 @Configuration
 class SpaWebConfiguration {
@@ -27,13 +22,9 @@ class SpaWebConfiguration {
     fun spaWebMvcConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
 
         override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
-            // The API namespace has no static surface: an explicit catch-all for
-            // `/api/**` outranks the SPA catch-all below and serves nothing, so
-            // unknown API paths stay on the JSON ProblemDetail contract.
+            // Serves nothing: keeps unknown API paths on the JSON 404 contract.
             registry.addResourceHandler("/api/**").resourceChain(true)
 
-            // Everything else: static assets, with the SPA entry point as the
-            // fallback for unmatched non-API paths (client routes on refresh).
             registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .resourceChain(true)

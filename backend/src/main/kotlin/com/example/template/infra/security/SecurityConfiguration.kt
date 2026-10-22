@@ -30,9 +30,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  */
 @Configuration
 class SecurityConfiguration(
-    // The allowed cross-origin origin: the frontend dev server's origin in dev, the
-    // public origin in the single-origin image (see application.yml). An empty value
-    // means no CORS registration at all.
+    // The CORS allowed origin; an empty value disables CORS registration entirely
+    // (single-origin deploy, where same-origin requests need no CORS).
     @param:Value("\${app.frontend-url:}") private val frontendUrl: String,
 ) {
 
@@ -45,8 +44,6 @@ class SecurityConfiguration(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val source = UrlBasedCorsConfigurationSource()
-        // Single-origin deployment (empty frontend-url): same-origin requests carry
-        // no cross-origin concern, so no CORS rules are registered at all.
         if (frontendUrl.isBlank()) return source
 
         val configuration = CorsConfiguration().apply {
@@ -95,14 +92,10 @@ class SecurityConfiguration(
                 // rejected here, before any controller runs.
                 authorize.requestMatchers("/api/team/**")
                     .hasAuthority(TEAM_SESSION_AUTHORITY)
-                // The whole API namespace defaults to requiring an admin session —
-                // a team principal lacks this authority and is rejected likewise.
-                // Deny by default: any future endpoint lands under /api and is
-                // protected unless it is deliberately opened above.
+                // Deny by default: any future endpoint lands under /api and stays
+                // protected unless deliberately opened above.
                 authorize.requestMatchers("/api/**").hasAuthority(ADMIN_SESSION_AUTHORITY)
-                // Everything outside the API namespace is the single-origin SPA
-                // (routes, static assets) plus the health endpoint — all anonymous
-                // by design (ADR 0002). No protected surface exists out here.
+                // Everything outside the API namespace is public surface (ADR 0002).
                 authorize.anyRequest().permitAll()
             }
             .exceptionHandling { exceptions ->

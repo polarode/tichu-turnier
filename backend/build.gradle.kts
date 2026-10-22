@@ -26,7 +26,7 @@ kotlin {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-    // Health endpoint (GET /health, DB-aware readiness check) for the deploy target.
+    // GET /health readiness check for the deploy target.
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")

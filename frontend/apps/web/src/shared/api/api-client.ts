@@ -10,6 +10,12 @@ import { parseProblemDetail } from '@/shared/api/problem-detail.ts';
  */
 export function resolveApiUrl(path: string): string {
     const base = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
+    // The single-origin image bakes VITE_API_URL=/ into the bundle (the API
+    // lives on the same origin). "/" is not a valid absolute base for the URL
+    // constructor, so resolve it against the current origin instead.
+    if (base.startsWith('/')) {
+        return new URL(path, window.location.origin).toString();
+    }
     return new URL(path, base).toString();
 }
 

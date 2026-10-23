@@ -1,5 +1,5 @@
 import MockAdapter from 'axios-mock-adapter';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError, UNKNOWN_ERROR_CODE } from '@/shared/api/api-error.ts';
 import { apiClient, resolveApiUrl } from '@/shared/api/api-client.ts';
@@ -13,6 +13,7 @@ describe('apiClient', () => {
 
     afterEach(() => {
         mock.restore();
+        vi.unstubAllEnvs();
     });
 
     it('sends the httpOnly session cookie', () => {
@@ -21,6 +22,14 @@ describe('apiClient', () => {
 
     it('resolves relative paths against the API base', () => {
         expect(resolveApiUrl('/api/tournaments')).toMatch(/^https?:\/\/.+\/api\/tournaments$/);
+    });
+
+    it('resolves a root-relative API base against the current origin', () => {
+        // The single-origin image bakes VITE_API_URL=/ into the bundle: the API
+        // lives on the same origin, so "/" must resolve against that origin
+        // instead of throwing "Invalid base URL".
+        vi.stubEnv('VITE_API_URL', '/');
+        expect(resolveApiUrl('/api/tournaments')).toMatch(/^https?:\/\/[^/]+\/api\/tournaments$/);
     });
 
     it('maps a problem response to a typed ApiError with its code', async () => {

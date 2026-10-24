@@ -1,5 +1,8 @@
 # Render Blueprint for the first production deploy (issue #45).
 #
+# DEPRECATED since the Coolify/VPS cutover (issue #49): production now deploys
+# the CI-built GHCR image on the operator's own VPS. Kept until the S10.7
+# cutover retires the Render service; see deploy/README.md.
 # Applied from the Render dashboard via "Blueprint" → point it at this repo:
 # the dashboard reads this file and offers to create the service. Secrets are
 # declared with `sync: false`: the blueprint requires them to exist, but the

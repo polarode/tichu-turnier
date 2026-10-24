@@ -36,7 +36,7 @@ endpoint all live on that one origin.
 | Variable | Purpose |
 | --- | --- |
 | `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Postgres connection (required). |
-| `SPRING_FLYWAY_URL` / `_USERNAME` / `_PASSWORD` | Flyway's own connection (required in the `prod` profile, no default — it must point at a direct, non-pooled endpoint on Neon). Credentials default to the datasource's and are usually omitted. |
+| `SPRING_FLYWAY_URL` / `_USERNAME` / `_PASSWORD` | Flyway's own connection (required in the `prod` profile, no default — on Neon it must point at a direct, non-pooled endpoint). With the on-VPS Postgres there is no pooler, so both URLs are the same; see the topology section below. Credentials default to the datasource's and are usually omitted. |
 | `APP_FRONTEND_URL` | Public origin of the app. Base for absolute invite links and the CORS allowed origin — with a single origin it must be the URL users browse to (e.g. `http://localhost:8080`). |
 | `OWNER_EMAIL` / `OWNER_PASSWORD_HASH` | First platform owner, provisioned idempotently at startup. `OWNER_PASSWORD_HASH` is a bcrypt hash, never plaintext. Leave both unset to skip provisioning. |
 | `APP_AUTH_SESSION_COOKIE_SECURE` | Cookies are `Secure` by default. On plain HTTP against a non-localhost host, set this to `false` (localhost is always a secure context in browsers). |
@@ -46,50 +46,64 @@ endpoint all live on that one origin.
 `GET /health` answers unauthenticated with `{"status":"UP"}`; it includes a
 database check, so an unreachable database yields 503 (readiness semantics).
 
-## Production (Neon + Render, free tier)
+## Production (own VPS: Coolify + GHCR + on-VPS Postgres)
 
-The first production deploy runs the same single-origin image on Render's free
-tier with a Neon Postgres, both in Frankfurt (eu-central-1).
+Production runs the same single-origin image on the operator's own VPS
+(1 vCPU, 2 GB RAM, 60 GB disk), orchestrated by Coolify (issue #49).
 
-- The Render service is defined by the [`render.yaml`](../render.yaml) blueprint
-  at the repo root: Docker runtime against `deploy/Dockerfile` with the repo
-  root as build context, free plan, Frankfurt region, health check path
-  `/health`, auto-deploy on every push to `main`.
-- Secret env vars (`SPRING_DATASOURCE_*`, `SPRING_FLYWAY_URL`, `OWNER_EMAIL`,
-  `OWNER_PASSWORD_HASH`) are declared with `sync: false` — you enter the values
-  once in the Render dashboard; nothing sensitive is committed.
-  (`APP_FRONTEND_URL` is not a secret, but it's only known after the service
-  exists, so it's declared with `sync: false` too.)
-- The runtime pool uses Neon's *transaction pooler* endpoint
-  (`…-pooler…`, `sslmode=require&prepareThreshold=0`); Flyway migrates through
-  Neon's *direct* endpoint (`SPRING_FLYWAY_URL`). The prod profile fails fast
-  at boot if the Flyway URL is missing.
-- Free-tier caveat: Render spins the service down when idle, so the first
-  request after a pause pays a cold start. Neon's free tier scales to zero too.
-- Fallback provider: Supabase (direct `:5432` for Flyway, Supavisor pooler for
-  the runtime; the project pauses after ~7 idle days).
+Topology:
 
-Provisioning is a human-only procedure (account creation, dashboard clicks);
-`scripts/provision-production.sh` walks through it step by step and captures
+- **Image**: CI (`.github/workflows/deploy-image.yml`) builds `deploy/Dockerfile`
+  on every push to `main` and pushes it to the **public** GHCR package
+  `ghcr.io/polarode/tichu-turnier`, tagged `sha-<git-sha>` (immutable) and
+  `latest`. No secrets are baked in (#43); PRs build the image without pushing.
+- **Registry → VPS**: the image is public, so the VPS pulls it without any
+  registry credentials. Coolify's GHCR integration redeploys when `latest`
+  changes, preserving auto-deploy-on-`main` like Render did.
+- **Database**: Postgres runs on the VPS as a Coolify-managed container with a
+  persistent Docker volume. It replaced the Neon project (DB was empty, so the
+  cutover was zero-risk; the Neon project is deleted once the cutover is
+  verified).
+- **Flyway note**: with the on-VPS Postgres there is no pooler, so
+  `SPRING_FLYWAY_URL` and `SPRING_DATASOURCE_URL` point at the *same*
+  host:port/db. The strict fail-fast requirement for `SPRING_FLYWAY_URL` in the
+  `prod` profile stays (#44) — set both, always.
+- **TLS**: the app is reachable over plain HTTP via the provider-assigned
+  hostname for now; the session cookie runs with
+  `APP_AUTH_SESSION_COOKIE_SECURE=false` until S10.7 adds TLS.
+- **Memory**: the box has a 2 GB swapfile as insurance; the JVM gets
+  `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75`.
+
+Provisioning is a human-only procedure (SSH, dashboard clicks); the
+`scripts/provision-vps.sh` wizard walks through it step by step and captures
 the values.
+
+## Previous provider: Neon + Render (deprecated)
+
+The first deploy ran on Render's free tier with a Neon Postgres, defined by the
+[`render.yaml`](../render.yaml) blueprint and provisioned with
+`scripts/provision-production.sh`. These artifacts are kept until the S10.7
+cutover retires the Render service; then `render.yaml`,
+`provision-production.sh` and this section go away. Highlights, in case the
+fallback is ever needed again: Neon transaction pooler for the runtime + direct
+endpoint for Flyway; Supabase as fallback provider.
 
 ## Production verification checklist
 
-Run through this after the first deploy — record the results and the measured
-cold-start time here; a summary goes into the closing comment of the deploy
-issue.
+Run through this after the first deploy — record the results here; a summary
+goes into the closing comment of the deploy issue.
 
 | # | Check | How | Result |
 | --- | --- | --- | --- |
-| 1 | First boot applies all Flyway migrations on the empty Neon DB | Render deploy log shows `Migrating schema …` with no errors; Neon console lists all tables | |
+| 1 | First boot applies all Flyway migrations on the empty DB | Coolify deploy log shows `Migrating schema …` with no errors | |
 | 2 | `ddl-auto: validate` passes | No `Schema-validation` errors in the boot log on every subsequent boot | |
-| 3 | Live HTTPS URL serves the app | Open the `https://….onrender.com` URL; the SPA loads | |
-| 4 | Owner login works over HTTPS | Log in at `/admin`; the session cookie is set with `Secure` | |
-| 5 | Data survives a restart | Create some data, then **Manual Deploy → Restart service** in Render; data is still there | |
-| 6 | Data survives a redeploy | Push a commit (or trigger a deploy); data is still there | |
-| 7 | Cold-start wake time | After ≥15 min idle, request the URL and time until the app answers (measure twice) | |
-| 8 | `/health` is UP | `curl https://…/health` → `{"status":"UP"}` | |
-| 9 | Unknown API path stays JSON | `curl https://…/api/nonexistent` → JSON ProblemDetail 404, not HTML | |
+| 3 | Live URL serves the app | Open the provider-assigned hostname; the SPA loads | |
+| 4 | Owner login works | Log in at `/admin` (cookie `Secure` may be false over plain HTTP until S10.7) | |
+| 5 | Data survives a restart | Create some data, then restart the container in Coolify; data is still there | |
+| 6 | Data survives a redeploy | Push a commit to `main` (auto-deploy); data is still there | |
+| 7 | CI image pipeline works | Push to `main` → new `sha-<sha>` + `latest` on GHCR → Coolify redeploys | |
+| 8 | `/health` is UP | `curl http://…/health` → `{"status":"UP"}` | |
+| 9 | Unknown API path stays JSON | `curl http://…/api/nonexistent` → JSON ProblemDetail 404, not HTML | |
 
 ## What the image contains
 

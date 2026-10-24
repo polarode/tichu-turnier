@@ -35,6 +35,7 @@ endpoint all live on that one origin.
 
 | Variable | Purpose |
 | --- | --- |
+| `SPRING_PROFILES_ACTIVE` | Set to `prod` in production — the prod profile turns on Flyway, `ddl-auto: validate` and the fail-fast `SPRING_FLYWAY_URL` check. Unset, the app silently runs the `default` profile (as caught during the #49 deploy). |
 | `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Postgres connection (required). |
 | `SPRING_FLYWAY_URL` / `_USERNAME` / `_PASSWORD` | Flyway's own connection (required in the `prod` profile, no default — on Neon it must point at a direct, non-pooled endpoint). With the on-VPS Postgres there is no pooler, so both URLs are the same; see the topology section below. Credentials default to the datasource's and are usually omitted. |
 | `APP_FRONTEND_URL` | Public origin of the app. Base for absolute invite links and the CORS allowed origin — with a single origin it must be the URL users browse to (e.g. `http://localhost:8080`). |

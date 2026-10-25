@@ -10,8 +10,8 @@
 #   SPRING_DATASOURCE_URL     JDBC URL of the runtime datasource (the on-VPS
 #                             Postgres; there is no pooler in front of it).
 #
-#   SPRING_DATASOURCE_USERNAME  Role for the pooled runtime datasource.
-#   SPRING_DATASOURCE_PASSWORD  Password for the pooled runtime datasource.
+#   SPRING_DATASOURCE_USERNAME  Role for the runtime datasource.
+#   SPRING_DATASOURCE_PASSWORD  Password for the runtime datasource.
 #
 #   SPRING_FLYWAY_URL         JDBC URL for Flyway's *own* connection — required,
 #                             never defaulted: schema migrations must not share

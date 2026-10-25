@@ -284,9 +284,8 @@ say "  SPRING_FLYWAY_PASSWORD     = (the password)"
 say "  APP_FRONTEND_URL           = http://<provider-assigned-hostname>"
 say "  APP_AUTH_SESSION_COOKIE_SECURE = false   (plain HTTP; removed in stage 7)"
 say "  JAVA_TOOL_OPTIONS          = -XX:MaxRAMPercentage=75"
-ask APP_HTTP_URL "Paste the app's http:// URL:"
-write_env APP_HTTP_URL "$APP_HTTP_URL"
-APP_FRONTEND_URL=$APP_HTTP_URL
+ask APP_FRONTEND_URL "Paste the app's http:// URL:"
+write_env APP_FRONTEND_URL "$APP_FRONTEND_URL"
 # Owner provisioning — carried over from the deleted provision-production.sh.
 say "The first platform owner is provisioned at boot from OWNER_EMAIL and"
 say "OWNER_PASSWORD_HASH (a bcrypt hash — the plaintext is never stored)."

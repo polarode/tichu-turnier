@@ -115,6 +115,14 @@ default.
 - `packages/ui` — reusable component library consumed by the app.
 - TanStack Router + Query, react-hook-form + zod, Tailwind CSS, Zustand.
 
+## Operations
+
+For the production deploy on the operator's VPS (Coolify), see
+[`deploy/README.md`](./deploy/README.md) for the topology and image details,
+and [`docs/operations.md`](./docs/operations.md) for the runbook: log
+tailing, Postgres backups and restore drills, credential rotation, patching
+and the monthly ops checklist.
+
 ## CI
 
 GitHub Actions runs the backend (`./gradlew build`) and the frontend

@@ -26,6 +26,10 @@ docker run --rm -p 8080:8080 \
 Then open <http://localhost:8080> — the SPA, the API (`/api/**`), and the health
 endpoint all live on that one origin.
 
+Day-to-day operation of the production deploy (logs, backups, restore drills,
+credential rotation, patching) is covered by the
+[operations runbook](../docs/operations.md).
+
 > `host.docker.internal` is how the container reaches a Postgres running on the
 > host (Docker Desktop; on Linux add `--add-host=host.docker.internal:host-gateway`).
 > Alternatively run the image inside the compose network so it can talk to

@@ -48,8 +48,8 @@ class TeamAuthController(
         TeamOverviewResponseDto.from(getOwnTeam.get(principal))
 
     /**
-     * The client address feeding the rate limiter. Behind a proxy (Render routes
-     * through one), the right-most `X-Forwarded-For` entry is the one our own
+     * The client address feeding the rate limiter. Behind the TLS-terminating
+     * proxy, the right-most `X-Forwarded-For` entry is the one our own
      * trusted proxy appended — the left-most entries are client-controlled and
      * would let an attacker rotate spoofed IPs to dodge the limiter. Without the
      * header, fall back to the direct remote address.

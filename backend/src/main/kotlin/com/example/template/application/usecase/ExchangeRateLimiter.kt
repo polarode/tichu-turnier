@@ -16,8 +16,8 @@ import java.util.concurrent.ConcurrentHashMap
  * - a blocked caller is indistinguishable from a wrong guess: the exchange use
  *   case rejects with the same generic error and does not even look at the token.
  *
- * Single-instance assumption: the counters live in one JVM's memory (Render free
- * tier is one container). If deployment ever scales out, replace with a shared
+ * Single-instance assumption: the counters live in one JVM's memory (the VPS
+ * deploy is one container). If deployment ever scales out, replace with a shared
  * store behind the same shape — call sites do not change.
  *
  * A plain class wired via [UseCaseConfiguration] — thresholds are constructor

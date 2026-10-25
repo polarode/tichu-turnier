@@ -205,9 +205,9 @@ finish() {
 
 run_wizard() {
 
-TOTAL_STAGES=6
+TOTAL_STAGES=9
 
-banner "Provision the VPS deploy: Coolify + GHCR + on-VPS Postgres (issue #49)"
+banner "Provision the VPS deploy: Coolify + GHCR + on-VPS Postgres + HTTPS (issues #49, #50)"
 
 # ── Stage 1: VPS prep — swapfile as memory insurance ─────────────────────
 stage "VPS: swapfile"
@@ -269,7 +269,8 @@ write_env DB_NAME "$DB_NAME"
 stage "Coolify: create the app resource from GHCR"
 step "Project → New resource → Docker Image."
 step "Image: ghcr.io/polarode/tichu-turnier:latest"
-step "Port: 8080. Domain: the provider-assigned hostname (plain HTTP for now)."
+step "Port: 8080. Leave 'Domains' empty for now — we attach the real"
+step "  domain with TLS in stage 7."
 step "Health check path: /health"
 step "Enable auto-deploy so Coolify redeploys when a new image is pushed."
 step "Environment variables (from $ENV_FILE):"
@@ -280,28 +281,99 @@ say "  SPRING_DATASOURCE_PASSWORD = (the password)"
 say "  SPRING_FLYWAY_URL          = same as SPRING_DATASOURCE_URL"
 say "  SPRING_FLYWAY_USERNAME     = $DB_USER"
 say "  SPRING_FLYWAY_PASSWORD     = (the password)"
-say "  APP_FRONTEND_URL           = http://<provider-hostname>"
-say "  APP_AUTH_SESSION_COOKIE_SECURE = false   (plain HTTP until S10.7)"
-say "  APP_AUTH_OWNER_EMAIL       = (the owner email)"
-say "  APP_AUTH_OWNER_PASSWORD_HASH = (bcrypt hash; see provision-production.sh"
-say "                               stage 2 for how to generate one)"
+say "  APP_FRONTEND_URL           = http://<provider-assigned-hostname>"
+say "  APP_AUTH_SESSION_COOKIE_SECURE = false   (plain HTTP; removed in stage 7)"
 say "  JAVA_TOOL_OPTIONS          = -XX:MaxRAMPercentage=75"
-ask APP_FRONTEND_URL "Paste the app's http:// URL:"
-write_env APP_FRONTEND_URL "$APP_FRONTEND_URL"
+ask APP_HTTP_URL "Paste the app's http:// URL:"
+write_env APP_HTTP_URL "$APP_HTTP_URL"
+APP_FRONTEND_URL=$APP_HTTP_URL
+# Owner provisioning — carried over from the deleted provision-production.sh.
+say "The first platform owner is provisioned at boot from OWNER_EMAIL and"
+say "OWNER_PASSWORD_HASH (a bcrypt hash — the plaintext is never stored)."
+ask OWNER_EMAIL "Owner email:"
+ask_secret OWNER_PASSWORD_PLAIN "Owner password (hidden):"
+if command -v docker >/dev/null 2>&1; then
+  OWNER_PASSWORD_HASH=$(printf '%s' "$OWNER_PASSWORD_PLAIN" | docker run --rm -i httpd:alpine htpasswd -nBiC 10 x | sed 's/^[^:]*://; s/^\$2y\$/\$2a\$/')
+  note "bcrypt hash generated locally via docker (httpd:alpine htpasswd)."
+else
+  ask_secret OWNER_PASSWORD_HASH "Paste the bcrypt hash (docker not available to generate one):"
+fi
+unset OWNER_PASSWORD_PLAIN
+write_env OWNER_EMAIL "$OWNER_EMAIL"
+write_env OWNER_PASSWORD_HASH "$OWNER_PASSWORD_HASH"
+step "Add OWNER_EMAIL and OWNER_PASSWORD_HASH to the app's environment too."
 pause "First deploy finished (log shows 'Migrating schema …' with no errors)?"
 
-# ── Stage 6: verify ───────────────────────────────────────────────────────
-stage "Verify the live app"
-if curl -sf "$APP_FRONTEND_URL/health" | grep -q '"status":"UP"'; then
-  printf '  %s✓ /health is UP%s\n' "$GREEN" "$RESET"
-else
-  warn "/health did not answer UP — check the Coolify deploy log."
+# ── Stage 6: DNS — point a subdomain at the VPS (issue #50) ───────────────
+stage "DNS: subdomain A record"
+say "The app gets a real name under your own domain. Pick a subdomain and"
+say "create an A record pointing it at the VPS IP."
+ask APP_DOMAIN "App hostname (e.g. tichu.example.com):"
+write_env APP_DOMAIN "$APP_DOMAIN"
+step "At your DNS provider, create an A record:"
+say "  Name: ${APP_DOMAIN%%.*}   Value: <VPS IPv4>"
+say "  (some providers want the full '$APP_DOMAIN' instead of the bare name)"
+say "  TTL: low (300 s) while provisioning; raise it later if you like."
+step "Wait for propagation, then verify from your machine:"
+say "  dig +short $APP_DOMAIN A   # must print the VPS IP"
+if command -v dig >/dev/null 2>&1; then
+  if dig +short "$APP_DOMAIN" A | grep -qE '^[0-9]+\.'; then
+    printf '  %s✓ %s resolves%s\n' "$GREEN" "$APP_DOMAIN" "$RESET"
+  else
+    warn "$APP_DOMAIN does not resolve yet — DNS can take a few minutes."
+  fi
 fi
-step "Open the URL: the SPA loads; log in at /admin with the owner credential."
-step "Create some data, then restart the container — data survives (volume)."
-step "Redeploy the app from Coolify — data survives."
+pause "A record created and resolving to the VPS?"
+
+# ── Stage 7: TLS via Coolify's built-in proxy (issue #50) ─────────────────
+stage "Coolify: domain + Let's Encrypt"
+say "Coolify's built-in proxy (Traefik) terminates TLS and obtains/renews"
+say "free Let's Encrypt certificates automatically via the HTTP-01"
+say "challenge — ports 80 and 443 must be reachable from the internet."
+step "In the VPS provider's firewall/security group, open TCP 80 and 443."
+step "In Coolify, open the app resource → Websocket/Domains tab:"
+say "  Domain: https://$APP_DOMAIN"
+say "  Let's Encrypt: enabled"
+step "In the app's Environment Variables:"
+say "  - update APP_FRONTEND_URL to https://$APP_DOMAIN"
+say "  - DELETE APP_AUTH_SESSION_COOKIE_SECURE entirely — cookies are"
+say "    Secure by default and HTTPS makes that correct now."
+step "Redeploy (or Restart) the app."
+ask APP_FRONTEND_URL "Paste the app's https:// URL:"
+write_env APP_FRONTEND_URL "$APP_FRONTEND_URL"
+note "The app needs no APP_AUTH_SESSION_COOKIE_SECURE variable anymore —"
+note "cookies are Secure by default."
+pause "App redeployed under https://$APP_DOMAIN?"
+
+# ── Stage 8: verify over HTTPS ────────────────────────────────────────────
+stage "Verify over HTTPS"
+if curl -sf "$APP_FRONTEND_URL/health" | grep -q '"status":"UP"'; then
+  printf '  %s✓ /health is UP over HTTPS%s\n' "$GREEN" "$RESET"
+else
+  warn "/health did not answer UP over HTTPS — check the Coolify log."
+fi
+if curl -sI "http://$APP_DOMAIN/health" | head -1 | grep -qE '30[1278]'; then
+  printf '  %s✓ HTTP redirects to HTTPS%s\n' "$GREEN" "$RESET"
+else
+  warn "http://$APP_DOMAIN did not redirect — check the Coolify proxy."
+fi
+step "Log in at https://$APP_DOMAIN/admin with the owner credential."
+step "In the browser devtools → Application → Cookies, verify the session"
+step "  cookie now shows the Secure flag."
+step "Create some data, restart the container — data survives (volume)."
 step "Run the full checklist in deploy/README.md and record the results."
 open_url "$APP_FRONTEND_URL"
+
+# ── Stage 9: tear down the old Render/Neon deploy (issue #50) ─────────────
+stage "Teardown: Render + Neon"
+say "The VPS deploy replaces Render + Neon (issue #45/#49). The database was"
+say "empty at cutover, so there is nothing to migrate."
+open_url "https://dashboard.render.com"
+step "Render dashboard → tichu-turnier service → delete it."
+open_url "https://console.neon.tech"
+step "Neon console → delete the project (it was empty)."
+step "Optionally delete the GitHub deploy workflow secrets Render used."
+pause "Render service and Neon project deleted?"
 
 finish
 }

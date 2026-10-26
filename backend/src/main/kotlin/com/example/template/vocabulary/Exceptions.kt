@@ -63,6 +63,13 @@ enum class ErrorCode {
 
     /** The organizer already saw the team access link once (or it is revoked); rotation is the recovery. */
     LINK_ALREADY_REVEALED,
+
+    /**
+     * The tournament cannot be paired under the current rules — today: an odd team
+     * count. Temporary contract until the trio-table slice supports three-team
+     * tables; introduced by the Swiss pairing component (#52).
+     */
+    PAIRING_UNSUPPORTED,
 }
 
 /**
@@ -192,6 +199,15 @@ class TeamAccessLinkConflictException(message: String) : ApiException(ErrorCode.
  */
 class TournamentNotEditableException(message: String) :
     ApiException(ErrorCode.TOURNAMENT_NOT_EDITABLE, message)
+
+/**
+ * Raised by the Swiss pairing domain component when pairing is impossible under the
+ * current rules — today, an odd team count. A temporary contract until the trio-table
+ * slice supports three-team tables. Mapped to HTTP 409 by the start-tournament use
+ * case (#53).
+ */
+class PairingUnsupportedException(message: String) :
+    ApiException(ErrorCode.PAIRING_UNSUPPORTED, message)
 
 /**
  * Thrown when a team name clashes with an existing team of the same tournament.

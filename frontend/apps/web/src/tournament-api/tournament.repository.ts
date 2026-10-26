@@ -1,6 +1,9 @@
 import { tournamentDtoToDomain, tournamentWriteInputToDto } from '@/tournament-api/mappers/tournament.mapper.ts';
+import { roundDtoToDomain } from '@/tournament-api/mappers/round.mapper.ts';
 import { tournamentDtoSchema, tournamentListDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
+import { roundListDtoSchema, startedTournamentDtoSchema } from '@/tournament-api/dtos/round.dto.ts';
 import type { Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
+import type { Round } from '@/domain/round.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
 /**
@@ -34,6 +37,20 @@ async function update(id: string, input: TournamentWriteInput): Promise<Tourname
     return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
 }
 
+async function start(id: string): Promise<{ tournament: Tournament; round: Round }> {
+    const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/start`);
+    const parsed = startedTournamentDtoSchema.parse(data);
+    return {
+        tournament: tournamentDtoToDomain(tournamentDtoSchema.parse(parsed.tournament)),
+        round: roundDtoToDomain(parsed.round),
+    };
+}
+
+async function rounds(id: string): Promise<Round[]> {
+    const { data } = await apiClient.get<unknown>(`/api/tournaments/${id}/rounds`);
+    return roundListDtoSchema.parse(data).map(roundDtoToDomain);
+}
+
 async function remove(id: string): Promise<void> {
     await apiClient.delete(`/api/tournaments/${id}`);
 }
@@ -44,4 +61,6 @@ export const TournamentRepository = {
     create,
     update,
     remove,
+    start,
+    rounds,
 };

@@ -216,6 +216,12 @@ export const en = {
     'teamLogin.backLink': 'Back to the start page',
     'error.teamAccessInvalid':
         'This access link is invalid or no longer active. Please contact your tournament organizer.',
+    'error.tournamentNotStartable':
+        'This tournament cannot be started because it is no longer in setup.',
+    'error.insufficientTeams':
+        'This tournament needs at least two teams before it can be started.',
+    'error.pairingUnsupported':
+        'An odd number of teams cannot be paired yet. The trio format is coming in a later update.',
 
     'teamOverview.tournament': 'Tournament',
     'teamOverview.teamName': 'Team',

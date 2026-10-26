@@ -27,6 +27,15 @@ export const ERROR_CODES = [
 
     /** A team access link cannot be exchanged; all causes share this one code (ADR 0001). */
     'TEAM_ACCESS_INVALID',
+
+    /** Starting a tournament that is not in the `setup` state (already started or completed). */
+    'TOURNAMENT_NOT_STARTABLE',
+
+    /** A tournament with fewer than two teams cannot be started. */
+    'INSUFFICIENT_TEAMS',
+
+    /** The pairing component cannot pair this field of teams (odd count, until trio tables land). */
+    'PAIRING_UNSUPPORTED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

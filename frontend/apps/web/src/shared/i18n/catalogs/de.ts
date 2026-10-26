@@ -217,6 +217,12 @@ export const de: Catalog = {
     'teamLogin.backLink': 'Zur Startseite',
     'error.teamAccessInvalid':
         'Dieser Zugriffslink ist ungültig oder nicht mehr aktiv. Bitte wende dich an deinen Turnier-Organisator.',
+    'error.tournamentNotStartable':
+        'Dieses Turnier kann nicht gestartet werden, weil es nicht mehr in der Vorbereitung ist.',
+    'error.insufficientTeams':
+        'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
+    'error.pairingUnsupported':
+        'Eine ungerade Teamanzahl kann noch nicht gepaart werden. Das Trio-Format folgt in einem späteren Update.',
 
     'teamOverview.tournament': 'Turnier',
     'teamOverview.teamName': 'Team',

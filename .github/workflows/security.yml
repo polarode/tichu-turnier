@@ -56,6 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # actions: read lets trivy-action send its (optional) telemetry status
+      # report via the Workflow Runs API; without it it only logs a warning.
+      actions: read
       security-events: write # for SARIF upload to the Security tab
     steps:
       - name: Checkout repository

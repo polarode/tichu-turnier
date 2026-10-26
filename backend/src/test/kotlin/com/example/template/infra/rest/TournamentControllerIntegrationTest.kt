@@ -377,6 +377,53 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }
 
+    @Test
+    fun `rounds of a started tournament are listed in order with their tables`() {
+        val id = createTournament("Spring Classic")
+        createTeam(id, "Team Alpha")
+        createTeam(id, "Team Beta")
+        createTeam(id, "Team Gamma")
+        createTeam(id, "Team Delta")
+
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isOk)
+
+        mockMvc.perform(get("/api/tournaments/$id/rounds").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("\$[0].roundNumber").value(1))
+            .andExpect(jsonPath("\$[0].tables.length()").value(2))
+            .andExpect(jsonPath("\$[0].tables[0].tableNumber").value(1))
+            .andExpect(jsonPath("\$[0].tables[0].homeTeamId").isNotEmpty)
+            .andExpect(jsonPath("\$[0].tables[0].awayTeamId").isNotEmpty)
+            .andExpect(jsonPath("\$[0].tables[1].tableNumber").value(2))
+    }
+
+    @Test
+    fun `rounds of an unstarted tournament are an empty list`() {
+        val id = createTournament("Empty")
+
+        mockMvc.perform(get("/api/tournaments/$id/rounds").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(content().json("[]"))
+    }
+
+    @Test
+    fun `a foreign admin cannot read another admin's rounds`() {
+        val id = createTournament("Alice's tournament")
+
+        mockMvc.perform(get("/api/tournaments/$id/rounds").cookie(otherAdminCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
+
+    @Test
+    fun `unauthenticated rounds request gets 401`() {
+        mockMvc.perform(get("/api/tournaments/any/rounds"))
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+    }
+
     private fun createTeam(tournamentId: String, name: String) {
         mockMvc.perform(
             post("/api/tournaments/$tournamentId/teams")

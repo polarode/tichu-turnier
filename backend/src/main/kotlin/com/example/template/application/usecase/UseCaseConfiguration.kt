@@ -27,6 +27,7 @@ import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
+import com.example.template.application.api.ListRounds
 import com.example.template.application.api.StartTournament
 import com.example.template.domain.AdminInviteRepository
 import com.example.template.domain.AdminSessionRepository
@@ -71,6 +72,12 @@ class UseCaseConfiguration(
         random: Random,
         clock: Clock,
     ): StartTournament = StartTournamentCommand(tournamentRepository, teamRepository, roundRepository, idGenerator, random, clock)
+
+    @Bean
+    fun listRounds(
+        tournamentRepository: TournamentRepository,
+        roundRepository: RoundRepository,
+    ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository)
 
     @Bean
     fun random(): Random = Random.Default

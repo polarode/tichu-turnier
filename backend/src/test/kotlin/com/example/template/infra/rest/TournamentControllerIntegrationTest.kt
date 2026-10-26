@@ -308,6 +308,93 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
 
+    @Test
+    fun `starting a tournament transitions it to active and returns round 1 with its tables`() {
+        val id = createTournament("Spring Classic")
+        createTeam(id, "Team Alpha")
+        createTeam(id, "Team Beta")
+        createTeam(id, "Team Gamma")
+        createTeam(id, "Team Delta")
+
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.tournament.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.round.roundNumber").value(1))
+            .andExpect(jsonPath("$.round.tables.length()").value(2))
+            .andExpect(jsonPath("$.round.tables[0].tableNumber").value(1))
+            .andExpect(jsonPath("$.round.tables[1].tableNumber").value(2))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
+    }
+
+    @Test
+    fun `starting an already started tournament returns a 409 problem`() {
+        val id = createTournament("Twice")
+        createTeam(id, "Team Alpha")
+        createTeam(id, "Team Beta")
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie)).andExpect(status().isOk)
+
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("TOURNAMENT_NOT_STARTABLE"))
+    }
+
+    @Test
+    fun `starting with fewer than two teams returns a 409 problem`() {
+        val id = createTournament("Lonely")
+        createTeam(id, "Team Alpha")
+
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("INSUFFICIENT_TEAMS"))
+    }
+
+    @Test
+    fun `starting with an odd team count returns the temporary unsupported 409 problem`() {
+        val id = createTournament("Odd")
+        createTeam(id, "Team Alpha")
+        createTeam(id, "Team Beta")
+        createTeam(id, "Team Gamma")
+
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("PAIRING_UNSUPPORTED"))
+    }
+
+    @Test
+    fun `a foreign admin cannot start another admin's tournament`() {
+        val id = createTournament("Alice's tournament")
+        createTeam(id, "Team Alpha")
+        createTeam(id, "Team Beta")
+
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(otherAdminCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
+
+    private fun createTeam(tournamentId: String, name: String) {
+        mockMvc.perform(
+            post("/api/tournaments/$tournamentId/teams")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        mapOf(
+                            "name" to name,
+                            "playerOneName" to "${name} 1",
+                            "playerTwoName" to "${name} 2",
+                        ),
+                    ),
+                ),
+        )
+            .andExpect(status().isCreated)
+    }
+
     private fun setStatus(id: String, status: String) {
         jdbcTemplate.update("UPDATE tournaments SET status = ? WHERE id = ?", status, id)
     }

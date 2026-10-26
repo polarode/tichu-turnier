@@ -8,6 +8,7 @@ import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamSessionRepository
 import com.example.template.domain.TeamTokenRepository
 import com.example.template.domain.TournamentRepository
+import com.example.template.domain.RoundRepository
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -35,6 +36,8 @@ class PersistenceConfiguration(
     private val springDataPlayerRepository: SpringDataPlayerRepository,
     private val springDataTeamTokenRepository: SpringDataTeamTokenRepository,
     private val springDataTeamSessionRepository: SpringDataTeamSessionRepository,
+    private val springDataRoundRepository: SpringDataRoundRepository,
+    private val springDataRoundTableRepository: SpringDataRoundTableRepository,
 ) {
 
     @Bean
@@ -44,6 +47,10 @@ class PersistenceConfiguration(
     @Bean
     fun teamRepository(): TeamRepository =
         JpaTeamRepository(springDataTeamRepository, springDataPlayerRepository)
+
+    @Bean
+    fun roundRepository(): RoundRepository =
+        JpaRoundRepository(springDataRoundRepository, springDataRoundTableRepository)
 
     @Bean
     fun teamTokenRepository(): TeamTokenRepository =

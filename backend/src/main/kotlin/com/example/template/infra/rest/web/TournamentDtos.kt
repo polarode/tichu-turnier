@@ -1,5 +1,8 @@
 package com.example.template.infra.rest.web
 
+import com.example.template.application.api.StartedTournament
+import com.example.template.domain.Round
+import com.example.template.domain.Table
 import com.example.template.domain.Tournament
 import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
@@ -61,3 +64,45 @@ data class TournamentWriteRequestBody(
 data class TournamentSettingsRequestBody(
     val allowGrandTichu: Boolean = true,
 )
+
+/**
+ * Wire representation of the start result: the activated tournament plus the newly
+ * created round 1 with its table assignment.
+ */
+data class StartedTournamentResponse(
+    val tournament: TournamentResponse,
+    val round: RoundResponse,
+) {
+    companion object {
+        fun from(started: StartedTournament): StartedTournamentResponse = StartedTournamentResponse(
+            tournament = TournamentResponse.from(started.tournament),
+            round = RoundResponse.from(started.round),
+        )
+    }
+}
+
+data class RoundResponse(
+    val roundNumber: Int,
+    val tables: List<TableResponse>,
+) {
+    companion object {
+        fun from(round: Round): RoundResponse = RoundResponse(
+            roundNumber = round.number,
+            tables = round.pairing.tables.map(TableResponse::from),
+        )
+    }
+}
+
+data class TableResponse(
+    val tableNumber: Int,
+    val homeTeamId: String,
+    val awayTeamId: String,
+) {
+    companion object {
+        fun from(table: Table): TableResponse = TableResponse(
+            tableNumber = table.id.value,
+            homeTeamId = table.home.value,
+            awayTeamId = table.away.value,
+        )
+    }
+}

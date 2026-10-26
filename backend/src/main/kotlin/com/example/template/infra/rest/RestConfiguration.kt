@@ -27,6 +27,7 @@ import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
+import com.example.template.application.api.StartTournament
 import com.example.template.infra.rest.web.AdminController
 import com.example.template.infra.rest.web.AuthController
 import com.example.template.infra.rest.web.InviteController
@@ -61,8 +62,9 @@ class RestConfiguration(
         getTournament: GetTournament,
         updateTournament: UpdateTournament,
         deleteTournament: DeleteTournament,
+        startTournament: StartTournament,
     ): TournamentController =
-        TournamentController(createTournament, listTournaments, getTournament, updateTournament, deleteTournament)
+        TournamentController(createTournament, listTournaments, getTournament, updateTournament, deleteTournament, startTournament)
 
     @Bean
     fun teamController(

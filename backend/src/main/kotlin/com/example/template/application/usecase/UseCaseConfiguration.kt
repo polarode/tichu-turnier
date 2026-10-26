@@ -27,11 +27,13 @@ import com.example.template.application.api.LoginAdmin
 import com.example.template.application.api.LogoutAdmin
 import com.example.template.application.api.RefreshSession
 import com.example.template.application.api.RegisterAdmin
+import com.example.template.application.api.StartTournament
 import com.example.template.domain.AdminInviteRepository
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
+import com.example.template.domain.RoundRepository
 import com.example.template.domain.SessionTokens
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamSessionRepository
@@ -42,6 +44,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.time.Clock
 import java.time.Duration
+import kotlin.random.Random
 
 /**
  * The only place use cases are turned into beans. They remain plain classes;
@@ -58,6 +61,19 @@ class UseCaseConfiguration(
     @param:Value("\${app.auth.owner.email:}") private val ownerEmail: String,
     @param:Value("\${app.auth.owner.password-hash:}") private val ownerPasswordHash: String,
 ) {
+
+    @Bean
+    fun startTournament(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        roundRepository: RoundRepository,
+        idGenerator: IdGenerator,
+        random: Random,
+        clock: Clock,
+    ): StartTournament = StartTournamentCommand(tournamentRepository, teamRepository, roundRepository, idGenerator, random, clock)
+
+    @Bean
+    fun random(): Random = Random.Default
 
     @Bean
     fun clock(): Clock = Clock.systemUTC()

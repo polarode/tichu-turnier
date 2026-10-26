@@ -5,6 +5,7 @@ import com.example.template.application.api.CreateTournament
 import com.example.template.application.api.DeleteTournament
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.StartTournament
 import com.example.template.application.api.TournamentWriteRequest
 import com.example.template.application.api.UpdateTournament
 import com.example.template.domain.TournamentId
@@ -39,6 +40,7 @@ class TournamentController(
     private val getTournament: GetTournament,
     private val updateTournament: UpdateTournament,
     private val deleteTournament: DeleteTournament,
+    private val startTournament: StartTournament,
 ) {
 
     @PostMapping
@@ -60,6 +62,14 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): TournamentResponse = TournamentResponse.from(
         getTournament.get(TournamentId(id), principal.adminUserId),
+    )
+
+    @PostMapping("/{id}/start")
+    fun start(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): StartedTournamentResponse = StartedTournamentResponse.from(
+        startTournament.start(TournamentId(id), principal.adminUserId),
     )
 
     @PutMapping("/{id}")

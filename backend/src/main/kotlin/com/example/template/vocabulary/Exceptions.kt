@@ -70,6 +70,12 @@ enum class ErrorCode {
      * tables; introduced by the Swiss pairing component (#52).
      */
     PAIRING_UNSUPPORTED,
+
+    /** Starting a tournament that is not in the `setup` state (already started or completed). */
+    TOURNAMENT_NOT_STARTABLE,
+
+    /** A tournament with fewer than two teams cannot be started. */
+    INSUFFICIENT_TEAMS,
 }
 
 /**
@@ -199,6 +205,22 @@ class TeamAccessLinkConflictException(message: String) : ApiException(ErrorCode.
  */
 class TournamentNotEditableException(message: String) :
     ApiException(ErrorCode.TOURNAMENT_NOT_EDITABLE, message)
+
+/**
+ * Thrown when a tournament that is not in `setup` is started — starting twice or
+ * starting a completed tournament. The transition `setup → active` is one-way, so
+ * the conflict is a state problem rather than invalid input. Mapped to HTTP 409.
+ */
+class TournamentNotStartableException(message: String) :
+    ApiException(ErrorCode.TOURNAMENT_NOT_STARTABLE, message)
+
+/**
+ * Thrown when a tournament with fewer than two teams is started. The threshold is a
+ * tournament-level rule, not a field problem, so it is not field-anchored. Mapped
+ * to HTTP 409.
+ */
+class InsufficientTeamsException(message: String) :
+    ApiException(ErrorCode.INSUFFICIENT_TEAMS, message)
 
 /**
  * Raised by the Swiss pairing domain component when pairing is impossible under the

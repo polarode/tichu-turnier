@@ -5,7 +5,15 @@
   "rangeStrategy": "pin",
   "timezone": "Europe/Berlin",
   "schedule": ["after 8am on monday"],
+  "automerge": true,
+  "automergeType": "pr",
+  "platformAutomerge": true,
   "packageRules": [
+    {
+      "description": "Never automerge major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
     {
       "description": "Group minor/patch updates for frontend dependencies into one PR",
       "groupName": "frontend minor+patch",
@@ -32,12 +40,10 @@
       "groupName": "spring boot patches"
     },
     {
-      "description": "Auto-merge patch updates for devDependencies (tests run in CI first)",
+      "description": "Legacy rule (automerge is now the default); kept for clarity",
       "matchManagers": ["npm"],
       "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "automergeType": "pr"
+      "matchUpdateTypes": ["patch"]
     },
     {
       "description": "Don't touch the pinned testcontainers override (Docker Engine 29 workaround)",

@@ -54,6 +54,13 @@ tasks.bootJar {
     archiveFileName = "app.jar"
 }
 
+// Pin resolved dependency versions in gradle.lockfile so Trivy (CVE scan +
+// CycloneDX SBOM in .github/workflows/security.yml) sees the full transitive
+// tree. Regenerate after dependency changes: ./gradlew dependencies --write-locks
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 

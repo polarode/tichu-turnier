@@ -3,7 +3,7 @@ import { Button } from '@tichu/ui/button.tsx';
 
 import type { Team, TeamWriteInput } from '@/domain/team.domain.ts';
 import type { TeamFormValues } from '@/features/teams/team-schemas.ts';
-import { useCreateTeam, useDeleteTeam, useTeams, useUpdateTeam } from '@/features/teams/hooks/team-queries.hook.ts';
+import { useCreateTeam, useDeleteTeam, useUpdateTeam } from '@/features/teams/hooks/team-queries.hook.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TeamFormDialog } from '@/features/teams/components/team-form-dialog.component.tsx';
@@ -16,6 +16,8 @@ interface TeamsSectionProps {
     maxTeams: number;
     /** Team management only exists during the setup phase. */
     editable: boolean;
+    /** The tournament's teams, owned by the parent's `useTeams` query (one observer). */
+    teams: readonly Team[];
 }
 
 interface DialogState {
@@ -29,9 +31,8 @@ interface DialogState {
  * actions during the setup phase. Server problems are localized and anchored to the
  * offending form field by the dialog.
  */
-export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionProps) {
+export function TeamsSection({ tournamentId, maxTeams, editable, teams }: TeamsSectionProps) {
     const { t } = useI18n();
-    const teamsQuery = useTeams(tournamentId);
     const createTeam = useCreateTeam(tournamentId);
     const updateTeam = useUpdateTeam(tournamentId);
     const deleteTeam = useDeleteTeam(tournamentId);
@@ -41,7 +42,6 @@ export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionP
     const [accessLinkTeam, setAccessLinkTeam] = useState<Team | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
 
-    const teams = teamsQuery.data ?? [];
     const capacityReached = teams.length >= maxTeams;
 
     const submit = async (values: TeamFormValues) => {
@@ -98,13 +98,7 @@ export function TeamsSection({ tournamentId, maxTeams, editable }: TeamsSectionP
                 </p>
             ) : null}
 
-            {teamsQuery.isPending ? (
-                <p className="text-muted-foreground">{t('common.loading')}</p>
-            ) : teamsQuery.isError ? (
-                <p role="alert" className="text-sm text-destructive">
-                    {localizedErrorMessage(teamsQuery.error, t)}
-                </p>
-            ) : teams.length === 0 ? (
+            {teams.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('teams.section.empty')}</p>
             ) : (
                 <ul className="flex flex-col gap-2">

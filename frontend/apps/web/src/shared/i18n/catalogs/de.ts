@@ -20,6 +20,7 @@ export const de: Catalog = {
     'common.no': 'Nein',
     'common.retry': 'Erneut versuchen',
     'common.cancel': 'Abbrechen',
+    'common.confirm': 'Bestätigen',
 
     'validation.email.required': 'E-Mail ist erforderlich.',
     'validation.email.invalid': 'Bitte eine gültige E-Mail-Adresse eingeben.',
@@ -160,6 +161,16 @@ export const de: Catalog = {
     'tournament.form.allowGrandTichu': 'Grand Tichu erlauben',
     'tournament.detail.title': 'Turnier',
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',
+
+    'tournament.start.action': 'Turnier starten',
+    'tournament.start.confirmDescription': 'Turnier starten und Runde 1 auslosen?',
+    'tournament.start.hintInsufficientTeams': 'Zum Starten braucht es mindestens zwei Teams.',
+    'tournament.start.hintOddTeamCount':
+        'Eine ungerade Teamanzahl kann noch nicht gepaart werden.',
+    'rounds.section.title': 'Runden',
+    'rounds.round': 'Runde',
+    'rounds.table': 'Tisch',
+    'rounds.versus': 'vs',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',

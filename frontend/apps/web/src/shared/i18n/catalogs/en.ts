@@ -23,6 +23,7 @@ export const en = {
     'common.no': 'No',
     'common.retry': 'Try again',
     'common.cancel': 'Cancel',
+    'common.confirm': 'Confirm',
 
     'validation.email.required': 'Email is required.',
     'validation.email.invalid': 'Enter a valid email address.',
@@ -154,6 +155,15 @@ export const en = {
     'tournament.edit.pending': 'Saving changes…',
     'tournament.detail.title': 'Tournament',
     'tournament.detail.description': 'Manage teams and settings.',
+
+    'tournament.start.action': 'Start tournament',
+    'tournament.start.confirmDescription': 'Start the tournament and draw round 1?',
+    'tournament.start.hintInsufficientTeams': 'At least two teams are needed to start.',
+    'tournament.start.hintOddTeamCount': 'An odd number of teams cannot be paired yet.',
+    'rounds.section.title': 'Rounds',
+    'rounds.round': 'Round',
+    'rounds.table': 'Table',
+    'rounds.versus': 'vs',
     'tournament.detail.edit': 'Edit',
     'tournament.form.name': 'Name',
     'tournament.form.description': 'Description',

@@ -3,6 +3,7 @@ export const QueryKeys = {
     SESSION: 'session',
     TOURNAMENTS: 'tournaments',
     TEAMS: 'teams',
+    ROUNDS: 'rounds',
     ADMIN_ACCOUNTS: 'admin-accounts',
     ADMIN_INVITES: 'admin-invites',
     TEAM_ME: 'team-me',
@@ -20,6 +21,9 @@ export const teamsQueryKey = (tournamentId: string) => [QueryKeys.TEAMS, tournam
 /** Key for a single team within a tournament. */
 export const teamQueryKey = (tournamentId: string, teamId: string) =>
     [QueryKeys.TEAMS, tournamentId, teamId] as const;
+
+/** Key for a tournament's rounds list. */
+export const roundsQueryKey = (tournamentId: string) => [QueryKeys.ROUNDS, tournamentId] as const;
 
 /** Key for the owner console's admin-account list. */
 export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;

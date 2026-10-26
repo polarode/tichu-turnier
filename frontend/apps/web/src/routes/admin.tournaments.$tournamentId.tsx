@@ -3,7 +3,10 @@ import { Badge } from '@tichu/ui/badge.tsx';
 import { buttonVariants } from '@tichu/ui/button.tsx';
 
 import { TeamsSection } from '@/features/teams/components/teams-section.component.tsx';
+import { RoundsSection } from '@/features/tournaments/components/rounds-section.component.tsx';
+import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
+import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -25,6 +28,7 @@ function TournamentDetailComponent() {
         const { t } = useI18n();
         const { tournamentId } = Route.useParams();
         const tournamentQuery = useTournament(tournamentId);
+        const teamsQuery = useTeams(tournamentId);
 
         if (tournamentQuery.isPending) {
             return <p className="text-muted-foreground">{t('common.loading')}</p>;
@@ -36,9 +40,20 @@ function TournamentDetailComponent() {
                 </p>
             );
         }
+        if (teamsQuery.isPending) {
+            return <p className="text-muted-foreground">{t('common.loading')}</p>;
+        }
+        if (teamsQuery.isError) {
+            return (
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(teamsQuery.error, t)}
+                </p>
+            );
+        }
 
         const tournament = tournamentQuery.data;
         const editable = tournament.status === TournamentStatus.SETUP;
+        const teams = teamsQuery.data ?? [];
 
         return (
             <section className="flex flex-col gap-6">
@@ -47,15 +62,18 @@ function TournamentDetailComponent() {
                         titleKey="tournament.detail.title"
                         descriptionKey="tournament.detail.description"
                     />
-                    {editable ? (
-                        <Link
-                            to="/admin/tournaments/$tournamentId/edit"
-                            params={{ tournamentId: tournament.id }}
-                            className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                        >
-                            {t('tournament.detail.edit')}
-                        </Link>
-                    ) : null}
+                    <div className="flex items-center gap-3">
+                        <StartTournamentButton tournament={tournament} teams={teams} />
+                        {editable ? (
+                            <Link
+                                to="/admin/tournaments/$tournamentId/edit"
+                                params={{ tournamentId: tournament.id }}
+                                className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                            >
+                                {t('tournament.detail.edit')}
+                            </Link>
+                        ) : null}
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-2 rounded-md border border-border p-4">
@@ -82,7 +100,12 @@ function TournamentDetailComponent() {
                     tournamentId={tournament.id}
                     maxTeams={tournament.maxTeams}
                     editable={editable}
+                    teams={teams}
                 />
+
+                {tournament.status !== TournamentStatus.SETUP ? (
+                    <RoundsSection tournamentId={tournament.id} teams={teams} />
+                ) : null}
         </section>
     );
 }

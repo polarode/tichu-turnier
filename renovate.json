@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "pin",
+  "timezone": "Europe/Berlin",
+  "schedule": ["after 8am on monday"],
+  "packageRules": [
+    {
+      "description": "Group minor/patch updates for frontend dependencies into one PR",
+      "groupName": "frontend minor+patch",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupByUpdateType": false
+    },
+    {
+      "description": "Group all @tanstack packages together (they move in lockstep)",
+      "matchManagers": ["npm"],
+      "matchPackagePatterns": ["^@tanstack/"],
+      "groupName": "tanstack"
+    },
+    {
+      "description": "Group Kotlin plugin updates",
+      "matchManagers": ["gradle"],
+      "matchPackagePatterns": ["org.jetbrains.kotlin"],
+      "groupName": "kotlin plugins"
+    },
+    {
+      "description": "Spring Boot patch updates grouped; minor/major separate for review",
+      "matchManagers": ["gradle"],
+      "matchPackagePatterns": ["org.springframework.boot"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "spring boot patches"
+    },
+    {
+      "description": "Auto-merge patch updates for devDependencies (tests run in CI first)",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Don't touch the pinned testcontainers override (Docker Engine 29 workaround)",
+      "matchManagers": ["gradle"],
+      "matchPackagePatterns": ["testcontainers"],
+      "enabled": false
+    }
+  ]
+}

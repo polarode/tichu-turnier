@@ -1,5 +1,6 @@
 import type { Team } from '@/domain/team.domain.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
+import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 interface RoundsSectionProps {
@@ -17,8 +18,18 @@ export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
     const { t } = useI18n();
     const roundsQuery = useRounds(tournamentId);
 
-    if (roundsQuery.isPending || roundsQuery.isError) {
+    if (roundsQuery.isPending) {
         return null;
+    }
+    if (roundsQuery.isError) {
+        return (
+            <section aria-label={t('rounds.section.title')} className="flex flex-col gap-3">
+                <h2 className="text-lg font-semibold">{t('rounds.section.title')}</h2>
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(roundsQuery.error, t)}
+                </p>
+            </section>
+        );
     }
 
     const rounds = roundsQuery.data;

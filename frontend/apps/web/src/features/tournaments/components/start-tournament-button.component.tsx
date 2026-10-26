@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@tichu/ui/button.tsx';
 
+import { ConfirmDialog } from '@/features/teams/components/confirm-dialog.component.tsx';
 import type { Team } from '@/domain/team.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { useStartTournament } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
@@ -58,17 +59,15 @@ export function StartTournamentButton({ tournament, teams }: StartTournamentButt
                 </Button>
             </div>
             {confirming ? (
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                        {t('tournament.start.confirmDescription')}
-                    </span>
-                    <Button size="sm" onClick={start} disabled={startTournament.isPending}>
-                        {t('common.confirm')}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setConfirming(false)}>
-                        {t('common.cancel')}
-                    </Button>
-                </div>
+                <ConfirmDialog
+                    titleKey="tournament.start.action"
+                    descriptionKey="tournament.start.confirmDescription"
+                    confirmLabelKey="common.confirm"
+                    destructive={false}
+                    disabled={startTournament.isPending}
+                    onConfirm={start}
+                    onCancel={() => setConfirming(false)}
+                />
             ) : null}
             {actionError ? (
                 <p role="alert" className="text-sm text-destructive">

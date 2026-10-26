@@ -39,10 +39,10 @@ async function update(id: string, input: TournamentWriteInput): Promise<Tourname
 
 async function start(id: string): Promise<{ tournament: Tournament; round: Round }> {
     const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/start`);
-    const parsed = startedTournamentDtoSchema.parse(data);
+    const { tournament, round } = startedTournamentDtoSchema.parse(data);
     return {
-        tournament: tournamentDtoToDomain(tournamentDtoSchema.parse(parsed.tournament)),
-        round: roundDtoToDomain(parsed.round),
+        tournament: tournamentDtoToDomain(tournament),
+        round: roundDtoToDomain(round),
     };
 }
 

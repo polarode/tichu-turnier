@@ -40,16 +40,7 @@ function TournamentDetailComponent() {
                 </p>
             );
         }
-        if (teamsQuery.isPending) {
-            return <p className="text-muted-foreground">{t('common.loading')}</p>;
-        }
-        if (teamsQuery.isError) {
-            return (
-                <p role="alert" className="text-sm text-destructive">
-                    {localizedErrorMessage(teamsQuery.error, t)}
-                </p>
-            );
-        }
+        const teamsReady = !teamsQuery.isPending && !teamsQuery.isError;
 
         const tournament = tournamentQuery.data;
         const editable = tournament.status === TournamentStatus.SETUP;
@@ -63,7 +54,9 @@ function TournamentDetailComponent() {
                         descriptionKey="tournament.detail.description"
                     />
                     <div className="flex items-center gap-3">
-                        <StartTournamentButton tournament={tournament} teams={teams} />
+                        {teamsReady ? (
+                            <StartTournamentButton tournament={tournament} teams={teams} />
+                        ) : null}
                         {editable ? (
                             <Link
                                 to="/admin/tournaments/$tournamentId/edit"
@@ -96,16 +89,26 @@ function TournamentDetailComponent() {
                     </p>
                 </div>
 
-                <TeamsSection
-                    tournamentId={tournament.id}
-                    maxTeams={tournament.maxTeams}
-                    editable={editable}
-                    teams={teams}
-                />
+                {teamsQuery.isPending ? (
+                    <p className="text-muted-foreground">{t('common.loading')}</p>
+                ) : teamsQuery.isError ? (
+                    <p role="alert" className="text-sm text-destructive">
+                        {localizedErrorMessage(teamsQuery.error, t)}
+                    </p>
+                ) : (
+                    <>
+                        <TeamsSection
+                            tournamentId={tournament.id}
+                            maxTeams={tournament.maxTeams}
+                            editable={editable}
+                            teams={teams}
+                        />
 
-                {tournament.status !== TournamentStatus.SETUP ? (
-                    <RoundsSection tournamentId={tournament.id} teams={teams} />
-                ) : null}
+                        {tournament.status !== TournamentStatus.SETUP ? (
+                            <RoundsSection tournamentId={tournament.id} teams={teams} />
+                        ) : null}
+                    </>
+                )}
         </section>
     );
 }

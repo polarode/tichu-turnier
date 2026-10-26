@@ -43,7 +43,10 @@ class JpaRoundRepository(
     /** Loads the tables of each round and reassembles the domain aggregates. */
     private fun withTables(rounds: List<RoundEntity>): List<Round> {
         val roundIds = rounds.map { it.id }
-        val tablesByRound = springDataRoundTableRepository.findAllByRoundIdIn(roundIds).groupBy { it.roundId }
+        val tablesByRound = springDataRoundTableRepository
+            .findAllByRoundIdIn(roundIds)
+            .sortedBy { it.tableNumber }
+            .groupBy { it.roundId }
         return rounds.map { round -> round.toDomain(tablesByRound[round.id].orEmpty()) }
     }
 }

@@ -208,7 +208,7 @@ class StartTournamentCommandTest {
     }
 
     @Test
-    fun `a failure while persisting the round rolls the tournament back to setup`() {
+    fun `persists nothing when the round save fails (ordering, not Spring rollback)`() {
         val id = createTournament()
         addTeam(id, "Team Alpha")
         addTeam(id, "Team Beta")

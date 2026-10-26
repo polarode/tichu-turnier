@@ -4,7 +4,6 @@
   "labels": ["dependencies"],
   "rangeStrategy": "pin",
   "timezone": "Europe/Berlin",
-  "schedule": ["after 8am on monday"],
   "automerge": true,
   "automergeType": "pr",
   "platformAutomerge": true,

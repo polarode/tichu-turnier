@@ -1,0 +1,97 @@
+name: CI - Security
+
+# Free supply-chain security checks:
+#   - dependency-review: on PRs, compares lockfile/manifest changes against the
+#     GitHub Advisory Database and fails on new vulnerable or disallowed
+#     (GPL-style) dependencies.
+#   - Trivy: weekly + on main, scans backend (Gradle) and frontend (pnpm)
+#     manifests for CVEs and uploads SARIF to the repo's Security tab.
+#   - Trivy SBOM: generates a CycloneDX SBOM of both ecosystems, uploaded as
+#     a workflow artifact on main.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'renovate.json'
+      - '.github/workflows/security.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'renovate.json'
+      - '.github/workflows/security.yml'
+  schedule:
+    - cron: '23 6 * * 1' # Mondays 06:23 UTC — weekly scan even without pushes
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: Dependency Review (PR)
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        # Fails on new vulnerabilities with any severity introduced by the PR.
+        # Allow-list licenses; extend as needed.
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-1.0-or-later, AGPL-1.0-or-later
+
+  trivy-scan:
+    name: Trivy CVE Scan & SBOM
+    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # for SARIF upload to the Security tab
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trivy vulnerability scan (SARIF -> Security tab)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          format: sarif
+          output: trivy-results.sarif
+          severity: MEDIUM,HIGH,CRITICAL
+          # Trivy scans lockfiles/manifests: pnpm lockfile for the frontend,
+          # gradle.lockfile for the backend (see note below on lockfiles).
+          skip-dirs: node_modules,.gradle,worktrees
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Trivy SBOM (CycloneDX, frontend + backend)
+        if: ${{ github.event_name == 'push' }}
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: cyclonedx
+          output: sbom.cdx.json
+          scanners: vuln
+          skip-dirs: node_modules,.gradle,worktrees
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json

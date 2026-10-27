@@ -43,7 +43,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
       - name: Dependency review
-        uses: actions/dependency-review-action@v4.9.0
+        uses: actions/dependency-review-action@v5.0.0
         # Fails on new vulnerabilities with any severity introduced by the PR.
         # Allow-list licenses; extend as needed.
         with:

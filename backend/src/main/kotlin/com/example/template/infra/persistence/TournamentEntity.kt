@@ -41,28 +41,28 @@ class TournamentEntity(
     updatedAt: Instant,
 ) {
     var name: String = name
-        private set
+        protected set
 
     var description: String = description
-        private set
+        protected set
 
     var maxTeams: Int = maxTeams
-        private set
+        protected set
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var settings: TournamentSettings = settings
-        private set
+        protected set
 
     @Enumerated(EnumType.STRING)
     var status: TournamentStatus = status
-        private set
+        protected set
 
     var createdAt: Instant = createdAt
-        private set
+        protected set
 
     var updatedAt: Instant = updatedAt
-        private set
+        protected set
 
     fun toDomain(): Tournament = Tournament(
         id = TournamentId(id),

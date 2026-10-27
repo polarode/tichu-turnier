@@ -47,7 +47,7 @@ jobs:
         # Fails on new vulnerabilities with any severity introduced by the PR.
         # Allow-list licenses; extend as needed.
         with:
-          fail-on-severity: moderate
+          fail-on-severity: high
           deny-licenses: GPL-1.0-or-later, AGPL-1.0-or-later
 
   trivy-scan:

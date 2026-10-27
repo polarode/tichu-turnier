@@ -1,18 +1,18 @@
 name: CI - Frontend
 
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths:
+#       - 'frontend/**'
+#       - '.github/workflows/frontend-ci.yml'
+#   pull_request:
+#     branches:
+#       - main
+#     paths:
+#       - 'frontend/**'
+#       - '.github/workflows/frontend-ci.yml'
 
 jobs:
   frontend-build:

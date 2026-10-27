@@ -7,7 +7,7 @@
 #   docker run -p 8080:8080 -e SPRING_DATASOURCE_URL=... tichu-turnier
 
 # Stage 1: build the SPA bundle; VITE_API_URL=/ makes it talk to its own origin.
-FROM node:22.23.4-alpine AS frontend
+FROM node:24.22.0-alpine AS frontend
 WORKDIR /fe
 RUN corepack enable
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/tsconfig.base.json ./

@@ -28,3 +28,6 @@ minimumReleaseAge: 10080 # minutes (7 days)
 allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
+minimumReleaseAgeExclude:
+  # Renovate security update: vite@6.4.4
+  - vite@6.4.4

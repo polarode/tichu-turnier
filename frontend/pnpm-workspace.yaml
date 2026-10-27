@@ -1,10 +1,8 @@
-# Shared dependency versions. Reference with `catalog:` in package.json files so
-# every workspace package stays on the same version.
 catalog:
   '@hookform/resolvers': 5.1.1
   '@tailwindcss/vite': 4.1.11
-  '@tanstack/react-query': 5.84.1
-  '@tanstack/react-router': 1.131.2
+  '@tanstack/react-query': 5.104.5
+  '@tanstack/react-router': 1.170.45
   axios: 1.11.0
   class-variance-authority: 0.7.1
   clsx: 2.1.1

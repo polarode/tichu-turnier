@@ -21,6 +21,11 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+# Supply-chain guard: refuse to install releases younger than 7 days, so a
+# freshly published (possibly compromised) package version cannot be pulled
+# manually. Mirrors `minimumReleaseAge` in renovate.json.
+minimumReleaseAge: 10080 # minutes (7 days)
+
 # Native build scripts we trust to run on install (vite's esbuild, tailwind's oxide).
 allowBuilds:
   '@tailwindcss/oxide': true

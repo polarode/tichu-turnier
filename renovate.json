@@ -4,6 +4,7 @@
   "labels": ["dependencies"],
   "rangeStrategy": "pin",
   "timezone": "Europe/Berlin",
+  "minimumReleaseAge": "7 days",
   "automerge": true,
   "automergeType": "pr",
   "platformAutomerge": true,

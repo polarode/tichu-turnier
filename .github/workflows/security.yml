@@ -5,7 +5,9 @@ name: CI - Security
 #     GitHub Advisory Database and fails on new vulnerable or disallowed
 #     (GPL-style) dependencies.
 #   - Trivy: weekly + on main, scans backend (Gradle) and frontend (pnpm)
-#     manifests for CVEs and uploads SARIF to the repo's Security tab.
+#     manifests for CVEs and fails the job on MEDIUM+ findings. The SARIF
+#     report is uploaded as a workflow artifact (the repo Security tab
+#     requires GitHub Advanced Security, unavailable on free private repos).
 #   - Trivy SBOM: generates a CycloneDX SBOM of both ecosystems, uploaded as
 #     a workflow artifact on main.
 
@@ -59,12 +61,14 @@ jobs:
       # actions: read lets trivy-action send its (optional) telemetry status
       # report via the Workflow Runs API; without it it only logs a warning.
       actions: read
-      security-events: write # for SARIF upload to the Security tab
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.4.0
 
-      - name: Trivy vulnerability scan (SARIF -> Security tab)
+      # Fails the job when MEDIUM+ CVEs are found. The SARIF report is kept
+      # as a CI artifact; uploading it to the Security tab requires GitHub
+      # Advanced Security, which is not available for free private repos.
+      - name: Trivy vulnerability scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -73,14 +77,17 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: MEDIUM,HIGH,CRITICAL
+          exit-code: '1'
           # Trivy scans lockfiles/manifests: pnpm lockfile for the frontend,
           # gradle.lockfile for the backend (see note below on lockfiles).
           skip-dirs: node_modules,.gradle,worktrees
 
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3.39.1
+      - name: Upload SARIF artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4.6.2
         with:
-          sarif_file: trivy-results.sarif
+          name: trivy-sarif
+          path: trivy-results.sarif
 
       - name: Trivy SBOM (CycloneDX, frontend + backend)
         if: ${{ github.event_name == 'push' }}

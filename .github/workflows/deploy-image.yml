@@ -12,6 +12,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'deploy/**'
+      - '.github/workflows/deploy-image.yml'
   pull_request:
     branches:
       - main

@@ -9,7 +9,7 @@ import com.example.template.domain.TournamentRepository
 import com.example.template.domain.TournamentStatus
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAsSeededAdmin
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

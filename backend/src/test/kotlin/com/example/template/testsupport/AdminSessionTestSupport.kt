@@ -6,7 +6,7 @@ import com.example.template.domain.AdminUser
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.PasswordHasher
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType

@@ -2,7 +2,7 @@ package com.example.template.infra.security
 
 import com.example.template.infra.rest.web.problemDetail
 import com.example.template.vocabulary.ErrorCode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus

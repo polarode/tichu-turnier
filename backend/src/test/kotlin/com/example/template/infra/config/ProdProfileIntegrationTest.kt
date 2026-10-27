@@ -6,18 +6,17 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.WebApplicationType
 import org.springframework.boot.builder.SpringApplicationBuilder
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.core.env.Environment
-import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.web.servlet.client.RestTestClient
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 
 /**
@@ -39,6 +38,7 @@ import com.example.template.testsupport.PostgresBackedIntegrationTest
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 )
 @ActiveProfiles("prod")
+@AutoConfigureRestTestClient
 class ProdProfileIntegrationTest {
 
     @Autowired
@@ -48,7 +48,7 @@ class ProdProfileIntegrationTest {
     lateinit var jdbcTemplate: JdbcTemplate
 
     @Autowired
-    lateinit var restTemplate: TestRestTemplate
+    lateinit var restTestClient: RestTestClient
 
     @Test
     fun `prod profile boots from env vars alone with flyway on the direct URL`() {
@@ -77,17 +77,14 @@ class ProdProfileIntegrationTest {
 
     @Test
     fun `session cookies stay Secure in prod`() {
-        val response = restTemplate.exchange(
-            "/api/auth/login",
-            HttpMethod.POST,
-            HttpEntity(
-                """{"email":"$ownerEmail","password":${ownerPasswordJson}}""",
-                HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON },
-            ),
-            String::class.java,
-        )
-        assertThat(response.statusCode.is2xxSuccessful).isTrue()
-        val setCookie = response.headers.getFirst(HttpHeaders.SET_COOKIE)
+        val result = restTestClient
+            .post().uri("/api/auth/login")
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .body("""{"email":"$ownerEmail","password":${ownerPasswordJson}}""")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody().returnResult()
+        val setCookie = result.responseHeaders.getFirst(HttpHeaders.SET_COOKIE)
             ?: error("no Set-Cookie header on login response")
         assertThat(setCookie).contains("Secure")
     }
@@ -155,13 +152,13 @@ class ProdProfileIntegrationTest {
         private const val ownerPassword = "s3cret-pw"
 
         private val ownerPasswordJson = run {
-            val encoder = com.fasterxml.jackson.databind.ObjectMapper()
+            val encoder = tools.jackson.databind.ObjectMapper()
             encoder.writeValueAsString(ownerPassword)
         }
 
         // Computed once; resolved lazily by the dynamic property supplier.
         private val ownerPasswordHash: String by lazy {
-            BCryptPasswordEncoder().encode(ownerPassword)
+            BCryptPasswordEncoder().let { requireNotNull(it.encode(ownerPassword)) }
         }
 
         @JvmStatic

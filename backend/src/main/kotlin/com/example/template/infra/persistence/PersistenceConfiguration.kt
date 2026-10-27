@@ -9,7 +9,7 @@ import com.example.template.domain.TeamSessionRepository
 import com.example.template.domain.TeamTokenRepository
 import com.example.template.domain.TournamentRepository
 import com.example.template.domain.RoundRepository
-import org.springframework.boot.autoconfigure.domain.EntityScan
+import org.springframework.boot.persistence.autoconfigure.EntityScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories

@@ -4,7 +4,7 @@ import com.example.template.domain.AdminUserRepository
 import com.example.template.domain.PasswordHasher
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAsSeededAdmin
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not

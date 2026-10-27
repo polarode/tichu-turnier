@@ -11,7 +11,7 @@ import com.example.template.domain.TournamentRepository
 import com.example.template.main.Application
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAsSeededAdmin
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach

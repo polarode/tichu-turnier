@@ -12,7 +12,7 @@ class BcryptPasswordHasher(
     private val encoder: BCryptPasswordEncoder = BCryptPasswordEncoder(),
 ) : PasswordHasher {
 
-    override fun hash(rawPassword: String): String = encoder.encode(rawPassword)
+    override fun hash(rawPassword: String): String = requireNotNull(encoder.encode(rawPassword))
 
     override fun matches(rawPassword: String, passwordHash: String): Boolean =
         encoder.matches(rawPassword, passwordHash)

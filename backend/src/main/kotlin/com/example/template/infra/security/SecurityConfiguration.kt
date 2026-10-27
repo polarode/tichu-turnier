@@ -5,7 +5,7 @@ import com.example.template.application.api.AuthenticateTeamSession
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
 import com.example.template.infra.rest.web.SessionCookieFactory
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.DispatcherType
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

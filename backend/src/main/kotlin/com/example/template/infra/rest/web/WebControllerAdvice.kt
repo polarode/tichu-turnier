@@ -29,6 +29,8 @@ import com.example.template.vocabulary.TournamentNotStartableException
 import com.example.template.vocabulary.UnauthenticatedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
+import org.springframework.http.converter.HttpMessageNotReadableException
+import tools.jackson.databind.exc.InvalidNullException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -181,6 +183,32 @@ class WebControllerAdvice {
         return problem
     }
 
+    /** Malformed/missing JSON body: same 400 shape, field-anchored when the
+     *  deserializer names the offending property (e.g. a missing required member).
+     */
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableBody(ex: HttpMessageNotReadableException): ProblemDetail {
+        val problem = problem(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, "Request body is not readable.")
+        var cause: Throwable? = ex.cause
+        while (cause != null) {
+            if (cause is InvalidNullException) {
+                cause.propertyName?.simpleName?.takeIf { it.isNotEmpty() }?.let {
+                    problem.setProperty("field", it)
+                }
+                break
+            }
+            // Jackson reports a missing required property without a structured
+            // property name, only in the message: "Missing required creator
+            // property 'maxTeams' (index 1)".
+            missingCreatorProperty.find(cause.message ?: "")?.groupValues?.get(1)?.let {
+                problem.setProperty("field", it)
+                break
+            }
+            cause = cause.cause
+        }
+        return problem
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ProblemDetail {
         val fieldErrors = ex.bindingResult.fieldErrors
@@ -191,6 +219,10 @@ class WebControllerAdvice {
         // Bean-validation failures are field-anchored too, same as InvalidFieldException.
         fieldErrors.firstOrNull()?.field?.let { problem.setProperty("field", it) }
         return problem
+    }
+
+    private companion object {
+        private val missingCreatorProperty = Regex("Missing required creator property '(\\w+)'")
     }
 
     private fun problem(status: HttpStatus, ex: ApiException): ProblemDetail =

@@ -13,7 +13,7 @@ import com.example.template.domain.normalizeEmail
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAndCaptureSession
 import com.example.template.testsupport.seedAdmin
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
 import org.hamcrest.Matchers.hasItem
 import org.junit.jupiter.api.Test

@@ -152,13 +152,13 @@ class ProdProfileIntegrationTest {
         private const val ownerPassword = "s3cret-pw"
 
         private val ownerPasswordJson = run {
-            val encoder = tools.jackson.databind.ObjectMapper()
-            encoder.writeValueAsString(ownerPassword)
+            val mapper = tools.jackson.databind.ObjectMapper()
+            mapper.writeValueAsString(ownerPassword)
         }
 
         // Computed once; resolved lazily by the dynamic property supplier.
         private val ownerPasswordHash: String by lazy {
-            BCryptPasswordEncoder().let { requireNotNull(it.encode(ownerPassword)) }
+            requireNotNull(BCryptPasswordEncoder().encode(ownerPassword))
         }
 
         @JvmStatic

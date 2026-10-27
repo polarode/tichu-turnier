@@ -179,7 +179,7 @@ class WebControllerAdvice {
 
     private fun anchoredConflict(ex: ApiException, field: String): ProblemDetail {
         val problem = problem(HttpStatus.CONFLICT, ex)
-        problem.setProperty("field", field)
+        problem.anchor(field)
         return problem
     }
 
@@ -192,16 +192,14 @@ class WebControllerAdvice {
         var cause: Throwable? = ex.cause
         while (cause != null) {
             if (cause is InvalidNullException) {
-                cause.propertyName?.simpleName?.takeIf { it.isNotEmpty() }?.let {
-                    problem.setProperty("field", it)
-                }
+                cause.propertyName?.simpleName?.takeIf { it.isNotEmpty() }?.let { problem.anchor(it) }
                 break
             }
             // Jackson reports a missing required property without a structured
             // property name, only in the message: "Missing required creator
             // property 'maxTeams' (index 1)".
             missingCreatorProperty.find(cause.message ?: "")?.groupValues?.get(1)?.let {
-                problem.setProperty("field", it)
+                problem.anchor(it)
                 break
             }
             cause = cause.cause
@@ -217,12 +215,17 @@ class WebControllerAdvice {
             .ifBlank { "Validation failed" }
         val problem = problem(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT, message)
         // Bean-validation failures are field-anchored too, same as InvalidFieldException.
-        fieldErrors.firstOrNull()?.field?.let { problem.setProperty("field", it) }
+        fieldErrors.firstOrNull()?.field?.let { problem.anchor(it) }
         return problem
     }
 
     private companion object {
         private val missingCreatorProperty = Regex("Missing required creator property '(\\w+)'")
+    }
+
+    /** Every field-anchored response funnels through here. */
+    private fun ProblemDetail.anchor(field: String) {
+        setProperty("field", field)
     }
 
     private fun problem(status: HttpStatus, ex: ApiException): ProblemDetail =

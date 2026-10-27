@@ -1,5 +1,8 @@
 name: CI - Frontend
 
+# Temporarily disabled — manual trigger only (YAML parses `on` as boolean
+# true when commented out, which makes the workflow run on every event).
+# Restore the original triggers to re-enable:
 # on:
 #   push:
 #     branches:
@@ -13,6 +16,8 @@ name: CI - Frontend
 #     paths:
 #       - 'frontend/**'
 #       - '.github/workflows/frontend-ci.yml'
+on:
+  workflow_dispatch
 
 jobs:
   frontend-build:

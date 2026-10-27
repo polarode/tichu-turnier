@@ -41,7 +41,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.4.0
+        uses: actions/checkout@v7.0.1
       - name: Dependency review
         uses: actions/dependency-review-action@v4.9.0
         # Fails on new vulnerabilities with any severity introduced by the PR.
@@ -62,7 +62,7 @@ jobs:
       security-events: write # for SARIF upload to the Security tab
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.4.0
+        uses: actions/checkout@v7.0.1
 
       - name: Trivy vulnerability scan (SARIF -> Security tab)
         uses: aquasecurity/trivy-action@v0.36.0

@@ -4,7 +4,7 @@ This is a two-app monorepo. Read the relevant section before editing an area.
 
 ## Git & pushing
 
-- **Never push.** Commit locally with Conventional Commits, but leave `git push` to the operator as a manual step. Do not run `git push`, `gh pr create` with immediate push, or anything else that publishes to the remote.
+- **Never push to main.** Commit locally with Conventional Commits, but leave `git push` to the operator as a manual step. Do not run `git push`, `gh pr create` with immediate push, or anything else that publishes to the remote.
 
 ## Plan & tickets
 

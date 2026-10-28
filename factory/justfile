@@ -1,0 +1,29 @@
+# Dark factory tasks. Run on the VPS from the /opt/tichu-factory checkout.
+# `just` required (https://github.com/casey/just).
+
+image := "ghcr.io/polarode/tichu-turnier/factory:latest"
+
+# Build the factory image locally (integration check before deploying).
+build-image:
+    docker build -t {{image}} -f factory/Dockerfile factory
+
+# Update the cron-side runner on the VPS (manual by design — no self-update).
+deploy-factory:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd /opt/tichu-factory
+    git pull --ff-only
+    echo "updated; cron command: flock -n /tmp/tichu-factory.lock /opt/tichu-factory/factory/run-factory.sh"
+
+# Static checks on the factory scripts.
+check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash -n factory/factory.sh
+    bash -n factory/run-factory.sh
+    if command -v shellcheck >/dev/null; then shellcheck factory/*.sh; else echo "shellcheck not installed; skipped"; fi
+    echo "checks OK"
+
+# Validate configuration and issue detection without touching Docker or issues.
+dry-run:
+    factory/run-factory.sh --dry-run

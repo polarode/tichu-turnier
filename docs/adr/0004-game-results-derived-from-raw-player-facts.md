@@ -17,9 +17,14 @@ and **derives** everything else at write time:
   plus 1 extra for the double-win team.
 
 Client-sent totals, success flags and double-win booleans are **never trusted and
-never persisted**; a mismatch between client-computed and server-derived totals is
-a validation error. Bonus amounts and the grand-Tichu toggle
-(`settings.allow_grand_tichu`) are server configuration, not per-request input.
+never persisted**; in fact client totals are not submitted at all (see Amendment
+below). Bonus amounts and the grand-Tichu toggle (`settings.allow_grand_tichu`)
+are server configuration, not per-request input.
+
+> **Amendment 2026-10-31** (issue #99 grilling): the payload carries raw facts
+> only — no client-computed totals — so the proposed mismatch validation error
+> and its error path are dropped. Client-side math stays display-only; the
+> client never sends totals, so there is nothing to mismatch.
 
 ## Why
 
@@ -28,9 +33,8 @@ a validation error. Bonus amounts and the grand-Tichu toggle
 - Once statistics (S9) and standings (S7) consume games, retro-fixing stored
   derivations is expensive; keeping one derivation path (server, pure domain
   component) makes the recorded game self-consistent by construction.
-- The scoring form still computes the same math client-side for instant feedback;
-  agreement is verified by the mismatch rejection, and disagreement surfaces as a
-  localized error rather than silent bad data.
+- The scoring form still computes the same math client-side for instant feedback,
+  but it is display-only and never submitted (amendment above).
 
 ## Consequences
 

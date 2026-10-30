@@ -76,6 +76,9 @@ enum class ErrorCode {
 
     /** A tournament with fewer than two teams cannot be started. */
     INSUFFICIENT_TEAMS,
+
+    /** A submitted game result violates the scoring rules (#99); field-anchored where sensible. */
+    GAME_VALIDATION_INVALID,
 }
 
 /**
@@ -276,3 +279,13 @@ class MaxTeamsBelowTeamCountException(
     val field: String,
     message: String,
 ) : ApiException(ErrorCode.MAX_TEAMS_BELOW_TEAM_COUNT, message)
+
+/**
+ * Thrown by the game scoring domain component (#99) when a submitted game violates
+ * the scoring rules. Field-anchored where sensible so the frontend can highlight
+ * the offending input. Mapped to HTTP 400 by the scoring API (#100).
+ */
+class GameValidationException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.GAME_VALIDATION_INVALID, message)

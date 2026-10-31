@@ -18,6 +18,7 @@ import com.example.template.application.api.ListAdmins
 import com.example.template.application.api.ListInvites
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.RecordGame
 import com.example.template.application.api.ReactivateAdmin
 import com.example.template.application.api.RejectAdmin
 import com.example.template.application.api.RevokeInvite
@@ -32,6 +33,7 @@ import com.example.template.application.api.StartTournament
 import com.example.template.domain.AdminInviteRepository
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
+import com.example.template.domain.GameRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.RoundRepository
@@ -78,6 +80,14 @@ class UseCaseConfiguration(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
     ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository)
+
+    @Bean
+    fun recordGame(
+        tournamentRepository: TournamentRepository,
+        roundRepository: RoundRepository,
+        teamRepository: TeamRepository,
+        gameRepository: GameRepository,
+    ): RecordGame = RecordGameCommand(tournamentRepository, roundRepository, teamRepository, gameRepository)
 
     @Bean
     fun random(): Random = Random.Default

@@ -29,6 +29,8 @@ class RoundEntity(
     val tournamentId: String,
     @Column(name = "round_number", nullable = false)
     val roundNumber: Int,
+    @Column(name = "locked", nullable = false)
+    val locked: Boolean = false,
 ) {
     fun toDomain(tables: List<RoundTableEntity>): Round = Round(
         id = RoundId(id),
@@ -39,6 +41,7 @@ class RoundEntity(
                 .sortedBy { it.tableNumber }
                 .map { it.toDomain() },
         ),
+        locked = locked,
     )
 
     companion object {
@@ -46,6 +49,7 @@ class RoundEntity(
             id = round.id.value,
             tournamentId = round.tournamentId.value,
             roundNumber = round.number,
+            locked = round.locked,
         )
     }
 }

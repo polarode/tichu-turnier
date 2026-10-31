@@ -3,6 +3,7 @@ package com.example.template.infra.persistence
 import com.example.template.domain.AdminInviteRepository
 import com.example.template.domain.AdminSessionRepository
 import com.example.template.domain.AdminUserRepository
+import com.example.template.domain.GameRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamSessionRepository
@@ -38,6 +39,8 @@ class PersistenceConfiguration(
     private val springDataTeamSessionRepository: SpringDataTeamSessionRepository,
     private val springDataRoundRepository: SpringDataRoundRepository,
     private val springDataRoundTableRepository: SpringDataRoundTableRepository,
+    private val springDataGameRepository: SpringDataGameRepository,
+    private val springDataGameParticipantRepository: SpringDataGameParticipantRepository,
 ) {
 
     @Bean
@@ -51,6 +54,10 @@ class PersistenceConfiguration(
     @Bean
     fun roundRepository(): RoundRepository =
         JpaRoundRepository(springDataRoundRepository, springDataRoundTableRepository)
+
+    @Bean
+    fun gameRepository(): GameRepository =
+        JpaGameRepository(springDataGameRepository, springDataGameParticipantRepository)
 
     @Bean
     fun teamTokenRepository(): TeamTokenRepository =

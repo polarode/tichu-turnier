@@ -10,6 +10,11 @@ import com.example.template.vocabulary.DuplicateTeamPlayersException
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.ForbiddenException
+import com.example.template.vocabulary.GameAlreadyExistsException
+import com.example.template.vocabulary.GameConfirmedException
+import com.example.template.vocabulary.GameConcurrentModificationException
+import com.example.template.vocabulary.GameNotFoundException
+import com.example.template.vocabulary.GameValidationException
 import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
@@ -177,8 +182,40 @@ class WebControllerAdvice {
     fun handleMaxTeamsBelowTeamCount(ex: MaxTeamsBelowTeamCountException): ProblemDetail =
         anchoredConflict(ex, ex.field)
 
+    /** A submitted game violates the scoring rules: 400, field-anchored where sensible (#100). */
+    @ExceptionHandler(GameValidationException::class)
+    fun handleGameValidation(ex: GameValidationException): ProblemDetail =
+        anchoredBadRequest(ex, ex.field)
+
+    /** The natural-key slot already holds a game (incl. a lost create race): 409. */
+    @ExceptionHandler(GameAlreadyExistsException::class)
+    fun handleGameAlreadyExists(ex: GameAlreadyExistsException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Stale optimistic-locking version — first commit wins: 409. */
+    @ExceptionHandler(GameConcurrentModificationException::class)
+    fun handleGameConcurrentModification(ex: GameConcurrentModificationException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** The game's round is locked; games of a locked round are read-only: 409. */
+    @ExceptionHandler(GameConfirmedException::class)
+    fun handleGameConfirmed(ex: GameConfirmedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** The addressed game (or its round/table) does not exist: 404. */
+    @ExceptionHandler(GameNotFoundException::class)
+    fun handleGameNotFound(ex: GameNotFoundException): ProblemDetail =
+        problem(HttpStatus.NOT_FOUND, ex)
+
     private fun anchoredConflict(ex: ApiException, field: String): ProblemDetail {
         val problem = problem(HttpStatus.CONFLICT, ex)
+        problem.anchor(field)
+        return problem
+    }
+
+    /** 400 variant of the field-anchored funnel, for validation-type failures. */
+    private fun anchoredBadRequest(ex: ApiException, field: String): ProblemDetail {
+        val problem = problem(HttpStatus.BAD_REQUEST, ex)
         problem.anchor(field)
         return problem
     }

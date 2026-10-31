@@ -11,6 +11,11 @@ data class Round(
     /** 1-based round number within the tournament; round 1 is the first round. */
     val number: Int,
     val pairing: Pairing,
+    /**
+     * Minimal lock state (S5, #100): a locked round's games are read-only. The
+     * confirm/retract workflow that flips it is S6 (#34).
+     */
+    val locked: Boolean = false,
 )
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */

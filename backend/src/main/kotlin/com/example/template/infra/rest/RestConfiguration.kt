@@ -15,6 +15,7 @@ import com.example.template.application.api.ListAdmins
 import com.example.template.application.api.ListInvites
 import com.example.template.application.api.ListTeams
 import com.example.template.application.api.ListTournaments
+import com.example.template.application.api.RecordGame
 import com.example.template.application.api.ReactivateAdmin
 import com.example.template.application.api.RejectAdmin
 import com.example.template.application.api.RevokeInvite
@@ -31,6 +32,7 @@ import com.example.template.application.api.ListRounds
 import com.example.template.application.api.StartTournament
 import com.example.template.infra.rest.web.AdminController
 import com.example.template.infra.rest.web.AuthController
+import com.example.template.infra.rest.web.GameController
 import com.example.template.infra.rest.web.InviteController
 import com.example.template.infra.rest.web.SessionCookieFactory
 import com.example.template.infra.rest.web.TeamAuthController
@@ -97,6 +99,9 @@ class RestConfiguration(
     @Bean
     fun teamSessionCookieFactory(): SessionCookieFactory =
         SessionCookieFactory(teamSessionCookieName, sessionCookieSecure, teamSessionTtl)
+
+    @Bean
+    fun gameController(recordGame: RecordGame): GameController = GameController(recordGame)
 
     @Bean
     fun authController(

@@ -79,6 +79,18 @@ enum class ErrorCode {
 
     /** A submitted game result violates the scoring rules (#99); field-anchored where sensible. */
     GAME_VALIDATION_INVALID,
+
+    /** A game was created for a natural-key slot that already holds one (#100). */
+    GAME_ALREADY_EXISTS,
+
+    /** The game was modified by someone else between read and write (stale version) (#100). */
+    GAME_CONCURRENT_MODIFICATION,
+
+    /** The game's round is locked; games of a locked round are read-only (#100, S6). */
+    GAME_CONFIRMED,
+
+    /** The addressed game was never created for that natural key (#100). */
+    GAME_NOT_FOUND,
 }
 
 /**
@@ -289,3 +301,33 @@ class GameValidationException(
     val field: String,
     message: String,
 ) : ApiException(ErrorCode.GAME_VALIDATION_INVALID, message)
+
+/**
+ * Thrown when a game is created for a natural-key slot that already holds one —
+ * including the loser of a concurrent create race, resolved by the unique
+ * constraint in the schema. Mapped to HTTP 409 by the scoring API (#100).
+ */
+class GameAlreadyExistsException(message: String) :
+    ApiException(ErrorCode.GAME_ALREADY_EXISTS, message)
+
+/**
+ * Thrown when a game update carries a stale optimistic-locking version: the game
+ * was modified between this writer's read and write, and the first commit wins.
+ * Mapped to HTTP 409 by the scoring API (#100).
+ */
+class GameConcurrentModificationException(message: String) :
+    ApiException(ErrorCode.GAME_CONCURRENT_MODIFICATION, message)
+
+/**
+ * Thrown when a game is created or edited in a locked round: the round's results
+ * were confirmed, so its games are read-only. The confirm/retract workflow is S6
+ * (#34); S5 only introduces the round-level lock state. Mapped to HTTP 409.
+ */
+class GameConfirmedException(message: String) :
+    ApiException(ErrorCode.GAME_CONFIRMED, message)
+
+/**
+ * Thrown when a game addressed by its natural key does not exist — e.g. a PUT to
+ * a game that was never created. Mapped to HTTP 404 by the scoring API (#100).
+ */
+class GameNotFoundException(message: String) : ApiException(ErrorCode.GAME_NOT_FOUND, message)

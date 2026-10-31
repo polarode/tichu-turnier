@@ -27,4 +27,11 @@ interface GameRepository {
 
     /** Exact lookup by natural key; null when the game was never created. */
     fun find(key: GameKey): Game?
+
+    /**
+     * All games entered at one round table, ordered by game number. Empty when
+     * none have been recorded yet (games are created lazily on first submit).
+     * Backs the team's read of its table (S5c, #101).
+     */
+    fun findByTable(tournamentId: TournamentId, roundNumber: Int, tableNumber: Int): List<Game>
 }

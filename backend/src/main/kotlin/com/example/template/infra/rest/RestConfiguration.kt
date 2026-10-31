@@ -10,6 +10,7 @@ import com.example.template.application.api.DisableAdmin
 import com.example.template.application.api.ExchangeTeamAccess
 import com.example.template.application.api.GetOwnTeam
 import com.example.template.application.api.GetTeam
+import com.example.template.application.api.GetTeamScoring
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListAdmins
 import com.example.template.application.api.ListInvites
@@ -37,6 +38,7 @@ import com.example.template.infra.rest.web.InviteController
 import com.example.template.infra.rest.web.SessionCookieFactory
 import com.example.template.infra.rest.web.TeamAuthController
 import com.example.template.infra.rest.web.TeamController
+import com.example.template.infra.rest.web.TeamScoringController
 import com.example.template.infra.rest.web.TournamentController
 import com.example.template.infra.rest.web.WebControllerAdvice
 import org.springframework.beans.factory.annotation.Value
@@ -102,6 +104,10 @@ class RestConfiguration(
 
     @Bean
     fun gameController(recordGame: RecordGame): GameController = GameController(recordGame)
+
+    @Bean
+    fun teamScoringController(getTeamScoring: GetTeamScoring): TeamScoringController =
+        TeamScoringController(getTeamScoring)
 
     @Bean
     fun authController(

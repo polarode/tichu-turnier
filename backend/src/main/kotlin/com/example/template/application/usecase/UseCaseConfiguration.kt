@@ -13,6 +13,7 @@ import com.example.template.application.api.DisableAdmin
 import com.example.template.application.api.ExchangeTeamAccess
 import com.example.template.application.api.GetOwnTeam
 import com.example.template.application.api.GetTeam
+import com.example.template.application.api.GetTeamScoring
 import com.example.template.application.api.GetTournament
 import com.example.template.application.api.ListAdmins
 import com.example.template.application.api.ListInvites
@@ -188,6 +189,14 @@ class UseCaseConfiguration(
     @Bean
     fun getOwnTeam(teamRepository: TeamRepository, tournamentRepository: TournamentRepository): GetOwnTeam =
         GetOwnTeamQuery(teamRepository, tournamentRepository)
+
+    @Bean
+    fun getTeamScoring(
+        tournamentRepository: TournamentRepository,
+        roundRepository: RoundRepository,
+        teamRepository: TeamRepository,
+        gameRepository: GameRepository,
+    ): GetTeamScoring = GetTeamScoringQuery(tournamentRepository, roundRepository, teamRepository, gameRepository)
 
     @Bean
     fun adminSessionIssuer(

@@ -107,6 +107,13 @@ open class JpaGameRepository(
     override fun find(key: GameKey): Game? =
         findEntity(key)?.let { it.toDomain(loadParticipants(it.id)) }
 
+    override fun findByTable(tournamentId: TournamentId, roundNumber: Int, tableNumber: Int): List<Game> =
+        springDataGameRepository
+            .findAllByTournamentIdAndRoundNumberAndTableNumberOrderByGameNumber(
+                tournamentId.value, roundNumber, tableNumber,
+            )
+            .map { it.toDomain(loadParticipants(it.id)) }
+
     private fun findEntity(key: GameKey): GameEntity? =
         springDataGameRepository.findByTournamentIdAndRoundNumberAndTableNumberAndGameNumber(
             key.tournamentId.value, key.roundNumber, key.tableNumber, key.gameNumber,

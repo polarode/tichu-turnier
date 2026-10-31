@@ -3,6 +3,7 @@ package com.example.template.testsupport
 import com.example.template.domain.Game
 import com.example.template.domain.GameKey
 import com.example.template.domain.GameRepository
+import com.example.template.domain.TournamentId
 import com.example.template.vocabulary.GameAlreadyExistsException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -43,6 +44,15 @@ class InMemoryGameRepository : GameRepository {
     }
 
     override fun find(key: GameKey): Game? = store[keyOf(key)]
+
+    override fun findByTable(tournamentId: TournamentId, roundNumber: Int, tableNumber: Int): List<Game> =
+        store.values
+            .filter {
+                it.tournamentId == tournamentId &&
+                    it.roundNumber == roundNumber &&
+                    it.tableNumber == tableNumber
+            }
+            .sortedBy { it.gameNumber }
 
     private fun nextId(): Long = idCounter++.let { if (it == 0L) 1L else it }
 

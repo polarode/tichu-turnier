@@ -37,6 +37,8 @@ export const de: Catalog = {
     'validation.tournamentMaxTeams.integer': 'Die maximale Teamanzahl muss eine ganze Zahl sein.',
     'validation.tournamentMaxTeams.min': 'Das Turnier benötigt mindestens 2 Teams.',
     'validation.tournamentMaxTeams.max': 'Die maximale Teamanzahl darf höchstens 64 betragen.',
+    'validation.scoring.positions':
+        'Setze die Platzierung jedes Spielers (1–4, oder 1 und 2 bei einem Doppelsieg).',
 
     'error.unknown': 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
     'error.notFound': 'Nicht gefunden.',
@@ -234,13 +236,47 @@ export const de: Catalog = {
         'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
     'error.pairingUnsupported':
         'Eine ungerade Teamanzahl kann noch nicht gepaart werden. Das Trio-Format folgt in einem späteren Update.',
+    'error.gameValidationInvalid':
+        'Das Spiel konnte nicht gespeichert werden – bitte die Eingaben prüfen und erneut versuchen.',
+    'error.gameAlreadyExists': 'Dieses Spiel wurde bereits eingetragen.',
+    'error.gameConcurrentModification':
+        'Dieses Spiel wurde zwischenzeitlich geändert. Bitte neu laden und die Änderungen erneut anwenden.',
+    'error.gameConfirmed': 'Diese Runde ist gesperrt; ihre Spiele können nicht mehr geändert werden.',
+    'error.gameNotFound': 'Dieses Spiel wurde noch nicht eingetragen.',
 
     'teamOverview.tournament': 'Turnier',
     'teamOverview.teamName': 'Team',
     'teamOverview.playerOne': 'Spieler 1',
     'teamOverview.playerTwo': 'Spieler 2',
     'teamOverview.scheduleNote': 'Der Spielplan erscheint, sobald das Turnier gestartet ist.',
+    'teamOverview.scoringLink': 'Ergebnisse eintragen',
 
     'public.title': 'Öffentlicher Bereich',
     'public.description': 'Turniere, Ranglisten und Live-Statistiken ansehen.',
+
+    'scoring.title': 'Ergebnisse eintragen',
+    'scoring.description': 'Trage die an deinem Tisch gespielten Spiele ein.',
+    'scoring.notSeated': 'Dein Tisch erscheint, sobald das Turnier gestartet ist.',
+    'scoring.matchup.versus': 'gegen',
+    'scoring.selector.label': 'Spiel auswählen',
+    'scoring.game.label': 'Spiel',
+    'scoring.form.title': 'Spielergebnis',
+    'scoring.finish.label': 'Fertig',
+    'scoring.finish.assign': 'Nächste Platzierung setzen',
+    'scoring.finish.reset': 'Platzierung zurücksetzen',
+    'scoring.call.label': 'Tichu-Ansage',
+    'scoring.call.none': '—',
+    'scoring.call.small': 'Tichu',
+    'scoring.call.grand': 'Großes',
+    'scoring.bombs.label': 'Bomben',
+    'scoring.baseScore.label': 'Punkte',
+    'scoring.beschiss.label': 'Beschiss',
+    'scoring.save.create': 'Spiel speichern',
+    'scoring.save.update': 'Spiel aktualisieren',
+    'scoring.save.saving': 'Speichern…',
+    'scoring.alreadyExists.load': 'Vorhandenen Eintrag laden',
+    'scoring.concurrent.reloadPrompt':
+        'Dieses Spiel wurde zwischenzeitlich geändert. Lade es neu, um den aktuellen Eintrag zu sehen, und wiederhole deine Änderungen.',
+    'scoring.concurrent.reload': 'Spiel neu laden',
+    'scoring.locked.explanation': 'Diese Runde ist gesperrt. Ihre Spiele sind schreibgeschützt.',
 };

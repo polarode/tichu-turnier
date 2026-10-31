@@ -40,6 +40,7 @@ export const en = {
     'validation.tournamentMaxTeams.integer': 'The max team count must be a whole number.',
     'validation.tournamentMaxTeams.min': 'The tournament needs at least 2 teams.',
     'validation.tournamentMaxTeams.max': 'The max team count may be at most 64.',
+    'validation.scoring.positions': 'Set each player\u2019s finishing position (1\u20134, or 1 and 2 for a double win).',
 
     'error.unknown': 'Something went wrong. Please try again.',
     'error.notFound': 'Not found.',
@@ -232,15 +233,48 @@ export const en = {
         'This tournament needs at least two teams before it can be started.',
     'error.pairingUnsupported':
         'An odd number of teams cannot be paired yet. The trio format is coming in a later update.',
+    'error.gameValidationInvalid': 'The game could not be saved — check the entries and try again.',
+    'error.gameAlreadyExists': 'This game has already been entered.',
+    'error.gameConcurrentModification':
+        'This game was changed in the meantime. Reload it and apply your changes again.',
+    'error.gameConfirmed': 'This round is locked; its games can no longer be changed.',
+    'error.gameNotFound': 'This game has not been entered yet.',
 
     'teamOverview.tournament': 'Tournament',
     'teamOverview.teamName': 'Team',
     'teamOverview.playerOne': 'Player 1',
     'teamOverview.playerTwo': 'Player 2',
     'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
+    'teamOverview.scoringLink': 'Enter results',
 
     'public.title': 'Public area',
     'public.description': 'Browse tournaments, standings and live statistics.',
+
+    'scoring.title': 'Enter results',
+    'scoring.description': 'Record the games played at your table.',
+    'scoring.notSeated': 'Your table appears once the tournament starts.',
+    'scoring.matchup.versus': 'vs',
+    'scoring.selector.label': 'Select a game',
+    'scoring.game.label': 'Game',
+    'scoring.form.title': 'Game result',
+    'scoring.finish.label': 'Finish',
+    'scoring.finish.assign': 'Set the next finishing position',
+    'scoring.finish.reset': 'Reset the finishing position',
+    'scoring.call.label': 'Tichu call',
+    'scoring.call.none': '—',
+    'scoring.call.small': 'Tichu',
+    'scoring.call.grand': 'Grand',
+    'scoring.bombs.label': 'Bombs',
+    'scoring.baseScore.label': 'Base score',
+    'scoring.beschiss.label': 'Beschiss',
+    'scoring.save.create': 'Save game',
+    'scoring.save.update': 'Update game',
+    'scoring.save.saving': 'Saving…',
+    'scoring.alreadyExists.load': 'Load the existing entry',
+    'scoring.concurrent.reloadPrompt':
+        'This game was changed in the meantime. Reload it to see the current entry, then redo your changes.',
+    'scoring.concurrent.reload': 'Reload the game',
+    'scoring.locked.explanation': 'This round is locked. Its games are read-only.',
 } as const satisfies Record<string, string>;
 
 /** Union of every user-facing string the app can render. */

@@ -7,6 +7,8 @@ export const QueryKeys = {
     ADMIN_ACCOUNTS: 'admin-accounts',
     ADMIN_INVITES: 'admin-invites',
     TEAM_ME: 'team-me',
+    TEAM_CURRENT_TABLE: 'team-current-table',
+    TEAM_GAMES: 'team-games',
 } as const;
 
 /** Key for the current admin session. */
@@ -33,3 +35,11 @@ export const adminInvitesQueryKey = () => [QueryKeys.ADMIN_INVITES] as const;
 
 /** Key for the team session's own overview (`GET /api/team/me`). */
 export const teamOverviewQueryKey = () => [QueryKeys.TEAM_ME] as const;
+
+/** Key for the team's current (in-progress) round table. */
+export const teamCurrentTableQueryKey = () => [QueryKeys.TEAM_CURRENT_TABLE] as const;
+
+/** Key for the games entered at one round table (team-scoped read). */
+export const teamGamesQueryKey = (tournamentId: string, roundNumber: number, tableNumber: number) =>
+    [QueryKeys.TEAM_GAMES, tournamentId, roundNumber, tableNumber] as const;
+

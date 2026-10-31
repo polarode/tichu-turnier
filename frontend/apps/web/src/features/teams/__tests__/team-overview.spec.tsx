@@ -1,7 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
+import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
@@ -12,7 +14,17 @@ vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     },
 }));
 
+vi.mock('@/scoring-api/scoring.repository.ts', () => ({
+    ScoringRepository: {
+        currentTable: vi.fn(),
+        games: vi.fn().mockResolvedValue([]),
+        create: vi.fn(),
+        update: vi.fn(),
+    },
+}));
+
 const mockedMe = vi.mocked(TeamAuthRepository.me);
+const mockedCurrentTable = vi.mocked(ScoringRepository.currentTable);
 
 const overview = {
     teamId: 'team-1',
@@ -28,6 +40,7 @@ const overview = {
 describe('/team', () => {
     beforeEach(() => {
         mockedMe.mockReset();
+        mockedCurrentTable.mockReset();
     });
 
     it('renders tournament name, team name, both players and the neutral schedule note', async () => {
@@ -44,6 +57,46 @@ describe('/team', () => {
         expect(screen.getByText('Bob')).toBeInTheDocument();
         expect(screen.getByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).toBeInTheDocument();
         expect(mockedMe).toHaveBeenCalledTimes(1);
+    });
+
+    it('links to the scoring screen, which loads the team’s current table', async () => {
+        mockedMe.mockResolvedValue(overview);
+        // The overview link renders unconditionally; the scoring route resolves
+        // the seat itself (a 404 there would show the not-seated placeholder).
+        mockedCurrentTable.mockResolvedValue({
+            tournamentId: 't-1',
+            roundNumber: 1,
+            tableNumber: 1,
+            locked: false,
+            allowGrandTichu: true,
+            teams: [
+                {
+                    teamId: 'team-1',
+                    teamName: 'Team Alpha',
+                    players: [
+                        { playerId: 'p-1', name: 'Alice' },
+                        { playerId: 'p-2', name: 'Bob' },
+                    ],
+                },
+                {
+                    teamId: 'team-2',
+                    teamName: 'Team Beta',
+                    players: [
+                        { playerId: 'p-3', name: 'Carol' },
+                        { playerId: 'p-4', name: 'Dave' },
+                    ],
+                },
+            ],
+        });
+
+        const { router } = renderApp('/team');
+        await screen.findByText('Spring Classic');
+
+        await userEvent.click(screen.getByRole('link', { name: 'Ergebnisse eintragen' }));
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));
+        expect(await screen.findByText('Team Alpha gegen Team Beta')).toBeInTheDocument();
+        expect(mockedCurrentTable).toHaveBeenCalled();
     });
 
     it('redirects to the neutral /team/login prompt when no session exists', async () => {

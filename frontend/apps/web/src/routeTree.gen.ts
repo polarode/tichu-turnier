@@ -9,43 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TeamRouteImport } from './routes/team'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as PublicRouteImport } from './routes/public'
-import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
+import { Route as PublicRouteImport } from './routes/public'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as TeamLoginRouteImport } from './routes/team_.login'
 import { Route as AdminConsoleRouteImport } from './routes/admin.console'
-import { Route as AdminTournamentsNewRouteImport } from './routes/admin.tournaments.new'
+import { Route as TeamLoginRouteImport } from './routes/team_.login'
+import { Route as TeamScoreRouteImport } from './routes/team_.score'
 import { Route as AdminTournamentsTournamentIdRouteImport } from './routes/admin.tournaments.$tournamentId'
+import { Route as AdminTournamentsNewRouteImport } from './routes/admin.tournaments.new'
 import { Route as AdminTournamentsTournamentIdEditRouteImport } from './routes/admin.tournaments.$tournamentId_.edit'
 
-const TeamRoute = TeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublicRoute = PublicRouteImport.update({
-  id: '/public',
-  path: '/public',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PendingApprovalRoute = PendingApprovalRouteImport.update({
-  id: '/pending-approval',
-  path: '/pending-approval',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -53,9 +34,29 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendingApprovalRoute = PendingApprovalRouteImport.update({
+  id: '/pending-approval',
+  path: '/pending-approval',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicRoute = PublicRouteImport.update({
+  id: '/public',
+  path: '/public',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -63,20 +64,20 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const TeamLoginRoute = TeamLoginRouteImport.update({
-  id: '/team_/login',
-  path: '/team/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminConsoleRoute = AdminConsoleRouteImport.update({
   id: '/console',
   path: '/console',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminTournamentsNewRoute = AdminTournamentsNewRouteImport.update({
-  id: '/tournaments/new',
-  path: '/tournaments/new',
-  getParentRoute: () => AdminRoute,
+const TeamLoginRoute = TeamLoginRouteImport.update({
+  id: '/team_/login',
+  path: '/team/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamScoreRoute = TeamScoreRouteImport.update({
+  id: '/team_/score',
+  path: '/team/score',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTournamentsTournamentIdRoute =
   AdminTournamentsTournamentIdRouteImport.update({
@@ -84,6 +85,11 @@ const AdminTournamentsTournamentIdRoute =
     path: '/tournaments/$tournamentId',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminTournamentsNewRoute = AdminTournamentsNewRouteImport.update({
+  id: '/tournaments/new',
+  path: '/tournaments/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminTournamentsTournamentIdEditRoute =
   AdminTournamentsTournamentIdEditRouteImport.update({
     id: '/tournaments/$tournamentId_/edit',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/admin/console': typeof AdminConsoleRoute
   '/team/login': typeof TeamLoginRoute
+  '/team/score': typeof TeamScoreRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/tournaments/$tournamentId': typeof AdminTournamentsTournamentIdRoute
   '/admin/tournaments/new': typeof AdminTournamentsNewRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/admin/console': typeof AdminConsoleRoute
   '/team/login': typeof TeamLoginRoute
+  '/team/score': typeof TeamScoreRoute
   '/admin': typeof AdminIndexRoute
   '/admin/tournaments/$tournamentId': typeof AdminTournamentsTournamentIdRoute
   '/admin/tournaments/new': typeof AdminTournamentsNewRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/admin/console': typeof AdminConsoleRoute
   '/team_/login': typeof TeamLoginRoute
+  '/team_/score': typeof TeamScoreRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/tournaments/$tournamentId': typeof AdminTournamentsTournamentIdRoute
   '/admin/tournaments/new': typeof AdminTournamentsNewRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/admin/console'
     | '/team/login'
+    | '/team/score'
     | '/admin/'
     | '/admin/tournaments/$tournamentId'
     | '/admin/tournaments/new'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/admin/console'
     | '/team/login'
+    | '/team/score'
     | '/admin'
     | '/admin/tournaments/$tournamentId'
     | '/admin/tournaments/new'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/admin/console'
     | '/team_/login'
+    | '/team_/score'
     | '/admin/'
     | '/admin/tournaments/$tournamentId'
     | '/admin/tournaments/new'
@@ -192,43 +204,16 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   TeamRoute: typeof TeamRoute
   TeamLoginRoute: typeof TeamLoginRoute
+  TeamScoreRoute: typeof TeamScoreRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/team': {
-      id: '/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof TeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/public': {
-      id: '/public'
-      path: '/public'
-      fullPath: '/public'
-      preLoaderRoute: typeof PublicRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pending-approval': {
-      id: '/pending-approval'
-      path: '/pending-approval'
-      fullPath: '/pending-approval'
-      preLoaderRoute: typeof PendingApprovalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -238,11 +223,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pending-approval': {
+      id: '/pending-approval'
+      path: '/pending-approval'
+      fullPath: '/pending-approval'
+      preLoaderRoute: typeof PendingApprovalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public': {
+      id: '/public'
+      path: '/public'
+      fullPath: '/public'
+      preLoaderRoute: typeof PublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -252,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/team_/login': {
-      id: '/team_/login'
-      path: '/team/login'
-      fullPath: '/team/login'
-      preLoaderRoute: typeof TeamLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/console': {
       id: '/admin/console'
       path: '/console'
@@ -266,18 +272,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminConsoleRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/tournaments/new': {
-      id: '/admin/tournaments/new'
-      path: '/tournaments/new'
-      fullPath: '/admin/tournaments/new'
-      preLoaderRoute: typeof AdminTournamentsNewRouteImport
-      parentRoute: typeof AdminRoute
+    '/team_/login': {
+      id: '/team_/login'
+      path: '/team/login'
+      fullPath: '/team/login'
+      preLoaderRoute: typeof TeamLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team_/score': {
+      id: '/team_/score'
+      path: '/team/score'
+      fullPath: '/team/score'
+      preLoaderRoute: typeof TeamScoreRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/tournaments/$tournamentId': {
       id: '/admin/tournaments/$tournamentId'
       path: '/tournaments/$tournamentId'
       fullPath: '/admin/tournaments/$tournamentId'
       preLoaderRoute: typeof AdminTournamentsTournamentIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/tournaments/new': {
+      id: '/admin/tournaments/new'
+      path: '/tournaments/new'
+      fullPath: '/admin/tournaments/new'
+      preLoaderRoute: typeof AdminTournamentsNewRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/tournaments/$tournamentId_/edit': {
@@ -317,6 +337,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   TeamRoute: TeamRoute,
   TeamLoginRoute: TeamLoginRoute,
+  TeamScoreRoute: TeamScoreRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -36,6 +36,18 @@ export const ERROR_CODES = [
 
     /** The pairing component cannot pair this field of teams (odd count, until trio tables land). */
     'PAIRING_UNSUPPORTED',
+
+    // --- Scoring (S5) ---
+    /** A submitted game failed the scoring engine's validation; field-anchored where sensible. */
+    'GAME_VALIDATION_INVALID',
+    /** POST to a game slot that already holds a game (the other team got there first). */
+    'GAME_ALREADY_EXISTS',
+    /** A PUT lost the optimistic-lock race; reload and retry. */
+    'GAME_CONCURRENT_MODIFICATION',
+    /** The game's round is locked (confirmed); its games are read-only. */
+    'GAME_CONFIRMED',
+    /** No game at the addressed slot (PUT before create, or unknown round/table). */
+    'GAME_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

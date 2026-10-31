@@ -32,6 +32,11 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     TOURNAMENT_NOT_STARTABLE: 'error.tournamentNotStartable',
     INSUFFICIENT_TEAMS: 'error.insufficientTeams',
     PAIRING_UNSUPPORTED: 'error.pairingUnsupported',
+    GAME_VALIDATION_INVALID: 'error.gameValidationInvalid',
+    GAME_ALREADY_EXISTS: 'error.gameAlreadyExists',
+    GAME_CONCURRENT_MODIFICATION: 'error.gameConcurrentModification',
+    GAME_CONFIRMED: 'error.gameConfirmed',
+    GAME_NOT_FOUND: 'error.gameNotFound',
 };
 
 /** The catalog key for a backend error code; never returns a missing key. */

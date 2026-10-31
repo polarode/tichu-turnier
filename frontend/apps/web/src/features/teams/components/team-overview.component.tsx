@@ -1,12 +1,15 @@
+import { Link } from '@tanstack/react-router';
+import { buttonVariants } from '@tichu/ui/button.tsx';
+
 import type { TeamOverview } from '@/domain/team-overview.domain.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 
 /**
  * The team's identity view (S2b): tournament name, team name and both players,
- * plus the neutral note that the match schedule appears once the tournament
- * starts. No confirm/retract controls — those arrive with the
- * confirmation-workflow slice.
+ * the entry point to the scoring screen (S5c, #101), and the neutral note that
+ * the match schedule appears once the tournament starts. No confirm/retract
+ * controls — those arrive with the confirmation-workflow slice.
  */
 export function TeamOverview({ overview }: { overview: TeamOverview }) {
     const { t } = useI18n();
@@ -33,6 +36,11 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
                     <dd className="font-medium">{playerTwo?.name}</dd>
                 </div>
             </dl>
+            {/* The scoring screen guards itself (401 → login, not seated →
+                placeholder), so the link can render unconditionally. */}
+            <Link to="/team/score" className={buttonVariants()}>
+                {t('teamOverview.scoringLink')}
+            </Link>
             <p className="text-sm text-muted-foreground">{t('teamOverview.scheduleNote')}</p>
         </section>
     );

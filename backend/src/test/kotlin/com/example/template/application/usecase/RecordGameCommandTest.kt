@@ -6,6 +6,7 @@ import com.example.template.application.api.PlayerResultInput
 import com.example.template.application.api.RecordGame
 import com.example.template.application.api.TeamResultInput
 import com.example.template.domain.AdminUserId
+import com.example.template.domain.GameKey
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PlayerId
 import com.example.template.domain.Pairing
@@ -57,6 +58,8 @@ class RecordGameCommandTest {
     private val playerB1 = PlayerId("team-b-p1")
     private val playerB2 = PlayerId("team-b-p2")
     private val seatedPrincipal = AuthenticatedTeam(teamA, tournamentId)
+
+    private fun gameKey() = GameKey(tournamentId, 1, 1, 1)
 
     private val tournamentRepository = InMemoryTournamentRepository()
     private val teamRepository = InMemoryTeamRepository()
@@ -164,7 +167,7 @@ class RecordGameCommandTest {
 
         assertFailsWith<com.example.template.vocabulary.GameAlreadyExistsException> { create(validRequest(beschiss = true)) }
 
-        assertEquals(1, gameRepository.find(tournamentId, 1, 1, 1)!!.version)
+        assertEquals(1, gameRepository.find(gameKey())!!.version)
     }
 
     @Test
@@ -174,7 +177,7 @@ class RecordGameCommandTest {
 
         assertFailsWith<ForbiddenException> { create(principal = outsider) }
 
-        assertNull(gameRepository.find(tournamentId, 1, 1, 1), "nothing was written")
+        assertNull(gameRepository.find(gameKey()), "nothing was written")
     }
 
     @Test
@@ -183,7 +186,7 @@ class RecordGameCommandTest {
 
         assertFailsWith<GameConfirmedException> { create() }
 
-        assertNull(gameRepository.find(tournamentId, 1, 1, 1))
+        assertNull(gameRepository.find(gameKey()))
     }
 
     @Test
@@ -199,7 +202,7 @@ class RecordGameCommandTest {
 
         assertFailsWith<GameValidationException> { create(wrongTeams) }
 
-        assertNull(gameRepository.find(tournamentId, 1, 1, 1))
+        assertNull(gameRepository.find(gameKey()))
     }
 
     @Test
@@ -261,7 +264,7 @@ class RecordGameCommandTest {
         val recorded = update(validRequest(version = 1).copy(beschiss = true))
 
         assertEquals(2, recorded.version)
-        assertEquals(true, gameRepository.find(tournamentId, 1, 1, 1)!!.beschiss)
+        assertEquals(true, gameRepository.find(gameKey())!!.beschiss)
     }
 
     @Test
@@ -278,7 +281,7 @@ class RecordGameCommandTest {
 
         assertFailsWith<GameConcurrentModificationException> { update(validRequest(version = 1)) }
 
-        assertEquals(2, gameRepository.find(tournamentId, 1, 1, 1)!!.version, "stale writer changed nothing")
+        assertEquals(2, gameRepository.find(gameKey())!!.version, "stale writer changed nothing")
     }
 
     @Test

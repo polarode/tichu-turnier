@@ -118,6 +118,8 @@ class GameControllerIntegrationTest(
 
     private fun PlayerId(value: String) = com.example.template.domain.PlayerId(value)
 
+    private fun gameKey() = com.example.template.domain.GameKey(TournamentId(tournamentId), 1, 1, 1)
+
     /** Exchanges a known team token for a team-session cookie. */
     private fun exchangeTeamSession(teamId: String): Cookie {
         val tokenRepository = context.getBean(com.example.template.domain.TeamTokenRepository::class.java)
@@ -224,7 +226,7 @@ class GameControllerIntegrationTest(
             .andExpect(jsonPath("$.version").value(2))
             .andExpect(jsonPath("$.outcome.teamPoints.$teamA").value(170))
 
-        val stored = gameRepository.find(TournamentId(tournamentId), 1, 1, 1)!!
+        val stored = gameRepository.find(gameKey())!!
         org.junit.jupiter.api.Assertions.assertEquals(70, stored.baseScoreTeam1)
     }
 
@@ -283,7 +285,7 @@ class GameControllerIntegrationTest(
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("GAME_CONCURRENT_MODIFICATION"))
 
-        val stored = gameRepository.find(TournamentId(tournamentId), 1, 1, 1)!!
+        val stored = gameRepository.find(gameKey())!!
         org.junit.jupiter.api.Assertions.assertEquals(2, stored.version)
         org.junit.jupiter.api.Assertions.assertEquals(60, stored.baseScoreTeam1, "first commit wins")
     }

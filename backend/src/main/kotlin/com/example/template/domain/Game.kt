@@ -33,6 +33,10 @@ data class Game(
         require(team1 != team2) { "The two playing teams of a game must be distinct" }
         require(participants.size == 4) { "A game has exactly 4 participants, got ${participants.size}" }
     }
+
+    /** The natural key this game is addressed by (the surrogate id stays internal). */
+    val key: GameKey
+        get() = GameKey(tournamentId, roundNumber, tableNumber, gameNumber)
 }
 
 /**

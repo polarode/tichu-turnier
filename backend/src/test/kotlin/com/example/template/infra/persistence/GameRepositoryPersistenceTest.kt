@@ -2,6 +2,7 @@ package com.example.template.infra.persistence
 
 import com.example.template.domain.AdminUserId
 import com.example.template.domain.Game
+import com.example.template.domain.GameKey
 import com.example.template.domain.GameParticipant
 import com.example.template.domain.GameRepository
 import com.example.template.domain.PlayerId
@@ -56,6 +57,8 @@ class GameRepositoryPersistenceTest(
 ) : PostgresBackedIntegrationTest() {
 
     private val owner = AdminUserId("admin-owner")
+
+    private fun gameKey() = com.example.template.domain.GameKey(tournamentId, 1, 1, 1)
     private val tournamentId = TournamentId("t-1")
 
     @BeforeEach
@@ -156,7 +159,11 @@ class GameRepositoryPersistenceTest(
         expectedVersion: Int,
         update: (Game) -> Game,
     ): Game? = transactionTemplate.execute {
-        gameRepository.updateWithVersion(tournamentId, 1, 1, 1, expectedVersion, update)
+        gameRepository.updateWithVersion(
+            com.example.template.domain.GameKey(tournamentId, 1, 1, 1),
+            expectedVersion,
+            update,
+        )
     }
 
     // ---- tests ---------------------------------------------------------------
@@ -169,7 +176,7 @@ class GameRepositoryPersistenceTest(
         assertEquals(1, created.version, "version starts at 1")
         assertEquals(4, created.participants.size)
 
-        val loaded = gameRepository.find(tournamentId, 1, 1, 1)
+        val loaded = gameRepository.find(gameKey())
         assertEquals(created.copy(id = loaded?.id), loaded)
         assertEquals(
             listOf(1, 3, 2, 4),
@@ -190,8 +197,8 @@ class GameRepositoryPersistenceTest(
 
     @Test
     fun `lookup of an uncreated game returns null`() {
-        assertNull(gameRepository.find(tournamentId, 1, 1, 1))
-        assertNull(gameRepository.find(tournamentId, 1, 1, 4))
+        assertNull(gameRepository.find(gameKey()))
+        assertNull(gameRepository.find(com.example.template.domain.GameKey(tournamentId, 1, 1, 4)))
     }
 
     @Test
@@ -224,7 +231,7 @@ class GameRepositoryPersistenceTest(
         val result = updateInTransaction(7) { it.copy(baseScoreTeam1 = 99, baseScoreTeam2 = 1) }
 
         assertNull(result, "stale writer loses")
-        val stored = gameRepository.find(tournamentId, 1, 1, 1)!!
+        val stored = gameRepository.find(gameKey())!!
         assertEquals(1, stored.version)
         assertEquals(55, stored.baseScoreTeam1, "no partial write happened")
     }
@@ -245,7 +252,7 @@ class GameRepositoryPersistenceTest(
 
         assertTrue(first != null, "first commit wins")
         assertNull(second, "second commit is stale")
-        assertEquals(60, gameRepository.find(tournamentId, 1, 1, 1)!!.baseScoreTeam1)
+        assertEquals(60, gameRepository.find(gameKey())!!.baseScoreTeam1)
     }
 
     @Test
@@ -261,7 +268,7 @@ class GameRepositoryPersistenceTest(
             transactionTemplate.execute { gameRepository.create(ghost) }
         }
 
-        assertNull(gameRepository.find(tournamentId, 1, 1, 1), "no game row survived the failed submit")
+        assertNull(gameRepository.find(gameKey()), "no game row survived the failed submit")
         assertEquals(0, gameRowCount())
         assertEquals(0, participantRowCount())
     }
@@ -272,7 +279,7 @@ class GameRepositoryPersistenceTest(
 
         tournamentRepository.delete(tournamentId)
 
-        assertNull(gameRepository.find(tournamentId, 1, 1, 1))
+        assertNull(gameRepository.find(gameKey()))
         assertEquals(0, gameRowCount())
         assertEquals(0, participantRowCount())
     }

@@ -1,12 +1,15 @@
 package com.example.template.infra.persistence
 
 import com.example.template.domain.Game
+import com.example.template.domain.GameKey
 import com.example.template.domain.GameRepository
-import com.example.template.vocabulary.GameAlreadyExistsException
 import com.example.template.domain.TournamentId
+import com.example.template.vocabulary.GameAlreadyExistsException
+import jakarta.persistence.EntityManager
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import java.sql.SQLException
 
 /**
  * Driven adapter implementing the [GameRepository] port on top of Spring Data
@@ -23,7 +26,13 @@ import org.springframework.transaction.annotation.Transactional
 open class JpaGameRepository(
     private val springDataGameRepository: SpringDataGameRepository,
     private val springDataGameParticipantRepository: SpringDataGameParticipantRepository,
+    private val entityManager: EntityManager,
 ) : GameRepository {
+
+    companion object {
+        /** Standard SQLSTATE for a unique-constraint violation (dialect-independent). */
+        private const val UNIQUE_VIOLATION_SQL_STATE = "23505"
+    }
 
     // Note: these two methods only *require* the caller's transaction (MANDATORY);
     // they open none themselves. The @Transactional annotation exists so a
@@ -40,13 +49,11 @@ open class JpaGameRepository(
             }
             return savedGame.toDomain(participants)
         } catch (ex: DataIntegrityViolationException) {
-            // Only the natural-key unique constraint means "already exists" —
-            // the arbiter of create races: the loser of a double-POST gets the
-            // same 409 as a plain duplicate. Any other integrity violation is a
-            // bug or invalid participant data and stays unmapped.
-            if (ex.message?.contains("uq_games_natural_key") == true ||
-                ex.cause?.message?.contains("uq_games_natural_key") == true
-            ) {
+            // Only a unique violation means "already exists" — the arbiter of
+            // create races: the loser of a double-POST gets the same 409 as a
+            // plain duplicate. Any other integrity violation is a bug or
+            // invalid participant data and stays unmapped.
+            if (isUniqueViolation(ex)) {
                 throw GameAlreadyExistsException(gameAlreadyExistsMessage(game))
             }
             throw ex
@@ -54,22 +61,19 @@ open class JpaGameRepository(
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    override fun updateWithVersion(
-        tournamentId: TournamentId,
-        roundNumber: Int,
-        tableNumber: Int,
-        gameNumber: Int,
-        expectedVersion: Int,
-        update: (Game) -> Game,
-    ): Game? {
-        val current = findEntity(tournamentId, roundNumber, tableNumber, gameNumber) ?: return null
+    override fun updateWithVersion(key: GameKey, expectedVersion: Int, update: (Game) -> Game): Game? {
+        val current = findEntity(key) ?: return null
+        detach(current)
 
-        val updated = update(current.toDomain(loadParticipants(current.id)))
+        val participantsBefore = loadParticipants(current.id)
+        participantsBefore.forEach { detach(it) }
+
+        val updated = update(current.toDomain(participantsBefore))
         val rows = springDataGameParticipantRepository.updateWithVersion(
-            tournamentId = tournamentId.value,
-            roundNumber = roundNumber,
-            tableNumber = tableNumber,
-            gameNumber = gameNumber,
+            tournamentId = key.tournamentId.value,
+            roundNumber = key.roundNumber,
+            tableNumber = key.tableNumber,
+            gameNumber = key.gameNumber,
             expectedVersion = expectedVersion,
             team1Id = updated.team1.value,
             team2Id = updated.team2.value,
@@ -100,26 +104,31 @@ open class JpaGameRepository(
         ).toDomain(participants)
     }
 
-    override fun find(
-        tournamentId: TournamentId,
-        roundNumber: Int,
-        tableNumber: Int,
-        gameNumber: Int,
-    ): Game? = findEntity(tournamentId, roundNumber, tableNumber, gameNumber)
-        ?.let { it.toDomain(loadParticipants(it.id)) }
+    override fun find(key: GameKey): Game? =
+        findEntity(key)?.let { it.toDomain(loadParticipants(it.id)) }
 
-    private fun findEntity(
-        tournamentId: TournamentId,
-        roundNumber: Int,
-        tableNumber: Int,
-        gameNumber: Int,
-    ): GameEntity? =
+    private fun findEntity(key: GameKey): GameEntity? =
         springDataGameRepository.findByTournamentIdAndRoundNumberAndTableNumberAndGameNumber(
-            tournamentId.value, roundNumber, tableNumber, gameNumber,
+            key.tournamentId.value, key.roundNumber, key.tableNumber, key.gameNumber,
         )
+
+    /**
+     * The bulk JPQL version update bypasses the persistence context, so anything
+     * still managed there is stale; detaching keeps commit-time dirty-checking
+     * from ever writing that stale state back.
+     */
+    private fun detach(entity: Any) {
+        entityManager.detach(entity)
+    }
 
     private fun loadParticipants(gameId: Long): List<GameParticipantEntity> =
         springDataGameParticipantRepository.findAllByGameId(gameId).sortedBy { it.id }
+
+    /** Standard-SQL unique-violation detection, robust across driver wording. */
+    private fun isUniqueViolation(ex: Throwable): Boolean =
+        generateSequence<Throwable>(ex) { it.cause }
+            .filterIsInstance<SQLException>()
+            .any { UNIQUE_VIOLATION_SQL_STATE == it.sqlState }
 
     private fun gameAlreadyExistsMessage(game: Game): String =
         "Game ${game.gameNumber} at table ${game.tableNumber} of round ${game.roundNumber} already exists"

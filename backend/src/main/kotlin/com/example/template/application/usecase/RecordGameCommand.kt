@@ -7,6 +7,7 @@ import com.example.template.application.api.RecordedGame
 import com.example.template.application.api.RecordedPlayer
 import com.example.template.application.api.RecordedTeam
 import com.example.template.domain.Game
+import com.example.template.domain.GameKey
 import com.example.template.domain.GameOutcome
 import com.example.template.domain.GameParticipant
 import com.example.template.domain.GameRepository
@@ -118,19 +119,16 @@ class RecordGameCommand(
         val recorded = if (create) {
             gameRepository.create(baseGame)
         } else {
+            val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
             // Existence first, so a missing game answers 404 — the stale-version
             // race answers 409 from the conditional update below.
-            gameRepository.find(tournamentId, round.number, table.id.value, request.gameNumber)
+            gameRepository.find(key)
                 ?: throw GameNotFoundException(
                 "Game ${request.gameNumber} at table ${table.id.value} of round ${round.number} not found",
             )
-            gameRepository.updateWithVersion(
-                tournamentId,
-                round.number,
-                table.id.value,
-                request.gameNumber,
-                request.version!!,
-            ) { baseGame.copy(id = it.id, version = it.version) }
+            gameRepository.updateWithVersion(key, request.version!!) {
+                baseGame.copy(id = it.id, version = it.version)
+            }
                 ?: throw GameConcurrentModificationException(
                     "Game ${request.gameNumber} was modified concurrently; reload and retry",
                 )

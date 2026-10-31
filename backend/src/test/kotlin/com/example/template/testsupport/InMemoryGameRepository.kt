@@ -1,8 +1,8 @@
 package com.example.template.testsupport
 
 import com.example.template.domain.Game
+import com.example.template.domain.GameKey
 import com.example.template.domain.GameRepository
-import com.example.template.domain.TournamentId
 import com.example.template.vocabulary.GameAlreadyExistsException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,15 +18,11 @@ class InMemoryGameRepository : GameRepository {
     /** Keyed by the natural key as one string. */
     private val store = ConcurrentHashMap<String, Game>()
 
-    private fun key(
-        tournamentId: TournamentId,
-        roundNumber: Int,
-        tableNumber: Int,
-        gameNumber: Int,
-    ): String = "${tournamentId.value}/$roundNumber/$tableNumber/$gameNumber"
+    private fun keyOf(key: GameKey): String =
+        "${key.tournamentId.value}/${key.roundNumber}/${key.tableNumber}/${key.gameNumber}"
 
     override fun create(game: Game): Game {
-        val k = key(game.tournamentId, game.roundNumber, game.tableNumber, game.gameNumber)
+        val k = keyOf(game.key)
         if (store.putIfAbsent(k, game.copy(id = nextId(), version = 1)) != null) {
             throw GameAlreadyExistsException(
                 "Game ${game.gameNumber} at table ${game.tableNumber} of round ${game.roundNumber} already exists",
@@ -35,15 +31,8 @@ class InMemoryGameRepository : GameRepository {
         return store[k]!!
     }
 
-    override fun updateWithVersion(
-        tournamentId: TournamentId,
-        roundNumber: Int,
-        tableNumber: Int,
-        gameNumber: Int,
-        expectedVersion: Int,
-        update: (Game) -> Game,
-    ): Game? {
-        val k = key(tournamentId, roundNumber, tableNumber, gameNumber)
+    override fun updateWithVersion(key: GameKey, expectedVersion: Int, update: (Game) -> Game): Game? {
+        val k = keyOf(key)
         store[k]?.let { current ->
             if (current.version != expectedVersion) return null
             val updated = update(current).copy(version = current.version + 1)
@@ -53,12 +42,7 @@ class InMemoryGameRepository : GameRepository {
         return null
     }
 
-    override fun find(
-        tournamentId: TournamentId,
-        roundNumber: Int,
-        tableNumber: Int,
-        gameNumber: Int,
-    ): Game? = store[key(tournamentId, roundNumber, tableNumber, gameNumber)]
+    override fun find(key: GameKey): Game? = store[keyOf(key)]
 
     private fun nextId(): Long = idCounter++.let { if (it == 0L) 1L else it }
 

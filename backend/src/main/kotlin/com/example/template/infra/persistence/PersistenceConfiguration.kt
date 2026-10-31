@@ -41,6 +41,7 @@ class PersistenceConfiguration(
     private val springDataRoundTableRepository: SpringDataRoundTableRepository,
     private val springDataGameRepository: SpringDataGameRepository,
     private val springDataGameParticipantRepository: SpringDataGameParticipantRepository,
+    private val entityManagerFactory: jakarta.persistence.EntityManagerFactory,
 ) {
 
     @Bean
@@ -56,8 +57,14 @@ class PersistenceConfiguration(
         JpaRoundRepository(springDataRoundRepository, springDataRoundTableRepository)
 
     @Bean
-    fun gameRepository(): GameRepository =
-        JpaGameRepository(springDataGameRepository, springDataGameParticipantRepository)
+    fun gameRepository(): GameRepository = JpaGameRepository(
+        springDataGameRepository,
+        springDataGameParticipantRepository,
+        // A shared (thread-safe) proxy; the adapter only ever detaches entities.
+        org.springframework.orm.jpa.SharedEntityManagerCreator.createSharedEntityManager(
+            entityManagerFactory,
+        ),
+    )
 
     @Bean
     fun teamTokenRepository(): TeamTokenRepository =

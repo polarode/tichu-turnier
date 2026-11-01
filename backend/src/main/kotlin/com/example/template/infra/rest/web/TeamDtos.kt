@@ -5,6 +5,7 @@ import com.example.template.application.api.TeamOverview
 import com.example.template.application.api.TeamWriteRequest
 import com.example.template.domain.Player
 import com.example.template.domain.Team
+import com.example.template.domain.TournamentStatus
 import jakarta.validation.constraints.NotBlank
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -82,13 +83,14 @@ data class TeamResponseDto(
 
 /**
  * Wire format of `GET /api/team/me` — the session-guarded team overview. Unlike
- * [TeamResponseDto] it carries the tournament's display name so the team space
- * needs no second, admin-scoped call.
+ * [TeamResponseDto] it carries the tournament's display name and lifecycle status
+ * so the team space needs no second, admin-scoped call.
  */
 data class TeamOverviewResponseDto(
     val teamId: String,
     val tournamentId: String,
     val tournamentName: String,
+    val tournamentStatus: TournamentStatus,
     val teamName: String,
     val players: List<PlayerResponseDto>,
 ) {
@@ -97,6 +99,7 @@ data class TeamOverviewResponseDto(
             teamId = overview.team.id.value,
             tournamentId = overview.team.tournamentId.value,
             tournamentName = overview.tournamentName,
+            tournamentStatus = overview.tournamentStatus,
             teamName = overview.team.name,
             players = overview.team.players.map(PlayerResponseDto::from),
         )

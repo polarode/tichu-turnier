@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
@@ -20,6 +21,7 @@ const overview = {
     teamId: 'team-1',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
+    tournamentStatus: TournamentStatus.ACTIVE,
     teamName: 'Team Alpha',
     players: [
         { id: 'p-1', name: 'Alice' },

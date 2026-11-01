@@ -5,6 +5,7 @@ import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamToken
 import com.example.template.domain.TeamTokenRepository
+import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
 import com.example.template.domain.TournamentStatus
 import com.example.template.testsupport.PostgresBackedIntegrationTest
@@ -154,6 +155,38 @@ class TeamAccessIntegrationTest(
             result.response.contentAsString.contains(raw),
             "the raw token must not appear in the response body",
         )
+    }
+
+    @Test
+    fun `the team overview carries the tournament status so the UI can gate scoring`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = seedKnownToken(teamId)
+        val cookie = teamCookie(exchange(raw))
+
+        // A fresh tournament is still in setup: the status travels with the overview
+        // so the team space can render state-dependent controls without a second call.
+        mockMvc.perform(get("/api/team/me").cookie(cookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.tournamentStatus").value("SETUP"))
+
+        tournamentRepository.save(
+            tournamentRepository.findById(TournamentId(tournamentId))!!
+                .copy(status = TournamentStatus.ACTIVE),
+        )
+        mockMvc.perform(get("/api/team/me").cookie(cookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.tournamentStatus").value("ACTIVE"))
+
+        // Completed counts as started too — scoring stays reachable after the finish.
+        tournamentRepository.save(
+            tournamentRepository.findById(TournamentId(tournamentId))!!
+                .copy(status = TournamentStatus.COMPLETED),
+        )
+        mockMvc.perform(get("/api/team/me").cookie(cookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.tournamentStatus").value("COMPLETED"))
     }
 
     @Test

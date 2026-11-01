@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 const sessionDto = {
     teamId: 'team-1',
@@ -71,6 +72,7 @@ describe('TeamAuthRepository me', () => {
             teamId: 'team-1',
             tournamentId: 't-1',
             tournamentName: 'Spring Classic',
+            tournamentStatus: TournamentStatus.ACTIVE,
             teamName: 'Team Alpha',
             players: [
                 { id: 'p-1', teamId: 'team-1', name: 'Alice' },
@@ -84,6 +86,7 @@ describe('TeamAuthRepository me', () => {
             teamId: 'team-1',
             tournamentId: 't-1',
             tournamentName: 'Spring Classic',
+            tournamentStatus: TournamentStatus.ACTIVE,
             teamName: 'Team Alpha',
             players: [
                 { id: 'p-1', name: 'Alice' },
@@ -97,6 +100,7 @@ describe('TeamAuthRepository me', () => {
             teamId: 'team-1',
             tournamentId: 't-1',
             tournamentName: 'Spring Classic',
+            tournamentStatus: TournamentStatus.ACTIVE,
             teamName: 'Team Alpha',
             players: [{ id: 'p-1', teamId: 'team-1', name: 'Alice' }],
         });

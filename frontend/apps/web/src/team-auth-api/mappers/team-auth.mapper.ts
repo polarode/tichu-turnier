@@ -17,6 +17,7 @@ export function teamOverviewDtoToDomain(dto: TeamOverviewDto): TeamOverview {
         teamId: dto.teamId,
         tournamentId: dto.tournamentId,
         tournamentName: dto.tournamentName,
+        tournamentStatus: dto.tournamentStatus,
         teamName: dto.teamName,
         players: dto.players.map((player) => ({ id: player.id, name: player.name })),
     };

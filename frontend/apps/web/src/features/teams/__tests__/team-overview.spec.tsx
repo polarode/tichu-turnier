@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
@@ -30,6 +31,7 @@ const overview = {
     teamId: 'team-1',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
+    tournamentStatus: TournamentStatus.ACTIVE,
     teamName: 'Team Alpha',
     players: [
         { id: 'p-1', name: 'Alice' },
@@ -43,8 +45,8 @@ describe('/team', () => {
         mockedCurrentTable.mockReset();
     });
 
-    it('renders tournament name, team name, both players and the neutral schedule note', async () => {
-        mockedMe.mockResolvedValue(overview);
+    it('renders tournament name, team name, both players and the neutral schedule note while in setup', async () => {
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.SETUP });
 
         const { router } = renderApp('/team');
 
@@ -56,7 +58,28 @@ describe('/team', () => {
         expect(screen.getByText('Alice')).toBeInTheDocument();
         expect(screen.getByText('Bob')).toBeInTheDocument();
         expect(screen.getByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Ergebnisse eintragen' })).not.toBeInTheDocument();
         expect(mockedMe).toHaveBeenCalledTimes(1);
+    });
+
+    it('swaps the schedule note for the scoring link once the tournament has started', async () => {
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.ACTIVE });
+
+        const { router } = renderApp('/team');
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
+        expect(await screen.findByRole('link', { name: 'Ergebnisse eintragen' })).toBeInTheDocument();
+        expect(screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).not.toBeInTheDocument();
+    });
+
+    it('keeps the scoring link (and no schedule note) after the tournament has completed', async () => {
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.COMPLETED });
+
+        const { router } = renderApp('/team');
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
+        expect(await screen.findByRole('link', { name: 'Ergebnisse eintragen' })).toBeInTheDocument();
+        expect(screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).not.toBeInTheDocument();
     });
 
     it('links to the scoring screen, which loads the team’s current table', async () => {

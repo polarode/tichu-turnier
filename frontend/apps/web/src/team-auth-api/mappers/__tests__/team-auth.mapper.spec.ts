@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { teamOverviewDtoToDomain, teamSessionDtoToDomain } from '@/team-auth-api/mappers/team-auth.mapper.ts';
 
 describe('teamSessionDtoToDomain', () => {
@@ -24,6 +25,7 @@ describe('teamOverviewDtoToDomain', () => {
             teamId: 'team-1',
             tournamentId: 't-1',
             tournamentName: 'Spring Classic',
+            tournamentStatus: TournamentStatus.ACTIVE,
             teamName: 'Team Alpha',
             players: [
                 { id: 'p-1', teamId: 'team-1', name: 'Alice' },
@@ -35,6 +37,7 @@ describe('teamOverviewDtoToDomain', () => {
             teamId: 'team-1',
             tournamentId: 't-1',
             tournamentName: 'Spring Classic',
+            tournamentStatus: TournamentStatus.ACTIVE,
             teamName: 'Team Alpha',
             players: [
                 { id: 'p-1', name: 'Alice' },

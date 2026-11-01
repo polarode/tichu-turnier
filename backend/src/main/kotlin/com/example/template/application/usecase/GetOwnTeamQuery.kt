@@ -21,8 +21,8 @@ class GetOwnTeamQuery(
     override fun get(principal: AuthenticatedTeam): TeamOverview {
         val team = teamRepository.findById(principal.teamId, principal.tournamentId)
             ?: throw NotFoundException("Team ${principal.teamId.value} not found")
-        val tournamentName = tournamentRepository.findById(team.tournamentId)?.name
+        val tournament = tournamentRepository.findById(team.tournamentId)
             ?: throw NotFoundException("Tournament ${team.tournamentId.value} not found")
-        return TeamOverview(team = team, tournamentName = tournamentName)
+        return TeamOverview(team = team, tournamentName = tournament.name, tournamentStatus = tournament.status)
     }
 }

@@ -6,6 +6,7 @@ import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/scoring-api/scoring.repository.ts', () => ({
@@ -33,6 +34,7 @@ const teamOverview = {
     teamId: 'team-a',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
+    tournamentStatus: TournamentStatus.ACTIVE,
     teamName: 'Team Alpha',
     players: [
         { id: 'a1', name: 'Alice' },

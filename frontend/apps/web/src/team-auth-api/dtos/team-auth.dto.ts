@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
+
 /**
  * zod schema for the exchange response. Unlike the access-link reveal, this carries
  * no secret — the session token travels in an httpOnly `Set-Cookie` header, so the
@@ -22,6 +24,8 @@ export const teamOverviewDtoSchema = z.object({
     teamId: z.string(),
     tournamentId: z.string(),
     tournamentName: z.string(),
+    /** Lifecycle of the tournament the team plays in (`setup → active → completed`). */
+    tournamentStatus: z.enum(TOURNAMENT_STATUSES),
     teamName: z.string(),
     players: z
         .object({

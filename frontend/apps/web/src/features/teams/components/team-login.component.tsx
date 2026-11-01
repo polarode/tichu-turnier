@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 
 import { useExchangeAccessLink } from '@/features/teams/hooks/team-auth-queries.hook.ts';
@@ -53,9 +53,17 @@ export function TeamLogin({ token }: { token?: string }) {
     // arrives via a redirect.
     const [redeemedToken, setRedeemedToken] = useState<string | undefined>(undefined);
     const [phase, setPhase] = useState<Phase>('exchanging');
+    // The exactly-once guard must be a ref: under StrictMode (dev) mount effects
+    // run setup → cleanup → setup, and a state guard set in the first run is not
+    // flushed yet when the second runs — a state check alone would fire the
+    // exchange twice, and the second success's cache eviction would cancel the
+    // in-flight `/me` fetch the /team loader is awaiting (CancelledError on the
+    // route). A ref persists across that cycle.
+    const redeemedRef = useRef<string | undefined>(undefined);
 
     useEffect(() => {
-        if (!token || redeemedToken === token) return;
+        if (!token || redeemedRef.current === token) return;
+        redeemedRef.current = token;
         setRedeemedToken(token);
 
         // Strip first — even a failing exchange must leave no token in the URL.

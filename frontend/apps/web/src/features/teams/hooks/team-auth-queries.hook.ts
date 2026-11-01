@@ -19,6 +19,10 @@ export function useExchangeAccessLink() {
             // A successful exchange changes the session state: a previously cached
             // overview (or a failed check) is stale by definition, so drop it and
             // let the /team guard fetch /me fresh.
+            // TanStack runs this hook-level onSuccess before the mutate() caller's
+            // callbacks, so the eviction has settled before /team's loader starts
+            // its /me fetch — swapping that order would cancel the in-flight fetch
+            // (CancelledError on the route).
             queryClient.removeQueries({ queryKey: teamOverviewQueryKey() });
         },
     });

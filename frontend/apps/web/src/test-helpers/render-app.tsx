@@ -6,6 +6,7 @@ import {
     RouterProvider,
 } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { StrictMode } from 'react';
 
 import { routeTree } from '@/routeTree.gen.ts';
 import { I18nProvider } from '@/shared/i18n/i18n.context.tsx';
@@ -20,7 +21,7 @@ export type AppRenderResult = RenderResult & { router: AnyRouter };
  */
 export function renderApp(
     initialPath = '/',
-    { initialLocale = 'de' }: { initialLocale?: Locale } = {},
+    { initialLocale = 'de', strictMode = false }: { initialLocale?: Locale; strictMode?: boolean } = {},
 ): AppRenderResult {
     const queryClient = createTestQueryClient();
     const router: AnyRouter = createRouter({
@@ -29,13 +30,18 @@ export function renderApp(
         context: { queryClient },
     });
 
-    const result = render(
+    // StrictMode mirrors main.tsx (dev double-invokes mount effects), letting
+    // tests reproduce StrictMode-specific races like double-fired effects.
+    let app = (
         <I18nProvider initialLocale={initialLocale}>
             <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
             </QueryClientProvider>
-        </I18nProvider>,
+        </I18nProvider>
     );
+    if (strictMode) app = <StrictMode>{app}</StrictMode>;
+
+    const result = render(app);
 
     return { ...result, router };
 }

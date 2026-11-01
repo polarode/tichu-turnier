@@ -119,4 +119,25 @@ describe('/team/login', () => {
         ).toBeInTheDocument();
         expect(mockedExchange).not.toHaveBeenCalled();
     });
+
+    it('exchanges the token exactly once under StrictMode, so the second onSuccess cannot cancel the /team loader fetch', async () => {
+        // In dev, StrictMode runs mount effects setup → cleanup → setup; a state
+        // guard set in the first run is not yet flushed, so the effect would fire
+        // the exchange twice. Both exchanges succeed (links are multi-use), and the
+        // second one's cache eviction cancels the in-flight /me fetch the /team
+        // loader is awaiting — surfacing a CancelledError on the route.
+        mockedExchange.mockResolvedValue({
+            teamId: 'team-1',
+            tournamentId: 't-1',
+            expiresAt: new Date('2026-01-01T10:00:00Z'),
+        });
+
+        const { router } = renderApp('/team/login?token=raw-secret-token', { strictMode: true });
+
+        await waitFor(() =>
+            expect(router.state.location.pathname).toBe('/team'),
+        );
+        await screen.findByText('Spring Classic');
+        expect(mockedExchange).toHaveBeenCalledTimes(1);
+    });
 });

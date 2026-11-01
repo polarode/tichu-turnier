@@ -47,6 +47,10 @@ interface GameEntryFormProps {
     onLoadExisting?: () => void;
     /** Invoked when the server reports the game changed underneath us (reload prompt). */
     onReloadRequested?: () => void;
+    /** Invoked when a save starts, so a previous confirmation can be cleared. */
+    onSubmitStart?: () => void;
+    /** Invoked after the server accepted the write: `created` for a new game, `updated` for an edit. */
+    onSaved?: (kind: 'created' | 'updated') => void;
 }
 
 /**
@@ -68,6 +72,8 @@ export function GameEntryForm({
     existingGame,
     onLoadExisting,
     onReloadRequested,
+    onSubmitStart,
+    onSaved,
 }: GameEntryFormProps) {
     const { t } = useI18n();
     const recordGame = useRecordGame(table);
@@ -126,8 +132,10 @@ export function GameEntryForm({
 
     const submit = form.handleSubmit(async (values) => {
         const input = toWriteInput(values, table, gameNumber, existingGame?.version ?? null);
+        onSubmitStart?.();
         try {
             await recordGame.mutateAsync(input);
+            onSaved?.(existingGame ? 'updated' : 'created');
         } catch (error) {
             if (error instanceof ApiError && error.code === 'GAME_CONFIRMED') {
                 // The round locked mid-edit: latch read-only. The read-only banner

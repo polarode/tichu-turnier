@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CircleCheck } from 'lucide-react';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
@@ -15,12 +16,16 @@ const GAME_NUMBERS = [1, 2, 3, 4] as const;
  * The team scoring screen (S5c, #101): a selector of the round's four games with
  * their entered/not-entered state, and the entry grid for the selected game.
  * Games may be entered in any order. Editing an entered game loads it (with its
- * version); a locked round renders every game read-only.
+ * version); a locked round renders every game read-only. A successful save is
+ * confirmed in a status line below the form until the next save or game switch.
  */
 export function ScoringPage({ table }: { table: TeamTable }) {
     const { t } = useI18n();
     const gamesQuery = useTableGames(table);
     const [selected, setSelected] = useState<number>(1);
+    // Lives here, not in the form: a successful save bumps the game's version,
+    // which remounts the form and would drop any state it held.
+    const [saved, setSaved] = useState<{ gameNumber: number; kind: 'created' | 'updated' } | null>(null);
 
     if (gamesQuery.isLoading) return <LoadingIndicator />;
 
@@ -40,7 +45,10 @@ export function ScoringPage({ table }: { table: TeamTable }) {
                 label={t('scoring.selector.label')}
                 size="touch"
                 value={String(selected)}
-                onValueChange={(value) => setSelected(Number(value))}
+                onValueChange={(value) => {
+                    setSelected(Number(value));
+                    setSaved(null);
+                }}
                 items={GAME_NUMBERS.map((n) => ({
                     value: String(n),
                     done: byNumber.has(n),
@@ -70,8 +78,22 @@ export function ScoringPage({ table }: { table: TeamTable }) {
                     existingGame={existingGame}
                     onLoadExisting={() => void gamesQuery.refetch()}
                     onReloadRequested={() => void gamesQuery.refetch()}
+                    onSubmitStart={() => setSaved(null)}
+                    onSaved={(kind) => setSaved({ gameNumber: selected, kind })}
                 />
             </TabPanel>
+
+            {/* Always mounted so screen readers announce the text when it appears. */}
+            <p role="status" className="flex min-h-5 items-center justify-center gap-2 text-sm font-medium">
+                {saved ? (
+                    <>
+                        <CircleCheck aria-hidden="true" className="size-4 text-primary" />
+                        {`${t('scoring.game.label')} ${saved.gameNumber} ${t(
+                            saved.kind === 'created' ? 'scoring.saved.created' : 'scoring.saved.updated',
+                        )}`}
+                    </>
+                ) : null}
+            </p>
         </section>
     );
 }

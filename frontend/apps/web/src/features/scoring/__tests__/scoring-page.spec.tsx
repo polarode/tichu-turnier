@@ -176,6 +176,44 @@ describe('/team/score', () => {
         });
     });
 
+    it('confirms a saved game in a status line and clears it on game switch', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        scoring.create.mockResolvedValue(recordedGame());
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+        expect(screen.queryByText(/gespeichert\./)).not.toBeInTheDocument();
+
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!);
+        await user.click(finishButtons[2]!);
+        await user.click(finishButtons[1]!);
+        await user.click(finishButtons[3]!);
+        await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
+
+        // The message sits in a polite live region, so screen readers announce it.
+        expect(await screen.findByText('Spiel 1 gespeichert.')).toHaveAttribute('role', 'status');
+
+        await user.click(screen.getByRole('tab', { name: 'Spiel 2' }));
+        expect(screen.queryByText('Spiel 1 gespeichert.')).not.toBeInTheDocument();
+    });
+
+    it('confirms an updated game', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([recordedGame()]);
+        scoring.update.mockResolvedValue({ ...recordedGame(), version: 2 });
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        await user.click(await screen.findByRole('button', { name: 'Spiel aktualisieren' }));
+
+        expect(await screen.findByText('Spiel 1 aktualisiert.')).toHaveAttribute('role', 'status');
+    });
+
     it('disables the base-score slider on a double win (positions 1+2 same team)', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);

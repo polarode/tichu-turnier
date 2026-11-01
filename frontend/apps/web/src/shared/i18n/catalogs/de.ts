@@ -288,6 +288,8 @@ export const de: Catalog = {
     'scoring.save.create': 'Spiel speichern',
     'scoring.save.update': 'Spiel aktualisieren',
     'scoring.save.saving': 'Speichern…',
+    'scoring.saved.created': 'gespeichert.',
+    'scoring.saved.updated': 'aktualisiert.',
     'scoring.alreadyExists.load': 'Vorhandenen Eintrag laden',
     'scoring.concurrent.reloadPrompt':
         'Dieses Spiel wurde zwischenzeitlich geändert. Lade es neu, um den aktuellen Eintrag zu sehen, und wiederhole deine Änderungen.',

@@ -284,6 +284,8 @@ export const en = {
     'scoring.save.create': 'Save game',
     'scoring.save.update': 'Update game',
     'scoring.save.saving': 'Saving…',
+    'scoring.saved.created': 'saved.',
+    'scoring.saved.updated': 'updated.',
     'scoring.alreadyExists.load': 'Load the existing entry',
     'scoring.concurrent.reloadPrompt':
         'This game was changed in the meantime. Reload it to see the current entry, then redo your changes.',

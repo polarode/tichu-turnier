@@ -29,11 +29,12 @@ describe('AppShell', () => {
 
         expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: 'Englisch' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Sprache' }));
+        await userEvent.click(screen.getByRole('menuitemradio', { name: 'Englisch' }));
 
         expect(await screen.findByText('Tichu Tournament')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'English' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Language' })).toBeInTheDocument();
         expect(document.documentElement.lang).toBe('en');
         expect(document.title).toBe('Tichu Tournament');
     });

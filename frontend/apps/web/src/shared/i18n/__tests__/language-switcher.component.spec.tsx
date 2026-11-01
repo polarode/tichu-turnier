@@ -6,28 +6,23 @@ import { LanguageSwitcher } from '@/shared/i18n/language-switcher.component.tsx'
 import { renderWithProviders } from '@/test-helpers/render-with-providers.tsx';
 
 describe('LanguageSwitcher', () => {
-    it('marks the active language and switches when the other is clicked', async () => {
+    it('shows the active language as a flag button whose menu switches languages', async () => {
         renderWithProviders(<LanguageSwitcher />, { initialLocale: 'de' });
 
-        expect(screen.getByRole('button', { name: 'Deutsch' })).toHaveAttribute(
-            'aria-pressed',
-            'true',
-        );
-        expect(screen.getByRole('button', { name: 'Englisch' })).toHaveAttribute(
-            'aria-pressed',
-            'false',
-        );
+        const trigger = screen.getByRole('button', { name: /Sprache/ });
+        expect(trigger).toHaveAccessibleDescription('Deutsch');
 
-        await userEvent.click(screen.getByRole('button', { name: 'Englisch' }));
+        // Menu is closed until the trigger is clicked.
+        expect(screen.queryByRole('menuitemradio', { name: 'Deutsch' })).not.toBeInTheDocument();
+        await userEvent.click(trigger);
 
-        expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute(
-            'aria-pressed',
-            'true',
-        );
-        expect(screen.getByRole('button', { name: 'German' })).toHaveAttribute(
-            'aria-pressed',
-            'false',
-        );
+        await userEvent.click(screen.getByRole('menuitemradio', { name: 'Englisch' }));
+
         expect(document.documentElement.lang).toBe('en');
+        // The trigger now reflects the new active language and the menu closed.
+        expect(screen.getByRole('button', { name: /Language/ })).toHaveAccessibleDescription(
+            'English',
+        );
+        expect(screen.queryByRole('menuitem', { name: 'Englisch' })).not.toBeInTheDocument();
     });
 });

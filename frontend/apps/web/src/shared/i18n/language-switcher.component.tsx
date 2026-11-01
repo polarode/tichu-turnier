@@ -1,4 +1,4 @@
-import { Button } from '@tichu/ui/button.tsx';
+import { useEffect, useRef, useState } from 'react';
 
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -9,27 +9,76 @@ const LANGUAGE_LABEL_KEY: Record<Locale, TranslationKey> = {
     en: 'language.en',
 };
 
-/** Visible de/en switch. Updating it re-renders every translated string. */
+/** Flag per locale (emoji), shown as the switcher trigger. */
+const LANGUAGE_FLAG: Record<Locale, string> = {
+    de: '🇩🇪',
+    en: '🇬🇧',
+};
+
+/** Compact flag in the top-right corner. Clicking it opens a dropdown to change the language. */
 export function LanguageSwitcher() {
     const { locale, setLocale, t } = useI18n();
+    const [open, setOpen] = useState(false);
+    const rootRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        function onDocumentClick(event: MouseEvent) {
+            if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+        }
+        function onKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') setOpen(false);
+        }
+        document.addEventListener('mousedown', onDocumentClick);
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', onDocumentClick);
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [open]);
 
     return (
-        <div className="flex items-center gap-1" role="group" aria-label={t('language.label')}>
-            {LOCALES.map((code) => {
-                const active = code === locale;
-                return (
-                    <Button
-                        key={code}
-                        type="button"
-                        size="sm"
-                        variant={active ? 'secondary' : 'ghost'}
-                        aria-pressed={active}
-                        onClick={() => setLocale(code)}
-                    >
-                        {t(LANGUAGE_LABEL_KEY[code])}
-                    </Button>
-                );
-            })}
+        <div ref={rootRef} className="relative">
+            <button
+                type="button"
+                aria-label={t('language.label')}
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-description={t(LANGUAGE_LABEL_KEY[locale])}
+                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                className="rounded-md p-1.5 text-lg leading-none transition-colors hover:bg-accent"
+            >
+                {LANGUAGE_FLAG[locale]}
+            </button>
+
+            {open && (
+                <div
+                    role="menu"
+                    aria-label={t('language.label')}
+                    className="absolute right-0 z-10 mt-1 min-w-36 overflow-hidden rounded-md border border-border bg-popover shadow-md"
+                >
+                    {LOCALES.map((code) => {
+                        const active = code === locale;
+                        return (
+                            <button
+                                key={code}
+                                type="button"
+                                role="menuitemradio"
+                                aria-checked={active}
+                                onClick={() => {
+                                    setLocale(code);
+                                    setOpen(false);
+                                }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                            >
+                                <span aria-hidden="true">{LANGUAGE_FLAG[code]}</span>
+                                <span>{t(LANGUAGE_LABEL_KEY[code])}</span>
+                                {active && <span aria-hidden="true" className="ml-auto">✓</span>}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

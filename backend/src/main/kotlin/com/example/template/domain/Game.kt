@@ -9,7 +9,7 @@ package com.example.template.domain
  * The natural key is `(tournamentId, roundNumber, tableNumber, gameNumber)`
  * (table numbers, not surrogate table ids — the pairing re-saves tables
  * wholesale). Everything derivable (success, double win, bonuses, totals,
- * victory points) is derived on read by [GameScoring], never stored.
+ * victory points) is derived on read by [score], never stored (ADR 0004).
  */
 data class Game(
     /** Surrogate database id; assigned by the sequence, internal only. */
@@ -37,6 +37,58 @@ data class Game(
     /** The natural key this game is addressed by (the surrogate id stays internal). */
     val key: GameKey
         get() = GameKey(tournamentId, roundNumber, tableNumber, gameNumber)
+
+    /** The recorded facts team-grouped, [team1] first — the shape [GameScoring] scores. */
+    val teamResults: List<TeamResult>
+        get() = listOf(teamResult(team1, baseScoreTeam1), teamResult(team2, baseScoreTeam2))
+
+    /** Derives the outcome from the recorded facts — the one read and write share. */
+    fun score(settings: TournamentSettings): GameOutcome = GameScoring.score(teamResults, settings)
+
+    private fun teamResult(teamId: TeamId, baseScore: Int) = TeamResult(
+        teamId = teamId,
+        baseScore = baseScore,
+        players = participants
+            .filter { it.teamId == teamId }
+            .map { PlayerResult(it.playerId, it.position, it.call, it.bombs) },
+    )
+
+    companion object {
+        /**
+         * A new, not-yet-persisted game at [key] from submitted team facts. The
+         * facts are validated by [GameScoring] first, so an invalid submit fails
+         * with a field-anchored [com.example.template.vocabulary.GameValidationException]
+         * rather than this class's invariants. Id and version are assigned by the
+         * repository adapter (version 1 on create, +1 per update).
+         */
+        fun record(
+            key: GameKey,
+            teams: List<TeamResult>,
+            beschiss: Boolean,
+            settings: TournamentSettings,
+        ): Game {
+            GameScoring.score(teams, settings)
+            val (first, second) = teams
+            return Game(
+                id = null,
+                tournamentId = key.tournamentId,
+                roundNumber = key.roundNumber,
+                tableNumber = key.tableNumber,
+                gameNumber = key.gameNumber,
+                team1 = first.teamId,
+                team2 = second.teamId,
+                baseScoreTeam1 = first.baseScore,
+                baseScoreTeam2 = second.baseScore,
+                beschiss = beschiss,
+                version = 0,
+                participants = teams.flatMap { team ->
+                    team.players.map {
+                        GameParticipant(it.playerId, team.teamId, it.position, it.call, it.bombs)
+                    }
+                },
+            )
+        }
+    }
 }
 
 /**

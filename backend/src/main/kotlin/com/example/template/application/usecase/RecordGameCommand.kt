@@ -4,14 +4,9 @@ import com.example.template.application.api.AuthenticatedTeam
 import com.example.template.application.api.GameWriteRequest
 import com.example.template.application.api.RecordGame
 import com.example.template.application.api.RecordedGame
-import com.example.template.application.api.RecordedPlayer
-import com.example.template.application.api.RecordedTeam
 import com.example.template.domain.Game
 import com.example.template.domain.GameKey
-import com.example.template.domain.GameOutcome
-import com.example.template.domain.GameParticipant
 import com.example.template.domain.GameRepository
-import com.example.template.domain.GameScoring
 import com.example.template.domain.PlayerResult
 import com.example.template.domain.Round
 import com.example.template.domain.RoundRepository
@@ -95,31 +90,12 @@ class RecordGameCommand(
         val teamResults = toTeamResults(request)
         requirePlayingTeams(tournamentId, teamResults, listOf(table.home, table.away))
 
-        val outcome = GameScoring.score(teamResults, tournament.settings)
-
-        val baseGame = Game(
-            id = null,
-            tournamentId = tournamentId,
-            roundNumber = round.number,
-            tableNumber = table.id.value,
-            gameNumber = request.gameNumber,
-            team1 = teamResults[0].teamId,
-            team2 = teamResults[1].teamId,
-            baseScoreTeam1 = teamResults[0].baseScore,
-            baseScoreTeam2 = teamResults[1].baseScore,
-            beschiss = request.beschiss,
-            version = 0, // assigned by the adapter: 1 on create, +1 per update
-            participants = teamResults.flatMap { team ->
-                team.players.map {
-                    GameParticipant(it.playerId, team.teamId, it.position, it.call, it.bombs)
-                }
-            },
-        )
+        val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
+        val baseGame = Game.record(key, teamResults, request.beschiss, tournament.settings)
 
         val recorded = if (create) {
             gameRepository.create(baseGame)
         } else {
-            val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
             // Existence first, so a missing game answers 404 — the stale-version
             // race answers 409 from the conditional update below.
             gameRepository.find(key)
@@ -134,36 +110,7 @@ class RecordGameCommand(
                 )
         }
 
-        return toRecordedGame(recorded, outcome)
-    }
-
-    /** The full server-authoritative view: stored raw facts + derived outcome. */
-    private fun toRecordedGame(game: Game, outcome: GameOutcome): RecordedGame {
-        fun GameParticipant.toRecordedPlayer() = RecordedPlayer(
-            playerId = playerId,
-            position = position,
-            call = call,
-            bombs = bombs,
-            tichuSuccess = playerId in outcome.tichuSuccesses,
-        )
-        return RecordedGame(
-            gameNumber = game.gameNumber,
-            version = game.version,
-            beschiss = game.beschiss,
-            teams = listOf(
-                RecordedTeam(
-                    game.team1,
-                    game.baseScoreTeam1,
-                    game.participants.filter { it.teamId == game.team1 }.map { it.toRecordedPlayer() },
-                ),
-                RecordedTeam(
-                    game.team2,
-                    game.baseScoreTeam2,
-                    game.participants.filter { it.teamId == game.team2 }.map { it.toRecordedPlayer() },
-                ),
-            ),
-            outcome = outcome,
-        )
+        return RecordedGame.of(recorded, tournament.settings)
     }
 
     private fun requireVersionOnUpdate(create: Boolean, request: GameWriteRequest) {

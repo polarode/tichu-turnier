@@ -1,10 +1,12 @@
 package com.example.template.application.api
 
+import com.example.template.domain.Game
 import com.example.template.domain.GameOutcome
 import com.example.template.domain.PlayerId
 import com.example.template.domain.TichuCall
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
+import com.example.template.domain.TournamentSettings
 
 /**
  * Transport-agnostic write payload for recording a game (issue #100): raw facts
@@ -43,7 +45,33 @@ data class RecordedGame(
     val beschiss: Boolean,
     val teams: List<RecordedTeam>,
     val outcome: GameOutcome,
-)
+) {
+    companion object {
+        /**
+         * The server-authoritative view of a stored [game]: its facts plus the
+         * outcome derived from them. Every read and write response goes through
+         * here, so a read and a fresh submit agree by construction (ADR 0004).
+         */
+        fun of(game: Game, settings: TournamentSettings): RecordedGame {
+            val outcome = game.score(settings)
+            return RecordedGame(
+                gameNumber = game.gameNumber,
+                version = game.version,
+                beschiss = game.beschiss,
+                teams = game.teamResults.map { team ->
+                    RecordedTeam(
+                        teamId = team.teamId,
+                        baseScore = team.baseScore,
+                        players = team.players.map {
+                            RecordedPlayer(it.playerId, it.position, it.call, it.bombs, tichuSuccess = it.isSuccess)
+                        },
+                    )
+                },
+                outcome = outcome,
+            )
+        }
+    }
+}
 
 data class RecordedTeam(
     val teamId: TeamId,

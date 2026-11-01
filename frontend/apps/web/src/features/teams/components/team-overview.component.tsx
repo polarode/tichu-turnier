@@ -21,7 +21,7 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
     return (
         <section className="flex w-full max-w-md flex-col gap-4">
             <PageHeader titleKey="team.title" descriptionKey="team.description" />
-            <dl className="flex flex-col divide-y divide-border rounded-md border border-border text-sm">
+            <dl className="flex flex-col divide-y divide-border rounded-md border border-border bg-card text-sm">
                 <div className="flex items-baseline justify-between gap-4 px-4 py-3">
                     <dt className="shrink-0 text-muted-foreground">{t('teamOverview.tournament')}</dt>
                     <dd className="min-w-0 text-right font-medium break-words">{overview.tournamentName}</dd>

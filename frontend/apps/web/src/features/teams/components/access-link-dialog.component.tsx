@@ -102,7 +102,7 @@ export function AccessLinkDialog({ tournamentId, team, onClose }: AccessLinkDial
                         </p>
                         <div className="mb-4 flex flex-col gap-2">
                             <span className="text-sm font-medium">{t('teams.accessLink.linkLabel')}</span>
-                            <code className="block break-all rounded-md border border-border p-2 text-xs">
+                            <code className="block break-all rounded-md border border-border bg-muted p-2 text-xs">
                                 {revealed.link}
                             </code>
                         </div>

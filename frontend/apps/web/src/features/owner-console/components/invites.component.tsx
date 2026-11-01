@@ -71,7 +71,7 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
             </form>
 
             {issued ? (
-                <div className="flex flex-col gap-2 rounded-md border border-border bg-accent/40 p-3">
+                <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-3">
                     <p className="font-medium">{t('ownerConsole.invites.issued.title')}</p>
                     <p className="text-sm text-muted-foreground">
                         {t('ownerConsole.invites.issued.description')}

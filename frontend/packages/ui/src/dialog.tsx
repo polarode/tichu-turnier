@@ -28,7 +28,7 @@ export function Dialog({ open, label, onClose, children }: DialogProps) {
                 aria-modal="true"
                 aria-label={label}
                 onClick={(event) => event.stopPropagation()}
-                className="w-full max-w-sm rounded-md border border-border bg-background p-6 shadow-lg"
+                className="w-full max-w-sm rounded-md border border-border bg-card p-6 shadow-lg"
             >
                 {children}
             </div>

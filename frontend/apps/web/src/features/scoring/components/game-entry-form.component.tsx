@@ -25,6 +25,9 @@ import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
+/** Team identity colours: team 1 (slots 0–1) is Jade, team 2 (slots 2–3) is Star. */
+const TEAM_TONE = ['bg-team-1-soft text-team-1', 'bg-team-2-soft text-team-2'] as const;
+
 /** Card points per team range from −25 to 125 in steps of 5. */
 const BASE_SCORE_MIN = -25;
 const BASE_SCORE_MAX = 125;
@@ -176,8 +179,10 @@ export function GameEntryForm({
             {/* One group per team. Phones stack each player's name above three equal
                 44px controls; from `sm` up name and controls share one row. */}
             {([0, 1] as const).map((team) => (
-                <fieldset key={team} className="flex flex-col gap-3 rounded-md border border-border p-3">
-                    <legend className="px-1 text-sm font-semibold">{table.teams[team].teamName}</legend>
+                <fieldset key={team} className="flex flex-col gap-3 rounded-md border border-border bg-card p-3">
+                    <legend className={cn('rounded-full px-2.5 py-0.5 text-sm font-semibold', TEAM_TONE[team])}>
+                        {table.teams[team].teamName}
+                    </legend>
                     {players
                         .filter(({ slot }) => teamOfSlot(slot) === team)
                         .map(({ slot, player }) => {
@@ -258,14 +263,14 @@ export function GameEntryForm({
 
             <div className="grid grid-cols-2 gap-4 text-center text-sm">
                 <div>
-                    <p className="text-muted-foreground">{table.teams[0].teamName}</p>
+                    <p className="font-medium text-team-1">{table.teams[0].teamName}</p>
                     <p className="text-lg font-semibold">
                         {dw === null ? state.baseScoreTeam0 : 0}
                         <span className="text-muted-foreground"> → {totals[0]}</span>
                     </p>
                 </div>
                 <div>
-                    <p className="text-muted-foreground">{table.teams[1].teamName}</p>
+                    <p className="font-medium text-team-2">{table.teams[1].teamName}</p>
                     <p className="text-lg font-semibold">
                         {team1Base}
                         <span className="text-muted-foreground"> → {totals[1]}</span>

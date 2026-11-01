@@ -6,18 +6,52 @@
  * like `bg-primary`, `text-muted-foreground`, etc.
  */
 @theme {
-    --color-background: #ffffff;
-    --color-foreground: #0a0a0a;
-    --color-primary: #4f46e5;
+    /*
+     * "Four suits" light theme. Neutrals carry a faint warm bias; the four
+     * Tichu suit colours (Jade, Pagoda, Star, Sword) supply the accents.
+     */
+    --color-background: #f7f7f5;
+    --color-foreground: #15161a;
+    /* Raised surfaces (cards, inputs, dialogs, menus) sit white on the off-white page. */
+    --color-card: #ffffff;
+    --color-card-foreground: #15161a;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #15161a;
+    /* Ink blue: actions and selection. Secondary is its soft tint ("set", "done"). */
+    --color-primary: #1f3a8a;
     --color-primary-foreground: #ffffff;
-    --color-secondary: #f1f5f9;
-    --color-secondary-foreground: #0f172a;
-    --color-muted: #f1f5f9;
-    --color-muted-foreground: #64748b;
-    --color-accent: #f1f5f9;
-    --color-accent-foreground: #0f172a;
-    --color-destructive: #dc2626;
-    --color-input: #e2e8f0;
-    --color-border: #e2e8f0;
-    --color-ring: #4f46e5;
+    --color-secondary: #e6ebf8;
+    --color-secondary-foreground: #1f3a8a;
+    --color-muted: #ebebe8;
+    --color-muted-foreground: #5c5f68;
+    --color-accent: #efefec;
+    --color-accent-foreground: #15161a;
+    --color-destructive: #c0262d;
+    --color-input: #d6d7d4;
+    --color-border: #e1e2e0;
+    --color-ring: #1f3a8a;
+
+    /* The app header: a white bar under the suit stripe; the active nav item takes the soft ink tint. */
+    --color-header: #ffffff;
+    --color-header-foreground: #15161a;
+    --color-header-muted: #5c5f68;
+    --color-header-active: #e6ebf8;
+
+    /* The four suits (Jade, Pagoda, Star, Sword), used for the header stripe. */
+    --color-suit-jade: #0f7a5c;
+    --color-suit-pagoda: #2563a8;
+    --color-suit-star: #b4233c;
+    --color-suit-sword: #15161a;
+
+    /* Team identity at a table: team 1 is Jade, team 2 is Star. */
+    --color-team-1: #0f7a5c;
+    --color-team-1-soft: #e3f2ec;
+    --color-team-2: #b4233c;
+    --color-team-2-soft: #fbe5e9;
+
+    /* Status. Text colours reach 4.5:1 on their soft fills. */
+    --color-success: #0f7a5c;
+    --color-success-soft: #e3f2ec;
+    --color-warning: #9a4a00;
+    --color-warning-soft: #fdecd8;
 }

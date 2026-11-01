@@ -13,7 +13,7 @@ const NAV_ITEMS: ReadonlyArray<{ to: '/admin' | '/team' | '/public'; labelKey: T
 ];
 
 const NAV_LINK_CLASS =
-    'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:py-1.5 data-[status=active]:bg-accent data-[status=active]:text-accent-foreground';
+    'rounded-md px-3 py-2 text-sm font-medium text-header-muted transition-colors outline-none hover:bg-header-active hover:text-header-foreground focus-visible:ring-2 focus-visible:ring-header-foreground sm:py-1.5 data-[status=active]:bg-header-active data-[status=active]:text-header-foreground';
 
 /**
  * The persistent frame every screen renders into: header with navigation and language switch.
@@ -24,11 +24,22 @@ export function AppShell({ children }: { children: ReactNode }) {
 
     return (
         <div className="flex min-h-screen flex-col">
-            <header className="border-b border-border">
+            <header className="border-b border-border bg-header text-header-foreground">
+                {/* The four Tichu suits — Jade, Pagoda, Star, Sword — as a thin stripe. */}
+                <div aria-hidden="true" className="grid h-1 grid-cols-4">
+                    <span className="bg-suit-jade" />
+                    <span className="bg-suit-pagoda" />
+                    <span className="bg-suit-star" />
+                    <span className="bg-suit-sword" />
+                </div>
                 <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-                    <Link to="/" activeOptions={{ exact: true }} className="flex flex-col">
+                    <Link
+                        to="/"
+                        activeOptions={{ exact: true }}
+                        className="flex flex-col rounded-md outline-none focus-visible:ring-2 focus-visible:ring-header-foreground"
+                    >
                         <span className="text-base font-semibold">{t('app.name')}</span>
-                        <span className="hidden text-xs text-muted-foreground sm:block">{t('app.tagline')}</span>
+                        <span className="hidden text-xs text-header-muted sm:block">{t('app.tagline')}</span>
                     </Link>
 
                     <nav aria-label={t('nav.primary')} className="order-last flex w-full items-center gap-1 sm:order-none sm:w-auto">

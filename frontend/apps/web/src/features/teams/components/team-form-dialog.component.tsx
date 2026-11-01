@@ -73,7 +73,7 @@ export function TeamFormDialog({ open, team, onSubmit, onClose }: TeamFormDialog
                 role="dialog"
                 aria-modal="true"
                 aria-label={t(titleKey)}
-                className="w-full max-w-sm rounded-md border border-border bg-background p-6 shadow-lg"
+                className="w-full max-w-sm rounded-md border border-border bg-card p-6 shadow-lg"
             >
                 <h2 className="mb-4 text-lg font-semibold">{t(titleKey)}</h2>
                 <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">

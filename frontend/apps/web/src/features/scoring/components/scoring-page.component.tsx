@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CircleCheck } from 'lucide-react';
+import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
@@ -84,10 +85,16 @@ export function ScoringPage({ table }: { table: TeamTable }) {
             </TabPanel>
 
             {/* Always mounted so screen readers announce the text when it appears. */}
-            <p role="status" className="flex min-h-5 items-center justify-center gap-2 text-sm font-medium">
+            <p
+                role="status"
+                className={cn(
+                    'flex min-h-5 items-center justify-center gap-2 rounded-md text-sm font-medium',
+                    saved && 'bg-success-soft px-3 py-2 text-success',
+                )}
+            >
                 {saved ? (
                     <>
-                        <CircleCheck aria-hidden="true" className="size-4 text-primary" />
+                        <CircleCheck aria-hidden="true" className="size-4" />
                         {`${t('scoring.game.label')} ${saved.gameNumber} ${t(
                             saved.kind === 'created' ? 'scoring.saved.created' : 'scoring.saved.updated',
                         )}`}

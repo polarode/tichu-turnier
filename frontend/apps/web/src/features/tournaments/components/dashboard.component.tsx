@@ -1,25 +1,11 @@
 import { useQueries } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { Badge } from '@tichu/ui/badge.tsx';
 import { buttonVariants } from '@tichu/ui/button.tsx';
 
 import { teamsQueryOptions } from '@/features/teams/hooks/team-queries.hook.ts';
+import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { useTournaments } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
-import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
-import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
-
-const STATUS_LABEL_KEYS: Record<TournamentStatus, TranslationKey> = {
-    [TournamentStatus.SETUP]: 'tournament.status.setup',
-    [TournamentStatus.ACTIVE]: 'tournament.status.active',
-    [TournamentStatus.COMPLETED]: 'tournament.status.completed',
-};
-
-const STATUS_BADGE_VARIANTS: Record<TournamentStatus, 'secondary' | 'success' | 'outline'> = {
-    [TournamentStatus.SETUP]: 'secondary',
-    [TournamentStatus.ACTIVE]: 'success',
-    [TournamentStatus.COMPLETED]: 'outline',
-};
 
 /**
  * The organiser's landing screen: their tournaments with status and team count, an
@@ -66,14 +52,12 @@ export function Dashboard() {
                         return (
                             <li
                                 key={tournament.id}
-                                className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-border p-4"
+                                className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-border bg-card p-4"
                             >
                                 <div className="flex flex-col gap-1">
                                     <span className="font-medium">{tournament.name}</span>
                                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                        <Badge variant={STATUS_BADGE_VARIANTS[tournament.status]}>
-                                            {t(STATUS_LABEL_KEYS[tournament.status])}
-                                        </Badge>
+                                        <TournamentStatusBadge status={tournament.status} />
                                         <span>{`${t('dashboard.teamCount')}: ${teamCount ?? '…'}`}</span>
                                     </div>
                                 </div>

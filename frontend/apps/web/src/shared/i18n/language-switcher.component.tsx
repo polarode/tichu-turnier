@@ -32,7 +32,7 @@ export function LanguageSwitcher() {
                 aria-expanded={open}
                 aria-description={t(LANGUAGE_LABEL_KEY[locale])}
                 onClick={() => setOpen((wasOpen) => !wasOpen)}
-                className="flex size-10 items-center justify-center rounded-md text-lg leading-none transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex size-10 items-center justify-center rounded-md text-lg leading-none transition-colors outline-none hover:bg-header-active focus-visible:ring-2 focus-visible:ring-header-foreground"
             >
                 {LANGUAGE_FLAG[locale]}
             </button>
@@ -41,7 +41,7 @@ export function LanguageSwitcher() {
                 <div
                     role="menu"
                     aria-label={t('language.label')}
-                    className="absolute right-0 z-10 mt-1 min-w-36 overflow-hidden rounded-md border border-border bg-popover shadow-md"
+                    className="absolute right-0 z-10 mt-1 min-w-36 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md"
                 >
                     {LOCALES.map((code) => {
                         const active = code === locale;

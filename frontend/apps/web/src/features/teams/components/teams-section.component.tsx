@@ -105,7 +105,7 @@ export function TeamsSection({ tournamentId, maxTeams, editable, teams }: TeamsS
                     {teams.map((team) => (
                         <li
                             key={team.id}
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3"
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3"
                         >
                             <div className="flex flex-col gap-0.5">
                                 <span className="font-medium">{team.name}</span>

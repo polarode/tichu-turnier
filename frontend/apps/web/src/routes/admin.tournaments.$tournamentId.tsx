@@ -1,9 +1,9 @@
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { Badge } from '@tichu/ui/badge.tsx';
 import { buttonVariants } from '@tichu/ui/button.tsx';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import { TeamsSection } from '@/features/teams/components/teams-section.component.tsx';
+import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { RoundsSection } from '@/features/tournaments/components/rounds-section.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
@@ -12,14 +12,7 @@ import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
-import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
-
-const STATUS_LABEL_KEYS: Record<TournamentStatus, TranslationKey> = {
-    [TournamentStatus.SETUP]: 'tournament.status.setup',
-    [TournamentStatus.ACTIVE]: 'tournament.status.active',
-    [TournamentStatus.COMPLETED]: 'tournament.status.completed',
-};
 
 /** The two sections of a started tournament, switched by tabs and kept in the URL. */
 type DetailTab = 'rounds' | 'teams';
@@ -90,12 +83,10 @@ function TournamentDetailComponent() {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2 rounded-md border border-border p-4">
+                <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4">
                     <div className="flex items-center gap-3">
                         <span className="text-lg font-medium">{tournament.name}</span>
-                        <Badge variant="secondary">
-                            {t(STATUS_LABEL_KEYS[tournament.status])}
-                        </Badge>
+                        <TournamentStatusBadge status={tournament.status} />
                     </div>
                     {tournament.description ? (
                         <p className="text-muted-foreground">{tournament.description}</p>

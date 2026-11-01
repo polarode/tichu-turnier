@@ -38,7 +38,7 @@ export function UserMenu() {
                 aria-haspopup="menu"
                 aria-expanded={open}
                 onClick={() => setOpen((wasOpen) => !wasOpen)}
-                className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
                 <span aria-hidden="true" className="text-sm font-semibold uppercase">
                     {admin.email.charAt(0)}
@@ -49,7 +49,7 @@ export function UserMenu() {
                 <div
                     role="menu"
                     aria-label={t('auth.menu')}
-                    className="absolute right-0 z-10 mt-1 min-w-48 overflow-hidden rounded-md border border-border bg-popover shadow-md"
+                    className="absolute right-0 z-10 mt-1 min-w-48 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md"
                 >
                     <div className="border-b border-border px-3 py-2 text-sm">
                         <div className="text-xs text-muted-foreground">{t('auth.signedInAs')}</div>

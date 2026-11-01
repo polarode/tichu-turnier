@@ -114,7 +114,7 @@ function RoundView({
 }) {
     const { t } = useI18n();
     const content = (
-        <div className="flex flex-col gap-2 rounded-md border border-border p-4">
+        <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4">
             <h2 className="font-medium">{`${t('rounds.round')} ${round.number}`}</h2>
             <ul className="flex flex-col divide-y divide-border">
                 {round.tables.map((table) => (
@@ -140,17 +140,24 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
     const { t } = useI18n();
     const [open, setOpen] = useState(false);
     const gamesId = useId();
-    const complete = table.games.length >= table.gameCount;
+    const entered = table.games.length;
+    // Done in the "done" tint, partly entered in amber, untouched in grey.
+    const progressTone =
+        entered >= table.gameCount ? 'bg-secondary text-secondary-foreground'
+        : entered > 0 ? 'bg-warning-soft text-warning'
+        : 'bg-muted text-muted-foreground';
 
     const summary = (
         <>
             <span className="min-w-0 flex-1">
                 <span className="font-medium">{`${t('rounds.table')} ${table.tableNumber}`}</span>
                 {': '}
-                {teamName(table.homeTeamId)} {t('rounds.versus')} {teamName(table.awayTeamId)}
+                <TeamDot tone="bg-team-1" />
+                {teamName(table.homeTeamId)} {t('rounds.versus')} <TeamDot tone="bg-team-2" />
+                {teamName(table.awayTeamId)}
             </span>
-            <span className={complete ? 'text-foreground' : 'text-muted-foreground'}>
-                {`${table.games.length}/${table.gameCount} ${t('rounds.games.entered')}`}
+            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', progressTone)}>
+                {`${entered}/${table.gameCount} ${t('rounds.games.entered')}`}
             </span>
         </>
     );
@@ -184,6 +191,11 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
             ) : null}
         </li>
     );
+}
+
+/** Small colour marker tying a team to its seat colour (home = team 1, away = team 2). */
+function TeamDot({ tone }: { tone: string }) {
+    return <span aria-hidden="true" className={cn('mr-1 inline-block size-2 rounded-full align-middle', tone)} />;
 }
 
 /**

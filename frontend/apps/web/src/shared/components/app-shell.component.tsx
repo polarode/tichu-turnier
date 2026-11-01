@@ -5,6 +5,7 @@ import { UserMenu } from '@/features/auth/components/user-menu.component.tsx';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { LanguageSwitcher } from '@/shared/i18n/language-switcher.component.tsx';
+import { ThemeSwitcher } from '@/shared/theme/theme-switcher.component.tsx';
 
 const NAV_ITEMS: ReadonlyArray<{ to: '/admin' | '/team' | '/public'; labelKey: TranslationKey }> = [
     { to: '/admin', labelKey: 'nav.admin' },
@@ -16,7 +17,7 @@ const NAV_LINK_CLASS =
     'rounded-md px-3 py-2 text-sm font-medium text-header-muted transition-colors outline-none hover:bg-header-active hover:text-header-foreground focus-visible:ring-2 focus-visible:ring-header-foreground sm:py-1.5 data-[status=active]:bg-header-active data-[status=active]:text-header-foreground';
 
 /**
- * The persistent frame every screen renders into: header with navigation and language switch.
+ * The persistent frame every screen renders into: header with navigation, theme and language switch.
  * On phones the navigation drops to its own full-width row below the brand and controls.
  */
 export function AppShell({ children }: { children: ReactNode }) {
@@ -51,6 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     </nav>
 
                     <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                        <ThemeSwitcher />
                         <LanguageSwitcher />
                         <UserMenu />
                     </div>

@@ -16,6 +16,10 @@ export const en = {
 
     'auth.menu': 'Account',
 
+    'theme.label': 'Colour scheme',
+    'theme.light': 'Light',
+    'theme.dark': 'Dark',
+    'theme.system': 'System',
     'language.label': 'Language',
     'language.de': 'German',
     'language.en': 'English',

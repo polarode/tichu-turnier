@@ -1,3 +1,5 @@
+import { readStoredPreference, storePreference } from '@/shared/storage/stored-preference.ts';
+
 /**
  * Languages the app ships with. German is the default — the product is
  * German-first, English is a first-class alternative.
@@ -17,19 +19,9 @@ export function isLocale(value: unknown): value is Locale {
 
 /** Read the persisted locale, tolerating private-mode / unavailable storage. */
 export function readStoredLocale(): Locale | null {
-    if (typeof window === 'undefined') return null;
-    try {
-        const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-        return isLocale(stored) ? stored : null;
-    } catch {
-        return null;
-    }
+    return readStoredPreference(LOCALE_STORAGE_KEY, isLocale);
 }
 
 export function storeLocale(locale: Locale): void {
-    try {
-        window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    } catch {
-        // Persisting the preference is best-effort; never break the app over it.
-    }
+    storePreference(LOCALE_STORAGE_KEY, locale);
 }

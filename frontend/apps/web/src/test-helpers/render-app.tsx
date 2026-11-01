@@ -10,6 +10,7 @@ import { StrictMode } from 'react';
 
 import { routeTree } from '@/routeTree.gen.ts';
 import { I18nProvider } from '@/shared/i18n/i18n.context.tsx';
+import { ThemeProvider } from '@/shared/theme/theme.context.tsx';
 import type { Locale } from '@/shared/i18n/locale.ts';
 import { createTestQueryClient } from '@/test-helpers/render-with-providers.tsx';
 
@@ -33,11 +34,13 @@ export function renderApp(
     // StrictMode mirrors main.tsx (dev double-invokes mount effects), letting
     // tests reproduce StrictMode-specific races like double-fired effects.
     let app = (
-        <I18nProvider initialLocale={initialLocale}>
-            <QueryClientProvider client={queryClient}>
-                <RouterProvider router={router} />
-            </QueryClientProvider>
-        </I18nProvider>
+        <ThemeProvider>
+            <I18nProvider initialLocale={initialLocale}>
+                <QueryClientProvider client={queryClient}>
+                    <RouterProvider router={router} />
+                </QueryClientProvider>
+            </I18nProvider>
+        </ThemeProvider>
     );
     if (strictMode) app = <StrictMode>{app}</StrictMode>;
 

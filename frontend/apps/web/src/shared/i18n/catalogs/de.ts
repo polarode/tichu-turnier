@@ -13,6 +13,10 @@ export const de: Catalog = {
 
     'auth.menu': 'Konto',
 
+    'theme.label': 'Farbschema',
+    'theme.light': 'Hell',
+    'theme.dark': 'Dunkel',
+    'theme.system': 'System',
     'language.label': 'Sprache',
     'language.de': 'Deutsch',
     'language.en': 'Englisch',

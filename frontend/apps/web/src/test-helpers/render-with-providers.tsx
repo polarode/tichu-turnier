@@ -3,6 +3,7 @@ import { render, type RenderResult } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 
 import { I18nProvider } from '@/shared/i18n/i18n.context.tsx';
+import { ThemeProvider } from '@/shared/theme/theme.context.tsx';
 import type { Locale } from '@/shared/i18n/locale.ts';
 
 /** A QueryClient with retries off, so tests fail fast and deterministically. */
@@ -27,9 +28,11 @@ export function renderWithProviders(
 ): RenderResult {
     const queryClient = createTestQueryClient();
     const wrapper = ({ children }: { children: ReactNode }) => (
-        <I18nProvider initialLocale={initialLocale}>
-            <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        </I18nProvider>
+        <ThemeProvider>
+            <I18nProvider initialLocale={initialLocale}>
+                <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+            </I18nProvider>
+        </ThemeProvider>
     );
     return render(ui, { wrapper });
 }

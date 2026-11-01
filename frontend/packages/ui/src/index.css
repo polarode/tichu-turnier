@@ -27,7 +27,9 @@
     --color-accent: #efefec;
     --color-accent-foreground: #15161a;
     --color-destructive: #c0262d;
-    --color-input: #d6d7d4;
+    --color-destructive-foreground: #ffffff;
+    /* Input and outline-button boundaries reach 3:1 against the white card (WCAG 1.4.11). */
+    --color-input: #8a8c88;
     --color-border: #e1e2e0;
     --color-ring: #1f3a8a;
 
@@ -54,4 +56,55 @@
     --color-success-soft: #e3f2ec;
     --color-warning: #9a4a00;
     --color-warning-soft: #fdecd8;
+}
+
+/*
+ * Dark theme. The app's ThemeProvider writes the resolved theme to
+ * <html data-theme>; these values override the light tokens above. Plain
+ * :root rules beat Tailwind's layered @theme output, so no !important is needed.
+ */
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --color-background: #0f1012;
+    --color-foreground: #ececea;
+    --color-card: #17181c;
+    --color-card-foreground: #ececea;
+    --color-popover: #1c1d22;
+    --color-popover-foreground: #ececea;
+    --color-primary: #7f9cf0;
+    --color-primary-foreground: #0b1430;
+    --color-secondary: #1d2747;
+    --color-secondary-foreground: #a9bdf6;
+    --color-muted: #24252b;
+    --color-muted-foreground: #9a9ca3;
+    --color-accent: #24252b;
+    --color-accent-foreground: #ececea;
+    /* Lighter red so error text reaches 4.5:1 on the dark page; buttons pair it with dark text. */
+    --color-destructive: #f0606a;
+    --color-destructive-foreground: #1a0607;
+    --color-input: #6b6d75;
+    --color-border: #2a2b30;
+    --color-ring: #7f9cf0;
+
+    --color-header: #17181c;
+    --color-header-foreground: #ececea;
+    --color-header-muted: #9a9ca3;
+    --color-header-active: #1d2747;
+
+    /* Brightened suits; the Sword segment turns light so it shows on the dark bar. */
+    --color-suit-jade: #3cb48c;
+    --color-suit-pagoda: #6aa6e8;
+    --color-suit-star: #f07a8e;
+    --color-suit-sword: #ececea;
+
+    --color-team-1: #3cb48c;
+    --color-team-1-soft: #16302a;
+    --color-team-2: #f07a8e;
+    --color-team-2-soft: #3d1820;
+
+    --color-success: #3cb48c;
+    --color-success-soft: #16302a;
+    --color-warning: #f0a25a;
+    --color-warning-soft: #3a2410;
 }

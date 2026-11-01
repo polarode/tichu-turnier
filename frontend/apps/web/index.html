@@ -4,6 +4,21 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Tichu Turnier</title>
+        <script>
+            // Apply the stored theme before first paint so dark users never see a
+            // white flash. Mirrors shared/theme/theme.ts (key, values, default 'system').
+            (function () {
+                var preference = 'system';
+                try {
+                    var stored = localStorage.getItem('tichu.theme');
+                    if (stored === 'light' || stored === 'dark' || stored === 'system') preference = stored;
+                } catch (e) {}
+                var dark =
+                    preference === 'dark' ||
+                    (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+            })();
+        </script>
     </head>
     <body>
         <div id="root"></div>

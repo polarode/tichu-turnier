@@ -24,9 +24,9 @@ async function fetchSession(): Promise<AdminUser | null> {
 }
 
 /**
- * Query options shared by `useSession()` and the admin route guard's `beforeLoad`, so
- * both read one cache entry. The long `staleTime` keeps the rotating refresh from
- * firing on every mount.
+ * Query options shared by `useSession()` (the header avatar) and the admin route
+ * guard's `beforeLoad`, so both read one cache entry. The long `staleTime` keeps
+ * the rotating refresh from firing on every mount.
  */
 export const sessionQueryOptions = {
     queryKey: sessionQueryKey(),
@@ -38,17 +38,6 @@ export const sessionQueryOptions = {
 /** The current admin session, or null when signed out. */
 export function useSession() {
     return useQuery(sessionQueryOptions);
-}
-
-/**
- * The session as last resolved by the route guard, login or logout — read purely
- * from the cache, never fetching. UI that only reflects an already-known session
- * (e.g. the shell's avatar) uses this, so public and team pages make no session
- * request of their own.
- */
-export function useCachedSession(): AdminUser | null {
-    const { data } = useQuery({ ...sessionQueryOptions, enabled: false });
-    return data ?? null;
 }
 
 /**

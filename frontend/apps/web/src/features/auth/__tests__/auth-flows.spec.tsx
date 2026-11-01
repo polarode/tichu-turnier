@@ -297,3 +297,26 @@ describe('admin auth flows', () => {
         expect(auth.logout).toHaveBeenCalled();
     });
 });
+
+describe('header avatar outside the admin area', () => {
+    beforeEach(() => {
+        vi.resetAllMocks();
+    });
+
+    it('shows for a signed-in admin who opens a non-admin page first', async () => {
+        auth.refresh.mockResolvedValue(admin);
+        renderApp('/public');
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Konto' }));
+        expect(screen.getByText('organizer@example.com')).toBeInTheDocument();
+    });
+
+    it('stays hidden when nobody is signed in', async () => {
+        auth.refresh.mockRejectedValue(noSession());
+        renderApp('/public');
+
+        await screen.findByRole('heading', { level: 1 });
+        await vi.waitFor(() => expect(auth.refresh).toHaveBeenCalled());
+        expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();
+    });
+});

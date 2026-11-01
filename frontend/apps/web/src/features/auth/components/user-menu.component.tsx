@@ -2,21 +2,22 @@ import { useNavigate } from '@tanstack/react-router';
 import { LogOut } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import { useCachedSession, useLogoutAdmin } from '@/features/auth/hooks/auth-queries.hook.ts';
+import { useLogoutAdmin, useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { useDropdownDismiss } from '@/shared/hooks/use-dropdown-dismiss.hook.ts';
 
 /**
  * Avatar in the top-right corner, shown only while a session exists. Clicking it
- * opens a menu with the signed-in email and the logout action. Reads the session
- * purely from the cache (never fetching): the admin guard populates it and logout
- * clears it, so the avatar appears and disappears with those transitions.
+ * opens a menu with the signed-in email and the logout action. It resolves the
+ * session itself (sharing the admin guard's cache entry), so it also appears when
+ * a signed-in admin opens a public or team page first; logout clears the entry
+ * and the avatar disappears with it.
  */
 export function UserMenu() {
     const { t } = useI18n();
     const navigate = useNavigate();
     const logout = useLogoutAdmin();
-    const admin = useCachedSession();
+    const { data: admin } = useSession();
 
     const [open, setOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);

@@ -8,7 +8,6 @@ import com.example.template.domain.Game
 import com.example.template.domain.GameKey
 import com.example.template.domain.GameRepository
 import com.example.template.domain.PlayerResult
-import com.example.template.domain.Round
 import com.example.template.domain.RoundRepository
 import com.example.template.domain.Table
 import com.example.template.domain.TeamId
@@ -81,14 +80,15 @@ class RecordGameCommand(
         if (round.locked) {
             throw GameConfirmedException("Round ${round.number} is locked; its games are read-only")
         }
-        val table = requireTable(round, tableNumber)
+        val table = round.table(tableNumber)
+            ?: throw GameNotFoundException("Table $tableNumber of round ${round.number} not found")
         requireSeatedAt(principal.teamId, table)
 
         val tournament = tournamentRepository.findById(tournamentId)
             ?: throw GameNotFoundException("Tournament ${tournamentId.value} not found")
 
         val teamResults = toTeamResults(request)
-        requirePlayingTeams(tournamentId, teamResults, listOf(table.home, table.away))
+        requirePlayingTeams(tournamentId, teamResults, table.playingTeams)
 
         val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
         val baseGame = Game.record(key, teamResults, request.beschiss, tournament.settings)
@@ -128,14 +128,8 @@ class RecordGameCommand(
         }
     }
 
-    private fun requireTable(round: Round, tableNumber: Int): Table =
-        round.pairing.tables.firstOrNull { it.id.value == tableNumber }
-            ?: throw GameNotFoundException(
-                "Table $tableNumber of round ${round.number} not found",
-            )
-
     private fun requireSeatedAt(teamId: TeamId, table: Table) {
-        if (teamId != table.home && teamId != table.away) {
+        if (!table.seats(teamId)) {
             throw ForbiddenException("Team ${teamId.value} is not seated at table ${table.id.value}")
         }
     }

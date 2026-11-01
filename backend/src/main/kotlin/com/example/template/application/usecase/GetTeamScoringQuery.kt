@@ -41,7 +41,7 @@ class GetTeamScoringQuery(
             )
         val settings = tournamentSettings(tournamentId)
 
-        val teams = listOf(table.home, table.away).map { teamId ->
+        val teams = table.playingTeams.map { teamId ->
             val team = requireTeam(teamId, tournamentId)
             TeamTableTeam(
                 teamId = team.id,
@@ -73,7 +73,7 @@ class GetTeamScoringQuery(
         }
         val round = roundRepository.findByTournamentAndNumber(tournamentId, roundNumber)
             ?: throw NotFoundException("Round $roundNumber of tournament ${tournamentId.value} not found")
-        val table = round.pairing.tables.firstOrNull { it.id.value == tableNumber }
+        val table = round.table(tableNumber)
             ?: throw NotFoundException("Table $tableNumber of round $roundNumber not found")
         requireSeatedAt(principal.teamId, table)
 
@@ -89,10 +89,7 @@ class GetTeamScoringQuery(
     private fun currentSeating(tournamentId: TournamentId, teamId: TeamId): Pair<Round, Table>? =
         roundRepository.findByTournament(tournamentId)
             .sortedByDescending { it.number }
-            .firstNotNullOfOrNull { round ->
-                round.pairing.tables.firstOrNull { it.home == teamId || it.away == teamId }
-                    ?.let { round to it }
-            }
+            .firstNotNullOfOrNull { round -> round.tableOf(teamId)?.let { round to it } }
 
     private fun tournamentSettings(tournamentId: TournamentId) =
         tournamentRepository.findById(tournamentId)?.settings
@@ -103,7 +100,7 @@ class GetTeamScoringQuery(
             ?: throw NotFoundException("Team ${teamId.value} not found")
 
     private fun requireSeatedAt(teamId: TeamId, table: Table) {
-        if (teamId != table.home && teamId != table.away) {
+        if (!table.seats(teamId)) {
             throw ForbiddenException("Team ${teamId.value} is not seated at table ${table.id.value}")
         }
     }

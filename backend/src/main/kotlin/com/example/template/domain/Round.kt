@@ -16,7 +16,13 @@ data class Round(
      * confirm/retract workflow that flips it is S6 (#34).
      */
     val locked: Boolean = false,
-)
+) {
+    /** The table numbered [tableNumber] in this round's pairing; null when there is none. */
+    fun table(tableNumber: Int): Table? = pairing.tables.firstOrNull { it.id.value == tableNumber }
+
+    /** The table [teamId] is seated at this round; null when the team sits out. */
+    fun tableOf(teamId: TeamId): Table? = pairing.tables.firstOrNull { it.seats(teamId) }
+}
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */
 @JvmInline

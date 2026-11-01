@@ -33,7 +33,14 @@ data class Table(
     val id: TableId,
     val home: TeamId,
     val away: TeamId,
-)
+) {
+    /** The teams seated at this table, `[home, away]` — the two playing teams of every game here. */
+    val playingTeams: List<TeamId>
+        get() = listOf(home, away)
+
+    /** Whether [teamId] is seated at this table. */
+    fun seats(teamId: TeamId): Boolean = teamId in playingTeams
+}
 
 /** The pairing of a round: every participating team sits at exactly one [Table]. */
 data class Pairing(val tables: List<Table>)

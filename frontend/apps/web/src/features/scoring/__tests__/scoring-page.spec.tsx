@@ -114,6 +114,23 @@ describe('/team/score', () => {
         teamAuth.me.mockResolvedValue(teamOverview);
     });
 
+    it('redirects to /team/login when the current-table load answers 403 (admin cookie, no team session)', async () => {
+        scoring.currentTable.mockRejectedValue(
+            new ApiError({
+                code: 'FORBIDDEN',
+                status: 403,
+                field: null,
+                message: 'access denied',
+            }),
+        );
+
+        const { router } = renderApp('/team/score');
+
+        await waitFor(() =>
+            expect(router.state.location.pathname).toBe('/team/login'),
+        );
+    });
+
     it('renders the matchup, roster and a game selector', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);

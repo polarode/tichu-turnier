@@ -9,7 +9,8 @@ import {
 
 /**
  * Query options for the team's current table (`GET /api/team/me/current-table`).
- * A 401 means the session is gone; the route guard handles that, so no retry.
+ * A missing team session (401, or 403 with an admin cookie in the browser) is
+ * handled by the route guard, so no retry.
  */
 export const teamCurrentTableQueryOptions = {
     queryKey: teamCurrentTableQueryKey(),

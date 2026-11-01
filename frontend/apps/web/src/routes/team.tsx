@@ -2,9 +2,8 @@ import { useEffect } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 
-import { ensureTeamOverview, teamOverviewQueryOptions } from '@/features/teams/hooks/team-auth-queries.hook.ts';
+import { ensureTeamOverview, isMissingTeamSession, teamOverviewQueryOptions } from '@/features/teams/hooks/team-auth-queries.hook.ts';
 import { TeamOverview } from '@/features/teams/components/team-overview.component.tsx';
-import { ApiError } from '@/shared/api/api-error.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { teamOverviewQueryKey } from '@/shared/constants/query-keys.ts';
 
@@ -34,11 +33,11 @@ function TeamOverviewPage() {
     const query = useQuery(teamOverviewQueryOptions);
     const navigate = useNavigate();
 
-    // A 401 after the initial load means the session died mid-flight; bounce to the
-    // neutral login prompt rather than showing an error.
+    // A failure after the initial load means the team session died mid-flight
+    // (see isMissingTeamSession); bounce to the neutral login prompt rather than
+    // showing an error.
     useEffect(() => {
-        const error = query.error;
-        if (error instanceof ApiError && error.status === 401) {
+        if (isMissingTeamSession(query.error)) {
             void navigate({ to: '/team/login' });
         }
     }, [navigate, query.error]);

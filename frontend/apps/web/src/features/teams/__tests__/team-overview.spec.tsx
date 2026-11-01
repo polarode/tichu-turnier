@@ -144,6 +144,28 @@ describe('/team', () => {
         ).toBeInTheDocument();
     });
 
+    it('redirects to /team/login on 403 (admin session in the same browser, but no team cookie)', async () => {
+        mockedMe.mockRejectedValue(
+            new ApiError({
+                code: 'FORBIDDEN',
+                status: 403,
+                field: null,
+                message: 'access denied',
+            }),
+        );
+
+        const { router } = renderApp('/team');
+
+        await waitFor(() =>
+            expect(router.state.location.pathname).toBe('/team/login'),
+        );
+        expect(
+            await screen.findByText(
+                'Öffne den persönlichen Zugriffslink aus der Nachricht deines Turnier-Organisators.',
+            ),
+        ).toBeInTheDocument();
+    });
+
     it('shows the router pending spinner while the session check is in flight', async () => {
         let resolveMe!: (value: typeof overview) => void;
         mockedMe.mockImplementation(() => new Promise((resolve) => (resolveMe = resolve)));

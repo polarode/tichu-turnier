@@ -31,8 +31,9 @@ export function useExchangeAccessLink() {
 /**
  * Query options for the session-guarded team overview (`GET /api/team/me`). The
  * httpOnly cookie is the only session store — the cache entry mirrors it for the
- * route guard and the overview screen. A 401 means the session is gone; callers
- * bounce to `/team/login` instead of retrying.
+ * route guard and the overview screen. A 401 or 403 means there is no usable
+ * team session (403 when an admin session lives in the same browser without a
+ * team cookie); callers bounce to `/team/login` instead of retrying.
  */
 export const teamOverviewQueryOptions = {
     queryKey: teamOverviewQueryKey(),
@@ -44,15 +45,26 @@ export const teamOverviewQueryOptions = {
 };
 
 /**
- * Resolves the team overview through the QueryClient for a route guard. A 401
- * resolves to null so the guard can redirect to the neutral login prompt; any
- * other failure propagates as an error.
+ * Whether a failure on a `/api/team/**` call means "no usable team session in
+ * this browser". A 401 is the missing/expired team cookie; a 403 is the same
+ * situation when the same browser holds an admin session — the backend rejects
+ * `/api/team/**` as authenticated-but-not-allowed rather than unauthenticated.
+ * Callers bounce to `/team/login` on either.
+ */
+export function isMissingTeamSession(error: unknown): error is ApiError {
+    return error instanceof ApiError && (error.status === 401 || error.status === 403);
+}
+
+/**
+ * Resolves the team overview through the QueryClient for a route guard. A
+ * missing team session ([[isMissingTeamSession]]) resolves to null so the guard
+ * can redirect to the neutral login prompt; any other failure propagates.
  */
 export async function ensureTeamOverview(queryClient: QueryClient) {
     try {
         return await queryClient.ensureQueryData(teamOverviewQueryOptions);
     } catch (error) {
-        if (error instanceof ApiError && error.status === 401) return null;
+        if (isMissingTeamSession(error)) return null;
         throw error;
     }
 }

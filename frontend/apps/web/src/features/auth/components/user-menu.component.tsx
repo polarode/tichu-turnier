@@ -38,7 +38,7 @@ export function UserMenu() {
                 aria-haspopup="menu"
                 aria-expanded={open}
                 onClick={() => setOpen((wasOpen) => !wasOpen)}
-                className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             >
                 <span aria-hidden="true" className="text-sm font-semibold uppercase">
                     {admin.email.charAt(0)}

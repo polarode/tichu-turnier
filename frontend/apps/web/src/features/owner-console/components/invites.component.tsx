@@ -52,7 +52,7 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
             description={t('ownerConsole.invites.description')}
             error={form.formState.errors.root?.message ?? error}
         >
-            <form onSubmit={onSubmit} noValidate className="flex max-w-md items-end gap-2">
+            <form onSubmit={onSubmit} noValidate className="flex max-w-md flex-wrap items-end gap-2">
                 <div className="flex-1">
                     <FormField
                         id="invite-email"

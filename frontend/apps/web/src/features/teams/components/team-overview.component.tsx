@@ -19,24 +19,24 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
     const [playerOne, playerTwo] = overview.players;
 
     return (
-        <section className="flex max-w-md flex-col gap-4">
+        <section className="flex w-full max-w-md flex-col gap-4">
             <PageHeader titleKey="team.title" descriptionKey="team.description" />
-            <dl className="flex flex-col gap-2 text-sm">
-                <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">{t('teamOverview.tournament')}</dt>
-                    <dd className="font-medium">{overview.tournamentName}</dd>
+            <dl className="flex flex-col divide-y divide-border rounded-md border border-border text-sm">
+                <div className="flex items-baseline justify-between gap-4 px-4 py-3">
+                    <dt className="shrink-0 text-muted-foreground">{t('teamOverview.tournament')}</dt>
+                    <dd className="min-w-0 text-right font-medium break-words">{overview.tournamentName}</dd>
                 </div>
-                <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">{t('teamOverview.teamName')}</dt>
-                    <dd className="font-medium">{overview.teamName}</dd>
+                <div className="flex items-baseline justify-between gap-4 px-4 py-3">
+                    <dt className="shrink-0 text-muted-foreground">{t('teamOverview.teamName')}</dt>
+                    <dd className="min-w-0 text-right font-medium break-words">{overview.teamName}</dd>
                 </div>
-                <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">{t('teamOverview.playerOne')}</dt>
-                    <dd className="font-medium">{playerOne?.name}</dd>
+                <div className="flex items-baseline justify-between gap-4 px-4 py-3">
+                    <dt className="shrink-0 text-muted-foreground">{t('teamOverview.playerOne')}</dt>
+                    <dd className="min-w-0 text-right font-medium break-words">{playerOne?.name}</dd>
                 </div>
-                <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">{t('teamOverview.playerTwo')}</dt>
-                    <dd className="font-medium">{playerTwo?.name}</dd>
+                <div className="flex items-baseline justify-between gap-4 px-4 py-3">
+                    <dt className="shrink-0 text-muted-foreground">{t('teamOverview.playerTwo')}</dt>
+                    <dd className="min-w-0 text-right font-medium break-words">{playerTwo?.name}</dd>
                 </div>
             </dl>
             {/* Either the schedule note (tournament still in setup) or the
@@ -46,7 +46,10 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
             {overview.tournamentStatus === TournamentStatus.SETUP ? (
                 <p className="text-sm text-muted-foreground">{t('teamOverview.scheduleNote')}</p>
             ) : (
-                <Link to="/team/score" className={buttonVariants()}>
+                <Link
+                    to="/team/score"
+                    className={buttonVariants({ size: 'touch', className: 'w-full sm:w-auto sm:self-start' })}
+                >
                     {t('teamOverview.scoringLink')}
                 </Link>
             )}

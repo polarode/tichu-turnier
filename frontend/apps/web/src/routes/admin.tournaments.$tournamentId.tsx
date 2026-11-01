@@ -1,9 +1,11 @@
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { Badge } from '@tichu/ui/badge.tsx';
 import { buttonVariants } from '@tichu/ui/button.tsx';
+import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import { TeamsSection } from '@/features/teams/components/teams-section.component.tsx';
 import { RoundsSection } from '@/features/tournaments/components/rounds-section.component.tsx';
+import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
@@ -19,16 +21,35 @@ const STATUS_LABEL_KEYS: Record<TournamentStatus, TranslationKey> = {
     [TournamentStatus.COMPLETED]: 'tournament.status.completed',
 };
 
+/** The two sections of a started tournament, switched by tabs and kept in the URL. */
+type DetailTab = 'rounds' | 'teams';
+
+interface DetailSearch {
+    tab?: DetailTab;
+}
+
 /**
- * The tournament detail screen. Team management arrives with #18; for now it shows the
- * tournament's identity and status, plus the edit entry — which only exists while the
- * tournament is still in setup, since editing is locked afterwards.
+ * The tournament detail screen: identity and status, the start and edit entries
+ * (edit only while in setup, since editing is locked afterwards), and the content
+ * below. In setup that is the team list alone; once started, Rounds and Teams sit
+ * behind tabs — Rounds first, since that is what an admin follows during play.
+ * The active tab lives in `?tab=` so a reload or the back button keeps it.
  */
 function TournamentDetailComponent() {
         const { t } = useI18n();
         const { tournamentId } = Route.useParams();
         const tournamentQuery = useTournament(tournamentId);
         const teamsQuery = useTeams(tournamentId);
+        const { tab = 'rounds' } = Route.useSearch();
+        const navigate = Route.useNavigate();
+        const status = tournamentQuery.data?.status;
+        const live = status === TournamentStatus.ACTIVE;
+        // Shares the rounds section's query (same key and polling), only for the tab count.
+        const roundsQuery = useRounds(tournamentId, {
+            live,
+            enabled: status !== undefined && status !== TournamentStatus.SETUP,
+        });
+        const roundCount = roundsQuery.data?.length;
 
         if (tournamentQuery.isPending) {
             return <p className="text-muted-foreground">{t('common.loading')}</p>;
@@ -95,28 +116,61 @@ function TournamentDetailComponent() {
                     <p role="alert" className="text-sm text-destructive">
                         {localizedErrorMessage(teamsQuery.error, t)}
                     </p>
+                ) : editable ? (
+                    // Setup has no rounds yet: the team list is the whole page, no tabs.
+                    <TeamsSection
+                        tournamentId={tournament.id}
+                        maxTeams={tournament.maxTeams}
+                        editable={editable}
+                        teams={teams}
+                    />
                 ) : (
-                    <>
-                        <TeamsSection
-                            tournamentId={tournament.id}
-                            maxTeams={tournament.maxTeams}
-                            editable={editable}
-                            teams={teams}
+                    <div className="flex flex-col gap-4">
+                        <TabList
+                            id="tournament-section"
+                            variant="underline"
+                            label={t('tournament.detail.sections')}
+                            value={tab}
+                            onValueChange={(next) =>
+                                void navigate({ search: { tab: next }, replace: true })
+                            }
+                            items={[
+                                {
+                                    value: 'rounds',
+                                    label: roundCount === undefined
+                                        ? t('rounds.section.title')
+                                        : `${t('rounds.section.title')} (${roundCount})`,
+                                },
+                                {
+                                    value: 'teams',
+                                    label: `${t('teams.section.title')} (${teams.length})`,
+                                },
+                            ]}
                         />
-
-                        {tournament.status !== TournamentStatus.SETUP ? (
-                            <RoundsSection
-                                tournamentId={tournament.id}
-                                teams={teams}
-                                live={tournament.status === TournamentStatus.ACTIVE}
-                            />
-                        ) : null}
-                    </>
+                        <TabPanel id="tournament-section" value={tab}>
+                            {tab === 'rounds' ? (
+                                <RoundsSection
+                                    tournamentId={tournament.id}
+                                    teams={teams}
+                                    live={live}
+                                />
+                            ) : (
+                                <TeamsSection
+                                    tournamentId={tournament.id}
+                                    maxTeams={tournament.maxTeams}
+                                    editable={editable}
+                                    teams={teams}
+                                />
+                            )}
+                        </TabPanel>
+                    </div>
                 )}
         </section>
     );
 }
 
 export const Route = createFileRoute('/admin/tournaments/$tournamentId')({
+    validateSearch: (search: Record<string, unknown>): DetailSearch =>
+        search.tab === 'rounds' || search.tab === 'teams' ? { tab: search.tab } : {},
     component: TournamentDetailComponent,
 });

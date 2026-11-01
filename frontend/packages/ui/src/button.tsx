@@ -19,6 +19,8 @@ const buttonVariants = cva(
                 default: 'h-9 px-4 py-2',
                 sm: 'h-8 px-3',
                 lg: 'h-10 px-6',
+                /** 44px tall: the minimum touch target for player-facing controls on phones. */
+                touch: 'h-11 px-4',
                 icon: 'size-9',
             },
         },

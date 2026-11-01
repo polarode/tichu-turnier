@@ -201,7 +201,7 @@ describe('rounds section', () => {
         renderApp('/admin/tournaments/t-1');
 
         const section = await screen.findByRole('region', { name: 'Runden' });
-        expect(within(section).getByText('Runde 1')).toBeInTheDocument();
+        expect(await within(section).findByText('Runde 1')).toBeInTheDocument();
         expect(within(section).getByText('Tisch 1')).toBeInTheDocument();
         const tableRow = within(section).getByText((_, element) =>
             element?.textContent === 'Tisch 1: Alpha vs Beta',
@@ -223,7 +223,14 @@ describe('rounds section', () => {
         renderApp('/admin/tournaments/t-1');
 
         const section = await screen.findByRole('region', { name: 'Runden' });
-        expect(within(section).getByText('2/4 eingetragen')).toBeInTheDocument();
+        expect(await within(section).findByText('2/4 eingetragen')).toBeInTheDocument();
+
+        // Games stay collapsed behind the table's summary line until it is opened.
+        expect(within(section).queryAllByRole('listitem', { name: /^Spiel/ })).toHaveLength(0);
+        const toggle = within(section).getByRole('button', { name: /Tisch 1.*Alpha vs Beta/ });
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await userEvent.click(toggle);
+        expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
         const [first, second] = within(section).getAllByRole('listitem', { name: /^Spiel/ });
         expect(within(first!).getByText('155 : 45')).toBeInTheDocument();
@@ -234,6 +241,59 @@ describe('rounds section', () => {
         expect(within(second!).queryByText('Beschiss')).not.toBeInTheDocument();
     });
 
+    it('opens on the latest round and switches rounds through the selector', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        const fullTable = table(1, 'team-a', 'team-b', [
+            game(1, { a: 100, b: 0 }),
+            game(2, { a: 100, b: 0 }),
+            game(3, { a: 100, b: 0 }),
+            game(4, { a: 100, b: 0 }),
+        ]);
+        tournaments.rounds.mockResolvedValue([round(1, [fullTable]), round(2, [table(1, 'team-b', 'team-a')])]);
+        renderApp('/admin/tournaments/t-1');
+
+        const selector = await screen.findByRole('tablist', { name: 'Runde auswählen' });
+        // Round 1 has every game entered, so it is marked complete.
+        expect(within(selector).getByRole('tab', { name: 'Runde 1 vollständig' })).toBeInTheDocument();
+        expect(within(selector).getByRole('tab', { name: 'Runde 2' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('heading', { name: 'Runde 2' })).toBeInTheDocument();
+        expect(screen.getByText('0/4 eingetragen')).toBeInTheDocument();
+
+        await userEvent.click(within(selector).getByRole('tab', { name: 'Runde 1 vollständig' }));
+        expect(screen.getByRole('heading', { name: 'Runde 1' })).toBeInTheDocument();
+        expect(screen.getByText('4/4 eingetragen')).toBeInTheDocument();
+    });
+
+    it('splits a started tournament into Rounds and Teams tabs, Rounds first', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([round(1, [table(1, 'team-a', 'team-b')])]);
+        const { router } = renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        expect(await within(sections).findByRole('tab', { name: 'Runden (1)' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
+        expect(screen.queryByText('Alpha 1 & Alpha 2')).not.toBeInTheDocument();
+
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Teams (2)' }));
+        expect(await screen.findByText('Alpha 1 & Alpha 2')).toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: 'Runden' })).not.toBeInTheDocument();
+        await waitFor(() => expect(router.state.location.search).toEqual({ tab: 'teams' }));
+    });
+
+    it('restores the Teams tab from the URL', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([]);
+        renderApp('/admin/tournaments/t-1?tab=teams');
+
+        expect(await screen.findByText('Alpha 1 & Alpha 2')).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Teams (2)' })).toHaveAttribute('aria-selected', 'true');
+    });
+
     it('shows no rounds section while the tournament is in setup', async () => {
         tournaments.get.mockResolvedValue(tournament('SETUP'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
@@ -242,5 +302,8 @@ describe('rounds section', () => {
 
         await screen.findByRole('button', { name: 'Turnier starten' });
         expect(screen.queryByRole('region', { name: 'Runden' })).not.toBeInTheDocument();
+        // Setup shows the team list alone, without section tabs.
+        expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+        expect(screen.getByText('Alpha 1 & Alpha 2')).toBeInTheDocument();
     });
 });

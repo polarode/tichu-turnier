@@ -195,6 +195,66 @@ describe('/team/score', () => {
         await waitFor(() => expect(screen.getByRole('slider')).toBeDisabled());
     });
 
+    it('steps the base score by 5 with the plus/minus buttons and clamps at the range ends', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        const slider = screen.getByRole('slider');
+        expect(slider).toHaveValue('50');
+
+        await user.click(screen.getByRole('button', { name: '5 Punkte mehr' }));
+        expect(slider).toHaveValue('55');
+
+        const less = screen.getByRole('button', { name: '5 Punkte weniger' });
+        for (let i = 0; i < 20; i++) {
+            if (less.hasAttribute('disabled')) break;
+            await user.click(less);
+        }
+        expect(slider).toHaveValue('-25');
+        expect(less).toBeDisabled();
+    });
+
+    it('moves between games with the arrow keys (tabs pattern)', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        const tabs = screen.getAllByRole('tab');
+        expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+        expect(tabs[1]).toHaveAttribute('tabindex', '-1');
+
+        tabs[0]!.focus();
+        await user.keyboard('{ArrowRight}');
+        expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveFocus();
+
+        await user.keyboard('{ArrowLeft}{ArrowLeft}');
+        expect(screen.getByRole('tab', { name: 'Spiel 4' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Spiel 4');
+    });
+
+    it('announces each player\'s current call and bomb count, not just the control name', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
+        expect(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
+        expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
+    });
+
     it('loads an existing game read-only when the round is locked', async () => {
         scoring.currentTable.mockResolvedValue(table({ locked: true }));
         scoring.games.mockResolvedValue([recordedGame()]);
@@ -219,6 +279,7 @@ describe('/team/score', () => {
         // Game 1 is entered → its tab carries the ✓ marker and the update label shows.
         const firstTab = screen.getAllByRole('tab')[0]!;
         expect(within(firstTab).getByText(/✓/)).toBeInTheDocument();
+        expect(firstTab).toHaveAccessibleName('Spiel 1 eingetragen');
         expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeInTheDocument();
     });
 

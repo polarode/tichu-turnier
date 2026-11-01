@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { Minus, Plus, X } from 'lucide-react';
 import { Button } from '@tichu/ui/button.tsx';
+import { cn } from '@tichu/ui/lib/utils.ts';
 
 import type { RecordedGame, TeamTable, TichuCall } from '@/domain/game.domain.ts';
 import {
@@ -22,6 +24,11 @@ import { ApiError } from '@/shared/api/api-error.ts';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+
+/** Card points per team range from −25 to 125 in steps of 5. */
+const BASE_SCORE_MIN = -25;
+const BASE_SCORE_MAX = 125;
+const BASE_SCORE_STEP = 5;
 
 /**
  * `GAME_VALIDATION_INVALID` is field-anchored server-side
@@ -105,6 +112,14 @@ export function GameEntryForm({
         form.setValue('calls', withSlot(state.calls, slot, nextCall));
     }
 
+    // The slider is moot on a double win (fixed 200 : 0) and in read-only mode.
+    const baseScoreLocked = readOnly || dw !== null;
+
+    function stepBaseScore(delta: number) {
+        const next = Math.min(BASE_SCORE_MAX, Math.max(BASE_SCORE_MIN, state.baseScoreTeam0 + delta));
+        form.setValue('baseScoreTeam0', next);
+    }
+
     function cycleBombs(slot: PlayerSlot) {
         form.setValue('bombs', withSlot(state.bombs, slot, (state.bombs[slot] + 1) % 4));
     }
@@ -150,84 +165,82 @@ export function GameEntryForm({
         <form onSubmit={submit} noValidate className="flex flex-col gap-4" aria-label={t('scoring.form.title')}>
             {readOnly ? <FormAlert message={t('scoring.locked.explanation')} /> : null}
 
-            <table className="w-full border-collapse text-center text-sm">
-                <thead>
-                    <tr>
-                        {players.map(({ slot, player }) => (
-                            <th key={slot} className="p-2 font-medium">
-                                {player.name}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        {players.map(({ slot, player }) => (
-                            <td key={slot} className="p-2">
-                                {state.positions[slot] === null ? (
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        disabled={readOnly}
-                                        aria-label={`${t('scoring.finish.assign')} – ${player.name}`}
-                                        onClick={() => assignFinish(slot)}
-                                    >
-                                        {t('scoring.finish.label')}
-                                    </Button>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1">
-                                        <span className="font-semibold">{state.positions[slot]}.</span>
+            {/* One group per team. Phones stack each player's name above three equal
+                44px controls; from `sm` up name and controls share one row. */}
+            {([0, 1] as const).map((team) => (
+                <fieldset key={team} className="flex flex-col gap-3 rounded-md border border-border p-3">
+                    <legend className="px-1 text-sm font-semibold">{table.teams[team].teamName}</legend>
+                    {players
+                        .filter(({ slot }) => teamOfSlot(slot) === team)
+                        .map(({ slot, player }) => {
+                            const position = state.positions[slot];
+                            const bombs = state.bombs[slot];
+                            return (
+                                <div
+                                    key={slot}
+                                    className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_repeat(3,6.5rem)] sm:items-center"
+                                >
+                                    <span className="truncate text-sm font-medium">{player.name}</span>
+                                    <div className="grid grid-cols-3 gap-2 sm:contents">
+                                        {position === null ? (
+                                            <Button
+                                                type="button"
+                                                size="touch"
+                                                variant="outline"
+                                                className="px-2"
+                                                disabled={readOnly}
+                                                aria-label={`${t('scoring.finish.assign')} – ${player.name}`}
+                                                onClick={() => assignFinish(slot)}
+                                            >
+                                                {t('scoring.finish.label')}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                size="touch"
+                                                variant="secondary"
+                                                className="px-2"
+                                                disabled={readOnly}
+                                                aria-label={`${t('scoring.finish.reset')} – ${player.name}: ${position}.`}
+                                                onClick={() => resetFinish(slot)}
+                                            >
+                                                <span className="font-semibold">{position}.</span>
+                                                <X aria-hidden="true" className="size-4 text-muted-foreground" />
+                                            </Button>
+                                        )}
                                         <Button
                                             type="button"
-                                            size="sm"
-                                            variant="ghost"
+                                            size="touch"
+                                            variant={state.calls[slot] === 'NONE' ? 'outline' : 'secondary'}
+                                            className={cn('px-2', state.calls[slot] === 'NONE' && 'text-muted-foreground')}
                                             disabled={readOnly}
-                                            aria-label={`${t('scoring.finish.reset')} – ${player.name}`}
-                                            onClick={() => resetFinish(slot)}
+                                            aria-label={`${t('scoring.call.label')} – ${player.name}: ${callLabel[state.calls[slot]]}`}
+                                            onClick={() => cycleCall(slot)}
                                         >
-                                            🗑️
+                                            {state.calls[slot] === 'NONE'
+                                                ? t('scoring.call.prompt')
+                                                : callLabel[state.calls[slot]]}
                                         </Button>
-                                    </span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-                    <tr>
-                        {players.map(({ slot, player }) => (
-                            <td key={slot} className="p-2">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={state.calls[slot] === 'NONE' ? 'outline' : 'secondary'}
-                                    disabled={readOnly}
-                                    aria-label={`${t('scoring.call.label')} – ${player.name}`}
-                                    onClick={() => cycleCall(slot)}
-                                >
-                                    {callLabel[state.calls[slot]]}
-                                </Button>
-                            </td>
-                        ))}
-                    </tr>
-                    <tr>
-                        {players.map(({ slot, player }) => (
-                            <td key={slot} className="p-2">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={readOnly}
-                                    className={state.bombs[slot] === 0 ? 'opacity-60' : undefined}
-                                    aria-label={`${t('scoring.bombs.label')} – ${player.name}`}
-                                    onClick={() => cycleBombs(slot)}
-                                >
-                                    {state.bombs[slot] === 0 ? '💣' : '💣'.repeat(state.bombs[slot])}
-                                </Button>
-                            </td>
-                        ))}
-                    </tr>
-                </tbody>
-            </table>
+                                        <Button
+                                            type="button"
+                                            size="touch"
+                                            variant={bombs === 0 ? 'outline' : 'secondary'}
+                                            className="px-2"
+                                            disabled={readOnly}
+                                            aria-label={`${t('scoring.bombs.label')} – ${player.name}: ${bombs}`}
+                                            onClick={() => cycleBombs(slot)}
+                                        >
+                                            <span aria-hidden="true" className={bombs === 0 ? 'opacity-50' : undefined}>
+                                                💣
+                                            </span>
+                                            <span>{bombs}</span>
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                </fieldset>
+            ))}
 
             {positionsError ? (
                 <p role="alert" className="text-sm text-destructive">
@@ -256,19 +269,47 @@ export function GameEntryForm({
                 <label htmlFor="base-score" className="text-sm font-medium">
                     {t('scoring.baseScore.label')} – {table.teams[0].teamName}
                 </label>
-                <input
-                    id="base-score"
-                    type="range"
-                    min={-25}
-                    max={125}
-                    step={5}
-                    value={state.baseScoreTeam0}
-                    disabled={readOnly || dw !== null}
-                    onChange={(e) =>
-                        form.setValue('baseScoreTeam0', Number(e.target.value))
-                    }
-                />
-                <output className="text-center text-sm">{state.baseScoreTeam0}</output>
+                {/* ±5 steppers: dragging a 30-step slider precisely is fiddly on a phone. */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        size="touch"
+                        variant="outline"
+                        className="w-11 px-0"
+                        disabled={baseScoreLocked || state.baseScoreTeam0 <= BASE_SCORE_MIN}
+                        aria-label={t('scoring.baseScore.decrease')}
+                        onClick={() => stepBaseScore(-BASE_SCORE_STEP)}
+                    >
+                        <Minus aria-hidden="true" className="size-4" />
+                    </Button>
+                    <input
+                        id="base-score"
+                        type="range"
+                        min={BASE_SCORE_MIN}
+                        max={BASE_SCORE_MAX}
+                        step={BASE_SCORE_STEP}
+                        value={state.baseScoreTeam0}
+                        disabled={baseScoreLocked}
+                        className="h-11 min-w-0 flex-1 accent-primary"
+                        onChange={(e) =>
+                            form.setValue('baseScoreTeam0', Number(e.target.value))
+                        }
+                    />
+                    <Button
+                        type="button"
+                        size="touch"
+                        variant="outline"
+                        className="w-11 px-0"
+                        disabled={baseScoreLocked || state.baseScoreTeam0 >= BASE_SCORE_MAX}
+                        aria-label={t('scoring.baseScore.increase')}
+                        onClick={() => stepBaseScore(BASE_SCORE_STEP)}
+                    >
+                        <Plus aria-hidden="true" className="size-4" />
+                    </Button>
+                </div>
+                <output htmlFor="base-score" className="text-center text-sm">
+                    {state.baseScoreTeam0}
+                </output>
             </div>
 
             <FormAlert message={rootError?.message} />
@@ -283,9 +324,11 @@ export function GameEntryForm({
                 </Button>
             ) : null}
 
-            <div className="flex items-center justify-between gap-2">
+            {/* Phones: full-width buttons, primary save on top within thumb reach of the grid. */}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                     type="button"
+                    size="touch"
                     variant={state.beschiss ? 'destructive' : 'outline'}
                     disabled={readOnly}
                     aria-pressed={state.beschiss}
@@ -293,7 +336,7 @@ export function GameEntryForm({
                 >
                     {state.beschiss ? `${t('scoring.beschiss.label')} ✓` : t('scoring.beschiss.label')}
                 </Button>
-                <Button type="submit" disabled={readOnly || pending}>
+                <Button type="submit" size="touch" disabled={readOnly || pending} aria-busy={pending}>
                     {pending
                         ? t('scoring.save.saving')
                         : existingGame

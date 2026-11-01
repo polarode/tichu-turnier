@@ -32,7 +32,7 @@ export function LanguageSwitcher() {
                 aria-expanded={open}
                 aria-description={t(LANGUAGE_LABEL_KEY[locale])}
                 onClick={() => setOpen((wasOpen) => !wasOpen)}
-                className="rounded-md p-1.5 text-lg leading-none transition-colors hover:bg-accent"
+                className="flex size-10 items-center justify-center rounded-md text-lg leading-none transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
             >
                 {LANGUAGE_FLAG[locale]}
             </button>

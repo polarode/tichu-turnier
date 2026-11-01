@@ -241,7 +241,7 @@ describe('setup-phase team management', () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('tm-1', 'Team Ass', 'Alice', 'Bob')]);
 
-        renderApp('/admin/tournaments/t-1');
+        renderApp('/admin/tournaments/t-1?tab=teams');
 
         expect(await screen.findByText('Team Ass')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Team hinzufügen' })).not.toBeInTheDocument();

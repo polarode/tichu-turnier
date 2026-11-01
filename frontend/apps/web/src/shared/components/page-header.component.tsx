@@ -12,7 +12,7 @@ export function PageHeader({ titleKey, descriptionKey }: PageHeaderProps) {
 
     return (
         <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold">{t(titleKey)}</h1>
+            <h1 className="text-xl font-semibold sm:text-2xl">{t(titleKey)}</h1>
             <p className="text-muted-foreground">{t(descriptionKey)}</p>
         </div>
     );

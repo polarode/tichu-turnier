@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@tichu/ui/button.tsx';
+import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { GameEntryForm } from '@/features/scoring/components/game-entry-form.component.tsx';
@@ -31,38 +31,47 @@ export function ScoringPage({ table }: { table: TeamTable }) {
     const matchup = `${table.teams[0].teamName} ${t('scoring.matchup.versus')} ${table.teams[1].teamName}`;
 
     return (
-        <section className="flex max-w-xl flex-col gap-4">
+        <section className="flex w-full max-w-xl flex-col gap-4">
             <PageHeader titleKey="scoring.title" descriptionKey="scoring.description" />
             <p className="text-sm text-muted-foreground">{matchup}</p>
 
-            <div role="tablist" aria-label={t('scoring.selector.label')} className="flex gap-2">
-                {GAME_NUMBERS.map((n) => {
-                    const entered = byNumber.has(n);
-                    return (
-                        <Button
-                            key={n}
-                            type="button"
-                            role="tab"
-                            aria-selected={selected === n}
-                            variant={selected === n ? 'default' : entered ? 'secondary' : 'outline'}
-                            onClick={() => setSelected(n)}
-                        >
-                            {t('scoring.game.label')} {n}
-                            {entered ? ' ✓' : ''}
-                        </Button>
-                    );
-                })}
-            </div>
-
-            <GameEntryForm
-                // Remount on game switch / existence change so the grid state resets cleanly.
-                key={`${selected}-${existingGame?.version ?? 'new'}`}
-                table={table}
-                gameNumber={selected}
-                existingGame={existingGame}
-                onLoadExisting={() => void gamesQuery.refetch()}
-                onReloadRequested={() => void gamesQuery.refetch()}
+            <TabList
+                id="game"
+                label={t('scoring.selector.label')}
+                size="touch"
+                value={String(selected)}
+                onValueChange={(value) => setSelected(Number(value))}
+                items={GAME_NUMBERS.map((n) => ({
+                    value: String(n),
+                    done: byNumber.has(n),
+                    label: (
+                        <>
+                            {/* Phones show just the number; the word stays for screen readers. */}
+                            <span className="sr-only sm:not-sr-only">{t('scoring.game.label')}</span>{' '}
+                            {n}
+                            {byNumber.has(n) ? (
+                                <>
+                                    {' '}
+                                    <span aria-hidden="true">✓</span>{' '}
+                                    <span className="sr-only">{t('scoring.game.entered')}</span>
+                                </>
+                            ) : null}
+                        </>
+                    ),
+                }))}
             />
+
+            <TabPanel id="game" value={String(selected)}>
+                <GameEntryForm
+                    // Remount on game switch / existence change so the grid state resets cleanly.
+                    key={`${selected}-${existingGame?.version ?? 'new'}`}
+                    table={table}
+                    gameNumber={selected}
+                    existingGame={existingGame}
+                    onLoadExisting={() => void gamesQuery.refetch()}
+                    onReloadRequested={() => void gamesQuery.refetch()}
+                />
+            </TabPanel>
         </section>
     );
 }

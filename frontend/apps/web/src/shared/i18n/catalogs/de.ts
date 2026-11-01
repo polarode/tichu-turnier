@@ -175,6 +175,10 @@ export const de: Catalog = {
     'rounds.round': 'Runde',
     'rounds.table': 'Tisch',
     'rounds.versus': 'vs',
+    'rounds.games.entered': 'eingetragen',
+    'rounds.game': 'Spiel',
+    'rounds.game.beschiss': 'Beschiss',
+    'rounds.game.doubleWin': 'Doppelsieg',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',

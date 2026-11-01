@@ -105,7 +105,11 @@ function TournamentDetailComponent() {
                         />
 
                         {tournament.status !== TournamentStatus.SETUP ? (
-                            <RoundsSection tournamentId={tournament.id} teams={teams} />
+                            <RoundsSection
+                                tournamentId={tournament.id}
+                                teams={teams}
+                                live={tournament.status === TournamentStatus.ACTIVE}
+                            />
                         ) : null}
                     </>
                 )}

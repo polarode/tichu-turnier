@@ -20,9 +20,17 @@ export function useStartTournament() {
     });
 }
 
-export function useRounds(tournamentId: string) {
+/** Poll interval while results come in; S8's live updates replace the polling. */
+const LIVE_ROUNDS_REFETCH_MS = 30_000;
+
+/**
+ * The tournament's rounds with each table's entered games. With [live] set (the
+ * tournament is ACTIVE) the query polls so the organizer sees new results.
+ */
+export function useRounds(tournamentId: string, { live = false }: { live?: boolean } = {}) {
     return useQuery({
         queryKey: roundsQueryKey(tournamentId),
         queryFn: (): Promise<Round[]> => TournamentRepository.rounds(tournamentId),
+        refetchInterval: live ? LIVE_ROUNDS_REFETCH_MS : false,
     });
 }

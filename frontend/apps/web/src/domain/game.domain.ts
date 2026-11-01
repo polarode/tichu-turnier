@@ -105,3 +105,8 @@ export interface GameOutcome {
     teamPoints: Record<string, number>;
     victoryPoints: Record<string, number>;
 }
+
+/** A team's total Tichu Points in a game; undefined when the team did not play it. */
+export function teamPoints(game: RecordedGame, teamId: string): number | undefined {
+    return game.outcome.teamPoints[teamId];
+}

@@ -29,8 +29,8 @@ const startedResponse = {
     round: {
         roundNumber: 1,
         tables: [
-            { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b' },
-            { tableNumber: 2, homeTeamId: 'team-c', awayTeamId: 'team-d' },
+            { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] },
+            { tableNumber: 2, homeTeamId: 'team-c', awayTeamId: 'team-d', gameCount: 4, games: [] },
         ],
     },
 };
@@ -38,7 +38,7 @@ const startedResponse = {
 const roundsResponse = [
     {
         roundNumber: 1,
-        tables: [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b' }],
+        tables: [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] }],
     },
 ];
 
@@ -137,8 +137,8 @@ describe('TournamentRepository start/rounds', () => {
         expect(tournament.status).toBe(TournamentStatus.ACTIVE);
         expect(round.number).toBe(1);
         expect(round.tables).toEqual([
-            { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b' },
-            { tableNumber: 2, homeTeamId: 'team-c', awayTeamId: 'team-d' },
+            { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] },
+            { tableNumber: 2, homeTeamId: 'team-c', awayTeamId: 'team-d', gameCount: 4, games: [] },
         ]);
     });
 
@@ -169,7 +169,7 @@ describe('TournamentRepository start/rounds', () => {
         expect(rounds).toEqual([
             {
                 number: 1,
-                tables: [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b' }],
+                tables: [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] }],
             },
         ]);
     });

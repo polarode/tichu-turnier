@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
+import type { RecordedGame } from '@/domain/game.domain.ts';
 import type { Player } from '@/domain/player.domain.ts';
-import type { Round } from '@/domain/round.domain.ts';
+import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
@@ -67,6 +68,49 @@ function round(number: number, tables: Round['tables']): Round {
     return { number, tables };
 }
 
+function table(
+    tableNumber: number,
+    homeTeamId: string,
+    awayTeamId: string,
+    games: RecordedGame[] = [],
+): TableOverview {
+    return { tableNumber, homeTeamId, awayTeamId, gameCount: 4, games };
+}
+
+/**
+ * A recorded game between team-a and team-b. The teams are stored away-first
+ * (team-b, then team-a) on purpose: the view must order scores home : away by
+ * team id, not by stored order.
+ */
+function game(
+    gameNumber: number,
+    points: { a: number; b: number },
+    options: { beschiss?: boolean; doubleWinTeam?: string } = {},
+): RecordedGame {
+    const player = (playerId: string) => ({
+        playerId,
+        position: null,
+        call: 'NONE' as const,
+        bombs: 0,
+        tichuSuccess: false,
+    });
+    return {
+        gameNumber,
+        version: 1,
+        beschiss: options.beschiss ?? false,
+        teams: [
+            { teamId: 'team-b', baseScore: 0, players: [player('b1'), player('b2')] },
+            { teamId: 'team-a', baseScore: 0, players: [player('a1'), player('a2')] },
+        ],
+        outcome: {
+            tichuSuccesses: [],
+            doubleWinTeam: options.doubleWinTeam ?? null,
+            teamPoints: { 'team-a': points.a, 'team-b': points.b },
+            victoryPoints: {},
+        },
+    };
+}
+
 beforeEach(() => {
     vi.clearAllMocks();
     auth.refresh.mockResolvedValue(admin);
@@ -79,7 +123,7 @@ describe('admin start action', () => {
         tournaments.rounds.mockResolvedValue([]);
         tournaments.start.mockResolvedValue({
             tournament: tournament('ACTIVE'),
-            round: round(1, [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b' }]),
+            round: round(1, [table(1, 'team-a', 'team-b')]),
         });
         renderApp('/admin/tournaments/t-1');
 
@@ -150,8 +194,8 @@ describe('rounds section', () => {
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
         tournaments.rounds.mockResolvedValue([
             round(1, [
-                { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b' },
-                { tableNumber: 2, homeTeamId: 'team-b', awayTeamId: 'team-a' },
+                table(1, 'team-a', 'team-b'),
+                table(2, 'team-b', 'team-a'),
             ]),
         ]);
         renderApp('/admin/tournaments/t-1');
@@ -163,6 +207,31 @@ describe('rounds section', () => {
             element?.textContent === 'Tisch 1: Alpha vs Beta',
         );
         expect(tableRow).toBeInTheDocument();
+    });
+
+    it('shows per-table game status and the entered scores home : away with markers', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                table(1, 'team-a', 'team-b', [
+                    game(1, { a: 155, b: 45 }, { beschiss: true }),
+                    game(2, { a: 0, b: 300 }, { doubleWinTeam: 'team-b' }),
+                ]),
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        expect(within(section).getByText('2/4 eingetragen')).toBeInTheDocument();
+
+        const [first, second] = within(section).getAllByRole('listitem', { name: /^Spiel/ });
+        expect(within(first!).getByText('155 : 45')).toBeInTheDocument();
+        expect(within(first!).getByText('Beschiss')).toBeInTheDocument();
+        expect(within(first!).queryByText('Doppelsieg')).not.toBeInTheDocument();
+        expect(within(second!).getByText('0 : 300')).toBeInTheDocument();
+        expect(within(second!).getByText('Doppelsieg')).toBeInTheDocument();
+        expect(within(second!).queryByText('Beschiss')).not.toBeInTheDocument();
     });
 
     it('shows no rounds section while the tournament is in setup', async () => {

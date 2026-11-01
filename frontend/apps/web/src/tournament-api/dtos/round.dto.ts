@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { recordedGameDtoSchema } from '@/scoring-api/dtos/scoring.dto.ts';
 import { tournamentDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 
 /**
@@ -7,17 +8,21 @@ import { tournamentDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
  * (inline round 1) and the rounds read endpoint. Every response is parsed through
  * these at the repository boundary.
  */
-export const tableAssignmentDtoSchema = z.object({
+export const tableOverviewDtoSchema = z.object({
     tableNumber: z.number(),
     homeTeamId: z.string(),
     awayTeamId: z.string(),
+    /** Games played at this table per round — the denominator of "x/n entered". */
+    gameCount: z.number(),
+    /** Games entered so far, ordered by game number (the shared recorded-game shape). */
+    games: z.array(recordedGameDtoSchema),
 });
 
-export type TableAssignmentDto = z.infer<typeof tableAssignmentDtoSchema>;
+export type TableOverviewDto = z.infer<typeof tableOverviewDtoSchema>;
 
 export const roundDtoSchema = z.object({
     roundNumber: z.number(),
-    tables: z.array(tableAssignmentDtoSchema),
+    tables: z.array(tableOverviewDtoSchema),
 });
 
 export type RoundDto = z.infer<typeof roundDtoSchema>;

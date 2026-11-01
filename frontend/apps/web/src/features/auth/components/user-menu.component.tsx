@@ -1,0 +1,72 @@
+import { useNavigate } from '@tanstack/react-router';
+import { LogOut } from 'lucide-react';
+import { useRef, useState } from 'react';
+
+import { useCachedSession, useLogoutAdmin } from '@/features/auth/hooks/auth-queries.hook.ts';
+import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { useDropdownDismiss } from '@/shared/hooks/use-dropdown-dismiss.hook.ts';
+
+/**
+ * Avatar in the top-right corner, shown only while a session exists. Clicking it
+ * opens a menu with the signed-in email and the logout action. Reads the session
+ * purely from the cache (never fetching): the admin guard populates it and logout
+ * clears it, so the avatar appears and disappears with those transitions.
+ */
+export function UserMenu() {
+    const { t } = useI18n();
+    const navigate = useNavigate();
+    const logout = useLogoutAdmin();
+    const admin = useCachedSession();
+
+    const [open, setOpen] = useState(false);
+    const rootRef = useRef<HTMLDivElement>(null);
+    useDropdownDismiss(open, rootRef, () => setOpen(false));
+
+    if (!admin) return null;
+
+    const onLogout = async () => {
+        setOpen(false);
+        await logout.mutateAsync();
+        await navigate({ to: '/login' });
+    };
+
+    return (
+        <div ref={rootRef} className="relative">
+            <button
+                type="button"
+                aria-label={t('auth.menu')}
+                aria-haspopup="menu"
+                aria-expanded={open}
+                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+                <span aria-hidden="true" className="text-sm font-semibold uppercase">
+                    {admin.email.charAt(0)}
+                </span>
+            </button>
+
+            {open && (
+                <div
+                    role="menu"
+                    aria-label={t('auth.menu')}
+                    className="absolute right-0 z-10 mt-1 min-w-48 overflow-hidden rounded-md border border-border bg-popover shadow-md"
+                >
+                    <div className="border-b border-border px-3 py-2 text-sm">
+                        <div className="text-xs text-muted-foreground">{t('auth.signedInAs')}</div>
+                        <div className="truncate font-medium text-foreground">{admin.email}</div>
+                    </div>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={onLogout}
+                        disabled={logout.isPending}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+                    >
+                        <LogOut aria-hidden="true" className="size-4" />
+                        {logout.isPending ? t('auth.logout.pending') : t('auth.logout')}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}

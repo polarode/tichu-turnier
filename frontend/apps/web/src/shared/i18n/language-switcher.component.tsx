@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { LOCALES, type Locale } from '@/shared/i18n/locale.ts';
+import { useDropdownDismiss } from '@/shared/hooks/use-dropdown-dismiss.hook.ts';
 
 const LANGUAGE_LABEL_KEY: Record<Locale, TranslationKey> = {
     de: 'language.de',
@@ -20,22 +21,7 @@ export function LanguageSwitcher() {
     const { locale, setLocale, t } = useI18n();
     const [open, setOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!open) return;
-        function onDocumentClick(event: MouseEvent) {
-            if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-        }
-        function onKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') setOpen(false);
-        }
-        document.addEventListener('mousedown', onDocumentClick);
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', onDocumentClick);
-            document.removeEventListener('keydown', onKeyDown);
-        };
-    }, [open]);
+    useDropdownDismiss(open, rootRef, () => setOpen(false));
 
     return (
         <div ref={rootRef} className="relative">

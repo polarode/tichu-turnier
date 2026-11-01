@@ -77,8 +77,10 @@ describe('admin auth flows', () => {
         await userEvent.type(await screen.findByLabelText('Passwort'), 'correct-password');
         await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
 
-        expect(await screen.findByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
+        // The shell shows an avatar once signed in; email and logout live in its menu.
+        await userEvent.click(await screen.findByRole('button', { name: 'Konto' }));
         expect(screen.getByText('organizer@example.com')).toBeInTheDocument();
+        expect(screen.getByRole('menuitem', { name: 'Abmelden' })).toBeInTheDocument();
     });
 
     it('validates the register form password length', async () => {
@@ -145,7 +147,7 @@ describe('admin auth flows', () => {
         await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
         await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
 
-        expect(await screen.findByRole('button', { name: 'Abmelden' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Konto' })).toBeInTheDocument();
         expect(auth.register).toHaveBeenCalledWith(
             expect.objectContaining({ inviteToken: 'invite-token' }),
         );
@@ -281,14 +283,17 @@ describe('admin auth flows', () => {
         expect(await screen.findByText('Dieses Konto wurde deaktiviert.')).toBeInTheDocument();
     });
 
-    it('logs out from the admin area and returns to login', async () => {
+    it('logs out from the admin area via the avatar menu and returns to login', async () => {
         auth.refresh.mockResolvedValue(admin);
         auth.logout.mockResolvedValue(undefined);
         renderApp('/admin');
 
-        await userEvent.click(await screen.findByRole('button', { name: 'Abmelden' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Konto' }));
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Abmelden' }));
 
         expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument();
+        // Signing out also removes the avatar from the shell.
+        expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();
         expect(auth.logout).toHaveBeenCalled();
     });
 });

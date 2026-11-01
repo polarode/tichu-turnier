@@ -21,7 +21,9 @@ describe('AppShell', () => {
             'href',
             '/public',
         );
-        expect(screen.getByRole('link', { name: 'Anmelden' })).toHaveAttribute('href', '/login');
+        // Signed-out visitors see neither a login entry nor an avatar in the shell.
+        expect(screen.queryByRole('link', { name: 'Anmelden' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();
     });
 
     it('switches every visible string to English and updates <html lang>', async () => {

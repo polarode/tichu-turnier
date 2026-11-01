@@ -11,6 +11,8 @@ export const de: Catalog = {
     'nav.public': 'Öffentlich',
     'nav.login': 'Anmelden',
 
+    'auth.menu': 'Konto',
+
     'language.label': 'Sprache',
     'language.de': 'Deutsch',
     'language.en': 'Englisch',

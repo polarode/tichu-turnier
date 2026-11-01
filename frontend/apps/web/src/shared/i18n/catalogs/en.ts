@@ -14,6 +14,8 @@ export const en = {
     'nav.public': 'Public',
     'nav.login': 'Login',
 
+    'auth.menu': 'Account',
+
     'language.label': 'Language',
     'language.de': 'German',
     'language.en': 'English',

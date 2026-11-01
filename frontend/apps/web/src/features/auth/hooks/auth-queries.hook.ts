@@ -41,6 +41,17 @@ export function useSession() {
 }
 
 /**
+ * The session as last resolved by the route guard, login or logout — read purely
+ * from the cache, never fetching. UI that only reflects an already-known session
+ * (e.g. the shell's avatar) uses this, so public and team pages make no session
+ * request of their own.
+ */
+export function useCachedSession(): AdminUser | null {
+    const { data } = useQuery({ ...sessionQueryOptions, enabled: false });
+    return data ?? null;
+}
+
+/**
  * Result of a registration. A plain registration is `pending`; an invited one is
  * `active` when the follow-up sign-in succeeds, or `signInFailed` when the account
  * activated but the session could not be established.

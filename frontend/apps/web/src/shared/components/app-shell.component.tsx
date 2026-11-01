@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
+import { UserMenu } from '@/features/auth/components/user-menu.component.tsx';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { LanguageSwitcher } from '@/shared/i18n/language-switcher.component.tsx';
@@ -37,9 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
                     <div className="ml-auto flex items-center gap-3">
                         <LanguageSwitcher />
-                        <Link to="/login" className={NAV_LINK_CLASS}>
-                            {t('nav.login')}
-                        </Link>
+                        <UserMenu />
                     </div>
                 </div>
             </header>

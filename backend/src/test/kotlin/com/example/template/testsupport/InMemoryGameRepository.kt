@@ -54,6 +54,11 @@ class InMemoryGameRepository : GameRepository {
             }
             .sortedBy { it.gameNumber }
 
+    override fun findByRound(tournamentId: TournamentId, roundNumber: Int): List<Game> =
+        store.values
+            .filter { it.tournamentId == tournamentId && it.roundNumber == roundNumber }
+            .sortedWith(compareBy({ it.tableNumber }, { it.gameNumber }))
+
     private fun nextId(): Long = idCounter++.let { if (it == 0L) 1L else it }
 
     private var idCounter = 1L

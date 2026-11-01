@@ -1,7 +1,17 @@
 package com.example.template.infra.rest
 
 import com.example.template.domain.AdminUserRepository
+import com.example.template.domain.Game
+import com.example.template.domain.GameKey
+import com.example.template.domain.GameRepository
 import com.example.template.domain.PasswordHasher
+import com.example.template.domain.PlayerResult
+import com.example.template.domain.RoundRepository
+import com.example.template.domain.TeamRepository
+import com.example.template.domain.TeamResult
+import com.example.template.domain.TichuCall
+import com.example.template.domain.TournamentId
+import com.example.template.domain.TournamentSettings
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAsSeededAdmin
 import tools.jackson.databind.ObjectMapper
@@ -24,6 +34,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.context.WebApplicationContext
 
 /**
@@ -38,6 +49,10 @@ class TournamentControllerIntegrationTest(
     @Autowired private val jdbcTemplate: JdbcTemplate,
     @Autowired private val adminUsers: AdminUserRepository,
     @Autowired private val passwordHasher: PasswordHasher,
+    @Autowired private val roundRepository: RoundRepository,
+    @Autowired private val teamRepository: TeamRepository,
+    @Autowired private val gameRepository: GameRepository,
+    @Autowired private val transactionTemplate: TransactionTemplate,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -323,6 +338,9 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.round.tables.length()").value(2))
             .andExpect(jsonPath("$.round.tables[0].tableNumber").value(1))
             .andExpect(jsonPath("$.round.tables[1].tableNumber").value(2))
+            // A fresh round: the game count is known, no games entered yet.
+            .andExpect(jsonPath("$.round.tables[0].gameCount").value(4))
+            .andExpect(jsonPath("$.round.tables[0].games.length()").value(0))
 
         mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
             .andExpect(status().isOk)
@@ -397,6 +415,56 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("\$[0].tables[0].homeTeamId").isNotEmpty)
             .andExpect(jsonPath("\$[0].tables[0].awayTeamId").isNotEmpty)
             .andExpect(jsonPath("\$[0].tables[1].tableNumber").value(2))
+    }
+
+    @Test
+    fun `rounds carry each table's game count and entered games with the derived outcome`() {
+        val id = createTournament("Spring Classic")
+        listOf("Team Alpha", "Team Beta", "Team Gamma", "Team Delta").forEach { createTeam(id, it) }
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isOk)
+        val home = enterGameAtTableOne(id, gameNumber = 2, beschiss = true)
+
+        mockMvc.perform(get("/api/tournaments/$id/rounds").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$[0].tables[0].gameCount").value(4))
+            .andExpect(jsonPath("\$[0].tables[0].games.length()").value(1))
+            .andExpect(jsonPath("\$[0].tables[0].games[0].gameNumber").value(2))
+            .andExpect(jsonPath("\$[0].tables[0].games[0].beschiss").value(true))
+            // Home: 55 base + successful small Tichu = 155 TP.
+            .andExpect(jsonPath("\$[0].tables[0].games[0].outcome.teamPoints['$home']").value(155))
+            .andExpect(jsonPath("\$[0].tables[1].games.length()").value(0))
+    }
+
+    /**
+     * Records one game at table 1 of round 1 through the persistence port (the
+     * team-session write flow is covered by GameControllerIntegrationTest) and
+     * returns the home team id: home 55 base with a successful small Tichu.
+     */
+    private fun enterGameAtTableOne(tournamentId: String, gameNumber: Int, beschiss: Boolean): String {
+        val tid = TournamentId(tournamentId)
+        val table = roundRepository.findByTournamentAndNumber(tid, 1)!!.table(1)!!
+        val (home, away) = table.playingTeams.map { teamRepository.findById(it, tid)!! }
+        transactionTemplate.execute {
+            gameRepository.create(
+                Game.record(
+                    GameKey(tid, roundNumber = 1, tableNumber = 1, gameNumber = gameNumber),
+                    listOf(
+                        TeamResult(home.id, 55, listOf(
+                            PlayerResult(home.players[0].id, 1, TichuCall.SMALL, 0),
+                            PlayerResult(home.players[1].id, 3, TichuCall.NONE, 0),
+                        )),
+                        TeamResult(away.id, 45, listOf(
+                            PlayerResult(away.players[0].id, 2, TichuCall.NONE, 0),
+                            PlayerResult(away.players[1].id, 4, TichuCall.NONE, 0),
+                        )),
+                    ),
+                    beschiss,
+                    TournamentSettings(),
+                ),
+            )
+        }
+        return home.id.value
     }
 
     @Test

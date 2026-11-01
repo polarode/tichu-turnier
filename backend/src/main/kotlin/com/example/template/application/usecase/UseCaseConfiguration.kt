@@ -80,7 +80,8 @@ class UseCaseConfiguration(
     fun listRounds(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
-    ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository)
+        gameRepository: GameRepository,
+    ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository)
 
     @Bean
     fun recordGame(

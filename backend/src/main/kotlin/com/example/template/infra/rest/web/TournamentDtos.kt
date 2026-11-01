@@ -1,5 +1,7 @@
 package com.example.template.infra.rest.web
 
+import com.example.template.application.api.RecordedGame
+import com.example.template.application.api.RoundOverview
 import com.example.template.application.api.StartedTournament
 import com.example.template.domain.Round
 import com.example.template.domain.Table
@@ -86,9 +88,16 @@ data class RoundResponse(
     val tables: List<TableResponse>,
 ) {
     companion object {
+        /** A freshly created round (the start response): no games entered yet. */
         fun from(round: Round): RoundResponse = RoundResponse(
             roundNumber = round.number,
-            tables = round.pairing.tables.map(TableResponse::from),
+            tables = round.pairing.tables.map { TableResponse.from(it, games = emptyList()) },
+        )
+
+        /** The admin's rounds read: each table with its entered games (S5d, #102). */
+        fun fromOverview(overview: RoundOverview): RoundResponse = RoundResponse(
+            roundNumber = overview.round.number,
+            tables = overview.tables.map { TableResponse.from(it.table, it.games) },
         )
     }
 }
@@ -97,12 +106,18 @@ data class TableResponse(
     val tableNumber: Int,
     val homeTeamId: String,
     val awayTeamId: String,
+    /** Games played here per round — the denominator of "x/n entered". */
+    val gameCount: Int,
+    /** The games entered so far, ordered by game number; absent numbers are not yet entered. */
+    val games: List<RecordedGameDto>,
 ) {
     companion object {
-        fun from(table: Table): TableResponse = TableResponse(
+        fun from(table: Table, games: List<RecordedGame>): TableResponse = TableResponse(
             tableNumber = table.id.value,
             homeTeamId = table.home.value,
             awayTeamId = table.away.value,
+            gameCount = table.gameCount,
+            games = games.map(RecordedGameDto::from),
         )
     }
 }

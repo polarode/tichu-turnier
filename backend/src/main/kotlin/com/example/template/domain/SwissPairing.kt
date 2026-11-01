@@ -38,6 +38,10 @@ data class Table(
     val playingTeams: List<TeamId>
         get() = listOf(home, away)
 
+    /** Games played here per round: a normal table hosts four (trio tables host six, #32). */
+    val gameCount: Int
+        get() = 4
+
     /** Whether [teamId] is seated at this table. */
     fun seats(teamId: TeamId): Boolean = teamId in playingTeams
 }

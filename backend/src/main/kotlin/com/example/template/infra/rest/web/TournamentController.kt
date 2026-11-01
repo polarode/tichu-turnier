@@ -78,7 +78,7 @@ class TournamentController(
     fun rounds(
         @PathVariable id: String,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): List<RoundResponse> = listRounds.list(TournamentId(id), principal.adminUserId).map(RoundResponse::from)
+    ): List<RoundResponse> = listRounds.list(TournamentId(id), principal.adminUserId).map(RoundResponse::fromOverview)
 
     @PutMapping("/{id}")
     fun update(

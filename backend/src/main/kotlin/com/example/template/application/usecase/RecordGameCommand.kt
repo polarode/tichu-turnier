@@ -71,7 +71,6 @@ class RecordGameCommand(
         create: Boolean,
     ): RecordedGame {
         requireVersionOnUpdate(create, request)
-        requireGameNumber(request.gameNumber)
 
         val round = roundRepository.findByTournamentAndNumber(tournamentId, roundNumber)
             ?: throw GameNotFoundException(
@@ -83,6 +82,7 @@ class RecordGameCommand(
         val table = round.table(tableNumber)
             ?: throw GameNotFoundException("Table $tableNumber of round ${round.number} not found")
         requireSeatedAt(principal.teamId, table)
+        requireGameNumber(request.gameNumber, table)
 
         val tournament = tournamentRepository.findById(tournamentId)
             ?: throw GameNotFoundException("Tournament ${tournamentId.value} not found")
@@ -122,9 +122,9 @@ class RecordGameCommand(
         }
     }
 
-    private fun requireGameNumber(gameNumber: Int) {
-        if (gameNumber !in 1..4) {
-            throw InvalidFieldException("gameNumber", "Game number must be between 1 and 4")
+    private fun requireGameNumber(gameNumber: Int, table: Table) {
+        if (gameNumber !in 1..table.gameCount) {
+            throw InvalidFieldException("gameNumber", "Game number must be between 1 and ${table.gameCount}")
         }
     }
 

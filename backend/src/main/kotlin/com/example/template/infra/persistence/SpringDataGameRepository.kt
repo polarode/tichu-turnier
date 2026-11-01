@@ -25,6 +25,11 @@ interface SpringDataGameRepository : JpaRepository<GameEntity, Long> {
         roundNumber: Int,
         tableNumber: Int,
     ): List<GameEntity>
+
+    fun findAllByTournamentIdAndRoundNumberOrderByTableNumberAscGameNumberAsc(
+        tournamentId: String,
+        roundNumber: Int,
+    ): List<GameEntity>
 }
 
 interface SpringDataGameParticipantRepository : JpaRepository<GameParticipantEntity, Long> {

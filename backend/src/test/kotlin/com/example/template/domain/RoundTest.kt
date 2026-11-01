@@ -43,4 +43,9 @@ class RoundTest {
         assertTrue(table1.seats(teamB))
         assertFalse(table1.seats(teamC))
     }
+
+    @Test
+    fun `a normal table hosts four games per round`() {
+        assertEquals(4, table1.gameCount)
+    }
 }

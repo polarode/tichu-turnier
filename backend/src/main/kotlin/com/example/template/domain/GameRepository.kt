@@ -34,4 +34,10 @@ interface GameRepository {
      * Backs the team's read of its table (S5c, #101).
      */
     fun findByTable(tournamentId: TournamentId, roundNumber: Int, tableNumber: Int): List<Game>
+
+    /**
+     * All games entered in one round, across its tables, ordered by table then
+     * game number. Backs the admin's rounds read (S5d, #102).
+     */
+    fun findByRound(tournamentId: TournamentId, roundNumber: Int): List<Game>
 }

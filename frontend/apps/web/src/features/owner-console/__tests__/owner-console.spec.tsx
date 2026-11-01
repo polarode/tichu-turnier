@@ -67,6 +67,19 @@ describe('owner console', () => {
         adminRepo.listAccounts.mockResolvedValue([]);
     });
 
+    it('opens the console from the avatar menu for owners', async () => {
+        auth.refresh.mockResolvedValue(owner);
+        adminRepo.listAccounts.mockResolvedValue([]);
+        const { router } = renderApp('/public');
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Konto' }));
+        await userEvent.click(screen.getByRole('menuitem', { name: 'Owner-Konsole' }));
+
+        await vi.waitFor(() => expect(router.state.location.pathname).toBe('/admin/console'));
+        expect(screen.queryByRole('menu', { name: 'Konto' })).not.toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Owner-Konsole' })).toBeInTheDocument();
+    });
+
     it('approves a pending request and moves the account into the admin list', async () => {
         auth.refresh.mockResolvedValue(owner);
         const pending = account({ id: 'pending-1', email: 'newbie@example.com', status: 'PENDING' });
@@ -76,8 +89,7 @@ describe('owner console', () => {
 
         renderApp('/admin/console');
 
-        // Owners reach the console and see its entry point; the pending request is listed.
-        expect(await screen.findByRole('link', { name: 'Owner-Konsole' })).toBeInTheDocument();
+        // Owners reach the console; the pending request is listed.
         expect(await screen.findByText('newbie@example.com')).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Freigeben' }));
@@ -149,7 +161,10 @@ describe('owner console', () => {
         renderApp('/admin/console');
 
         expect(await screen.findByRole('heading', { name: 'Nicht verfügbar' })).toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: 'Owner-Konsole' })).not.toBeInTheDocument();
+        // Only owners get the console entry in the avatar menu.
+        await userEvent.click(screen.getByRole('button', { name: 'Konto' }));
+        expect(screen.getByRole('menu', { name: 'Konto' })).toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: 'Owner-Konsole' })).not.toBeInTheDocument();
         expect(adminRepo.listAccounts).not.toHaveBeenCalled();
         expect(adminRepo.listInvites).not.toHaveBeenCalled();
     });

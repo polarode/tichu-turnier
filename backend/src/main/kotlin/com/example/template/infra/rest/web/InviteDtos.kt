@@ -16,6 +16,7 @@ data class CreateInviteRequestBody(
 
 /**
  * The one response that carries the raw token — returned exactly once, at issuance.
+ * It repeats every [InviteResponse] field, so clients parse it as an invite plus token.
  * [link] is the copyable, ready-to-share URL the owner hands out; it embeds the same
  * token, so either field can be used by a client.
  */
@@ -23,8 +24,10 @@ data class CreateInviteResponse(
     val id: String,
     val email: String,
     val status: InviteStatus,
+    val createdBy: String,
     val createdAt: Instant,
     val expiresAt: Instant,
+    val spentAt: Instant?,
     val token: String,
     val link: String,
 ) {
@@ -36,8 +39,10 @@ data class CreateInviteResponse(
                 id = invite.id.value,
                 email = invite.email,
                 status = invite.status,
+                createdBy = invite.createdBy.value,
                 createdAt = invite.createdAt,
                 expiresAt = invite.expiresAt,
+                spentAt = invite.spentAt,
                 token = issued.token,
                 link = "${frontendUrl.trimEnd('/')}/register?invite=$encodedToken",
             )

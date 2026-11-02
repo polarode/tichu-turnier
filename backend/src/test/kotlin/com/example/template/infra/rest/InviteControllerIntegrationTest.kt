@@ -129,6 +129,11 @@ class InviteControllerIntegrationTest(
         val token = body.get("token").asText()
         assertTrue(body.get("link").asText().contains(token), "the copyable link embeds the token")
 
+        // The issuance response is a superset of the listed invite, so clients can parse it
+        // with the same invite schema plus the token fields.
+        assertTrue(body.path("createdBy").isTextual, "the issued invite names its creator")
+        assertTrue(body.has("spentAt") && body.get("spentAt").isNull, "a fresh invite is unspent")
+
         // The database holds only the digest.
         val stored = adminInvites.findByTokenHash(sessionTokens.hash(token))
         assertTrue(stored != null, "the invite is persisted under its token hash")

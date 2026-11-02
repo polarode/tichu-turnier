@@ -73,6 +73,21 @@ The card points a team accumulates from playing games (base scores summing to
 with a bigger TP margin therefore ranks a team higher on equal VP.
 _Avoid_: points, score
 
+### Confirmation
+
+**Confirmation**:
+A team's statement that it agrees with every game recorded at its table in a round.
+Only possible once all of the table's games are entered; the team may retract it
+until the table is completed.
+_Avoid_: approval, sign-off
+
+**Table Status**:
+Derived from the table's confirmations: **Playing** (no team confirmed; games
+editable), **Confirming** (at least one team confirmed; games frozen, retracting
+the last confirmation returns to Playing), **Completed** (every team seated at the
+table confirmed; final, no retraction). A round is complete when all its tables are.
+_Avoid_: locked, done
+
 ### Scoring
 
 **Beschiss**:

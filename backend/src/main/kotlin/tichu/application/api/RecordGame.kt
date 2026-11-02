@@ -1,0 +1,117 @@
+package tichu.application.api
+
+import tichu.domain.Game
+import tichu.domain.GameOutcome
+import tichu.domain.PlayerId
+import tichu.domain.TichuCall
+import tichu.domain.TeamId
+import tichu.domain.TournamentId
+import tichu.domain.TournamentSettings
+
+/**
+ * Transport-agnostic write payload for recording a game (issue #100): raw facts
+ * only, team-grouped exactly as the scoring engine wants them. No client totals,
+ * no tichu_success, no doubleWin flag — everything derivable is derived
+ * server-side (ADR 0004). [version] is carried on PUT only; POST has none.
+ */
+data class GameWriteRequest(
+    val gameNumber: Int,
+    val beschiss: Boolean,
+    val version: Int?,
+    val teams: List<TeamResultInput>,
+)
+
+data class TeamResultInput(
+    val teamId: TeamId,
+    val baseScore: Int,
+    val players: List<PlayerResultInput>,
+)
+
+data class PlayerResultInput(
+    val playerId: PlayerId,
+    val position: Int?,
+    val call: TichuCall,
+    val bombs: Int,
+)
+
+/**
+ * The server-authoritative answer after a successful submit: the full game —
+ * natural key, raw facts as stored (the participants echo) with the derived
+ * per-player success — plus the derived outcome.
+ */
+data class RecordedGame(
+    val gameNumber: Int,
+    val version: Int,
+    val beschiss: Boolean,
+    val teams: List<RecordedTeam>,
+    val outcome: GameOutcome,
+) {
+    companion object {
+        /**
+         * The server-authoritative view of a stored [game]: its facts plus the
+         * outcome derived from them. Every read and write response goes through
+         * here, so a read and a fresh submit agree by construction (ADR 0004).
+         */
+        fun of(game: Game, settings: TournamentSettings): RecordedGame {
+            val outcome = game.score(settings)
+            return RecordedGame(
+                gameNumber = game.gameNumber,
+                version = game.version,
+                beschiss = game.beschiss,
+                teams = game.teamResults.map { team ->
+                    RecordedTeam(
+                        teamId = team.teamId,
+                        baseScore = team.baseScore,
+                        players = team.players.map {
+                            RecordedPlayer(it.playerId, it.position, it.call, it.bombs, tichuSuccess = it.isSuccess)
+                        },
+                    )
+                },
+                outcome = outcome,
+            )
+        }
+    }
+}
+
+data class RecordedTeam(
+    val teamId: TeamId,
+    val baseScore: Int,
+    val players: List<RecordedPlayer>,
+)
+
+data class RecordedPlayer(
+    val playerId: PlayerId,
+    val position: Int?,
+    val call: TichuCall,
+    val bombs: Int,
+    /** Derived, never stored: call ∧ position 1 (ADR 0004). */
+    val tichuSuccess: Boolean,
+)
+
+/**
+ * Inbound port (driving side) for the team-session scoring API. The round and
+ * table are addressed by numbers (the API never takes a surrogate table id);
+ * the principal is the team, so the session — not the request — scopes the
+ * mutation. Authorization is "any team seated at the table may create or edit
+ * any game at that table", checked inside the use case.
+ */
+interface RecordGame {
+
+    /** Creates the game; a natural-key slot that already holds one is a conflict. */
+    fun create(
+        tournamentId: TournamentId,
+        roundNumber: Int,
+        tableNumber: Int,
+        request: GameWriteRequest,
+        principal: AuthenticatedTeam,
+    ): RecordedGame
+
+    /** Explicit edit; carries [GameWriteRequest.version] for optimistic locking. */
+    fun update(
+        tournamentId: TournamentId,
+        roundNumber: Int,
+        tableNumber: Int,
+        request: GameWriteRequest,
+        principal: AuthenticatedTeam,
+    ): RecordedGame
+}

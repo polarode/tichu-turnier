@@ -1,0 +1,36 @@
+package tichu.application.usecase
+
+import tichu.application.api.DeleteTeam
+import tichu.domain.AdminUserId
+import tichu.domain.TeamId
+import tichu.domain.TeamRepository
+import tichu.domain.TeamTokenRepository
+import tichu.domain.TournamentId
+import tichu.domain.TournamentRepository
+import tichu.vocabulary.NotFoundException
+import org.springframework.transaction.annotation.Transactional
+
+/**
+ * Deletes a team, its two players and its access token. Ownership is checked on the
+ * tournament first,
+ * then the team must belong to that tournament — a foreign or unknown team id answers
+ * 404 for every verb, never 403. The read and the deletes share one transaction, so a
+ * failure cannot leave a team half-removed (the players and the token also cascade in
+ * the schema, but the scoped deletes are the application-level guarantee). A plain
+ * class wired as a bean in [UseCaseConfiguration].
+ */
+@Transactional
+class DeleteTeamCommand(
+    private val tournamentRepository: TournamentRepository,
+    private val teamRepository: TeamRepository,
+    private val teamTokenRepository: TeamTokenRepository,
+) : DeleteTeam {
+
+    override fun delete(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId) {
+        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        teamRepository.findById(teamId, tournamentId)
+            ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
+        teamRepository.delete(teamId, tournamentId)
+        teamTokenRepository.deleteByTeamId(teamId)
+    }
+}

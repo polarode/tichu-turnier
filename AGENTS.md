@@ -55,13 +55,13 @@ Hexagonal (ports & adapters). Dependencies point inward: `infra` → `applicatio
 
 ```
 backend/src/main/kotlin/tichu/
-├── domain/              # entities + port interfaces (TaskRepository). No Spring.
+├── domain/              # entities + port interfaces (RoundRepository). No Spring.
 ├── application/
-│   ├── api/             # inbound ports: use-case interfaces (CreateTask, ListTasks, ...)
+│   ├── api/             # inbound ports: use-case interfaces (RecordGame, ListRounds, ...)
 │   └── usecase/         # use-case implementations + UseCaseConfiguration (@Bean wiring)
 ├── infra/
 │   ├── rest/            # controllers + RestConfiguration (@Bean) + error handling
-│   └── persistence/     # repository adapter (in-memory) + PersistenceConfiguration (@Bean)
+│   └── persistence/     # JPA repository adapters (Postgres) + PersistenceConfiguration (@Bean)
 ├── vocabulary/          # shared exceptions / value types
 └── main/                # @SpringBootApplication + @Import of every configuration
 ```

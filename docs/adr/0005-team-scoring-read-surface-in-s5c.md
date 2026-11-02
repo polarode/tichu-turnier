@@ -2,6 +2,10 @@
 
 Date: 2026-10-31 · Status: accepted · Context: issues #100 (S5b), #101 (S5c)
 
+> Superseded in part by [ADR 0006](0006-per-table-confirmation-freezes-at-first-confirm.md):
+> `current-table` no longer exposes the round's `locked` flag; it carries the table's
+> derived `status` and `confirmedTeamIds` instead.
+
 ## Decision
 
 The two team-scoped **read** endpoints that the scoring form depends on are built

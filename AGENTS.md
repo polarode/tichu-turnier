@@ -9,8 +9,8 @@ This is a two-app monorepo. Read the relevant section before editing an area.
 ## Plan & tickets
 
 - **Wayfinder map**: issue #27 on `polarode/tichu-turnier` — the authoritative plan. Work is organized as feature slices (S1–S11), each a child issue of the map with the full spec in its body. Invoke the wayfinder skill with the map to work through it.
-- **Tickets**: GitHub Issues on `polarode/tichu-turnier`, collected in the "Tichu Turnier" project. Each issue carries a *Blocked by* section referencing the blocking issue numbers, and the `ready-for-agent` label marks issues whose blockers are resolved. Done work is closed with the `done` label. Do not create local ticket files in the repo.
-- **Status in the plan**: the map's Decisions-so-far section records what is done; keep it current as slices close.
+- **Tickets**: GitHub Issues on `polarode/tichu-turnier`, collected in the "Tichu Turnier" project. Blocking is expressed as native GitHub issue dependencies (mirrored by a *Blocked by* line in the body). Sub-tickets are native sub-issues of their slice. Done work is simply closed; there are no status labels. The map's slice tickets carry only their `wayfinder:*` type label. Do not create local ticket files in the repo.
+- **Status in the plan**: the map's Decisions-so-far section is an index, with one line per closed slice (name, link, one-line gist). Details live in the slice and its sub-tickets, never in the map.
 
 ## Conventional Commits
 

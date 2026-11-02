@@ -16,7 +16,7 @@ import {
     useRetractTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
-import { TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
+import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
@@ -106,7 +106,7 @@ function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTe
             ) : null}
 
             <p>
-                {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedTeamIds.length}${outOf}${table.teams.length} ${t('confirmation.count.confirmed')}`}
+                {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}
             </p>
             {confirmedTeamIds.length > 0 ? (
                 <p className="text-muted-foreground">

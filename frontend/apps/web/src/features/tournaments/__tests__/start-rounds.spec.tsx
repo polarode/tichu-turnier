@@ -285,7 +285,7 @@ describe('rounds section', () => {
 
         // Playing keeps the entry progress; once someone confirms, the chip shows the status.
         expect(within(playing).getByText('3/4 eingetragen')).toBeInTheDocument();
-        expect(within(confirming).getByText('Bestätigung läuft · 1/2 bestätigt')).toBeInTheDocument();
+        expect(within(confirming).getByText('Bestätigung läuft · 1 von 2 bestätigt')).toBeInTheDocument();
         expect(within(confirming).queryByText(/eingetragen/)).not.toBeInTheDocument();
         expect(within(completed).getByText('Abgeschlossen')).toBeInTheDocument();
 

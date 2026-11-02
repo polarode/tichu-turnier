@@ -271,6 +271,7 @@ export const de: Catalog = {
     'confirmation.status.completed': 'Abgeschlossen',
     'confirmation.count.of': 'von',
     'confirmation.count.confirmed': 'bestätigt',
+    'confirmation.teamConfirmed': 'bestätigt',
     'confirmation.confirmedBy': 'Bestätigt von',
     'confirmation.gamesEntered': 'Spielen eingetragen',
     'confirmation.confirm': 'Alle Spiele bestätigen',

@@ -8,12 +8,12 @@ import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import { GameSummaryRow, TeamDot } from '@/features/scoring/components/game-summary-row.component.tsx';
-import { TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
+import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
-import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { type I18n, useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 interface RoundsSectionProps {
@@ -149,21 +149,8 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
     const { t } = useI18n();
     const [open, setOpen] = useState(false);
     const gamesId = useId();
-    const entered = table.games.length;
-    const { status, confirmedTeamIds } = table.confirmation;
-    const statusLabel = t(TABLE_STATUS_LABEL_KEYS[status]);
-    const chip =
-        status === TableStatus.COMPLETED ? statusLabel
-        : status === TableStatus.CONFIRMING ?
-            `${statusLabel} · ${confirmedTeamIds.length}/${table.teamIds.length} ${t('confirmation.count.confirmed')}`
-        :   `${entered}/${table.gameCount} ${t('rounds.games.entered')}`;
-    // Done in the "done" tint, partly entered or awaiting confirmations in amber, untouched in grey.
-    const chipTone =
-        status === TableStatus.COMPLETED ? 'bg-secondary text-secondary-foreground'
-        : status === TableStatus.CONFIRMING ? 'bg-warning-soft text-warning'
-        : entered >= table.gameCount ? 'bg-secondary text-secondary-foreground'
-        : entered > 0 ? 'bg-warning-soft text-warning'
-        : 'bg-muted text-muted-foreground';
+    const { confirmedTeamIds } = table.confirmation;
+    const chip = tableChip(table, t);
     const byNumber = new Map(table.games.map((game) => [game.gameNumber, game]));
     const seatOfTeam = (teamId: string) => table.teamIds.indexOf(teamId);
 
@@ -192,15 +179,15 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                                 <>
                                     {' '}
                                     <span aria-hidden="true">✓</span>{' '}
-                                    <span className="sr-only">{t('confirmation.count.confirmed')}</span>
+                                    <span className="sr-only">{t('confirmation.teamConfirmed')}</span>
                                 </>
                             ) : null}
                         </Fragment>
                     ))}
                 </span>
                 {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
-                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', chipTone)}>
-                    {chip}
+                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', chip.tone)}>
+                    {chip.label}
                 </span>
             </button>
             {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}
@@ -218,4 +205,32 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
             </ul>
         </li>
     );
+}
+
+const DONE_TONE = 'bg-secondary text-secondary-foreground';
+const PENDING_TONE = 'bg-warning-soft text-warning';
+const UNTOUCHED_TONE = 'bg-muted text-muted-foreground';
+
+/**
+ * The table's chip: the entry progress while Playing (grey untouched, amber once
+ * games come in), the status with "k of n confirmed" while Confirming (amber),
+ * and "Completed" in the done tint — the only state the round's ✓ counts.
+ */
+function tableChip(table: TableOverview, t: I18n['t']): { label: string; tone: string } {
+    const { status } = table.confirmation;
+    const statusLabel = t(TABLE_STATUS_LABEL_KEYS[status]);
+    switch (status) {
+        case TableStatus.COMPLETED:
+            return { label: statusLabel, tone: DONE_TONE };
+        case TableStatus.CONFIRMING:
+            return {
+                label: `${statusLabel} · ${confirmedCountLabel(table.confirmation, table.teamIds.length, t)}`,
+                tone: PENDING_TONE,
+            };
+        case TableStatus.PLAYING:
+            return {
+                label: `${table.games.length}/${table.gameCount} ${t('rounds.games.entered')}`,
+                tone: table.games.length > 0 ? PENDING_TONE : UNTOUCHED_TONE,
+            };
+    }
 }

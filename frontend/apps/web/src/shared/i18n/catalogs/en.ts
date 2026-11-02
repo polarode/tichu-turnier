@@ -270,6 +270,7 @@ export const en = {
     'confirmation.status.completed': 'Completed',
     'confirmation.count.of': 'of',
     'confirmation.count.confirmed': 'confirmed',
+    'confirmation.teamConfirmed': 'confirmed',
     'confirmation.confirmedBy': 'Confirmed by',
     'confirmation.gamesEntered': 'games entered',
     'confirmation.confirm': 'Confirm all games',

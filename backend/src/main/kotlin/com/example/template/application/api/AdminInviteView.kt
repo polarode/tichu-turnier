@@ -14,7 +14,7 @@ import java.time.Instant
  */
 data class AdminInviteView(
     val id: InviteId,
-    val email: String,
+    val label: String,
     val status: InviteStatus,
     val createdBy: AdminUserId,
     val createdAt: Instant,
@@ -25,7 +25,7 @@ data class AdminInviteView(
 /** The single projection point; every invite use case returns through it. */
 fun AdminInvite.toView(): AdminInviteView = AdminInviteView(
     id = id,
-    email = email,
+    label = label,
     status = status,
     createdBy = createdBy,
     createdAt = createdAt,

@@ -3,7 +3,7 @@ package com.example.template.domain
 import java.time.Instant
 
 /**
- * An owner-issued, email-addressed invitation to become an admin. Framework-free: like
+ * An owner-issued invitation to become an admin. Framework-free: like
  * a session token, the invite's secret is held only as a hash produced by the
  * [SessionTokens] port, so the raw token exists only in the copyable link handed to the
  * owner at issuance.
@@ -15,7 +15,12 @@ import java.time.Instant
  */
 data class AdminInvite(
     val id: InviteId,
-    val email: String,
+    /**
+     * Free text naming who the link is for, shown only in the owner console. Invites are
+     * handed out by hand rather than mailed, so the label is not bound to any account and
+     * the link can be redeemed with any email address.
+     */
+    val label: String,
     val tokenHash: String,
     val status: InviteStatus,
     /** The owner who issued it; copied onto the account as `invitedBy` when accepted. */

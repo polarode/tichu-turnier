@@ -3,15 +3,15 @@ package com.example.template.infra.rest.web
 import com.example.template.application.api.AdminInviteView
 import com.example.template.application.api.IssuedInvite
 import com.example.template.domain.InviteStatus
-import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import java.time.Instant
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 /** Wire DTO for issuing an invite. Validated at the boundary; carries no secret. */
 data class CreateInviteRequestBody(
-    @field:NotBlank @field:Email val email: String,
+    @field:NotBlank @field:Size(max = 100) val label: String,
 )
 
 /**
@@ -22,7 +22,7 @@ data class CreateInviteRequestBody(
  */
 data class CreateInviteResponse(
     val id: String,
-    val email: String,
+    val label: String,
     val status: InviteStatus,
     val createdBy: String,
     val createdAt: Instant,
@@ -37,7 +37,7 @@ data class CreateInviteResponse(
             val encodedToken = URLEncoder.encode(issued.token, StandardCharsets.UTF_8)
             return CreateInviteResponse(
                 id = invite.id.value,
-                email = invite.email,
+                label = invite.label,
                 status = invite.status,
                 createdBy = invite.createdBy.value,
                 createdAt = invite.createdAt,
@@ -56,7 +56,7 @@ data class CreateInviteResponse(
  */
 data class InviteResponse(
     val id: String,
-    val email: String,
+    val label: String,
     val status: InviteStatus,
     val createdBy: String,
     val createdAt: Instant,
@@ -66,7 +66,7 @@ data class InviteResponse(
     companion object {
         fun from(view: AdminInviteView): InviteResponse = InviteResponse(
             id = view.id.value,
-            email = view.email,
+            label = view.label,
             status = view.status,
             createdBy = view.createdBy.value,
             createdAt = view.createdAt,

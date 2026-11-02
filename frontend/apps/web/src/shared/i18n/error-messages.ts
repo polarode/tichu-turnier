@@ -25,7 +25,6 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     ADMIN_STATUS_CONFLICT: 'error.adminStatusConflict',
     INVITE_INVALID: 'error.inviteInvalid',
     INVITE_EXPIRED: 'error.inviteExpired',
-    INVITE_EMAIL_MISMATCH: 'error.inviteEmailMismatch',
     INVITE_STATUS_CONFLICT: 'error.inviteStatusConflict',
     LINK_ALREADY_REVEALED: 'error.linkAlreadyRevealed',
     TEAM_ACCESS_INVALID: 'error.teamAccessInvalid',

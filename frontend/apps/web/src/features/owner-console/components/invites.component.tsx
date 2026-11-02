@@ -36,13 +36,11 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
 
     const onSubmit = form.handleSubmit(async (values) => {
         try {
-            const created = await createInvite.mutateAsync(values.email);
+            const created = await createInvite.mutateAsync(values.label);
             setIssued(created);
             form.reset();
         } catch (failure) {
-            applyServerError(form.setError, failure, t, {
-                codes: { EMAIL_ALREADY_REGISTERED: 'email' },
-            });
+            applyServerError(form.setError, failure, t);
         }
     });
 
@@ -55,12 +53,11 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
             <form onSubmit={onSubmit} noValidate className="flex max-w-md flex-wrap items-end gap-2">
                 <div className="flex-1">
                     <FormField
-                        id="invite-email"
-                        type="email"
+                        id="invite-label"
                         autoComplete="off"
-                        label={t('ownerConsole.invites.email')}
-                        error={form.formState.errors.email?.message}
-                        {...form.register('email')}
+                        label={t('ownerConsole.invites.label')}
+                        error={form.formState.errors.label?.message}
+                        {...form.register('label')}
                     />
                 </div>
                 <Button type="submit" disabled={createInvite.isPending}>
@@ -100,7 +97,7 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
                     {invites.map((invite) => (
                         <ConsoleRow key={invite.id}>
                             <div className="flex flex-wrap items-center gap-3">
-                                <span className="font-medium">{invite.email}</span>
+                                <span className="font-medium">{invite.label}</span>
                                 <Badge
                                     variant={
                                         invite.status === InviteStatus.PENDING

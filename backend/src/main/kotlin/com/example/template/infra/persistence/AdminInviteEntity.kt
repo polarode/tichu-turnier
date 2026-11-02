@@ -19,7 +19,7 @@ import java.time.Instant
 class AdminInviteEntity(
     @Id
     val id: String,
-    val email: String,
+    val label: String,
     val tokenHash: String,
     val status: String,
     val createdBy: String,
@@ -30,7 +30,7 @@ class AdminInviteEntity(
 ) {
     fun toDomain(): AdminInvite = AdminInvite(
         id = InviteId(id),
-        email = email,
+        label = label,
         tokenHash = tokenHash,
         status = InviteStatus.valueOf(status),
         createdBy = AdminUserId(createdBy),
@@ -42,7 +42,7 @@ class AdminInviteEntity(
     companion object {
         fun from(invite: AdminInvite): AdminInviteEntity = AdminInviteEntity(
             id = invite.id.value,
-            email = invite.email,
+            label = invite.label,
             tokenHash = invite.tokenHash,
             status = invite.status.name,
             createdBy = invite.createdBy.value,

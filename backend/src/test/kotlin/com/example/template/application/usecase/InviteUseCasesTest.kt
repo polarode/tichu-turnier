@@ -18,7 +18,6 @@ import com.example.template.testsupport.InMemoryAdminInviteRepository
 import com.example.template.testsupport.InMemoryAdminUserRepository
 import com.example.template.vocabulary.EmailAlreadyRegisteredException
 import com.example.template.vocabulary.ForbiddenException
-import com.example.template.vocabulary.InviteEmailMismatchException
 import com.example.template.vocabulary.InviteExpiredException
 import com.example.template.vocabulary.InviteInvalidException
 import com.example.template.vocabulary.InviteStatusConflictException
@@ -55,7 +54,7 @@ class InviteUseCasesTest {
         override fun newId(): String = "id-${++counter}"
     }
 
-    private val createInvite = CreateInviteCommand(invites, users, sessionTokens, idGenerator, fixedClock, inviteTtl)
+    private val createInvite = CreateInviteCommand(invites, sessionTokens, idGenerator, fixedClock, inviteTtl)
     private val listInvites = ListInvitesQuery(invites)
     private val revokeInvite = RevokeInviteCommand(invites)
     private val registerAdmin =
@@ -65,8 +64,8 @@ class InviteUseCasesTest {
 
     private fun plainAdmin() = AuthenticatedAdmin(AdminUserId("admin-id"), "admin@example.com", AdminRole.ADMIN)
 
-    private fun issue(email: String = "invitee@example.com") =
-        createInvite.create(owner(), CreateInvite.CreateInviteRequest(email))
+    private fun issue(label: String = "Ada") =
+        createInvite.create(owner(), CreateInvite.CreateInviteRequest(label))
 
     private fun seedUser(email: String, status: AdminStatus = AdminStatus.ACTIVE): AdminUser =
         users.save(
@@ -82,14 +81,14 @@ class InviteUseCasesTest {
 
     private fun seedInvite(
         rawToken: String,
-        email: String,
+        label: String = "Ada",
         status: InviteStatus = InviteStatus.PENDING,
         expiresAt: Instant = now.plus(inviteTtl),
         createdAt: Instant = now,
     ): AdminInvite = invites.save(
         AdminInvite(
             id = InviteId(idGenerator.newId()),
-            email = normalizeEmail(email),
+            label = label,
             tokenHash = sessionTokens.hash(rawToken),
             status = status,
             createdBy = owner().adminUserId,
@@ -101,9 +100,9 @@ class InviteUseCasesTest {
 
     @Test
     fun `issuing an invite returns the raw token once and stores only its high-entropy hash`() {
-        val issued = issue("  Ada@Example.com ")
+        val issued = issue("  Ada Lovelace ")
 
-        assertEquals("ada@example.com", issued.invite.email, "the invite email is normalized")
+        assertEquals("Ada Lovelace", issued.invite.label, "the invite label is trimmed")
         assertEquals(InviteStatus.PENDING, issued.invite.status)
         assertEquals(owner().adminUserId, issued.invite.createdBy)
         assertEquals(now, issued.invite.createdAt)
@@ -118,16 +117,19 @@ class InviteUseCasesTest {
     }
 
     @Test
-    fun `issuing an invite for an already registered email is refused`() {
+    fun `an invite is not tied to an email address`() {
         seedUser("taken@example.com")
 
-        assertFailsWith<EmailAlreadyRegisteredException> { issue("taken@example.com") }
+        // The label only tells the owner who the link is for; it is not checked anywhere.
+        val issued = issue("taken@example.com")
+
+        assertEquals(InviteStatus.PENDING, issued.invite.status)
     }
 
     @Test
     fun `a non-owner cannot issue an invite`() {
         assertFailsWith<ForbiddenException> {
-            createInvite.create(plainAdmin(), CreateInvite.CreateInviteRequest("invitee@example.com"))
+            createInvite.create(plainAdmin(), CreateInvite.CreateInviteRequest("Ada"))
         }
     }
 
@@ -138,7 +140,7 @@ class InviteUseCasesTest {
         val listed = listInvites.list(owner()).single()
 
         assertEquals(issued.invite.id, listed.id)
-        assertEquals(issued.invite.email, listed.email)
+        assertEquals(issued.invite.label, listed.label)
         assertEquals(InviteStatus.PENDING, listed.status)
         assertEquals(owner().adminUserId, listed.createdBy)
     }
@@ -167,7 +169,7 @@ class InviteUseCasesTest {
 
     @Test
     fun `revoking an invite that is not pending is a status conflict`() {
-        val spent = seedInvite("raw-token", "invitee@example.com", status = InviteStatus.SPENT)
+        val spent = seedInvite("raw-token", status = InviteStatus.SPENT)
 
         assertFailsWith<InviteStatusConflictException> { revokeInvite.revoke(owner(), spent.id) }
     }
@@ -181,8 +183,8 @@ class InviteUseCasesTest {
     }
 
     @Test
-    fun `registering with a valid invite for that email activates immediately and records the inviter`() {
-        val issued = issue("invitee@example.com")
+    fun `registering with a valid invite activates immediately and records the inviter`() {
+        val issued = issue()
 
         val account = registerAdmin.register(
             RegisterAdmin.RegisterAdminRequest("invitee@example.com", "s3cret-pw", issued.token),
@@ -201,7 +203,7 @@ class InviteUseCasesTest {
 
     @Test
     fun `an invite cannot be used twice`() {
-        val issued = issue("first@example.com")
+        val issued = issue()
         registerAdmin.register(RegisterAdmin.RegisterAdminRequest("first@example.com", "s3cret-pw", issued.token))
 
         // A different email skips the duplicate-account check, isolating the invite's single use.
@@ -213,7 +215,7 @@ class InviteUseCasesTest {
     @Test
     fun `the account records when the invite was issued, not just when it was accepted`() {
         val issuedAt = now.minus(Duration.ofDays(2))
-        seedInvite("early-token", "invitee@example.com", createdAt = issuedAt, expiresAt = now.plus(inviteTtl))
+        seedInvite("early-token", createdAt = issuedAt, expiresAt = now.plus(inviteTtl))
 
         val account = registerAdmin.register(
             RegisterAdmin.RegisterAdminRequest("invitee@example.com", "s3cret-pw", "early-token"),
@@ -225,7 +227,7 @@ class InviteUseCasesTest {
 
     @Test
     fun `an expired invite is rejected`() {
-        seedInvite("stale-token", "invitee@example.com", expiresAt = now.minus(Duration.ofMinutes(1)))
+        seedInvite("stale-token", expiresAt = now.minus(Duration.ofMinutes(1)))
 
         assertFailsWith<InviteExpiredException> {
             registerAdmin.register(RegisterAdmin.RegisterAdminRequest("invitee@example.com", "s3cret-pw", "stale-token"))
@@ -234,7 +236,7 @@ class InviteUseCasesTest {
 
     @Test
     fun `a revoked invite is rejected`() {
-        seedInvite("revoked-token", "invitee@example.com", status = InviteStatus.REVOKED)
+        seedInvite("revoked-token", status = InviteStatus.REVOKED)
 
         assertFailsWith<InviteInvalidException> {
             registerAdmin.register(
@@ -244,17 +246,26 @@ class InviteUseCasesTest {
     }
 
     @Test
-    fun `an invite for a different email is rejected`() {
-        val issued = issue("invited@example.com")
+    fun `an invite can be redeemed with any email address`() {
+        val issued = issue("Ada")
 
-        assertFailsWith<InviteEmailMismatchException> {
-            registerAdmin.register(
-                RegisterAdmin.RegisterAdminRequest("someone-else@example.com", "s3cret-pw", issued.token),
-            )
+        val account = registerAdmin.register(
+            RegisterAdmin.RegisterAdminRequest("whoever@example.com", "s3cret-pw", issued.token),
+        )
+
+        assertEquals("whoever@example.com", account.email)
+        assertEquals(AdminStatus.ACTIVE, account.status)
+    }
+
+    @Test
+    fun `redeeming an invite with an already registered email is refused and leaves the invite pending`() {
+        seedUser("taken@example.com")
+        val issued = issue()
+
+        assertFailsWith<EmailAlreadyRegisteredException> {
+            registerAdmin.register(RegisterAdmin.RegisterAdminRequest("taken@example.com", "s3cret-pw", issued.token))
         }
-        // The mismatch did not consume the invite.
         assertEquals(InviteStatus.PENDING, invites.findById(issued.invite.id)!!.status)
-        assertTrue(users.findByEmail("someone-else@example.com") == null, "no account is created on rejection")
     }
 
     @Test

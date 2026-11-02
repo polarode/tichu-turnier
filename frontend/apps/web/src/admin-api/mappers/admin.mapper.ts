@@ -23,7 +23,7 @@ export function adminAccountDtoToDomain(dto: AdminAccountDto): AdminAccount {
 export function inviteDtoToDomain(dto: InviteDto): AdminInvite {
     return {
         id: dto.id,
-        email: dto.email,
+        label: dto.label,
         status: dto.status,
         createdBy: dto.createdBy,
         createdAt: new Date(dto.createdAt),

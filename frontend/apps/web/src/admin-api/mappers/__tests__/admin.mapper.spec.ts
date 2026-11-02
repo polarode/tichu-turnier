@@ -57,7 +57,7 @@ describe('inviteDtoToDomain', () => {
     it('maps an invite DTO without any token material', () => {
         const invite = inviteDtoToDomain({
             id: 'invite-1',
-            email: 'invitee@example.com',
+            label: 'Ada Lovelace',
             status: 'PENDING',
             createdBy: 'owner-1',
             createdAt: '2026-01-01T00:00:00Z',
@@ -67,7 +67,7 @@ describe('inviteDtoToDomain', () => {
 
         expect(invite).toEqual({
             id: 'invite-1',
-            email: 'invitee@example.com',
+            label: 'Ada Lovelace',
             status: 'PENDING',
             createdBy: 'owner-1',
             createdAt: new Date('2026-01-01T00:00:00Z'),
@@ -82,7 +82,7 @@ describe('issuedInviteDtoToDomain', () => {
     it('carries the one-time token and link onto the invite', () => {
         const issued = issuedInviteDtoToDomain({
             id: 'invite-1',
-            email: 'invitee@example.com',
+            label: 'Ada Lovelace',
             status: 'PENDING',
             createdBy: 'owner-1',
             createdAt: '2026-01-01T00:00:00Z',

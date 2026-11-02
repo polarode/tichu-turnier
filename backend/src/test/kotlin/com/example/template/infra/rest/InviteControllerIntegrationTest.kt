@@ -9,7 +9,6 @@ import com.example.template.domain.InviteId
 import com.example.template.domain.InviteStatus
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
-import com.example.template.domain.normalizeEmail
 import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAndCaptureSession
 import com.example.template.testsupport.seedAdmin
@@ -67,12 +66,12 @@ class InviteControllerIntegrationTest(
     }
 
     /** Issues an invite through the API and returns the raw token the owner is shown once. */
-    private fun issue(cookie: Cookie, email: String): String {
+    private fun issue(cookie: Cookie, label: String = "Ada"): String {
         val result = mockMvc.perform(
             post("/api/invites")
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"$email"}"""),
+                .content("""{"label":"$label"}"""),
         ).andExpect(status().isCreated).andReturn()
         return objectMapper.readTree(result.response.contentAsString).get("token").asText()
     }
@@ -91,13 +90,12 @@ class InviteControllerIntegrationTest(
 
     private fun seedInvite(
         rawToken: String,
-        email: String,
         status: InviteStatus = InviteStatus.PENDING,
         expiresAt: Instant = Instant.now().plus(Duration.ofDays(7)),
     ): AdminInvite = adminInvites.save(
         AdminInvite(
             id = InviteId(UUID.randomUUID().toString()),
-            email = normalizeEmail(email),
+            label = "Ada",
             tokenHash = sessionTokens.hash(rawToken),
             status = status,
             createdBy = seedAdmin(adminUsers, passwordHasher, uniqueEmail("issuer"), role = AdminRole.OWNER).id,
@@ -110,16 +108,16 @@ class InviteControllerIntegrationTest(
     @Test
     fun `issuing returns the token exactly once and no listing ever leaks it`() {
         val cookie = ownerCookie()
-        val email = uniqueEmail("invitee")
+        val label = "Invitee ${UUID.randomUUID()}"
 
         val result = mockMvc.perform(
             post("/api/invites")
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"$email"}"""),
+                .content("""{"label":"$label"}"""),
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.email").value(email))
+            .andExpect(jsonPath("$.label").value(label))
             .andExpect(jsonPath("$.status").value("PENDING"))
             .andExpect(jsonPath("$.token").isNotEmpty)
             .andExpect(jsonPath("$.link").isNotEmpty)
@@ -142,7 +140,7 @@ class InviteControllerIntegrationTest(
         // Neither the invite listing nor the admin listing reproduces the token.
         val invitesBody = mockMvc.perform(get("/api/invites").cookie(cookie))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$[*].email", hasItem(email)))
+            .andExpect(jsonPath("$[*].label", hasItem(label)))
             .andReturn().response.contentAsString
         assertFalse(invitesBody.contains(token), "the invite listing must never return the token")
 
@@ -153,10 +151,10 @@ class InviteControllerIntegrationTest(
     }
 
     @Test
-    fun `registering with a valid invite for that email activates immediately and consumes it`() {
+    fun `registering with a valid invite activates immediately and consumes it`() {
         val cookie = ownerCookie()
         val email = uniqueEmail("invitee")
-        val token = issue(cookie, email)
+        val token = issue(cookie)
 
         register(email, token)
             .andExpect(status().isCreated)
@@ -184,7 +182,7 @@ class InviteControllerIntegrationTest(
     fun `a spent invite cannot be used a second time`() {
         val cookie = ownerCookie()
         val email = uniqueEmail("invitee")
-        val token = issue(cookie, email)
+        val token = issue(cookie)
         register(email, token).andExpect(status().isCreated)
 
         register(uniqueEmail("other"), token)
@@ -195,7 +193,7 @@ class InviteControllerIntegrationTest(
     @Test
     fun `an expired invite is rejected with a stable code`() {
         val email = uniqueEmail("invitee")
-        seedInvite("expired-token", email, expiresAt = Instant.now().minus(Duration.ofMinutes(1)))
+        seedInvite("expired-token", expiresAt = Instant.now().minus(Duration.ofMinutes(1)))
 
         register(email, "expired-token")
             .andExpect(status().isConflict)
@@ -206,7 +204,7 @@ class InviteControllerIntegrationTest(
     fun `a revoked invite is rejected with a stable code`() {
         val cookie = ownerCookie()
         val email = uniqueEmail("invitee")
-        val token = issue(cookie, email)
+        val token = issue(cookie)
 
         val inviteId = adminInvites.findByTokenHash(sessionTokens.hash(token))!!.id.value
         mockMvc.perform(post("/api/invites/$inviteId/revoke").cookie(cookie)).andExpect(status().isOk)
@@ -217,13 +215,11 @@ class InviteControllerIntegrationTest(
     }
 
     @Test
-    fun `an invite for a different email is rejected with a stable code`() {
+    fun `an invite is redeemable with any email address`() {
         val cookie = ownerCookie()
-        val token = issue(cookie, uniqueEmail("invited"))
+        val token = issue(cookie, "Someone")
 
-        register(uniqueEmail("someone-else"), token)
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.code").value("INVITE_EMAIL_MISMATCH"))
+        register(uniqueEmail("whoever"), token).andExpect(status().isCreated)
     }
 
     @Test
@@ -234,19 +230,15 @@ class InviteControllerIntegrationTest(
     }
 
     @Test
-    fun `issuing an invite for an already registered email is refused`() {
-        val cookie = ownerCookie()
-        val email = uniqueEmail("taken")
-        seedAdmin(adminUsers, passwordHasher, email)
-
+    fun `issuing an invite without a label is rejected`() {
         mockMvc.perform(
             post("/api/invites")
-                .cookie(cookie)
+                .cookie(ownerCookie())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"$email"}"""),
+                .content("""{"label":"  "}"""),
         )
-            .andExpect(status().isConflict)
-            .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_REGISTERED"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
     }
 
     @Test
@@ -259,7 +251,7 @@ class InviteControllerIntegrationTest(
             post("/api/invites")
                 .cookie(cookie)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"${uniqueEmail("invitee")}"}"""),
+                .content("""{"label":"Ada"}"""),
         )
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.code").value("FORBIDDEN"))
@@ -278,7 +270,7 @@ class InviteControllerIntegrationTest(
         mockMvc.perform(
             post("/api/invites")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"email":"${uniqueEmail("invitee")}"}"""),
+                .content("""{"label":"Ada"}"""),
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))

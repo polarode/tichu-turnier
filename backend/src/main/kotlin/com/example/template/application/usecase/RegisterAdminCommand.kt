@@ -13,7 +13,6 @@ import com.example.template.domain.InviteStatus
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.SessionTokens
 import com.example.template.domain.normalizeEmail
-import com.example.template.vocabulary.InviteEmailMismatchException
 import com.example.template.vocabulary.InviteExpiredException
 import com.example.template.vocabulary.InviteInvalidException
 import org.springframework.transaction.annotation.Transactional
@@ -44,7 +43,7 @@ class RegisterAdminCommand(
         adminUsers.requireEmailFree(email)
 
         val now = clock.instant()
-        val invite = command.inviteToken?.let { acceptInvite(it, email, now) }
+        val invite = command.inviteToken?.let { acceptInvite(it, now) }
 
         val user = AdminUser(
             id = AdminUserId(idGenerator.newId()),
@@ -63,11 +62,10 @@ class RegisterAdminCommand(
 
     /**
      * Validates the presented token and returns the pending invite it names. An unknown,
-     * spent or revoked token all fail identically; expiry and email mismatch are checked
-     * only afterwards, so guessing a token (or using a stale one) reveals nothing about
-     * the invite's address.
+     * spent or revoked token all fail identically; expiry is checked only afterwards. The
+     * invite is not bound to an email, so whoever holds the link chooses the address.
      */
-    private fun acceptInvite(rawToken: String, email: String, now: Instant): AdminInvite {
+    private fun acceptInvite(rawToken: String, now: Instant): AdminInvite {
         val invite = adminInvites.findByTokenHash(sessionTokens.hash(rawToken))
             ?: throw InviteInvalidException("This invite is not valid")
         if (invite.status != InviteStatus.PENDING) {
@@ -75,9 +73,6 @@ class RegisterAdminCommand(
         }
         if (invite.isExpired(now)) {
             throw InviteExpiredException("This invite has expired")
-        }
-        if (invite.email != email) {
-            throw InviteEmailMismatchException("This invite was issued for a different email address")
         }
         return invite
     }

@@ -19,7 +19,7 @@ const accountDto = {
 
 const inviteDto = {
     id: 'invite-1',
-    email: 'invitee@example.com',
+    label: 'Ada Lovelace',
     status: 'PENDING',
     createdBy: 'owner-1',
     createdAt: '2026-01-01T00:00:00Z',
@@ -89,16 +89,16 @@ describe('AdminRepository', () => {
         expect(invites[0]).not.toHaveProperty('token');
     });
 
-    it('issues an invite with the email and returns the one-time link', async () => {
+    it('issues an invite with the label and returns the one-time link', async () => {
         mock.onPost('/api/invites').reply(201, {
             ...inviteDto,
             token: 'raw-token',
             link: 'http://localhost:3000/register?invite=raw-token',
         });
 
-        const issued = await AdminRepository.createInvite('invitee@example.com');
+        const issued = await AdminRepository.createInvite('Ada Lovelace');
 
-        expect(JSON.parse(mock.history.post[0]!.data)).toEqual({ email: 'invitee@example.com' });
+        expect(JSON.parse(mock.history.post[0]!.data)).toEqual({ label: 'Ada Lovelace' });
         expect(issued.token).toBe('raw-token');
         expect(issued.link).toContain('raw-token');
     });

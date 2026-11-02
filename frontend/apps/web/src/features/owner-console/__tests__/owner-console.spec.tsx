@@ -118,7 +118,7 @@ describe('owner console', () => {
         auth.refresh.mockResolvedValue(owner);
         const issued: IssuedInvite = {
             id: 'invite-1',
-            email: 'invitee@example.com',
+            label: 'Ada Lovelace',
             status: 'PENDING',
             createdBy: 'owner-1',
             createdAt: new Date('2026-01-01T00:00:00Z'),
@@ -131,10 +131,10 @@ describe('owner console', () => {
 
         renderApp('/admin/console');
 
-        await userEvent.type(await screen.findByLabelText('E-Mail'), 'invitee@example.com');
+        await userEvent.type(await screen.findByLabelText('Name'), 'Ada Lovelace');
         await userEvent.click(screen.getByRole('button', { name: 'Einladung erstellen' }));
 
-        expect(adminRepo.createInvite).toHaveBeenCalledWith('invitee@example.com');
+        expect(adminRepo.createInvite).toHaveBeenCalledWith('Ada Lovelace');
         const linkInput = await screen.findByLabelText('Einladungslink');
         expect(linkInput).toHaveValue('http://localhost:3000/register?invite=raw-token');
         expect(screen.getByRole('button', { name: 'Link kopieren' })).toBeInTheDocument();

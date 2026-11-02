@@ -18,7 +18,6 @@ import com.example.template.vocabulary.GameValidationException
 import com.example.template.vocabulary.InvalidCredentialsException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.InvalidInputException
-import com.example.template.vocabulary.InviteEmailMismatchException
 import com.example.template.vocabulary.InviteExpiredException
 import com.example.template.vocabulary.InviteInvalidException
 import com.example.template.vocabulary.InviteStatusConflictException
@@ -112,11 +111,6 @@ class WebControllerAdvice {
     /** An unknown, spent or revoked invite presented at registration: 400. */
     @ExceptionHandler(InviteInvalidException::class)
     fun handleInviteInvalid(ex: InviteInvalidException): ProblemDetail =
-        problem(HttpStatus.BAD_REQUEST, ex)
-
-    /** A valid invite used with a different email than it was issued for: 400. */
-    @ExceptionHandler(InviteEmailMismatchException::class)
-    fun handleInviteEmailMismatch(ex: InviteEmailMismatchException): ProblemDetail =
         problem(HttpStatus.BAD_REQUEST, ex)
 
     /** A known invite whose lifetime has passed: 409, a state conflict rather than bad input. */

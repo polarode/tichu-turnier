@@ -39,7 +39,7 @@ class InviteController(
         @Valid @RequestBody body: CreateInviteRequestBody,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): CreateInviteResponse {
-        val issued = createInvite.create(principal, CreateInvite.CreateInviteRequest(email = body.email))
+        val issued = createInvite.create(principal, CreateInvite.CreateInviteRequest(label = body.label))
         return CreateInviteResponse.from(issued, frontendUrl)
     }
 

@@ -27,7 +27,7 @@ export const adminAccountListDtoSchema = z.array(adminAccountDtoSchema);
 
 export const inviteDtoSchema = z.object({
     id: z.string(),
-    email: z.string(),
+    label: z.string(),
     status: z.enum(INVITE_STATUSES),
     createdBy: z.string(),
     createdAt: z.string(),
@@ -49,5 +49,5 @@ export type IssuedInviteDto = z.infer<typeof issuedInviteDtoSchema>;
 
 /** Wire payload for issuing an invite. Validated at the server boundary too. */
 export interface CreateInviteRequestDto {
-    email: string;
+    label: string;
 }

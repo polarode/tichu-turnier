@@ -269,12 +269,11 @@ class UseCaseConfiguration(
     @Bean
     fun createInvite(
         adminInvites: AdminInviteRepository,
-        adminUsers: AdminUserRepository,
         sessionTokens: SessionTokens,
         idGenerator: IdGenerator,
         clock: Clock,
     ): CreateInvite =
-        CreateInviteCommand(adminInvites, adminUsers, sessionTokens, idGenerator, clock, inviteTtl)
+        CreateInviteCommand(adminInvites, sessionTokens, idGenerator, clock, inviteTtl)
 
     @Bean
     fun listInvites(adminInvites: AdminInviteRepository): ListInvites = ListInvitesQuery(adminInvites)

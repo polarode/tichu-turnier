@@ -9,6 +9,7 @@ import {
     inviteDtoSchema,
     inviteListDtoSchema,
     issuedInviteDtoSchema,
+    type CreateInviteRequestDto,
 } from '@/admin-api/dtos/admin.dto.ts';
 import type { AdminAccount, AdminInvite, IssuedInvite } from '@/domain/admin-account.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
@@ -47,8 +48,9 @@ async function listInvites(): Promise<AdminInvite[]> {
     return inviteListDtoSchema.parse(data).map(inviteDtoToDomain);
 }
 
-async function createInvite(email: string): Promise<IssuedInvite> {
-    const { data } = await apiClient.post<unknown>('/api/invites', { email });
+async function createInvite(label: string): Promise<IssuedInvite> {
+    const body: CreateInviteRequestDto = { label };
+    const { data } = await apiClient.post<unknown>('/api/invites', body);
     return issuedInviteDtoToDomain(issuedInviteDtoSchema.parse(data));
 }
 

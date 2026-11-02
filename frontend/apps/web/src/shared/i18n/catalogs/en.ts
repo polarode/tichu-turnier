@@ -33,6 +33,8 @@ export const en = {
 
     'validation.email.required': 'Email is required.',
     'validation.email.invalid': 'Enter a valid email address.',
+    'validation.inviteLabel.required': 'Enter who this invite is for.',
+    'validation.inviteLabel.max': 'The name may be at most 100 characters long.',
     'validation.password.required': 'Password is required.',
     'validation.password.min': 'The password must be at least 8 characters long.',
 
@@ -66,7 +68,6 @@ export const en = {
     'error.adminStatusConflict': 'The account is not in a state that allows this action.',
     'error.inviteInvalid': 'This invite link is not valid. Please request a new one.',
     'error.inviteExpired': 'This invite link has expired. Please request a new one.',
-    'error.inviteEmailMismatch': 'This invite was issued for a different email address.',
     'error.inviteStatusConflict': 'This invite can no longer be changed.',
     'error.linkAlreadyRevealed':
         'This access link was already shown or is disabled. Rotate it to get a new one.',
@@ -122,8 +123,9 @@ export const en = {
     'ownerConsole.admins.reactivate': 'Reactivate',
 
     'ownerConsole.invites.title': 'Invites',
-    'ownerConsole.invites.description': 'Invite an organizer by email. The link is shown once.',
-    'ownerConsole.invites.email': 'Email',
+    'ownerConsole.invites.description':
+        'Create a single-use invite link and send it to the organizer yourself. The link is shown once.',
+    'ownerConsole.invites.label': 'Name',
     'ownerConsole.invites.issue': 'Create invite',
     'ownerConsole.invites.issuing': 'Creating…',
     'ownerConsole.invites.issued.title': 'Invite link',

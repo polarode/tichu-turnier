@@ -19,10 +19,13 @@ export interface AdminAccount {
     invitedAt: Date | null;
 }
 
-/** An owner-issued admin invitation. Never carries the secret token, only its lifecycle. */
+/**
+ * An owner-issued admin invitation. Never carries the secret token, only its lifecycle.
+ * [label] names who the link is for; it is not bound to the email the invitee registers with.
+ */
 export interface AdminInvite {
     id: string;
-    email: string;
+    label: string;
     status: InviteStatus;
     createdBy: string;
     createdAt: Date;

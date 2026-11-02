@@ -62,7 +62,7 @@ export function useInvites(enabled = true) {
 export function useCreateInvite() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (email: string) => AdminRepository.createInvite(email),
+        mutationFn: (label: string) => AdminRepository.createInvite(label),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: adminInvitesQueryKey() }),
     });
 }

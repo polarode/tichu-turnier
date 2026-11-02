@@ -39,12 +39,11 @@ export function RegisterForm({ inviteToken }: RegisterFormProps) {
                 form.setError('root', { type: 'server', message: t('register.signInFailed') });
             }
         } catch (error) {
-            // The backend field-anchors neither of these; attach the address-related
-            // ones to the email input and leave the rest as a form-level message.
+            // The backend does not field-anchor a duplicate address; attach it to the
+            // email input and leave the rest as a form-level message.
             applyServerError(form.setError, error, t, {
                 codes: {
                     EMAIL_ALREADY_REGISTERED: 'email',
-                    INVITE_EMAIL_MISMATCH: 'email',
                 },
             });
         }

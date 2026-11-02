@@ -178,29 +178,6 @@ describe('admin auth flows', () => {
         expect(screen.getByRole('button', { name: 'Konto erstellen' })).toBeInTheDocument();
     });
 
-    it('anchors an invite email mismatch to the email field', async () => {
-        auth.register.mockRejectedValue(
-            new ApiError({
-                code: 'INVITE_EMAIL_MISMATCH',
-                status: 400,
-                field: null,
-                message: 'wrong address',
-            }),
-        );
-        renderApp('/register?invite=invite-token');
-
-        await userEvent.type(await screen.findByLabelText('E-Mail'), 'someone-else@example.com');
-        await userEvent.type(await screen.findByLabelText('Passwort'), 'long-enough-password');
-        await userEvent.click(screen.getByRole('button', { name: 'Konto erstellen' }));
-
-        expect(
-            await screen.findByText(
-                'Diese Einladung wurde für eine andere E-Mail-Adresse ausgestellt.',
-            ),
-        ).toBeInTheDocument();
-        expect(screen.getByLabelText('E-Mail')).toHaveAttribute('aria-invalid', 'true');
-    });
-
     it('shows a localized error when an invite link has expired', async () => {
         auth.register.mockRejectedValue(
             new ApiError({

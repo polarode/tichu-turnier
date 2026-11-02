@@ -30,6 +30,8 @@ export const de: Catalog = {
 
     'validation.email.required': 'E-Mail ist erforderlich.',
     'validation.email.invalid': 'Bitte eine gültige E-Mail-Adresse eingeben.',
+    'validation.inviteLabel.required': 'Bitte angeben, für wen die Einladung ist.',
+    'validation.inviteLabel.max': 'Der Name darf höchstens 100 Zeichen lang sein.',
     'validation.password.required': 'Passwort ist erforderlich.',
     'validation.password.min': 'Das Passwort muss mindestens 8 Zeichen lang sein.',
 
@@ -64,8 +66,6 @@ export const de: Catalog = {
     'error.adminStatusConflict': 'Das Konto ist nicht in einem Zustand, der diese Aktion erlaubt.',
     'error.inviteInvalid': 'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
     'error.inviteExpired': 'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
-    'error.inviteEmailMismatch':
-        'Diese Einladung wurde für eine andere E-Mail-Adresse ausgestellt.',
     'error.inviteStatusConflict': 'Diese Einladung kann nicht mehr geändert werden.',
     'error.linkAlreadyRevealed':
         'Dieser Zugangs-Link wurde bereits angezeigt oder ist deaktiviert. Rotiere ihn, um einen neuen zu erhalten.',
@@ -123,8 +123,8 @@ export const de: Catalog = {
 
     'ownerConsole.invites.title': 'Einladungen',
     'ownerConsole.invites.description':
-        'Organisator per E-Mail einladen. Der Link wird einmal angezeigt.',
-    'ownerConsole.invites.email': 'E-Mail',
+        'Einmal-Einladungslink erstellen und selbst an den Organisator schicken. Der Link wird einmal angezeigt.',
+    'ownerConsole.invites.label': 'Name',
     'ownerConsole.invites.issue': 'Einladung erstellen',
     'ownerConsole.invites.issuing': 'Wird erstellt…',
     'ownerConsole.invites.issued.title': 'Einladungslink',

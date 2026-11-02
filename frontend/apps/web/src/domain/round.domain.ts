@@ -1,16 +1,18 @@
-import type { RecordedGame } from '@/domain/game.domain.ts';
+import type { RecordedGame, ScheduledGame, SeatedTeams } from '@/domain/game.domain.ts';
 
 /**
- * One table of a round as the admin follows it: the seating (the two opposing teams)
- * plus the games entered there so far. Table numbers are the backend's 1-based
- * sequential numbers; the ids reference teams of the same tournament.
+ * One table of a round as the admin follows it: the seating (two teams, or three at
+ * the trio table), who plays which game, plus the games entered there so far. Table
+ * numbers are the backend's 1-based sequential numbers; the ids reference teams of
+ * the same tournament.
  */
 export interface TableOverview {
     tableNumber: number;
-    homeTeamId: string;
-    awayTeamId: string;
-    /** Games played at this table per round (4 for a normal table). */
+    teamIds: SeatedTeams<string>;
+    trio: boolean;
+    /** Games played at this table per round (4 at a normal table, 6 at the trio table). */
     gameCount: number;
+    schedule: readonly ScheduledGame[];
     /** Games entered so far, ordered by game number; a missing number is not yet entered. */
     games: readonly RecordedGame[];
 }

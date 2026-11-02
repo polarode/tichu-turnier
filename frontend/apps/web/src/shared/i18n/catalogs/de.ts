@@ -174,8 +174,6 @@ export const de: Catalog = {
     'tournament.start.action': 'Turnier starten',
     'tournament.start.confirmDescription': 'Turnier starten und Runde 1 auslosen?',
     'tournament.start.hintInsufficientTeams': 'Zum Starten braucht es mindestens zwei Teams.',
-    'tournament.start.hintOddTeamCount':
-        'Eine ungerade Teamanzahl kann noch nicht gepaart werden.',
     'rounds.section.title': 'Runden',
     'rounds.round': 'Runde',
     'rounds.selector.label': 'Runde auswählen',
@@ -248,8 +246,6 @@ export const de: Catalog = {
         'Dieses Turnier kann nicht gestartet werden, weil es nicht mehr in der Vorbereitung ist.',
     'error.insufficientTeams':
         'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
-    'error.pairingUnsupported':
-        'Eine ungerade Teamanzahl kann noch nicht gepaart werden. Das Trio-Format folgt in einem späteren Update.',
     'error.gameValidationInvalid':
         'Das Spiel konnte nicht gespeichert werden – bitte die Eingaben prüfen und erneut versuchen.',
     'error.gameAlreadyExists': 'Dieses Spiel wurde bereits eingetragen.',

@@ -67,6 +67,8 @@ function table(overrides: Partial<TeamTable> = {}): TeamTable {
                 ],
             },
         ],
+        trio: false,
+        schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
         ...overrides,
     };
 }

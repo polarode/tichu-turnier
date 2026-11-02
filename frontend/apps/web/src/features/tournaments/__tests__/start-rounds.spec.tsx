@@ -74,7 +74,11 @@ function table(
     awayTeamId: string,
     games: RecordedGame[] = [],
 ): TableOverview {
-    return { tableNumber, homeTeamId, awayTeamId, gameCount: 4, games };
+    const schedule = [1, 2, 3, 4].map((gameNumber) => ({
+        gameNumber,
+        teamIds: [homeTeamId, awayTeamId] as [string, string],
+    }));
+    return { tableNumber, teamIds: [homeTeamId, awayTeamId], trio: false, gameCount: 4, schedule, games };
 }
 
 /**
@@ -148,7 +152,7 @@ describe('admin start action', () => {
         expect(tournaments.start).not.toHaveBeenCalled();
     });
 
-    it('blocks the start button with a hint while the team count is odd', async () => {
+    it('allows starting with an odd team count (trio table)', async () => {
         tournaments.get.mockResolvedValue(tournament('SETUP'));
         teams.list.mockResolvedValue([
             team('team-a', 'Alpha'),
@@ -159,8 +163,8 @@ describe('admin start action', () => {
         renderApp('/admin/tournaments/t-1');
 
         const button = await screen.findByRole('button', { name: 'Turnier starten' });
-        expect(button).toBeDisabled();
-        expect(screen.getByText(/ungerade Teamanzahl/)).toBeInTheDocument();
+        expect(button).toBeEnabled();
+        expect(screen.queryByText(/ungerade Teamanzahl/)).not.toBeInTheDocument();
     });
 
     it('shows the localized server error when starting is rejected', async () => {

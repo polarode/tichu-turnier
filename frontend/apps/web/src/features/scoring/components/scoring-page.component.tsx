@@ -34,7 +34,7 @@ export function ScoringPage({ table }: { table: TeamTable }) {
     const byNumber = new Map<number, RecordedGame>(games.map((g) => [g.gameNumber, g]));
     const existingGame = byNumber.get(selected);
 
-    const matchup = `${table.teams[0].teamName} ${t('scoring.matchup.versus')} ${table.teams[1].teamName}`;
+    const matchup = table.teams.map((team) => team.teamName).join(` ${t('scoring.matchup.versus')} `);
 
     return (
         <section className="flex w-full max-w-xl flex-col gap-4">

@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { Fragment, useId, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
@@ -152,9 +152,13 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
             <span className="min-w-0 flex-1">
                 <span className="font-medium">{`${t('rounds.table')} ${table.tableNumber}`}</span>
                 {': '}
-                <TeamDot tone="bg-team-1" />
-                {teamName(table.homeTeamId)} {t('rounds.versus')} <TeamDot tone="bg-team-2" />
-                {teamName(table.awayTeamId)}
+                {table.teamIds.map((teamId, seat) => (
+                    <Fragment key={teamId}>
+                        {seat > 0 ? ` ${t('rounds.versus')} ` : null}
+                        <TeamDot tone={SEAT_TONES[seat] ?? SEAT_TONES[0]} />
+                        {teamName(teamId)}
+                    </Fragment>
+                ))}
             </span>
             <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', progressTone)}>
                 {`${entered}/${table.gameCount} ${t('rounds.games.entered')}`}
@@ -193,14 +197,17 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
     );
 }
 
-/** Small colour marker tying a team to its seat colour (home = team 1, away = team 2). */
+/** Seat colours: seat 1 = team 1, seat 2 = team 2; the trio table's third seat stays neutral (#110). */
+const SEAT_TONES = ['bg-team-1', 'bg-team-2', 'bg-muted-foreground'] as const;
+
+/** Small colour marker tying a team to its seat colour. */
 function TeamDot({ tone }: { tone: string }) {
     return <span aria-hidden="true" className={cn('mr-1 inline-block size-2 rounded-full align-middle', tone)} />;
 }
 
 /**
- * One entered game: total Tichu Points ordered home : away by team id (the stored
- * team order may differ from the table's seating), plus the Beschiss and
+ * One entered game: total Tichu Points of the game's two playing teams in seat order,
+ * per the server schedule (the stored team order may differ), plus the Beschiss and
  * double-win markers.
  */
 function GameRow({ table, game }: { table: TableOverview; game: RecordedGame }) {
@@ -208,11 +215,12 @@ function GameRow({ table, game }: { table: TableOverview; game: RecordedGame }) 
     const label = `${t('rounds.game')} ${game.gameNumber}`;
     // A team missing from the outcome shows a dash, never a misleading 0.
     const points = (teamId: string) => teamPoints(game, teamId) ?? '–';
+    const playing = table.schedule.find((scheduled) => scheduled.gameNumber === game.gameNumber)?.teamIds;
 
     return (
         <li aria-label={label} className="flex flex-wrap items-center gap-2">
             <span className="w-16 text-muted-foreground">{label}</span>
-            <span className="tabular-nums">{`${points(table.homeTeamId)} : ${points(table.awayTeamId)}`}</span>
+            <span className="tabular-nums">{playing ? `${points(playing[0])} : ${points(playing[1])}` : '–'}</span>
             {game.beschiss ? <Badge variant="warning">{t('rounds.game.beschiss')}</Badge> : null}
             {game.outcome.doubleWinTeam !== null ? (
                 <Badge variant="secondary">{t('rounds.game.doubleWin')}</Badge>

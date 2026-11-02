@@ -18,6 +18,9 @@ data class TeamTableResponseDto(
     val locked: Boolean,
     val allowGrandTichu: Boolean,
     val teams: List<TeamTableTeamDto>,
+    val trio: Boolean,
+    /** Who plays each game at this table; the frontend never re-derives the trio schedule. */
+    val schedule: List<ScheduledGameDto>,
 ) {
     companion object {
         fun from(table: TeamTable): TeamTableResponseDto = TeamTableResponseDto(
@@ -27,6 +30,8 @@ data class TeamTableResponseDto(
             locked = table.locked,
             allowGrandTichu = table.allowGrandTichu,
             teams = table.teams.map(TeamTableTeamDto::from),
+            trio = table.trio,
+            schedule = table.schedule.map(ScheduledGameDto::from),
         )
     }
 }

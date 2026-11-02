@@ -24,7 +24,6 @@ import com.example.template.vocabulary.InviteStatusConflictException
 import com.example.template.vocabulary.InsufficientTeamsException
 import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
-import com.example.template.vocabulary.PairingUnsupportedException
 import com.example.template.vocabulary.TeamAccessException
 import com.example.template.vocabulary.TeamAccessLinkConflictException
 import com.example.template.vocabulary.TeamLimitReachedException
@@ -146,11 +145,6 @@ class WebControllerAdvice {
     /** The tournament cannot start because it holds fewer than two teams: HTTP 409. */
     @ExceptionHandler(InsufficientTeamsException::class)
     fun handleInsufficientTeams(ex: InsufficientTeamsException): ProblemDetail =
-        problem(HttpStatus.CONFLICT, ex)
-
-    /** The tournament cannot be paired under the current rules (odd team count): HTTP 409. */
-    @ExceptionHandler(PairingUnsupportedException::class)
-    fun handlePairingUnsupported(ex: PairingUnsupportedException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
     /** Uniqueness violations of teams/players: 409, field-anchored like InvalidFieldException. */

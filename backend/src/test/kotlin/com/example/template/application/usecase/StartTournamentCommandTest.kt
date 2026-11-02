@@ -13,7 +13,6 @@ import com.example.template.testsupport.RecordingSessionTokens
 import com.example.template.vocabulary.ErrorCode
 import com.example.template.vocabulary.InsufficientTeamsException
 import com.example.template.vocabulary.NotFoundException
-import com.example.template.vocabulary.PairingUnsupportedException
 import com.example.template.vocabulary.TournamentNotStartableException
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -194,17 +193,18 @@ class StartTournamentCommandTest {
     }
 
     @Test
-    fun `an odd team count is rejected with the temporary unsupported error`() {
+    fun `an odd team count starts with a trio table at the last table number`() {
         val id = createTournament()
         addTeam(id, "Team Alpha")
         addTeam(id, "Team Beta")
         addTeam(id, "Team Gamma")
 
-        val ex = assertFailsWith<PairingUnsupportedException> { startTournament.start(id, owner) }
+        val started = startTournament.start(id, owner)
 
-        assertEquals(ErrorCode.PAIRING_UNSUPPORTED, ex.code)
-        assertEquals(TournamentStatus.SETUP, tournamentRepository.findById(id)?.status, "no side effects")
-        assertEquals(0, roundRepository.findByTournament(id).size)
+        assertEquals(TournamentStatus.ACTIVE, started.tournament.status)
+        val tables = roundRepository.findByTournamentAndNumber(id, 1)!!.pairing.tables
+        assertEquals(1, tables.size)
+        assertTrue(tables.single().isTrio)
     }
 
     @Test

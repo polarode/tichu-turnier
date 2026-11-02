@@ -20,6 +20,7 @@ import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.insertAdminRow
 import com.example.template.testsupport.loginAsSeededAdmin
 import jakarta.servlet.http.Cookie
+import org.hamcrest.Matchers.contains
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -193,6 +194,35 @@ class TeamScoringControllerIntegrationTest(
             .andExpect(jsonPath("$.teams[0].players[0].name").value("P1 of Team Alpha"))
             .andExpect(jsonPath("$.teams[1].teamId").value(teamB))
             .andExpect(jsonPath("$.teams[1].teamName").value("Team Beta"))
+            .andExpect(jsonPath("$.trio").value(false))
+            .andExpect(jsonPath("$.schedule.length()").value(4))
+            .andExpect(jsonPath("$.schedule[3].gameNumber").value(4))
+            .andExpect(jsonPath("$.schedule[3].teamIds").value(contains(teamA, teamB)))
+    }
+
+    @Test
+    fun `current-table at a trio table lists all three teams and the six-game schedule`() {
+        teamRepository.save(team("team-c", "Team Gamma", "team-c-p1", "team-c-p2"))
+        roundRepository.save(
+            round(1).copy(
+                pairing = com.example.template.domain.Pairing(
+                    tables = listOf(Table(TableId(1), listOf(TeamId(teamA), TeamId(teamB), TeamId("team-c")))),
+                ),
+            ),
+        )
+        val teamCCookie = exchangeTeamSession("team-c")
+
+        mockMvc.perform(get("/api/team/me/current-table").cookie(teamCCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.trio").value(true))
+            .andExpect(jsonPath("$.teams.length()").value(3))
+            .andExpect(jsonPath("$.teams[2].teamName").value("Team Gamma"))
+            .andExpect(jsonPath("$.teams[2].players[1].playerId").value("team-c-p2"))
+            .andExpect(jsonPath("$.schedule.length()").value(6))
+            .andExpect(jsonPath("$.schedule[0].teamIds").value(contains(teamA, teamB)))
+            .andExpect(jsonPath("$.schedule[1].teamIds").value(contains(teamA, "team-c")))
+            .andExpect(jsonPath("$.schedule[5].gameNumber").value(6))
+            .andExpect(jsonPath("$.schedule[5].teamIds").value(contains(teamB, "team-c")))
     }
 
     @Test

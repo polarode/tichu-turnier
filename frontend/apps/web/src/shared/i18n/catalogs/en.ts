@@ -169,7 +169,6 @@ export const en = {
     'tournament.start.action': 'Start tournament',
     'tournament.start.confirmDescription': 'Start the tournament and draw round 1?',
     'tournament.start.hintInsufficientTeams': 'At least two teams are needed to start.',
-    'tournament.start.hintOddTeamCount': 'An odd number of teams cannot be paired yet.',
     'rounds.section.title': 'Rounds',
     'rounds.round': 'Round',
     'rounds.selector.label': 'Select round',
@@ -247,8 +246,6 @@ export const en = {
         'This tournament cannot be started because it is no longer in setup.',
     'error.insufficientTeams':
         'This tournament needs at least two teams before it can be started.',
-    'error.pairingUnsupported':
-        'An odd number of teams cannot be paired yet. The trio format is coming in a later update.',
     'error.gameValidationInvalid': 'The game could not be saved — check the entries and try again.',
     'error.gameAlreadyExists': 'This game has already been entered.',
     'error.gameConcurrentModification':

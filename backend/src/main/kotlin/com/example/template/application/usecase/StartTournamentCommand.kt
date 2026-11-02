@@ -13,7 +13,6 @@ import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
 import com.example.template.domain.TournamentStatus
 import com.example.template.vocabulary.InsufficientTeamsException
-import com.example.template.vocabulary.PairingUnsupportedException
 import com.example.template.vocabulary.TournamentNotStartableException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -50,14 +49,7 @@ class StartTournamentCommand(
             )
         }
 
-        // The pairing seats trio tables, but persistence and the API stay two-seated
-        // until #109 lands: odd counts remain rejected here until then.
-        if (teams.size % 2 == 1) {
-            throw PairingUnsupportedException(
-                "Tournament ${tournamentId.value} has an odd number of teams (${teams.size}); " +
-                    "trio tables are not supported yet.",
-            )
-        }
+        // An odd count seats the last three shuffled teams at a trio table.
         val pairing = SwissPairing.pairFirstRound(teams.map { it.id }, random)
         val round = Round(
             id = RoundId(idGenerator.newId()),

@@ -69,6 +69,10 @@ data class Table(
         return TRIO_SCHEDULE[gameNumber - 1].map { seatedTeams[it] }
     }
 
+    /** Who plays each game here, in game-number order. */
+    val schedule: List<ScheduledGame>
+        get() = (1..gameCount).map { ScheduledGame(it, playingTeams(it)) }
+
     /** Every pair of teams meeting at this table: one pair, or all three at a trio table. */
     val pairs: List<Pair<TeamId, TeamId>>
         get() = seatedTeams.flatMapIndexed { i, a -> seatedTeams.drop(i + 1).map { b -> Pair(a, b) } }
@@ -83,6 +87,9 @@ data class Table(
         private val TRIO_SCHEDULE = listOf(listOf(0, 1), listOf(0, 2), listOf(1, 2), listOf(0, 1), listOf(0, 2), listOf(1, 2))
     }
 }
+
+/** One game of a [Table]'s schedule: its 1-based [gameNumber] and the two [playingTeams]. */
+data class ScheduledGame(val gameNumber: Int, val playingTeams: List<TeamId>)
 
 /** The pairing of a round: every participating team sits at exactly one [Table]. */
 data class Pairing(val tables: List<Table>)

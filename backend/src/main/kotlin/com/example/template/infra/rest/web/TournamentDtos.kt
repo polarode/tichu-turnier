@@ -4,6 +4,7 @@ import com.example.template.application.api.RecordedGame
 import com.example.template.application.api.RoundOverview
 import com.example.template.application.api.StartedTournament
 import com.example.template.domain.Round
+import com.example.template.domain.ScheduledGame
 import com.example.template.domain.Table
 import com.example.template.domain.Tournament
 import com.example.template.domain.TournamentSettings
@@ -104,24 +105,35 @@ data class RoundResponse(
 
 data class TableResponse(
     val tableNumber: Int,
-    val homeTeamId: String,
-    val awayTeamId: String,
+    /** The seated teams in seat order: two, or three at the trio table. */
+    val teamIds: List<String>,
+    val trio: Boolean,
     /** Games played here per round — the denominator of "x/n entered". */
     val gameCount: Int,
+    /** Who plays each game; the server is the single source of the trio schedule. */
+    val schedule: List<ScheduledGameDto>,
     /** The games entered so far, ordered by game number; absent numbers are not yet entered. */
     val games: List<RecordedGameDto>,
 ) {
     companion object {
-        fun from(table: Table, games: List<RecordedGame>): TableResponse {
-            // Two seats on the wire until trio tables are exposed (#109); the start guard keeps trios out.
-            check(!table.isTrio) { "Trio tables cannot be exposed yet (#109)" }
-            return TableResponse(
-                tableNumber = table.id.value,
-                homeTeamId = table.seatedTeams[0].value,
-                awayTeamId = table.seatedTeams[1].value,
-                gameCount = table.gameCount,
-                games = games.map(RecordedGameDto::from),
-            )
-        }
+        fun from(table: Table, games: List<RecordedGame>): TableResponse = TableResponse(
+            tableNumber = table.id.value,
+            teamIds = table.seatedTeams.map { it.value },
+            trio = table.isTrio,
+            gameCount = table.gameCount,
+            schedule = table.schedule.map(ScheduledGameDto::from),
+            games = games.map(RecordedGameDto::from),
+        )
+    }
+}
+
+/** One game of a table's schedule: its number and the two teams playing it. */
+data class ScheduledGameDto(
+    val gameNumber: Int,
+    val teamIds: List<String>,
+) {
+    companion object {
+        fun from(game: ScheduledGame): ScheduledGameDto =
+            ScheduledGameDto(game.gameNumber, game.playingTeams.map { it.value })
     }
 }

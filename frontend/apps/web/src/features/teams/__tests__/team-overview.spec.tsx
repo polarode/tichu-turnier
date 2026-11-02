@@ -110,6 +110,8 @@ describe('/team', () => {
                     ],
                 },
             ],
+            trio: false,
+            schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-1', 'team-2'] })),
         });
 
         const { router } = renderApp('/team');

@@ -4,12 +4,14 @@ import type {
     RecordedGame,
     RecordedPlayer,
     RecordedTeam,
+    ScheduledGame,
     TeamTable,
     TeamTableTeam,
 } from '@/domain/game.domain.ts';
 import type {
     GameRequestDto,
     RecordedGameDto,
+    ScheduledGameDto,
     TeamResultRequestDto,
     TeamTableDto,
 } from '@/scoring-api/dtos/scoring.dto.ts';
@@ -28,8 +30,18 @@ export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
         tableNumber: dto.tableNumber,
         locked: dto.locked,
         allowGrandTichu: dto.allowGrandTichu,
-        teams: mapPair(dto.teams, teamTableTeamDtoToDomain),
+        teams: [
+            teamTableTeamDtoToDomain(dto.teams[0]),
+            teamTableTeamDtoToDomain(dto.teams[1]),
+            ...dto.teams.slice(2).map(teamTableTeamDtoToDomain),
+        ],
+        trio: dto.trio,
+        schedule: dto.schedule.map(scheduledGameDtoToDomain),
     };
+}
+
+export function scheduledGameDtoToDomain(dto: ScheduledGameDto): ScheduledGame {
+    return { gameNumber: dto.gameNumber, teamIds: [dto.teamIds[0], dto.teamIds[1]] };
 }
 
 function teamTableTeamDtoToDomain(dto: TeamTableDto['teams'][number]): TeamTableTeam {

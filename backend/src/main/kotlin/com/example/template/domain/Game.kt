@@ -17,7 +17,7 @@ data class Game(
     val tournamentId: TournamentId,
     val roundNumber: Int,
     val tableNumber: Int,
-    /** 1-based game number within the table (1–4; trio 1–6 with #32). */
+    /** 1-based game number within the table (1–4; 1–6 at a trio table). */
     val gameNumber: Int,
     val team1: TeamId,
     val team2: TeamId,

@@ -16,9 +16,9 @@ interface StartTournamentButtonProps {
 
 /**
  * The organizer's start action. Guards are enforced where the client can know them —
- * the button locks with a hint while there are fewer than two teams or an odd team
- * count — and anything only the server can judge (status conflicts, pairing limits)
- * surfaces as the localized typed error. Starting is confirmed explicitly, mirroring
+ * the button locks with a hint while there are fewer than two teams (an odd count
+ * is fine: it seats a trio table) — and anything only the server can judge (status
+ * conflicts) surfaces as the localized typed error. Starting is confirmed explicitly, mirroring
  * the other destructive-ish setup actions.
  */
 export function StartTournamentButton({ tournament, teams }: StartTournamentButtonProps) {
@@ -31,11 +31,8 @@ export function StartTournamentButton({ tournament, teams }: StartTournamentButt
         return null;
     }
 
-    const oddTeamCount = teams.length % 2 !== 0;
-    const blocked = teams.length < 2 || oddTeamCount;
-    const hintKey = teams.length < 2
-        ? 'tournament.start.hintInsufficientTeams'
-        : 'tournament.start.hintOddTeamCount';
+    // An odd count is fine: the server seats three teams at a trio table.
+    const blocked = teams.length < 2;
 
     const start = async () => {
         try {
@@ -52,7 +49,7 @@ export function StartTournamentButton({ tournament, teams }: StartTournamentButt
         <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-3">
                 {blocked ? (
-                    <span className="text-sm text-muted-foreground">{t(hintKey)}</span>
+                    <span className="text-sm text-muted-foreground">{t('tournament.start.hintInsufficientTeams')}</span>
                 ) : null}
                 <Button size="sm" disabled={blocked} onClick={() => setConfirming(true)}>
                     {t('tournament.start.action')}

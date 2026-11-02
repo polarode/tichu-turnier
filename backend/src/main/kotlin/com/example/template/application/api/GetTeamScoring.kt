@@ -1,6 +1,7 @@
 package com.example.template.application.api
 
 import com.example.template.domain.PlayerId
+import com.example.template.domain.ScheduledGame
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
 
@@ -37,8 +38,9 @@ interface GetTeamScoring {
  * (the games endpoints address a game by tournament/round/table/game), which
  * round and table (the numbers the write endpoints address), whether the round
  * is [locked] (games read-only), whether grand Tichu is accepted
- * ([allowGrandTichu], so the form can hide the option), and the two playing
- * [teams] with their names and players — the matchup label and the grid's roster.
+ * ([allowGrandTichu], so the form can hide the option), and the seated [teams]
+ * (two, or three at the [trio] table) with their names and players — the matchup
+ * label and the grid's roster — plus the [schedule] of who plays which game.
  */
 data class TeamTable(
     val tournamentId: TournamentId,
@@ -47,6 +49,8 @@ data class TeamTable(
     val locked: Boolean,
     val allowGrandTichu: Boolean,
     val teams: List<TeamTableTeam>,
+    val trio: Boolean,
+    val schedule: List<ScheduledGame>,
 )
 
 data class TeamTableTeam(

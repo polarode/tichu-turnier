@@ -20,10 +20,20 @@ export interface TableRef {
     tableNumber: number;
 }
 
+/** The teams seated at a table, in seat order: two, or three at the trio table. */
+export type SeatedTeams<T> = [T, T, ...T[]];
+
+/** One game of a table's schedule: its 1-based number and the two teams playing it. */
+export interface ScheduledGame {
+    gameNumber: number;
+    teamIds: [string, string];
+}
+
 /**
- * The team's current table: which round and table it is entering, the matchup
- * and roster, whether the round is locked (games read-only) and whether grand
- * Tichu is accepted (so the form can hide the option). From
+ * The team's current table: which round and table it is entering, the seated
+ * teams and their rosters, whether it is the trio table and who plays which
+ * game, whether the round is locked (games read-only) and whether grand Tichu
+ * is accepted (so the form can hide the option). From
  * `GET /api/team/me/current-table`.
  */
 export interface TeamTable {
@@ -32,7 +42,9 @@ export interface TeamTable {
     tableNumber: number;
     locked: boolean;
     allowGrandTichu: boolean;
-    teams: [TeamTableTeam, TeamTableTeam];
+    teams: SeatedTeams<TeamTableTeam>;
+    trio: boolean;
+    schedule: readonly ScheduledGame[];
 }
 
 export interface TeamTableTeam {

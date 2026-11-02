@@ -82,6 +82,23 @@ class RoundRepositoryPersistenceTest(
     }
 
     @Test
+    fun `a trio table round-trips with all three seats in seat order`() {
+        tournament("t-1")
+        val withTrio = round("r-1", "t-1", 1).copy(
+            pairing = com.example.template.domain.Pairing(
+                tables = listOf(
+                    Table(TableId(1), listOf(TeamId("team-a"), TeamId("team-b"))),
+                    Table(TableId(2), listOf(TeamId("team-e"), TeamId("team-c"), TeamId("team-d"))),
+                ),
+            ),
+        )
+
+        roundRepository.save(withTrio)
+
+        assertEquals(withTrio, roundRepository.findByTournamentAndNumber(TournamentId("t-1"), 1))
+    }
+
+    @Test
     fun `lookup by unknown round number returns null`() {
         tournament("t-1")
         roundRepository.save(round("r-1", "t-1", 1))

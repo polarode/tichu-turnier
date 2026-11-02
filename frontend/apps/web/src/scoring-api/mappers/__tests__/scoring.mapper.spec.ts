@@ -32,6 +32,32 @@ const tableDto: TeamTableDto = {
             ],
         },
     ],
+    trio: false,
+    schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
+};
+
+const trioTableDto: TeamTableDto = {
+    ...tableDto,
+    teams: [
+        ...tableDto.teams,
+        {
+            teamId: 'team-c',
+            teamName: 'Team Gamma',
+            players: [
+                { playerId: 'c1', name: 'Cleo' },
+                { playerId: 'c2', name: 'Carl' },
+            ],
+        },
+    ],
+    trio: true,
+    schedule: [
+        { gameNumber: 1, teamIds: ['team-a', 'team-b'] },
+        { gameNumber: 2, teamIds: ['team-a', 'team-c'] },
+        { gameNumber: 3, teamIds: ['team-b', 'team-c'] },
+        { gameNumber: 4, teamIds: ['team-a', 'team-b'] },
+        { gameNumber: 5, teamIds: ['team-a', 'team-c'] },
+        { gameNumber: 6, teamIds: ['team-b', 'team-c'] },
+    ],
 };
 
 const gameDto: RecordedGameDto = {
@@ -74,6 +100,17 @@ describe('teamTableDtoToDomain', () => {
         expect(table.allowGrandTichu).toBe(true);
         expect(table.teams[0].teamName).toBe('Team Alpha');
         expect(table.teams[1].players[1]).toEqual({ playerId: 'b2', name: 'Ben' });
+        expect(table.trio).toBe(false);
+        expect(table.schedule).toHaveLength(4);
+    });
+
+    it('maps a trio table with all three seated teams and its six-game schedule', () => {
+        const table = teamTableDtoToDomain(trioTableDto);
+
+        expect(table.trio).toBe(true);
+        expect(table.teams.map((team) => team.teamName)).toEqual(['Team Alpha', 'Team Beta', 'Team Gamma']);
+        expect(table.schedule[1]).toEqual({ gameNumber: 2, teamIds: ['team-a', 'team-c'] });
+        expect(table.schedule[5]).toEqual({ gameNumber: 6, teamIds: ['team-b', 'team-c'] });
     });
 });
 

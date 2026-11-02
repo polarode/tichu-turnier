@@ -33,9 +33,6 @@ export const ERROR_CODES = [
     /** A tournament with fewer than two teams cannot be started. */
     'INSUFFICIENT_TEAMS',
 
-    /** The pairing component cannot pair this field of teams (odd count, until trio tables land). */
-    'PAIRING_UNSUPPORTED',
-
     // --- Scoring (S5) ---
     /** A submitted game failed the scoring engine's validation; field-anchored where sensible. */
     'GAME_VALIDATION_INVALID',

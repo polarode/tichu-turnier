@@ -24,13 +24,18 @@ const writeRequest = {
     settings: { allowGrandTichu: true },
 };
 
+
+/** A normal table's four-game schedule: both teams play every game. */
+function schedule(first: string, second: string) {
+    return [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: [first, second] }));
+}
 const startedResponse = {
     tournament: { ...dto, status: TournamentStatus.ACTIVE },
     round: {
         roundNumber: 1,
         tables: [
-            { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] },
-            { tableNumber: 2, homeTeamId: 'team-c', awayTeamId: 'team-d', gameCount: 4, games: [] },
+            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
+            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
         ],
     },
 };
@@ -38,7 +43,7 @@ const startedResponse = {
 const roundsResponse = [
     {
         roundNumber: 1,
-        tables: [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] }],
+        tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
     },
 ];
 
@@ -137,8 +142,8 @@ describe('TournamentRepository start/rounds', () => {
         expect(tournament.status).toBe(TournamentStatus.ACTIVE);
         expect(round.number).toBe(1);
         expect(round.tables).toEqual([
-            { tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] },
-            { tableNumber: 2, homeTeamId: 'team-c', awayTeamId: 'team-d', gameCount: 4, games: [] },
+            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
+            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
         ]);
     });
 
@@ -146,7 +151,6 @@ describe('TournamentRepository start/rounds', () => {
         for (const code of [
             'TOURNAMENT_NOT_STARTABLE',
             'INSUFFICIENT_TEAMS',
-            'PAIRING_UNSUPPORTED',
         ] as const) {
             mock.onPost('/api/tournaments/t-1/start').replyOnce(409, {
                 status: 409,
@@ -169,7 +173,7 @@ describe('TournamentRepository start/rounds', () => {
         expect(rounds).toEqual([
             {
                 number: 1,
-                tables: [{ tableNumber: 1, homeTeamId: 'team-a', awayTeamId: 'team-b', gameCount: 4, games: [] }],
+                tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
             },
         ]);
     });

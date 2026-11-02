@@ -67,27 +67,28 @@ class RoundTableEntity(
     val tournamentId: String,
     @Column(name = "table_number", nullable = false)
     val tableNumber: Int,
-    @Column(name = "home_team_id", nullable = false)
-    val homeTeamId: String,
-    @Column(name = "away_team_id", nullable = false)
-    val awayTeamId: String,
+    @Column(name = "seat1_team_id", nullable = false)
+    val seat1TeamId: String,
+    @Column(name = "seat2_team_id", nullable = false)
+    val seat2TeamId: String,
+    /** The third seat, only at the trio table; null at a normal table. */
+    @Column(name = "seat3_team_id")
+    val seat3TeamId: String?,
 ) {
     fun toDomain(): PairingTable = PairingTable(
         id = TableId(tableNumber),
-        seatedTeams = listOf(TeamId(homeTeamId), TeamId(awayTeamId)),
+        seatedTeams = listOfNotNull(seat1TeamId, seat2TeamId, seat3TeamId).map(::TeamId),
     )
 
     companion object {
-        fun from(roundId: String, tournamentId: String, table: PairingTable): RoundTableEntity {
-            // Two columns until trio tables are persisted (#109); the start guard keeps trios out.
-            check(!table.isTrio) { "Trio tables cannot be persisted yet (#109)" }
-            return RoundTableEntity(
+        fun from(roundId: String, tournamentId: String, table: PairingTable): RoundTableEntity =
+            RoundTableEntity(
                 roundId = roundId,
                 tournamentId = tournamentId,
                 tableNumber = table.id.value,
-                homeTeamId = table.seatedTeams[0].value,
-                awayTeamId = table.seatedTeams[1].value,
+                seat1TeamId = table.seatedTeams[0].value,
+                seat2TeamId = table.seatedTeams[1].value,
+                seat3TeamId = table.seatedTeams.getOrNull(2)?.value,
             )
-        }
     }
 }

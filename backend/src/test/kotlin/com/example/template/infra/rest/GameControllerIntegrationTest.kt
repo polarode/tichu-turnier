@@ -513,4 +513,54 @@ class GameControllerIntegrationTest(
             .andExpect(jsonPath("$.outcome.victoryPoints.$teamA").value(3))
             .andExpect(jsonPath("$.outcome.victoryPoints.$teamB").value(0))
     }
+
+    // ---- trio table -------------------------------------------------------------
+
+    /** Seats A/B/C at a trio table (1 AB, 2 AC, 3 BC, ...) and returns a session cookie for C. */
+    private fun seatTrioAndLoginTeamC(): Cookie {
+        teamRepository.save(team("team-c", "Team Gamma", "team-c-p1", "team-c-p2"))
+        roundRepository.save(
+            round(1).copy(
+                pairing = com.example.template.domain.Pairing(
+                    tables = listOf(Table(TableId(1), listOf(TeamId(teamA), TeamId(teamB), TeamId("team-c")))),
+                ),
+            ),
+        )
+        return exchangeTeamSession("team-c")
+    }
+
+    @Test
+    fun `a trio team records a game it sits out`() {
+        val teamCCookie = seatTrioAndLoginTeamC()
+
+        // Game 4 is A vs B; C sits it out but may enter it.
+        mockMvc.perform(
+            post(createUrl()).cookie(teamCCookie).contentType(MediaType.APPLICATION_JSON).content(createBody(gameNumber = 4)),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.gameNumber").value(4))
+    }
+
+    @Test
+    fun `a wrong pair for a trio game number answers GAME_VALIDATION_INVALID`() {
+        seatTrioAndLoginTeamC()
+
+        // Game 2 is A vs C, not A vs B.
+        createGame(body = createBody(gameNumber = 2))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("GAME_VALIDATION_INVALID"))
+            .andExpect(jsonPath("$.field").value("teams"))
+    }
+
+    @Test
+    fun `a team not seated at the trio table answers 403`() {
+        seatTrioAndLoginTeamC()
+        teamRepository.save(team("team-x", "Team X", "team-x-p1", "team-x-p2"))
+        val outsiderCookie = exchangeTeamSession("team-x")
+
+        mockMvc.perform(
+            post(createUrl()).cookie(outsiderCookie).contentType(MediaType.APPLICATION_JSON).content(createBody()),
+        )
+            .andExpect(status().isForbidden)
+    }
 }

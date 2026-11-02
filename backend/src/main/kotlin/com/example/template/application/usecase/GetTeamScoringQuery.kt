@@ -57,6 +57,8 @@ class GetTeamScoringQuery(
             locked = round.locked,
             allowGrandTichu = settings.allowGrandTichu,
             teams = teams,
+            trio = table.isTrio,
+            schedule = table.schedule,
         )
     }
 

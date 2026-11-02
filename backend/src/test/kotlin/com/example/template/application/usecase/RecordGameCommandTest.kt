@@ -291,4 +291,104 @@ class RecordGameCommandTest {
 
         assertFailsWith<GameConfirmedException> { update(validRequest(version = 1)) }
     }
+
+    // ---- trio table -------------------------------------------------------------
+
+    private val teamC = TeamId("team-c")
+    private val playerC1 = PlayerId("team-c-p1")
+    private val playerC2 = PlayerId("team-c-p2")
+
+    /** Seats A/B/C at a trio table: 1 AB, 2 AC, 3 BC, 4 AB, 5 AC, 6 BC. */
+    private fun seatTrio() {
+        teamRepository.save(team(teamC, "Team Gamma", playerC1, playerC2))
+        roundRepository.save(
+            round(1).copy(pairing = Pairing(tables = listOf(Table(TableId(1), listOf(teamA, teamB, teamC))))),
+        )
+    }
+
+    private val rosters = mapOf(teamA to (playerA1 to playerA2), teamB to (playerB1 to playerB2), teamC to (playerC1 to playerC2))
+
+    /** A valid game between [first] and [second]: [first] wins with a successful small Tichu. */
+    private fun trioRequest(gameNumber: Int, first: TeamId, second: TeamId) = GameWriteRequest(
+        gameNumber = gameNumber,
+        beschiss = false,
+        version = null,
+        teams = listOf(
+            TeamResultInput(first, 55, listOf(
+                PlayerResultInput(rosters.getValue(first).first, 1, TichuCall.SMALL, 0),
+                PlayerResultInput(rosters.getValue(first).second, 3, TichuCall.NONE, 0),
+            )),
+            TeamResultInput(second, 45, listOf(
+                PlayerResultInput(rosters.getValue(second).first, 2, TichuCall.NONE, 0),
+                PlayerResultInput(rosters.getValue(second).second, 4, TichuCall.NONE, 0),
+            )),
+        ),
+    )
+
+    @Test
+    fun `a trio table records six games with the playing teams switching per game`() {
+        seatTrio()
+        val schedule = listOf(teamA to teamB, teamA to teamC, teamB to teamC, teamA to teamB, teamA to teamC, teamB to teamC)
+
+        schedule.forEachIndexed { index, (first, second) -> create(trioRequest(index + 1, first, second)) }
+
+        assertEquals(
+            schedule.map { (first, second) -> setOf(first, second) },
+            (1..6).map { n -> gameRepository.find(GameKey(tournamentId, 1, 1, n))!!.let { setOf(it.team1, it.team2) } },
+        )
+    }
+
+    @Test
+    fun `a trio table has no seventh game`() {
+        seatTrio()
+
+        assertFailsWith<InvalidFieldException> { create(trioRequest(7, teamA, teamB)) }
+    }
+
+    @Test
+    fun `a wrong pair for the trio game number is rejected`() {
+        seatTrio()
+
+        // Game 1 is A vs B; C sits it out.
+        val ex = assertFailsWith<GameValidationException> { create(trioRequest(1, teamA, teamC)) }
+
+        assertEquals("teams", ex.field)
+        assertNull(gameRepository.find(gameKey()))
+    }
+
+    @Test
+    fun `trio participants are limited to the playing teams' players`() {
+        seatTrio()
+        // Game 2 is A vs C; a player of the sitting-out team B slips in under A.
+        val intruder = trioRequest(2, teamA, teamC).let { request ->
+            request.copy(teams = listOf(
+                request.teams[0].copy(players = listOf(request.teams[0].players[0], request.teams[0].players[1].copy(playerId = playerB1))),
+                request.teams[1],
+            ))
+        }
+
+        val ex = assertFailsWith<GameValidationException> { create(intruder) }
+
+        assertEquals("players", ex.field)
+    }
+
+    @Test
+    fun `a team sitting out a trio game may still record it`() {
+        seatTrio()
+
+        val recorded = create(trioRequest(1, teamA, teamB), principal = AuthenticatedTeam(teamC, tournamentId))
+
+        assertEquals(1, recorded.gameNumber)
+    }
+
+    @Test
+    fun `a team not seated at the trio table is rejected`() {
+        seatTrio()
+        val outsider = TeamId("team-x")
+        teamRepository.save(team(outsider, "Team X", PlayerId("team-x-p1"), PlayerId("team-x-p2")))
+
+        assertFailsWith<ForbiddenException> {
+            create(trioRequest(1, teamA, teamB), principal = AuthenticatedTeam(outsider, tournamentId))
+        }
+    }
 }

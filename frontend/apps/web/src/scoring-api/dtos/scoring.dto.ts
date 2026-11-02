@@ -19,6 +19,12 @@ const teamTableTeamDtoSchema = z.object({
     players: z.tuple([teamTablePlayerDtoSchema, teamTablePlayerDtoSchema]),
 });
 
+/** One game of a table's schedule: who plays it. The server is the single source of the trio schedule. */
+export const scheduledGameDtoSchema = z.object({
+    gameNumber: z.number(),
+    teamIds: z.tuple([z.string(), z.string()]),
+});
+
 /** `GET /api/team/me/current-table`. */
 export const teamTableDtoSchema = z.object({
     tournamentId: z.string(),
@@ -26,7 +32,10 @@ export const teamTableDtoSchema = z.object({
     tableNumber: z.number(),
     locked: z.boolean(),
     allowGrandTichu: z.boolean(),
-    teams: z.tuple([teamTableTeamDtoSchema, teamTableTeamDtoSchema]),
+    /** The seated teams in seat order: two, or three at the trio table. */
+    teams: z.tuple([teamTableTeamDtoSchema, teamTableTeamDtoSchema]).rest(teamTableTeamDtoSchema),
+    trio: z.boolean(),
+    schedule: z.array(scheduledGameDtoSchema),
 });
 
 const recordedPlayerDtoSchema = z.object({
@@ -63,6 +72,7 @@ export const recordedGameListDtoSchema = z.array(recordedGameDtoSchema);
 
 export type TichuCallDto = z.infer<typeof tichuCallDtoSchema>;
 export type TeamTableDto = z.infer<typeof teamTableDtoSchema>;
+export type ScheduledGameDto = z.infer<typeof scheduledGameDtoSchema>;
 export type RecordedGameDto = z.infer<typeof recordedGameDtoSchema>;
 
 /** Write payloads (sent, not parsed) — mirror the backend `GameRequestDto`. */

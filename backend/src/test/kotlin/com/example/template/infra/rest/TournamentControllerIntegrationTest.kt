@@ -16,10 +16,14 @@ import com.example.template.testsupport.PostgresBackedIntegrationTest
 import com.example.template.testsupport.loginAsSeededAdmin
 import tools.jackson.databind.ObjectMapper
 import jakarta.servlet.http.Cookie
+import org.hamcrest.Matchers.contains
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import kotlin.test.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
@@ -371,17 +375,24 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.code").value("INSUFFICIENT_TEAMS"))
     }
 
-    @Test
-    fun `starting with an odd team count returns the temporary unsupported 409 problem`() {
-        val id = createTournament("Odd")
-        createTeam(id, "Team Alpha")
-        createTeam(id, "Team Beta")
-        createTeam(id, "Team Gamma")
+    @ParameterizedTest
+    @ValueSource(ints = [3, 5, 7])
+    fun `starting with an odd team count seats one trio table at the last table number`(count: Int) {
+        val id = createTournament("Odd $count")
+        (1..count).forEach { createTeam(id, "Team $it") }
+        val trioNumber = (count - 1) / 2
 
         mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
-            .andExpect(status().isConflict)
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.code").value("PAIRING_UNSUPPORTED"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.round.tables.length()").value(trioNumber))
+            .andExpect(jsonPath("$.round.tables[-1].tableNumber").value(trioNumber))
+            .andExpect(jsonPath("$.round.tables[-1].trio").value(true))
+            .andExpect(jsonPath("$.round.tables[-1].teamIds.length()").value(3))
+            .andExpect(jsonPath("$.round.tables[-1].gameCount").value(6))
+
+        val persisted = roundRepository.findByTournamentAndNumber(TournamentId(id), 1)!!.pairing.tables
+        assertEquals(listOf(trioNumber), persisted.filter { it.isTrio }.map { it.id.value })
+        assertEquals(count, persisted.sumOf { it.seatedTeams.size })
     }
 
     @Test
@@ -412,9 +423,34 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("\$[0].roundNumber").value(1))
             .andExpect(jsonPath("\$[0].tables.length()").value(2))
             .andExpect(jsonPath("\$[0].tables[0].tableNumber").value(1))
-            .andExpect(jsonPath("\$[0].tables[0].homeTeamId").isNotEmpty)
-            .andExpect(jsonPath("\$[0].tables[0].awayTeamId").isNotEmpty)
+            .andExpect(jsonPath("\$[0].tables[0].teamIds.length()").value(2))
+            .andExpect(jsonPath("\$[0].tables[0].trio").value(false))
+            .andExpect(jsonPath("\$[0].tables[0].schedule.length()").value(4))
+            .andExpect(jsonPath("\$[0].tables[0].schedule[3].gameNumber").value(4))
+            .andExpect(jsonPath("\$[0].tables[0].schedule[3].teamIds.length()").value(2))
             .andExpect(jsonPath("\$[0].tables[1].tableNumber").value(2))
+    }
+
+    @Test
+    fun `the rounds read exposes a trio table's seated teams and six-game schedule`() {
+        val id = createTournament("Trio")
+        listOf("Team Alpha", "Team Beta", "Team Gamma").forEach { createTeam(id, it) }
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isOk)
+        val (a, b, c) = roundRepository.findByTournamentAndNumber(TournamentId(id), 1)!!
+            .table(1)!!.seatedTeams.map { it.value }
+
+        mockMvc.perform(get("/api/tournaments/$id/rounds").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$[0].tables.length()").value(1))
+            .andExpect(jsonPath("\$[0].tables[0].trio").value(true))
+            .andExpect(jsonPath("\$[0].tables[0].teamIds").value(contains(a, b, c)))
+            .andExpect(jsonPath("\$[0].tables[0].gameCount").value(6))
+            .andExpect(jsonPath("\$[0].tables[0].schedule.length()").value(6))
+            .andExpect(jsonPath("\$[0].tables[0].schedule[0].teamIds").value(contains(a, b)))
+            .andExpect(jsonPath("\$[0].tables[0].schedule[1].teamIds").value(contains(a, c)))
+            .andExpect(jsonPath("\$[0].tables[0].schedule[2].gameNumber").value(3))
+            .andExpect(jsonPath("\$[0].tables[0].schedule[2].teamIds").value(contains(b, c)))
     }
 
     @Test

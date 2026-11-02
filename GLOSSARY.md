@@ -58,8 +58,22 @@ The assignment of teams to opponents for a round, produced by the Swiss pairing
 component. Each pairing assigns every team to exactly one numbered table.
 _Avoid_: draw, bracket
 
+**Trio Table**:
+The one table per round that seats three teams when the team count is odd. Its
+six games follow a fixed matchup per game number (1 AB, 2 AC, 3 BC, 4 AB, 5 AC,
+6 BC), so every pair meets twice and no team sits out twice in a row. It is always
+the round's last table, so it can be the same physical table every round. Round 1
+seats three random teams there; from round 2 on, the bottom three in the standings.
+_Avoid_: triple table, odd table
+
+**Sit-out**:
+A game at a trio table in which one of its three teams does not play. Each trio
+team sits out two of the six games.
+_Avoid_: bye (a bye means skipping a whole round)
+
 **Rematch**:
 A pair of teams meeting more than once across rounds; avoided where possible.
+Meeting at a trio table counts as having met.
 _Avoid_: repeat, replay
 
 **Victory Points (VP)**:

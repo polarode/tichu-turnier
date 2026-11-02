@@ -1,5 +1,6 @@
 package com.example.template.application.api
 
+import com.example.template.domain.Table
 import com.example.template.domain.TableConfirmations
 import com.example.template.domain.TableKey
 import com.example.template.domain.TableStatus
@@ -35,7 +36,8 @@ data class TableConfirmationState(
     val confirmedTeamIds: List<TeamId>,
 ) {
     companion object {
-        fun of(confirmations: TableConfirmations): TableConfirmationState =
-            TableConfirmationState(confirmations.status, confirmations.confirmedInSeatOrder)
+        /** The state of [table] given who confirmed it; none by default, as on a fresh table. */
+        fun of(table: Table, confirmed: Set<TeamId> = emptySet()): TableConfirmationState =
+            TableConfirmations(table, confirmed).let { TableConfirmationState(it.status, it.confirmedInSeatOrder) }
     }
 }

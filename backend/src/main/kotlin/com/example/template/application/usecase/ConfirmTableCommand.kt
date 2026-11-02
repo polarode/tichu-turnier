@@ -10,9 +10,7 @@ import com.example.template.domain.Table
 import com.example.template.domain.TableConfirmationRepository
 import com.example.template.domain.TableConfirmations
 import com.example.template.domain.TableKey
-import com.example.template.domain.TableStatus
 import com.example.template.domain.TeamId
-import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.GameConcurrentModificationException
 import com.example.template.vocabulary.InvalidFieldException
 import com.example.template.vocabulary.NotFoundException
@@ -72,7 +70,7 @@ class ConfirmTableCommand(
     override fun retract(key: TableKey, principal: AuthenticatedTeam): TableConfirmationState {
         val table = lockSeatedTable(key, principal)
         val confirmed = confirmationRepository.findByTable(key)
-        if (TableConfirmations(table, confirmed).status == TableStatus.COMPLETED) {
+        if (TableConfirmations(table, confirmed).isCompleted) {
             throw TableCompletedException("Table ${table.id.value} is completed; confirmations are final")
         }
         if (principal.teamId !in confirmed) return state(table, confirmed)
@@ -90,9 +88,7 @@ class ConfirmTableCommand(
         val table = roundRepository.findByTournamentAndNumber(key.tournamentId, key.roundNumber)
             ?.table(key.tableNumber)
             ?: throw NotFoundException("Table ${key.tableNumber} of round ${key.roundNumber} not found")
-        if (!table.seats(principal.teamId)) {
-            throw ForbiddenException("Team ${principal.teamId.value} is not seated at table ${table.id.value}")
-        }
+        table.requireSeated(principal.teamId)
         roundRepository.lockTable(key)
         return table
     }
@@ -103,6 +99,5 @@ class ConfirmTableCommand(
         }
     }
 
-    private fun state(table: Table, confirmed: Set<TeamId>) =
-        TableConfirmationState.of(TableConfirmations(table, confirmed))
+    private fun state(table: Table, confirmed: Set<TeamId>) = TableConfirmationState.of(table, confirmed)
 }

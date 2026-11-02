@@ -7,7 +7,6 @@ import com.example.template.application.api.TableConfirmationState
 import com.example.template.domain.Round
 import com.example.template.domain.ScheduledGame
 import com.example.template.domain.Table
-import com.example.template.domain.TableConfirmations
 import com.example.template.domain.Tournament
 import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
@@ -94,9 +93,7 @@ data class RoundResponse(
         /** A freshly created round (the start response): no games entered yet. */
         fun from(round: Round): RoundResponse = RoundResponse(
             roundNumber = round.number,
-            tables = round.pairing.tables.map {
-                TableResponse.from(it, games = emptyList(), TableConfirmationState.of(TableConfirmations(it, emptySet())))
-            },
+            tables = round.pairing.tables.map { TableResponse.from(it, games = emptyList(), TableConfirmationState.of(it)) },
         )
 
         /** The admin's rounds read: each table with its entered games (S5d, #102). */

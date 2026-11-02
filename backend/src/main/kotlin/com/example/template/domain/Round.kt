@@ -24,9 +24,7 @@ data class Round(
      * advancement (S7) consumes this.
      */
     fun isComplete(confirmations: Map<TableId, Set<TeamId>>): Boolean =
-        pairing.tables.all {
-            TableConfirmations(it, confirmations[it.id].orEmpty()).status == TableStatus.COMPLETED
-        }
+        pairing.tables.all { TableConfirmations(it, confirmations[it.id].orEmpty()).isCompleted }
 }
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */

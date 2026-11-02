@@ -23,6 +23,13 @@ data class TableConfirmations(
             else -> TableStatus.CONFIRMING
         }
 
+    /** Games are frozen from the first confirmation on (ADR 0006). */
+    val isFrozen: Boolean
+        get() = status != TableStatus.PLAYING
+
+    val isCompleted: Boolean
+        get() = status == TableStatus.COMPLETED
+
     /** The confirmed teams in the table's seat order, the order the API lists them in. */
     val confirmedInSeatOrder: List<TeamId>
         get() = table.seatedTeams.filter { it in confirmedTeamIds }

@@ -13,13 +13,11 @@ import com.example.template.domain.Table
 import com.example.template.domain.TableConfirmationRepository
 import com.example.template.domain.TableConfirmations
 import com.example.template.domain.TableKey
-import com.example.template.domain.TableStatus
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamResult
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
-import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.GameConfirmedException
 import com.example.template.vocabulary.GameConcurrentModificationException
 import com.example.template.vocabulary.GameNotFoundException
@@ -84,7 +82,7 @@ class RecordGameCommand(
             )
         val table = round.table(tableNumber)
             ?: throw GameNotFoundException("Table $tableNumber of round ${round.number} not found")
-        requireSeatedAt(principal.teamId, table)
+        table.requireSeated(principal.teamId)
         requireGameNumber(request.gameNumber, table)
         requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
 
@@ -139,17 +137,14 @@ class RecordGameCommand(
      */
     private fun requireNotFrozen(key: TableKey, table: Table) {
         roundRepository.lockTable(key)
-        val status = TableConfirmations(table, confirmationRepository.findByTable(key)).status
-        if (status != TableStatus.PLAYING) {
-            throw GameConfirmedException("Table ${table.id.value} is ${status.name.lowercase()}; its games are frozen")
+        val confirmations = TableConfirmations(table, confirmationRepository.findByTable(key))
+        if (confirmations.isFrozen) {
+            throw GameConfirmedException(
+                "Table ${table.id.value} is ${confirmations.status.name.lowercase()}; its games are frozen",
+            )
         }
     }
 
-    private fun requireSeatedAt(teamId: TeamId, table: Table) {
-        if (!table.seats(teamId)) {
-            throw ForbiddenException("Team ${teamId.value} is not seated at table ${table.id.value}")
-        }
-    }
 
     private fun requirePlayingTeams(
         tournamentId: TournamentId,

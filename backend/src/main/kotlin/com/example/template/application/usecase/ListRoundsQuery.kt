@@ -9,7 +9,6 @@ import com.example.template.domain.AdminUserId
 import com.example.template.domain.GameRepository
 import com.example.template.domain.RoundRepository
 import com.example.template.domain.TableConfirmationRepository
-import com.example.template.domain.TableConfirmations
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
 
@@ -35,9 +34,7 @@ class ListRoundsQuery(
                     TableOverview(
                         table = table,
                         games = gamesByTable[table.id.value].orEmpty().map { RecordedGame.of(it, settings) },
-                        confirmation = TableConfirmationState.of(
-                            TableConfirmations(table, confirmedByTable[table.id].orEmpty()),
-                        ),
+                        confirmation = TableConfirmationState.of(table, confirmedByTable[table.id].orEmpty()),
                     )
                 },
             )

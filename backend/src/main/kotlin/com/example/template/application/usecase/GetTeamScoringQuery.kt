@@ -12,14 +12,12 @@ import com.example.template.domain.Round
 import com.example.template.domain.RoundRepository
 import com.example.template.domain.Table
 import com.example.template.domain.TableConfirmationRepository
-import com.example.template.domain.TableConfirmations
 import com.example.template.domain.TableKey
 import com.example.template.domain.Team
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TournamentId
 import com.example.template.domain.TournamentRepository
-import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.NotFoundException
 
 /**
@@ -60,7 +58,8 @@ class GetTeamScoringQuery(
             roundNumber = round.number,
             tableNumber = table.id.value,
             confirmation = TableConfirmationState.of(
-                TableConfirmations(table, confirmationRepository.findByTable(TableKey(tournamentId, round.number, table.id.value))),
+                table,
+                confirmationRepository.findByTable(TableKey(tournamentId, round.number, table.id.value)),
             ),
             allowGrandTichu = settings.allowGrandTichu,
             teams = teams,
@@ -84,7 +83,7 @@ class GetTeamScoringQuery(
             ?: throw NotFoundException("Round $roundNumber of tournament ${tournamentId.value} not found")
         val table = round.table(tableNumber)
             ?: throw NotFoundException("Table $tableNumber of round $roundNumber not found")
-        requireSeatedAt(principal.teamId, table)
+        table.requireSeated(principal.teamId)
 
         val settings = tournamentSettings(tournamentId)
         return gameRepository.findByTable(tournamentId, roundNumber, tableNumber)
@@ -108,9 +107,4 @@ class GetTeamScoringQuery(
         teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found")
 
-    private fun requireSeatedAt(teamId: TeamId, table: Table) {
-        if (!table.seats(teamId)) {
-            throw ForbiddenException("Team ${teamId.value} is not seated at table ${table.id.value}")
-        }
-    }
 }

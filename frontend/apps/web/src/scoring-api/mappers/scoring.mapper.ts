@@ -5,6 +5,7 @@ import type {
     RecordedPlayer,
     RecordedTeam,
     ScheduledGame,
+    SeatedTeams,
     TeamTable,
     TeamTableTeam,
 } from '@/domain/game.domain.ts';
@@ -23,6 +24,13 @@ function mapPair<T, R>(pair: readonly [T, T], f: (item: T) => R): [R, R] {
     return [f(pair[0]), f(pair[1])];
 }
 
+/** Maps a table's seated teams element-wise, preserving the two-or-three seat shape. */
+export function mapSeated<T, R>(seated: SeatedTeams<T>, f: (item: T) => R): SeatedTeams<R> {
+    return seated.length === 3 ?
+            [f(seated[0]), f(seated[1]), f(seated[2])]
+        :   [f(seated[0]), f(seated[1])];
+}
+
 export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
     return {
         tournamentId: dto.tournamentId,
@@ -30,11 +38,7 @@ export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
         tableNumber: dto.tableNumber,
         locked: dto.locked,
         allowGrandTichu: dto.allowGrandTichu,
-        teams: [
-            teamTableTeamDtoToDomain(dto.teams[0]),
-            teamTableTeamDtoToDomain(dto.teams[1]),
-            ...dto.teams.slice(2).map(teamTableTeamDtoToDomain),
-        ],
+        teams: mapSeated(dto.teams, teamTableTeamDtoToDomain),
         trio: dto.trio,
         schedule: dto.schedule.map(scheduledGameDtoToDomain),
     };

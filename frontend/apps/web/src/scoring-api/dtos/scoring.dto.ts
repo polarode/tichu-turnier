@@ -13,6 +13,11 @@ const teamTablePlayerDtoSchema = z.object({
     name: z.string(),
 });
 
+/** A table's seated teams in seat order: two, or three at the trio table — never more. */
+export function seatedSchema<T extends z.ZodType>(seat: T) {
+    return z.union([z.tuple([seat, seat]), z.tuple([seat, seat, seat])]);
+}
+
 const teamTableTeamDtoSchema = z.object({
     teamId: z.string(),
     teamName: z.string(),
@@ -33,7 +38,7 @@ export const teamTableDtoSchema = z.object({
     locked: z.boolean(),
     allowGrandTichu: z.boolean(),
     /** The seated teams in seat order: two, or three at the trio table. */
-    teams: z.tuple([teamTableTeamDtoSchema, teamTableTeamDtoSchema]).rest(teamTableTeamDtoSchema),
+    teams: seatedSchema(teamTableTeamDtoSchema),
     trio: z.boolean(),
     schedule: z.array(scheduledGameDtoSchema),
 });

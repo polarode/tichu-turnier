@@ -21,7 +21,7 @@ export interface TableRef {
 }
 
 /** The teams seated at a table, in seat order: two, or three at the trio table. */
-export type SeatedTeams<T> = [T, T, ...T[]];
+export type SeatedTeams<T> = [T, T] | [T, T, T];
 
 /** One game of a table's schedule: its 1-based number and the two teams playing it. */
 export interface ScheduledGame {

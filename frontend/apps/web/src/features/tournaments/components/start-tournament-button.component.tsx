@@ -16,10 +16,10 @@ interface StartTournamentButtonProps {
 
 /**
  * The organizer's start action. Guards are enforced where the client can know them —
- * the button locks with a hint while there are fewer than two teams (an odd count
- * is fine: it seats a trio table) — and anything only the server can judge (status
- * conflicts) surfaces as the localized typed error. Starting is confirmed explicitly, mirroring
- * the other destructive-ish setup actions.
+ * the button locks with a hint while there are fewer than two teams (an odd count is
+ * fine: it seats a trio table) — and anything only the server can judge (status
+ * conflicts) surfaces as the localized typed error. Starting is confirmed explicitly,
+ * mirroring the other destructive-ish setup actions.
  */
 export function StartTournamentButton({ tournament, teams }: StartTournamentButtonProps) {
     const { t } = useI18n();

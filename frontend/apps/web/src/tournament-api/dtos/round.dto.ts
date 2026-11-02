@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { recordedGameDtoSchema, scheduledGameDtoSchema } from '@/scoring-api/dtos/scoring.dto.ts';
+import { recordedGameDtoSchema, scheduledGameDtoSchema, seatedSchema } from '@/scoring-api/dtos/scoring.dto.ts';
 import { tournamentDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 
 /**
@@ -11,7 +11,7 @@ import { tournamentDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 export const tableOverviewDtoSchema = z.object({
     tableNumber: z.number(),
     /** The seated teams in seat order: two, or three at the trio table. */
-    teamIds: z.tuple([z.string(), z.string()]).rest(z.string()),
+    teamIds: seatedSchema(z.string()),
     trio: z.boolean(),
     /** Games played at this table per round — the denominator of "x/n entered". */
     gameCount: z.number(),

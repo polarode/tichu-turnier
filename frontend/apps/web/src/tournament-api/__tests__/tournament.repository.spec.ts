@@ -178,6 +178,26 @@ describe('TournamentRepository start/rounds', () => {
         ]);
     });
 
+    it('rejects a table seating more than three teams at the zod boundary', async () => {
+        mock.onGet('/api/tournaments/t-1/rounds').reply(200, [
+            {
+                roundNumber: 1,
+                tables: [
+                    {
+                        tableNumber: 1,
+                        teamIds: ['team-a', 'team-b', 'team-c', 'team-d'],
+                        trio: true,
+                        gameCount: 6,
+                        schedule: [],
+                        games: [],
+                    },
+                ],
+            },
+        ]);
+
+        await expect(TournamentRepository.rounds('t-1')).rejects.toThrow();
+    });
+
     it('rejects a malformed rounds response at the zod boundary', async () => {
         mock.onGet('/api/tournaments/t-1/rounds').reply(200, [{ roundNumber: 'one' }]);
 

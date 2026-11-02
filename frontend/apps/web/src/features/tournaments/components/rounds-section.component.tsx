@@ -5,7 +5,7 @@ import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import { type RecordedGame, teamPoints } from '@/domain/game.domain.ts';
-import type { Round, TableOverview } from '@/domain/round.domain.ts';
+import { playingTeamIds, type Round, type TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
@@ -215,7 +215,7 @@ function GameRow({ table, game }: { table: TableOverview; game: RecordedGame }) 
     const label = `${t('rounds.game')} ${game.gameNumber}`;
     // A team missing from the outcome shows a dash, never a misleading 0.
     const points = (teamId: string) => teamPoints(game, teamId) ?? '–';
-    const playing = table.schedule.find((scheduled) => scheduled.gameNumber === game.gameNumber)?.teamIds;
+    const playing = playingTeamIds(table, game.gameNumber);
 
     return (
         <li aria-label={label} className="flex flex-wrap items-center gap-2">

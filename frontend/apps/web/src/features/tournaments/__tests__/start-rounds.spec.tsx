@@ -245,6 +245,47 @@ describe('rounds section', () => {
         expect(within(second!).queryByText('Beschiss')).not.toBeInTheDocument();
     });
 
+    it('lists all three trio teams and orders each game\'s scores by its playing teams', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta'), team('team-c', 'Gamma')]);
+        const trioGame: RecordedGame = {
+            ...game(2, { a: 120, b: 0 }),
+            // Stored C first; game 2 is A vs C by the schedule.
+            teams: [
+                { teamId: 'team-c', baseScore: 0, players: game(2, { a: 0, b: 0 }).teams[0].players },
+                { teamId: 'team-a', baseScore: 0, players: game(2, { a: 0, b: 0 }).teams[1].players },
+            ],
+            outcome: { tichuSuccesses: [], doubleWinTeam: null, teamPoints: { 'team-a': 120, 'team-c': 80 }, victoryPoints: {} },
+        };
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                {
+                    tableNumber: 1,
+                    teamIds: ['team-a', 'team-b', 'team-c'],
+                    trio: true,
+                    gameCount: 6,
+                    schedule: [
+                        { gameNumber: 1, teamIds: ['team-a', 'team-b'] },
+                        { gameNumber: 2, teamIds: ['team-a', 'team-c'] },
+                        { gameNumber: 3, teamIds: ['team-b', 'team-c'] },
+                        { gameNumber: 4, teamIds: ['team-a', 'team-b'] },
+                        { gameNumber: 5, teamIds: ['team-a', 'team-c'] },
+                        { gameNumber: 6, teamIds: ['team-b', 'team-c'] },
+                    ],
+                    games: [trioGame],
+                },
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        expect(await within(section).findByText('1/6 eingetragen')).toBeInTheDocument();
+        await userEvent.click(within(section).getByRole('button', { name: /Tisch 1.*Alpha vs Beta vs Gamma/ }));
+
+        const [row] = within(section).getAllByRole('listitem', { name: /^Spiel/ });
+        expect(within(row!).getByText('120 : 80')).toBeInTheDocument();
+    });
+
     it('opens on the latest round and switches rounds through the selector', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);

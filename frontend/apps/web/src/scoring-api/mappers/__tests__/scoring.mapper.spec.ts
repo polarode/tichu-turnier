@@ -39,7 +39,8 @@ const tableDto: TeamTableDto = {
 const trioTableDto: TeamTableDto = {
     ...tableDto,
     teams: [
-        ...tableDto.teams,
+        tableDto.teams[0],
+        tableDto.teams[1],
         {
             teamId: 'team-c',
             teamName: 'Team Gamma',

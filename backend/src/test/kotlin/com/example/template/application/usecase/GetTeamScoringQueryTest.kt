@@ -11,6 +11,8 @@ import com.example.template.domain.Round
 import com.example.template.domain.RoundId
 import com.example.template.domain.Table
 import com.example.template.domain.TableId
+import com.example.template.domain.TableKey
+import com.example.template.domain.TableStatus
 import com.example.template.domain.Team
 import com.example.template.domain.TeamId
 import com.example.template.domain.TichuCall
@@ -21,6 +23,7 @@ import com.example.template.domain.TournamentStatus
 import com.example.template.infra.persistence.InMemoryTournamentRepository
 import com.example.template.testsupport.InMemoryGameRepository
 import com.example.template.testsupport.InMemoryRoundRepository
+import com.example.template.testsupport.InMemoryTableConfirmationRepository
 import com.example.template.testsupport.InMemoryTeamRepository
 import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.NotFoundException
@@ -53,12 +56,13 @@ class GetTeamScoringQueryTest {
     private val teamRepository = InMemoryTeamRepository()
     private val roundRepository = InMemoryRoundRepository()
     private val gameRepository = InMemoryGameRepository()
+    private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val recordGame = RecordGameCommand(
-        tournamentRepository, roundRepository, teamRepository, gameRepository,
+        tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
     )
     private val query = GetTeamScoringQuery(
-        tournamentRepository, roundRepository, teamRepository, gameRepository,
+        tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
     )
 
     @BeforeEach
@@ -91,12 +95,11 @@ class GetTeamScoringQueryTest {
         ),
     )
 
-    private fun round(number: Int, locked: Boolean = false, home: TeamId = teamA, away: TeamId = teamB) = Round(
+    private fun round(number: Int, home: TeamId = teamA, away: TeamId = teamB) = Round(
         id = RoundId("r-$number"),
         tournamentId = tournamentId,
         number = number,
         pairing = Pairing(tables = listOf(Table(TableId(1), listOf(home, away)))),
-        locked = locked,
     )
 
     private fun seedGame(gameNumber: Int) {
@@ -124,6 +127,17 @@ class GetTeamScoringQueryTest {
     // ---- currentTable -----------------------------------------------------------
 
     @Test
+    fun `currentTable reports the confirmation state and is locked from the first confirmation`() {
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), teamB, Instant.parse("2026-01-01T13:00:00Z"))
+
+        val table = query.currentTable(seatedPrincipal)
+
+        assertEquals(TableStatus.CONFIRMING, table.confirmation.status)
+        assertEquals(listOf(teamB), table.confirmation.confirmedTeamIds)
+        assertEquals(true, table.locked, "frozen while confirming")
+    }
+
+    @Test
     fun `currentTable returns the matchup, roster, lock and settings`() {
         val table = query.currentTable(seatedPrincipal)
 
@@ -131,6 +145,8 @@ class GetTeamScoringQueryTest {
         assertEquals(1, table.roundNumber)
         assertEquals(1, table.tableNumber)
         assertEquals(false, table.locked)
+        assertEquals(TableStatus.PLAYING, table.confirmation.status)
+        assertEquals(emptyList(), table.confirmation.confirmedTeamIds)
         assertEquals(true, table.allowGrandTichu)
         assertEquals(listOf(teamA, teamB), table.teams.map { it.teamId })
         assertEquals("Team Alpha", table.teams[0].teamName)

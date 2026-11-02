@@ -43,7 +43,7 @@ import java.util.UUID
  * Integration test for the team scoring API (#100, S5b), driven over MockMvc and
  * the real security chain against Testcontainers PostgreSQL. Covers the issue's
  * acceptance criteria: error-code mapping, optimistic version race, POST/PUT
- * split, round-lock rejection, seat authorization and the playing-teams rule.
+ * split, seat authorization and the playing-teams rule.
  */
 @SpringBootTest(classes = [Application::class])
 class GameControllerIntegrationTest(
@@ -108,12 +108,11 @@ class GameControllerIntegrationTest(
         ),
     )
 
-    private fun round(number: Int, locked: Boolean = false) = Round(
+    private fun round(number: Int) = Round(
         id = RoundId("r-$number"),
         tournamentId = TournamentId(tournamentId),
         number = number,
         pairing = com.example.template.domain.Pairing(tables = listOf(Table(TableId(1), listOf(TeamId(teamA), TeamId(teamB))))),
-        locked = locked,
     )
 
     private fun PlayerId(value: String) = com.example.template.domain.PlayerId(value)
@@ -288,21 +287,6 @@ class GameControllerIntegrationTest(
         val stored = gameRepository.find(gameKey())!!
         org.junit.jupiter.api.Assertions.assertEquals(2, stored.version)
         org.junit.jupiter.api.Assertions.assertEquals(60, stored.baseScoreTeam1, "first commit wins")
-    }
-
-    // ---- AC: round lock ---------------------------------------------------------
-
-    @Test
-    fun `POST and PUT in a locked round answer GAME_CONFIRMED as 409`() {
-        roundRepository.save(round(1, locked = true))
-
-        createGame()
-            .andExpect(status().isConflict)
-            .andExpect(jsonPath("$.code").value("GAME_CONFIRMED"))
-
-        updateGame()
-            .andExpect(status().isConflict)
-            .andExpect(jsonPath("$.code").value("GAME_CONFIRMED"))
     }
 
     // ---- AC: seat authorization -------------------------------------------------

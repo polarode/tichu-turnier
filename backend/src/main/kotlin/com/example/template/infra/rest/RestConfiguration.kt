@@ -1,6 +1,7 @@
 package com.example.template.infra.rest
 
 import com.example.template.application.api.ApproveAdmin
+import com.example.template.application.api.ConfirmTable
 import com.example.template.application.api.CreateInvite
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
@@ -38,6 +39,7 @@ import com.example.template.infra.rest.web.InviteController
 import com.example.template.infra.rest.web.SessionCookieFactory
 import com.example.template.infra.rest.web.TeamAuthController
 import com.example.template.infra.rest.web.TeamController
+import com.example.template.infra.rest.web.TableConfirmationController
 import com.example.template.infra.rest.web.TeamScoringController
 import com.example.template.infra.rest.web.TournamentController
 import com.example.template.infra.rest.web.WebControllerAdvice
@@ -108,6 +110,10 @@ class RestConfiguration(
     @Bean
     fun teamScoringController(getTeamScoring: GetTeamScoring): TeamScoringController =
         TeamScoringController(getTeamScoring)
+
+    @Bean
+    fun tableConfirmationController(confirmTable: ConfirmTable): TableConfirmationController =
+        TableConfirmationController(confirmTable)
 
     @Bean
     fun authController(

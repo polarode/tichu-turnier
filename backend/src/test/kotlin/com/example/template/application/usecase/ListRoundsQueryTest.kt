@@ -10,6 +10,8 @@ import com.example.template.domain.Round
 import com.example.template.domain.RoundId
 import com.example.template.domain.Table
 import com.example.template.domain.TableId
+import com.example.template.domain.TableKey
+import com.example.template.domain.TableStatus
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamResult
 import com.example.template.domain.TichuCall
@@ -20,6 +22,7 @@ import com.example.template.domain.TournamentStatus
 import com.example.template.infra.persistence.InMemoryTournamentRepository
 import com.example.template.testsupport.InMemoryGameRepository
 import com.example.template.testsupport.InMemoryRoundRepository
+import com.example.template.testsupport.InMemoryTableConfirmationRepository
 import com.example.template.vocabulary.NotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -44,8 +47,9 @@ class ListRoundsQueryTest {
     private val tournamentRepository = InMemoryTournamentRepository()
     private val roundRepository = InMemoryRoundRepository()
     private val gameRepository = InMemoryGameRepository()
+    private val confirmationRepository = InMemoryTableConfirmationRepository()
 
-    private val query = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository)
+    private val query = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository, confirmationRepository)
 
     @BeforeEach
     fun setUp() {
@@ -107,6 +111,20 @@ class ListRoundsQueryTest {
         assertEquals(mapOf(teamA to 155, teamB to 45), table1.games[0].outcome.teamPoints)
         assertEquals(listOf(false, true), table1.games.map { it.beschiss })
         assertTrue(table2.games.isEmpty(), "a table without entries has no games")
+    }
+
+    @Test
+    fun `each table carries its confirmation state`() {
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), teamB, Instant.parse("2026-01-01T13:00:00Z"))
+        confirmationRepository.add(TableKey(tournamentId, 1, 2), teamD, Instant.parse("2026-01-01T13:00:00Z"))
+        confirmationRepository.add(TableKey(tournamentId, 1, 2), teamC, Instant.parse("2026-01-01T13:01:00Z"))
+
+        val (table1, table2) = query.list(tournamentId, owner).single().tables
+
+        assertEquals(TableStatus.CONFIRMING, table1.confirmation.status)
+        assertEquals(listOf(teamB), table1.confirmation.confirmedTeamIds)
+        assertEquals(TableStatus.COMPLETED, table2.confirmation.status)
+        assertEquals(listOf(teamC, teamD), table2.confirmation.confirmedTeamIds, "seat order")
     }
 
     @Test

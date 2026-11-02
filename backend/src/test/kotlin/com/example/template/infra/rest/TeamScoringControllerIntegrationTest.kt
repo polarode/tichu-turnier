@@ -56,6 +56,7 @@ class TeamScoringControllerIntegrationTest(
     @Autowired private val tournamentRepository: TournamentRepository,
     @Autowired private val roundRepository: RoundRepository,
     @Autowired private val gameRepository: GameRepository,
+    @Autowired private val confirmationRepository: com.example.template.domain.TableConfirmationRepository,
     @Autowired private val jdbcTemplate: JdbcTemplate,
 ) : PostgresBackedIntegrationTest() {
 
@@ -109,12 +110,11 @@ class TeamScoringControllerIntegrationTest(
         ),
     )
 
-    private fun round(number: Int, locked: Boolean = false) = Round(
+    private fun round(number: Int) = Round(
         id = RoundId("r-$number"),
         tournamentId = TournamentId(tournamentId),
         number = number,
         pairing = com.example.template.domain.Pairing(tables = listOf(Table(TableId(1), listOf(TeamId(teamA), TeamId(teamB))))),
-        locked = locked,
     )
 
     private fun pid(value: String) = com.example.template.domain.PlayerId(value)
@@ -180,6 +180,22 @@ class TeamScoringControllerIntegrationTest(
     // ---- current-table ----------------------------------------------------------
 
     @Test
+    fun `current-table reports who confirmed and is locked from the first confirmation`() {
+        confirmationRepository.add(
+            com.example.template.domain.TableKey(TournamentId(tournamentId), 1, 1),
+            TeamId(teamB),
+            Instant.parse("2026-01-01T13:00:00Z"),
+        )
+
+        mockMvc.perform(get("/api/team/me/current-table").cookie(teamCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("CONFIRMING"))
+            .andExpect(jsonPath("$.confirmedTeamIds[0]").value(teamB))
+            .andExpect(jsonPath("$.confirmedTeamIds.length()").value(1))
+            .andExpect(jsonPath("$.locked").value(true))
+    }
+
+    @Test
     fun `current-table returns the matchup, roster, lock and settings`() {
         mockMvc.perform(get("/api/team/me/current-table").cookie(teamCookie))
             .andExpect(status().isOk)
@@ -187,6 +203,8 @@ class TeamScoringControllerIntegrationTest(
             .andExpect(jsonPath("$.roundNumber").value(1))
             .andExpect(jsonPath("$.tableNumber").value(1))
             .andExpect(jsonPath("$.locked").value(false))
+            .andExpect(jsonPath("$.status").value("PLAYING"))
+            .andExpect(jsonPath("$.confirmedTeamIds.length()").value(0))
             .andExpect(jsonPath("$.allowGrandTichu").value(true))
             .andExpect(jsonPath("$.teams[0].teamId").value(teamA))
             .andExpect(jsonPath("$.teams[0].teamName").value("Team Alpha"))
@@ -223,15 +241,6 @@ class TeamScoringControllerIntegrationTest(
             .andExpect(jsonPath("$.schedule[1].teamIds").value(contains(teamA, "team-c")))
             .andExpect(jsonPath("$.schedule[5].gameNumber").value(6))
             .andExpect(jsonPath("$.schedule[5].teamIds").value(contains(teamB, "team-c")))
-    }
-
-    @Test
-    fun `current-table reflects a locked round`() {
-        roundRepository.save(round(1, locked = true))
-
-        mockMvc.perform(get("/api/team/me/current-table").cookie(teamCookie))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.locked").value(true))
     }
 
     @Test

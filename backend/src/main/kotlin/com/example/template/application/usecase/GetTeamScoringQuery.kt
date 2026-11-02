@@ -3,6 +3,7 @@ package com.example.template.application.usecase
 import com.example.template.application.api.AuthenticatedTeam
 import com.example.template.application.api.GetTeamScoring
 import com.example.template.application.api.RecordedGame
+import com.example.template.application.api.TableConfirmationState
 import com.example.template.application.api.TeamTable
 import com.example.template.application.api.TeamTablePlayer
 import com.example.template.application.api.TeamTableTeam
@@ -10,6 +11,9 @@ import com.example.template.domain.GameRepository
 import com.example.template.domain.Round
 import com.example.template.domain.RoundRepository
 import com.example.template.domain.Table
+import com.example.template.domain.TableConfirmationRepository
+import com.example.template.domain.TableConfirmations
+import com.example.template.domain.TableKey
 import com.example.template.domain.Team
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
@@ -31,6 +35,7 @@ class GetTeamScoringQuery(
     private val roundRepository: RoundRepository,
     private val teamRepository: TeamRepository,
     private val gameRepository: GameRepository,
+    private val confirmationRepository: TableConfirmationRepository,
 ) : GetTeamScoring {
 
     override fun currentTable(principal: AuthenticatedTeam): TeamTable {
@@ -54,7 +59,9 @@ class GetTeamScoringQuery(
             tournamentId = tournamentId,
             roundNumber = round.number,
             tableNumber = table.id.value,
-            locked = round.locked,
+            confirmation = TableConfirmationState.of(
+                TableConfirmations(table, confirmationRepository.findByTable(TableKey(tournamentId, round.number, table.id.value))),
+            ),
             allowGrandTichu = settings.allowGrandTichu,
             teams = teams,
             trio = table.isTrio,

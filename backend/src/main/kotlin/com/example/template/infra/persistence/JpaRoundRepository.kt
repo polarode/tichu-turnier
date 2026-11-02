@@ -2,8 +2,10 @@ package com.example.template.infra.persistence
 
 import com.example.template.domain.Round
 import com.example.template.domain.RoundRepository
+import com.example.template.domain.TableKey
 import com.example.template.domain.TournamentId
-import org.springframework.data.repository.findByIdOrNull
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * Driven adapter implementing the [RoundRepository] port on top of Spring Data
@@ -14,7 +16,8 @@ import org.springframework.data.repository.findByIdOrNull
  * rows in the caller's transaction (the use case is `@Transactional`). Saving is
  * replace-semantics for the tables, matching the team aggregate's pattern.
  */
-class JpaRoundRepository(
+// `open` only so Spring can proxy the MANDATORY-transactional lock (CGLIB).
+open class JpaRoundRepository(
     private val springDataRoundRepository: SpringDataRoundRepository,
     private val springDataRoundTableRepository: SpringDataRoundTableRepository,
 ) : RoundRepository {
@@ -39,6 +42,13 @@ class JpaRoundRepository(
 
     override fun findByTournament(tournamentId: TournamentId): List<Round> =
         withTables(springDataRoundRepository.findByTournamentIdOrderByRoundNumberAsc(tournamentId.value))
+
+    // MANDATORY: a row lock outside a transaction would be released immediately,
+    // so a mis-wired call fails loudly instead of silently not serializing.
+    @Transactional(propagation = Propagation.MANDATORY)
+    override fun lockTable(key: TableKey) {
+        springDataRoundTableRepository.lockTable(key.tournamentId.value, key.roundNumber, key.tableNumber)
+    }
 
     /** Loads the tables of each round and reassembles the domain aggregates. */
     private fun withTables(rounds: List<RoundEntity>): List<Round> {

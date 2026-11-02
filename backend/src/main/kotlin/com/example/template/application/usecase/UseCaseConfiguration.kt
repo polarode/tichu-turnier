@@ -4,6 +4,7 @@ import com.example.template.application.api.ApproveAdmin
 import com.example.template.application.api.AuthenticateSession
 import com.example.template.application.api.AuthenticateTeamSession
 import com.example.template.application.api.BootstrapOwner
+import com.example.template.application.api.ConfirmTable
 import com.example.template.application.api.CreateInvite
 import com.example.template.application.api.CreateTeam
 import com.example.template.application.api.CreateTournament
@@ -38,6 +39,7 @@ import com.example.template.domain.GameRepository
 import com.example.template.domain.IdGenerator
 import com.example.template.domain.PasswordHasher
 import com.example.template.domain.RoundRepository
+import com.example.template.domain.TableConfirmationRepository
 import com.example.template.domain.SessionTokens
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamSessionRepository
@@ -81,7 +83,8 @@ class UseCaseConfiguration(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
         gameRepository: GameRepository,
-    ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository)
+        confirmationRepository: TableConfirmationRepository,
+    ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository, confirmationRepository)
 
     @Bean
     fun recordGame(
@@ -89,7 +92,17 @@ class UseCaseConfiguration(
         roundRepository: RoundRepository,
         teamRepository: TeamRepository,
         gameRepository: GameRepository,
-    ): RecordGame = RecordGameCommand(tournamentRepository, roundRepository, teamRepository, gameRepository)
+        confirmationRepository: TableConfirmationRepository,
+    ): RecordGame =
+        RecordGameCommand(tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository)
+
+    @Bean
+    fun confirmTable(
+        roundRepository: RoundRepository,
+        gameRepository: GameRepository,
+        confirmationRepository: TableConfirmationRepository,
+        clock: Clock,
+    ): ConfirmTable = ConfirmTableCommand(roundRepository, gameRepository, confirmationRepository, clock)
 
     @Bean
     fun random(): Random = Random.Default
@@ -197,7 +210,9 @@ class UseCaseConfiguration(
         roundRepository: RoundRepository,
         teamRepository: TeamRepository,
         gameRepository: GameRepository,
-    ): GetTeamScoring = GetTeamScoringQuery(tournamentRepository, roundRepository, teamRepository, gameRepository)
+        confirmationRepository: TableConfirmationRepository,
+    ): GetTeamScoring =
+        GetTeamScoringQuery(tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository)
 
     @Bean
     fun adminSessionIssuer(

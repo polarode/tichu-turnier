@@ -114,14 +114,13 @@ class GameRepositoryPersistenceTest(
         assertEquals(id, team.id.value)
     }
 
-    private fun round(number: Int = 1, locked: Boolean = false) = Round(
+    private fun round(number: Int = 1) = Round(
         id = RoundId("r-$number"),
         tournamentId = tournamentId,
         number = number,
         pairing = com.example.template.domain.Pairing(
             tables = listOf(Table(TableId(1), listOf(TeamId("team-a"), TeamId("team-b")))),
         ),
-        locked = locked,
     )
 
     private fun game(

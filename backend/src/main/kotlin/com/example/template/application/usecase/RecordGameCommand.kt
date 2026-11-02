@@ -10,6 +10,10 @@ import com.example.template.domain.GameRepository
 import com.example.template.domain.PlayerResult
 import com.example.template.domain.RoundRepository
 import com.example.template.domain.Table
+import com.example.template.domain.TableConfirmationRepository
+import com.example.template.domain.TableConfirmations
+import com.example.template.domain.TableKey
+import com.example.template.domain.TableStatus
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
 import com.example.template.domain.TeamResult
@@ -34,7 +38,8 @@ import org.springframework.transaction.annotation.Transactional
  * widen it.
  *
  * The whole submit is one transaction (@Transactional): either the game row and
- * its four participants commit together or nothing is written. Versioning is
+ * its four participants commit together or nothing is written. It takes the
+ * round table's lock first and is rejected once the table is frozen (ADR 0006). Versioning is
  * optimistic: create assigns version 1, update carries the version and the first
  * commit wins.
  */
@@ -44,6 +49,7 @@ class RecordGameCommand(
     private val roundRepository: RoundRepository,
     private val teamRepository: TeamRepository,
     private val gameRepository: GameRepository,
+    private val confirmationRepository: TableConfirmationRepository,
 ) : RecordGame {
 
     override fun create(
@@ -76,13 +82,11 @@ class RecordGameCommand(
             ?: throw GameNotFoundException(
                 "Round $roundNumber of tournament ${tournamentId.value} not found",
             )
-        if (round.locked) {
-            throw GameConfirmedException("Round ${round.number} is locked; its games are read-only")
-        }
         val table = round.table(tableNumber)
             ?: throw GameNotFoundException("Table $tableNumber of round ${round.number} not found")
         requireSeatedAt(principal.teamId, table)
         requireGameNumber(request.gameNumber, table)
+        requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
 
         val tournament = tournamentRepository.findById(tournamentId)
             ?: throw GameNotFoundException("Tournament ${tournamentId.value} not found")
@@ -125,6 +129,19 @@ class RecordGameCommand(
     private fun requireGameNumber(gameNumber: Int, table: Table) {
         if (gameNumber !in 1..table.gameCount) {
             throw InvalidFieldException("gameNumber", "Game number must be between 1 and ${table.gameCount}")
+        }
+    }
+
+    /**
+     * Takes the table lock (shared with [ConfirmTableCommand]) and rejects the
+     * write once any team confirmed: games freeze at the first confirmation
+     * (ADR 0006). Under the lock, no confirmation can commit before this write.
+     */
+    private fun requireNotFrozen(key: TableKey, table: Table) {
+        roundRepository.lockTable(key)
+        val status = TableConfirmations(table, confirmationRepository.findByTable(key)).status
+        if (status != TableStatus.PLAYING) {
+            throw GameConfirmedException("Table ${table.id.value} is ${status.name.lowercase()}; its games are frozen")
         }
     }
 

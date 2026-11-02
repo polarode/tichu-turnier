@@ -64,6 +64,9 @@ class StartRollbackIntegrationTest(
 
             override fun findByTournament(tournamentId: TournamentId): Nothing =
                 throw UnsupportedOperationException()
+
+            override fun lockTable(key: com.example.template.domain.TableKey): Nothing =
+                throw UnsupportedOperationException()
         }
     }
 

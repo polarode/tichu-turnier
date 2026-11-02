@@ -2,6 +2,7 @@ package com.example.template.application.api
 
 import com.example.template.domain.PlayerId
 import com.example.template.domain.ScheduledGame
+import com.example.template.domain.TableStatus
 import com.example.template.domain.TeamId
 import com.example.template.domain.TournamentId
 
@@ -36,8 +37,9 @@ interface GetTeamScoring {
 /**
  * The team's view of the table it is seated at this round: the [tournamentId]
  * (the games endpoints address a game by tournament/round/table/game), which
- * round and table (the numbers the write endpoints address), whether the round
- * is [locked] (games read-only), whether grand Tichu is accepted
+ * round and table (the numbers the write endpoints address), the table's
+ * [confirmation] state and whether it is [locked] (frozen: anyone confirmed, so
+ * games are read-only), whether grand Tichu is accepted
  * ([allowGrandTichu], so the form can hide the option), and the seated [teams]
  * (two, or three at the [trio] table) with their names and players — the matchup
  * label and the grid's roster — plus the [schedule] of who plays which game.
@@ -46,12 +48,16 @@ data class TeamTable(
     val tournamentId: TournamentId,
     val roundNumber: Int,
     val tableNumber: Int,
-    val locked: Boolean,
+    val confirmation: TableConfirmationState,
     val allowGrandTichu: Boolean,
     val teams: List<TeamTableTeam>,
     val trio: Boolean,
     val schedule: List<ScheduledGame>,
-)
+) {
+    /** Games are frozen from the first confirmation (ADR 0006). Kept on the wire until S6b (#106) reads [confirmation]. */
+    val locked: Boolean
+        get() = confirmation.status != TableStatus.PLAYING
+}
 
 data class TeamTableTeam(
     val teamId: TeamId,

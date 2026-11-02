@@ -44,5 +44,7 @@ consumes that derived fact. S5's per-round `rounds.locked` boolean is dropped.
   override in S6. That is a known follow-up.
 - Game edits, confirm and retract on one table must be serialized, because a
   confirm racing an edit would otherwise confirm a stale game.
+- A confirm carries the game versions it confirmed, so it never covers a game
+  the team didn't see (an edit that landed after the team's last read).
 - Edits to a frozen table keep answering `GAME_CONFIRMED`, in both Confirming and
   Completed.

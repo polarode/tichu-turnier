@@ -24,6 +24,8 @@ import com.example.template.vocabulary.InviteStatusConflictException
 import com.example.template.vocabulary.InsufficientTeamsException
 import com.example.template.vocabulary.MaxTeamsBelowTeamCountException
 import com.example.template.vocabulary.NotFoundException
+import com.example.template.vocabulary.TableCompletedException
+import com.example.template.vocabulary.TableIncompleteException
 import com.example.template.vocabulary.TeamAccessException
 import com.example.template.vocabulary.TeamAccessLinkConflictException
 import com.example.template.vocabulary.TeamLimitReachedException
@@ -185,7 +187,7 @@ class WebControllerAdvice {
     fun handleGameConcurrentModification(ex: GameConcurrentModificationException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
-    /** The game's round is locked; games of a locked round are read-only: 409. */
+    /** The game's table is confirming or completed; its games are frozen: 409. */
     @ExceptionHandler(GameConfirmedException::class)
     fun handleGameConfirmed(ex: GameConfirmedException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
@@ -194,6 +196,16 @@ class WebControllerAdvice {
     @ExceptionHandler(GameNotFoundException::class)
     fun handleGameNotFound(ex: GameNotFoundException): ProblemDetail =
         problem(HttpStatus.NOT_FOUND, ex)
+
+    /** Confirming before every game of the table is entered: 409. */
+    @ExceptionHandler(TableIncompleteException::class)
+    fun handleTableIncomplete(ex: TableIncompleteException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Retracting on a completed (final) table: 409. */
+    @ExceptionHandler(TableCompletedException::class)
+    fun handleTableCompleted(ex: TableCompletedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
 
     private fun anchoredConflict(ex: ApiException, field: String): ProblemDetail {
         val problem = problem(HttpStatus.CONFLICT, ex)

@@ -76,11 +76,17 @@ enum class ErrorCode {
     /** The game was modified by someone else between read and write (stale version) (#100). */
     GAME_CONCURRENT_MODIFICATION,
 
-    /** The game's round is locked; games of a locked round are read-only (#100, S6). */
+    /** The game's table is confirming or completed; its games are frozen (#100, ADR 0006). */
     GAME_CONFIRMED,
 
     /** The addressed game was never created for that natural key (#100). */
     GAME_NOT_FOUND,
+
+    /** A table can only be confirmed once all of its games are entered (#105). */
+    TABLE_INCOMPLETE,
+
+    /** A completed table is final; its confirmations can no longer be retracted (#105). */
+    TABLE_COMPLETED,
 }
 
 /**
@@ -293,9 +299,9 @@ class GameConcurrentModificationException(message: String) :
     ApiException(ErrorCode.GAME_CONCURRENT_MODIFICATION, message)
 
 /**
- * Thrown when a game is created or edited in a locked round: the round's results
- * were confirmed, so its games are read-only. The confirm/retract workflow is S6
- * (#34); S5 only introduces the round-level lock state. Mapped to HTTP 409.
+ * Thrown when a game is created or edited at a table that is confirming or
+ * completed: its games froze at the first confirmation (ADR 0006). Mapped to
+ * HTTP 409.
  */
 class GameConfirmedException(message: String) :
     ApiException(ErrorCode.GAME_CONFIRMED, message)
@@ -305,3 +311,9 @@ class GameConfirmedException(message: String) :
  * a game that was never created. Mapped to HTTP 404 by the scoring API (#100).
  */
 class GameNotFoundException(message: String) : ApiException(ErrorCode.GAME_NOT_FOUND, message)
+
+/** Thrown when a team confirms a table before every game is entered (#105). Mapped to HTTP 409. */
+class TableIncompleteException(message: String) : ApiException(ErrorCode.TABLE_INCOMPLETE, message)
+
+/** Thrown when a team retracts its confirmation of a completed table (#105). Mapped to HTTP 409. */
+class TableCompletedException(message: String) : ApiException(ErrorCode.TABLE_COMPLETED, message)

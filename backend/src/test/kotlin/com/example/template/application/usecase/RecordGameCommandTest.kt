@@ -15,6 +15,7 @@ import com.example.template.domain.RoundId
 import com.example.template.domain.RoundRepository
 import com.example.template.domain.Table
 import com.example.template.domain.TableId
+import com.example.template.domain.TableKey
 import com.example.template.domain.Team
 import com.example.template.domain.TeamId
 import com.example.template.domain.TeamRepository
@@ -27,6 +28,7 @@ import com.example.template.domain.TournamentStatus
 import com.example.template.infra.persistence.InMemoryTournamentRepository
 import com.example.template.testsupport.InMemoryGameRepository
 import com.example.template.testsupport.InMemoryRoundRepository
+import com.example.template.testsupport.InMemoryTableConfirmationRepository
 import com.example.template.testsupport.InMemoryTeamRepository
 import com.example.template.vocabulary.ForbiddenException
 import com.example.template.vocabulary.GameNotFoundException
@@ -44,7 +46,7 @@ import kotlin.test.assertNull
 
 /**
  * Use-case unit tests for the team scoring API (#100), at the inbound-port seam
- * with in-memory doubles. Covers authorization (seat check), round-lock
+ * with in-memory doubles. Covers authorization (seat check), frozen-table
  * rejection, POST/PUT semantics, optimistic versioning and the team-roster
  * participant rule; engine-internal validation lives in GameScoringTest (#99).
  */
@@ -65,12 +67,14 @@ class RecordGameCommandTest {
     private val teamRepository = InMemoryTeamRepository()
     private val roundRepository = InMemoryRoundRepository()
     private val gameRepository = InMemoryGameRepository()
+    private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val recordGame: RecordGame = RecordGameCommand(
         tournamentRepository,
         roundRepository,
         teamRepository,
         gameRepository,
+        confirmationRepository,
     )
 
     @BeforeEach
@@ -103,12 +107,11 @@ class RecordGameCommandTest {
         ),
     )
 
-    private fun round(number: Int, locked: Boolean = false) = Round(
+    private fun round(number: Int) = Round(
         id = RoundId("r-$number"),
         tournamentId = tournamentId,
         number = number,
         pairing = Pairing(tables = listOf(Table(TableId(1), listOf(teamA, teamB)))),
-        locked = locked,
     )
 
     private fun validRequest(
@@ -178,15 +181,6 @@ class RecordGameCommandTest {
         assertFailsWith<ForbiddenException> { create(principal = outsider) }
 
         assertNull(gameRepository.find(gameKey()), "nothing was written")
-    }
-
-    @Test
-    fun `creating a game in a locked round is rejected as confirmed`() {
-        roundRepository.save(round(1, locked = true))
-
-        assertFailsWith<GameConfirmedException> { create() }
-
-        assertNull(gameRepository.find(gameKey()))
     }
 
     @Test
@@ -284,12 +278,31 @@ class RecordGameCommandTest {
         assertEquals(2, gameRepository.find(gameKey())!!.version, "stale writer changed nothing")
     }
 
+    // ---- freeze (ADR 0006) --------------------------------------------------------
+
+    private fun confirmBy(team: TeamId) = team.let {
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), it, Instant.parse("2026-01-01T13:00:00Z"))
+    }
+
     @Test
-    fun `editing a game in a locked round is rejected as confirmed`() {
+    fun `creating a game at a confirming table is rejected as confirmed`() {
+        confirmBy(teamB)
+
+        assertFailsWith<GameConfirmedException> { create() }
+
+        assertNull(gameRepository.find(gameKey()))
+    }
+
+    @Test
+    fun `editing a game is rejected as confirmed while confirming and once completed`() {
         create()
-        roundRepository.save(round(1, locked = true))
+        confirmBy(teamA)
 
         assertFailsWith<GameConfirmedException> { update(validRequest(version = 1)) }
+
+        confirmBy(teamB)
+        assertFailsWith<GameConfirmedException> { update(validRequest(version = 1)) }
+        assertEquals(1, gameRepository.find(gameKey())!!.version, "nothing changed")
     }
 
     // ---- trio table -------------------------------------------------------------

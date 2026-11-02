@@ -56,6 +56,7 @@ class TournamentControllerIntegrationTest(
     @Autowired private val roundRepository: RoundRepository,
     @Autowired private val teamRepository: TeamRepository,
     @Autowired private val gameRepository: GameRepository,
+    @Autowired private val confirmationRepository: com.example.template.domain.TableConfirmationRepository,
     @Autowired private val transactionTemplate: TransactionTemplate,
 ) : PostgresBackedIntegrationTest() {
 
@@ -429,6 +430,27 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("\$[0].tables[0].schedule[3].gameNumber").value(4))
             .andExpect(jsonPath("\$[0].tables[0].schedule[3].teamIds.length()").value(2))
             .andExpect(jsonPath("\$[0].tables[1].tableNumber").value(2))
+            .andExpect(jsonPath("\$[0].tables[1].status").value("PLAYING"))
+            .andExpect(jsonPath("\$[0].tables[1].confirmedTeamIds.length()").value(0))
+    }
+
+    @Test
+    fun `the rounds read exposes each table's confirmation status and confirmed teams`() {
+        val id = createTournament("Spring Classic")
+        listOf("Team Alpha", "Team Beta", "Team Gamma", "Team Delta").forEach { createTeam(id, it) }
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(sessionCookie))
+            .andExpect(status().isOk)
+        val (first, second) = roundRepository.findByTournamentAndNumber(TournamentId(id), 1)!!.table(1)!!.seatedTeams
+        val tableOne = com.example.template.domain.TableKey(TournamentId(id), 1, 1)
+        val at = java.time.Instant.parse("2026-01-01T13:00:00Z")
+        confirmationRepository.add(tableOne, second, at)
+        confirmationRepository.add(tableOne, first, at)
+
+        mockMvc.perform(get("/api/tournaments/$id/rounds").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$[0].tables[0].status").value("COMPLETED"))
+            .andExpect(jsonPath("\$[0].tables[0].confirmedTeamIds").value(contains(first.value, second.value)))
+            .andExpect(jsonPath("\$[0].tables[1].status").value("PLAYING"))
     }
 
     @Test

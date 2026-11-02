@@ -19,8 +19,9 @@ data class RoundOverview(
     val tables: List<TableOverview>,
 )
 
-/** One table of a [RoundOverview]: the seating and its entered games, ordered by game number. */
+/** One table of a [RoundOverview]: the seating, its entered games (by game number) and its confirmation state. */
 data class TableOverview(
     val table: Table,
     val games: List<RecordedGame>,
+    val confirmation: TableConfirmationState,
 )

@@ -3,6 +3,7 @@ package com.example.template.testsupport
 import com.example.template.domain.Round
 import com.example.template.domain.RoundId
 import com.example.template.domain.RoundRepository
+import com.example.template.domain.TableKey
 import com.example.template.domain.TournamentId
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,4 +27,7 @@ class InMemoryRoundRepository : RoundRepository {
 
     override fun findByTournament(tournamentId: TournamentId): List<Round> =
         store.values.filter { it.tournamentId == tournamentId }.sortedBy { it.number }
+
+    /** Single-threaded unit tests need no serialization; the JPA adapter takes a row lock. */
+    override fun lockTable(key: TableKey) = Unit
 }

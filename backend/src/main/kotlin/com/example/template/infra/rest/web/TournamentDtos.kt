@@ -3,9 +3,11 @@ package com.example.template.infra.rest.web
 import com.example.template.application.api.RecordedGame
 import com.example.template.application.api.RoundOverview
 import com.example.template.application.api.StartedTournament
+import com.example.template.application.api.TableConfirmationState
 import com.example.template.domain.Round
 import com.example.template.domain.ScheduledGame
 import com.example.template.domain.Table
+import com.example.template.domain.TableConfirmations
 import com.example.template.domain.Tournament
 import com.example.template.domain.TournamentSettings
 import com.example.template.domain.TournamentStatus
@@ -92,13 +94,15 @@ data class RoundResponse(
         /** A freshly created round (the start response): no games entered yet. */
         fun from(round: Round): RoundResponse = RoundResponse(
             roundNumber = round.number,
-            tables = round.pairing.tables.map { TableResponse.from(it, games = emptyList()) },
+            tables = round.pairing.tables.map {
+                TableResponse.from(it, games = emptyList(), TableConfirmationState.of(TableConfirmations(it, emptySet())))
+            },
         )
 
         /** The admin's rounds read: each table with its entered games (S5d, #102). */
         fun fromOverview(overview: RoundOverview): RoundResponse = RoundResponse(
             roundNumber = overview.round.number,
-            tables = overview.tables.map { TableResponse.from(it.table, it.games) },
+            tables = overview.tables.map { TableResponse.from(it.table, it.games, it.confirmation) },
         )
     }
 }
@@ -114,15 +118,21 @@ data class TableResponse(
     val schedule: List<ScheduledGameDto>,
     /** The games entered so far, ordered by game number; absent numbers are not yet entered. */
     val games: List<RecordedGameDto>,
+    /** The derived Table Status: PLAYING, CONFIRMING or COMPLETED (ADR 0006). */
+    val status: String,
+    /** The teams that confirmed, in seat order. */
+    val confirmedTeamIds: List<String>,
 ) {
     companion object {
-        fun from(table: Table, games: List<RecordedGame>): TableResponse = TableResponse(
+        fun from(table: Table, games: List<RecordedGame>, confirmation: TableConfirmationState): TableResponse = TableResponse(
             tableNumber = table.id.value,
             teamIds = table.seatedTeams.map { it.value },
             trio = table.isTrio,
             gameCount = table.gameCount,
             schedule = table.schedule.map(ScheduledGameDto::from),
             games = games.map(RecordedGameDto::from),
+            status = confirmation.status.name,
+            confirmedTeamIds = confirmation.confirmedTeamIds.map { it.value },
         )
     }
 }

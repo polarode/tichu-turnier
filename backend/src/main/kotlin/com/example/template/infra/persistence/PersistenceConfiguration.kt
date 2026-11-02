@@ -10,6 +10,7 @@ import com.example.template.domain.TeamSessionRepository
 import com.example.template.domain.TeamTokenRepository
 import com.example.template.domain.TournamentRepository
 import com.example.template.domain.RoundRepository
+import com.example.template.domain.TableConfirmationRepository
 import org.springframework.boot.persistence.autoconfigure.EntityScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -41,6 +42,7 @@ class PersistenceConfiguration(
     private val springDataRoundTableRepository: SpringDataRoundTableRepository,
     private val springDataGameRepository: SpringDataGameRepository,
     private val springDataGameParticipantRepository: SpringDataGameParticipantRepository,
+    private val springDataTableConfirmationRepository: SpringDataTableConfirmationRepository,
     private val entityManagerFactory: jakarta.persistence.EntityManagerFactory,
 ) {
 
@@ -65,6 +67,10 @@ class PersistenceConfiguration(
             entityManagerFactory,
         ),
     )
+
+    @Bean
+    fun tableConfirmationRepository(): TableConfirmationRepository =
+        JpaTableConfirmationRepository(springDataTableConfirmationRepository)
 
     @Bean
     fun teamTokenRepository(): TeamTokenRepository =

@@ -22,7 +22,7 @@ class TeamScoringController(
     private val getTeamScoring: GetTeamScoring,
 ) {
 
-    /** The team's current (in-progress) round table: matchup, roster, lock, settings. */
+    /** The team's current (in-progress) round table: matchup, roster, confirmation state, settings. */
     @GetMapping("/me/current-table")
     fun currentTable(
         @AuthenticationPrincipal principal: AuthenticatedTeam,

@@ -3,16 +3,20 @@ import { describe, expect, it } from 'vitest';
 import type { GameWriteInput } from '@/domain/game.domain.ts';
 import type { RecordedGameDto, TeamTableDto } from '@/scoring-api/dtos/scoring.dto.ts';
 import {
+    confirmRequestOf,
     gameWriteInputToDto,
     recordedGameDtoToDomain,
+    tableConfirmationDtoToDomain,
     teamTableDtoToDomain,
 } from '@/scoring-api/mappers/scoring.mapper.ts';
+import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 const tableDto: TeamTableDto = {
     tournamentId: 't-1',
     roundNumber: 2,
     tableNumber: 3,
-    locked: false,
+    status: 'PLAYING',
+    confirmedTeamIds: [],
     allowGrandTichu: true,
     teams: [
         {
@@ -105,6 +109,12 @@ describe('teamTableDtoToDomain', () => {
         expect(table.schedule).toHaveLength(4);
     });
 
+    it('maps the confirmation status and the confirmed teams', () => {
+        const table = teamTableDtoToDomain({ ...tableDto, status: 'CONFIRMING', confirmedTeamIds: ['team-b'] });
+
+        expect(table.confirmation).toEqual({ status: TableStatus.CONFIRMING, confirmedTeamIds: ['team-b'] });
+    });
+
     it('maps a trio table with all three seated teams and its six-game schedule', () => {
         const table = teamTableDtoToDomain(trioTableDto);
 
@@ -181,6 +191,28 @@ describe('gameWriteInputToDto', () => {
                         { playerId: 'b2', position: 3, call: 'NONE', bombs: 0 },
                     ],
                 },
+            ],
+        });
+    });
+});
+
+describe('tableConfirmationDtoToDomain', () => {
+    it('maps the confirm/retract response', () => {
+        expect(tableConfirmationDtoToDomain({ status: 'COMPLETED', confirmedTeamIds: ['team-a', 'team-b'] })).toEqual({
+            status: TableStatus.COMPLETED,
+            confirmedTeamIds: ['team-a', 'team-b'],
+        });
+    });
+});
+
+describe('confirmRequestOf', () => {
+    it('sends the number and version of every game the team saw', () => {
+        const second = recordedGameDtoToDomain({ ...gameDto, gameNumber: 2, version: 1 });
+
+        expect(confirmRequestOf([recordedGameDtoToDomain(gameDto), second])).toEqual({
+            games: [
+                { gameNumber: 1, version: 4 },
+                { gameNumber: 2, version: 1 },
             ],
         });
     });

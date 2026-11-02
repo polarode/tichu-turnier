@@ -6,6 +6,8 @@
  * derived by the server and returned in the outcome.
  */
 
+import { TableStatus } from '@/vocabulary/table-status.enum.ts';
+
 /** A player's pre-deal announcement. Mirrors the backend `TichuCall` enum. */
 export type TichuCall = 'NONE' | 'SMALL' | 'GRAND';
 
@@ -30,17 +32,35 @@ export interface ScheduledGame {
 }
 
 /**
+ * A table's confirmation state (ADR 0006): the derived [status] and the teams
+ * that confirmed, in seat order. Games are read-only unless the table is PLAYING.
+ */
+export interface TableConfirmation {
+    status: TableStatus;
+    confirmedTeamIds: readonly string[];
+}
+
+/** Whether the table's games are frozen: someone confirmed, so nobody may edit (ADR 0006). */
+export function isFrozen(confirmation: TableConfirmation): boolean {
+    return confirmation.status !== TableStatus.PLAYING;
+}
+
+/** Whether every seated team confirmed: final, nothing at the table changes any more. */
+export function isCompleted(confirmation: TableConfirmation): boolean {
+    return confirmation.status === TableStatus.COMPLETED;
+}
+
+/**
  * The team's current table: which round and table it is entering, the seated
  * teams and their rosters, whether it is the trio table and who plays which
- * game, whether the round is locked (games read-only) and whether grand Tichu
- * is accepted (so the form can hide the option). From
- * `GET /api/team/me/current-table`.
+ * game, its [confirmation] state and whether grand Tichu is accepted (so the
+ * form can hide the option). From `GET /api/team/me/current-table`.
  */
 export interface TeamTable {
     tournamentId: string;
     roundNumber: number;
     tableNumber: number;
-    locked: boolean;
+    confirmation: TableConfirmation;
     allowGrandTichu: boolean;
     teams: SeatedTeams<TeamTableTeam>;
     trio: boolean;
@@ -73,6 +93,11 @@ export function matchupOf(table: TeamTable, gameNumber: number): Matchup {
 /** Whether [teamId] sits out game [gameNumber] at [table] (only ever true at a trio table). */
 export function sitsOut(table: TeamTable, teamId: string, gameNumber: number): boolean {
     return !matchupOf(table, gameNumber).some((team) => team.teamId === teamId);
+}
+
+/** The name of the team seated at [table] as [teamId]; the id itself when it is not seated there. */
+export function teamNameOf(table: TeamTable, teamId: string): string {
+    return table.teams.find((team) => team.teamId === teamId)?.teamName ?? teamId;
 }
 
 /** The 0-based seat of [teamId] at [table] (A = 0, B = 1, C = 2); drives the seat colour. */

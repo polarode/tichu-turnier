@@ -7,16 +7,14 @@ import com.example.template.application.api.TeamTableTeam
 /**
  * Wire format of the team-session scoring reads (S5c, #101; ADR 0005). The
  * current-table response tells the form which round/table it is entering, the
- * matchup and roster, the table's confirmation [status] and [confirmedTeamIds],
- * whether it is locked (frozen; dropped by S6b, #106), and whether grand
- * Tichu is accepted (so the form can hide the option). The games list reuses
+ * matchup and roster, the table's confirmation [status] and [confirmedTeamIds]
+ * (games are read-only unless PLAYING), and whether grand Tichu is accepted (so the form can hide the option). The games list reuses
  * [RecordedGameDto] — the same shape the write endpoints return.
  */
 data class TeamTableResponseDto(
     val tournamentId: String,
     val roundNumber: Int,
     val tableNumber: Int,
-    val locked: Boolean,
     val status: String,
     val confirmedTeamIds: List<String>,
     val allowGrandTichu: Boolean,
@@ -30,7 +28,6 @@ data class TeamTableResponseDto(
             tournamentId = table.tournamentId.value,
             roundNumber = table.roundNumber,
             tableNumber = table.tableNumber,
-            locked = table.locked,
             status = table.confirmation.status.name,
             confirmedTeamIds = table.confirmation.confirmedTeamIds.map { it.value },
             allowGrandTichu = table.allowGrandTichu,

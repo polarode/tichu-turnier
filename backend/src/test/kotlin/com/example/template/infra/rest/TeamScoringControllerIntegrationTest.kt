@@ -180,7 +180,7 @@ class TeamScoringControllerIntegrationTest(
     // ---- current-table ----------------------------------------------------------
 
     @Test
-    fun `current-table reports who confirmed and is locked from the first confirmation`() {
+    fun `current-table reports who confirmed`() {
         confirmationRepository.add(
             com.example.template.domain.TableKey(TournamentId(tournamentId), 1, 1),
             TeamId(teamB),
@@ -192,17 +192,15 @@ class TeamScoringControllerIntegrationTest(
             .andExpect(jsonPath("$.status").value("CONFIRMING"))
             .andExpect(jsonPath("$.confirmedTeamIds[0]").value(teamB))
             .andExpect(jsonPath("$.confirmedTeamIds.length()").value(1))
-            .andExpect(jsonPath("$.locked").value(true))
     }
 
     @Test
-    fun `current-table returns the matchup, roster, lock and settings`() {
+    fun `current-table returns the matchup, roster, confirmation state and settings`() {
         mockMvc.perform(get("/api/team/me/current-table").cookie(teamCookie))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.tournamentId").value(tournamentId))
             .andExpect(jsonPath("$.roundNumber").value(1))
             .andExpect(jsonPath("$.tableNumber").value(1))
-            .andExpect(jsonPath("$.locked").value(false))
             .andExpect(jsonPath("$.status").value("PLAYING"))
             .andExpect(jsonPath("$.confirmedTeamIds.length()").value(0))
             .andExpect(jsonPath("$.allowGrandTichu").value(true))

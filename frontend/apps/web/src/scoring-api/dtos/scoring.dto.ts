@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TABLE_STATUSES } from '@/vocabulary/table-status.enum.ts';
+
 /**
  * zod schemas for the team scoring wire format (S5c, #101). Every response is
  * parsed at the boundary, so a malformed payload is rejected before it reaches a
@@ -30,12 +32,19 @@ export const scheduledGameDtoSchema = z.object({
     teamIds: z.tuple([z.string(), z.string()]),
 });
 
+/** A table's confirmation state: the confirm/retract response, and part of the reads. */
+export const tableConfirmationDtoSchema = z.object({
+    status: z.enum(TABLE_STATUSES),
+    /** The teams that confirmed, in seat order. */
+    confirmedTeamIds: z.array(z.string()),
+});
+
 /** `GET /api/team/me/current-table`. */
 export const teamTableDtoSchema = z.object({
     tournamentId: z.string(),
     roundNumber: z.number(),
     tableNumber: z.number(),
-    locked: z.boolean(),
+    ...tableConfirmationDtoSchema.shape,
     allowGrandTichu: z.boolean(),
     /** The seated teams in seat order: two, or three at the trio table. */
     teams: seatedSchema(teamTableTeamDtoSchema),
@@ -77,6 +86,7 @@ export const recordedGameListDtoSchema = z.array(recordedGameDtoSchema);
 
 export type TichuCallDto = z.infer<typeof tichuCallDtoSchema>;
 export type TeamTableDto = z.infer<typeof teamTableDtoSchema>;
+export type TableConfirmationDto = z.infer<typeof tableConfirmationDtoSchema>;
 export type ScheduledGameDto = z.infer<typeof scheduledGameDtoSchema>;
 export type RecordedGameDto = z.infer<typeof recordedGameDtoSchema>;
 
@@ -99,4 +109,9 @@ export interface GameRequestDto {
     beschiss: boolean;
     version: number | null;
     teams: [TeamResultRequestDto, TeamResultRequestDto];
+}
+
+/** `PUT …/confirmation` — the games the team confirms, as it last read them. */
+export interface ConfirmRequestDto {
+    games: { gameNumber: number; version: number }[];
 }

@@ -127,24 +127,22 @@ class GetTeamScoringQueryTest {
     // ---- currentTable -----------------------------------------------------------
 
     @Test
-    fun `currentTable reports the confirmation state and is locked from the first confirmation`() {
+    fun `currentTable reports the confirmation state`() {
         confirmationRepository.add(TableKey(tournamentId, 1, 1), teamB, Instant.parse("2026-01-01T13:00:00Z"))
 
         val table = query.currentTable(seatedPrincipal)
 
         assertEquals(TableStatus.CONFIRMING, table.confirmation.status)
         assertEquals(listOf(teamB), table.confirmation.confirmedTeamIds)
-        assertEquals(true, table.locked, "frozen while confirming")
     }
 
     @Test
-    fun `currentTable returns the matchup, roster, lock and settings`() {
+    fun `currentTable returns the matchup, roster, confirmation state and settings`() {
         val table = query.currentTable(seatedPrincipal)
 
         assertEquals(tournamentId, table.tournamentId)
         assertEquals(1, table.roundNumber)
         assertEquals(1, table.tableNumber)
-        assertEquals(false, table.locked)
         assertEquals(TableStatus.PLAYING, table.confirmation.status)
         assertEquals(emptyList(), table.confirmation.confirmedTeamIds)
         assertEquals(true, table.allowGrandTichu)

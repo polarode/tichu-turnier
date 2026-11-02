@@ -6,13 +6,16 @@ import type {
     RecordedTeam,
     ScheduledGame,
     SeatedTeams,
+    TableConfirmation,
     TeamTable,
     TeamTableTeam,
 } from '@/domain/game.domain.ts';
 import type {
+    ConfirmRequestDto,
     GameRequestDto,
     RecordedGameDto,
     ScheduledGameDto,
+    TableConfirmationDto,
     TeamResultRequestDto,
     TeamTableDto,
 } from '@/scoring-api/dtos/scoring.dto.ts';
@@ -36,12 +39,21 @@ export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
         tournamentId: dto.tournamentId,
         roundNumber: dto.roundNumber,
         tableNumber: dto.tableNumber,
-        locked: dto.locked,
+        confirmation: tableConfirmationDtoToDomain(dto),
         allowGrandTichu: dto.allowGrandTichu,
         teams: mapSeated(dto.teams, teamTableTeamDtoToDomain),
         trio: dto.trio,
         schedule: dto.schedule.map(scheduledGameDtoToDomain),
     };
+}
+
+export function tableConfirmationDtoToDomain(dto: TableConfirmationDto): TableConfirmation {
+    return { status: dto.status, confirmedTeamIds: [...dto.confirmedTeamIds] };
+}
+
+/** The confirm request for the games the team is looking at: each game's number and version. */
+export function confirmRequestOf(games: readonly RecordedGame[]): ConfirmRequestDto {
+    return { games: games.map((game) => ({ gameNumber: game.gameNumber, version: game.version })) };
 }
 
 export function scheduledGameDtoToDomain(dto: ScheduledGameDto): ScheduledGame {

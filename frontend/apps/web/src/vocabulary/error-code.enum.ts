@@ -40,10 +40,16 @@ export const ERROR_CODES = [
     'GAME_ALREADY_EXISTS',
     /** A PUT lost the optimistic-lock race; reload and retry. */
     'GAME_CONCURRENT_MODIFICATION',
-    /** The game's round is locked (confirmed); its games are read-only. */
+    /** The game's table is confirming or completed; its games are frozen (ADR 0006). */
     'GAME_CONFIRMED',
     /** No game at the addressed slot (PUT before create, or unknown round/table). */
     'GAME_NOT_FOUND',
+
+    // --- Confirmation (S6) ---
+    /** Confirming before every game of the table is entered. */
+    'TABLE_INCOMPLETE',
+    /** Retracting on a completed table; its confirmations are final. */
+    'TABLE_COMPLETED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

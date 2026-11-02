@@ -1,10 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Minus, Plus, X } from 'lucide-react';
 import { Button } from '@tichu/ui/button.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
-import { type Matchup, type RecordedGame, seatOf, type TeamTable, type TichuCall } from '@/domain/game.domain.ts';
+import {
+    isFrozen,
+    type Matchup,
+    type RecordedGame,
+    seatOf,
+    type TeamTable,
+    type TichuCall,
+} from '@/domain/game.domain.ts';
 import {
     complementBaseScore,
     displayTotals,
@@ -44,16 +52,24 @@ interface GameEntryFormProps {
     /** The selected game's two playing teams, in seat order: slots 0–1 and 2–3. */
     matchup: Matchup;
     gameNumber: number;
-    /** The already-entered game for this slot, when editing; absent in create mode. */
+    /**
+     * The stored game for this slot as the server last returned it (polled);
+     * absent while nobody entered it. The form keeps the version it loaded, so a
+     * newer one arriving mid-edit never overwrites unsaved input.
+     */
     existingGame?: RecordedGame;
-    /** Offered after a GAME_ALREADY_EXISTS create collision. */
-    onLoadExisting?: () => void;
-    /** Invoked when the server reports the game changed underneath us (reload prompt). */
-    onReloadRequested?: () => void;
+    /**
+     * Reloads this game from the server and resolves with the stored version (if
+     * any). Offered after a GAME_ALREADY_EXISTS collision and after a
+     * GAME_CONCURRENT_MODIFICATION (the game changed underneath us).
+     */
+    onReload?: () => Promise<RecordedGame | undefined>;
     /** Invoked when a save starts, so a previous confirmation can be cleared. */
     onSubmitStart?: () => void;
     /** Invoked after the server accepted the write: `created` for a new game, `updated` for an edit. */
     onSaved?: (kind: 'created' | 'updated') => void;
+    /** Invoked when a write is rejected because the table froze, so the table state can reload. */
+    onFrozen?: () => void;
 }
 
 /**
@@ -64,39 +80,71 @@ interface GameEntryFormProps {
  * math is display-only and the form submits raw facts, with the server returning
  * the authoritative outcome (ADR 0004).
  *
- * Read-only has two sources: the round being locked on arrival (`table.locked`),
- * or the server rejecting a write with `GAME_CONFIRMED` because the round locked
- * mid-edit. Error UX is per code (#101): `GAME_VALIDATION_INVALID` → localized
- * form message, `GAME_CONCURRENT_MODIFICATION` → reload prompt, `GAME_CONFIRMED`
- * → the form flips to read-only with an explanation.
+ * Read-only has two sources: the table being frozen (someone confirmed, ADR
+ * 0006; the page explains who), or the server rejecting a write with
+ * `GAME_CONFIRMED` because the table froze mid-edit. Error UX is per code (#101):
+ * `GAME_VALIDATION_INVALID` → localized form message, `GAME_CONCURRENT_MODIFICATION`
+ * → reload prompt, `GAME_CONFIRMED` → the form flips to read-only.
+ *
+ * The form edits the game version it [loaded] and saves against it. When a newer
+ * version arrives (the games poll, #106), an untouched form takes it over quietly;
+ * a form with unsaved input keeps it and offers the other team's version instead.
  */
 export function GameEntryForm({
     table,
     matchup,
     gameNumber,
     existingGame,
-    onLoadExisting,
-    onReloadRequested,
+    onReload,
     onSubmitStart,
     onSaved,
+    onFrozen,
 }: GameEntryFormProps) {
     const { t } = useI18n();
     const recordGame = useRecordGame(table);
 
+    // The stored version the form shows and saves against (null-version create when absent).
+    const [loaded, setLoaded] = useState<RecordedGame | undefined>(existingGame);
+    const valuesOf = (game: RecordedGame | undefined) => (game ? fromRecordedGame(game, matchup) : emptyFormState());
+
     const form = useForm<GameFormValues>({
         resolver: zodResolver(gameFormSchema(t)),
-        defaultValues: existingGame ? fromRecordedGame(existingGame, matchup) : emptyFormState(),
+        defaultValues: valuesOf(existingGame),
     });
 
     const state: GameFormValues = form.watch();
+    // Compared by value, not `formState.isDirty`: the grid writes through setValue,
+    // which leaves react-hook-form's dirty tracking untouched.
+    const dirty = JSON.stringify(state) !== JSON.stringify(valuesOf(loaded));
+    // A stored version newer than the loaded one. Strictly newer: right after a save
+    // the cached games still hold the older version until their refetch lands.
+    const newer = existingGame && existingGame.version > (loaded?.version ?? 0) ? existingGame : undefined;
+
+    function load(game: RecordedGame) {
+        form.reset(fromRecordedGame(game, matchup));
+        setLoaded(game);
+    }
+
+    async function reload() {
+        const latest = await onReload?.();
+        if (latest) load(latest);
+    }
+
+    // A newer stored version arrived (the games poll): an untouched form takes it over.
+    useEffect(() => {
+        if (newer && !dirty) load(newer);
+        // Only a version change re-decides; `dirty` alone must not reload mid-edit.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [existingGame?.version]);
     const dw = doubleWinTeam(state.positions);
     const totals = displayTotals(state);
     const team1Base = complementBaseScore(state.baseScoreTeam0, dw !== null);
 
-    // A locked round is read-only on arrival; a GAME_CONFIRMED rejection latches
-    // the same read-only mode when the round locks mid-edit.
+    // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
+    // the same read-only mode when the table freezes mid-edit.
+    const frozen = isFrozen(table.confirmation);
     const confirmed = form.formState.errors.root?.type === 'confirmed';
-    const readOnly = table.locked || confirmed;
+    const readOnly = frozen || confirmed;
 
     const players = PLAYER_SLOTS.map((slot) => {
         const team = matchup[teamOfSlot(slot)];
@@ -136,17 +184,19 @@ export function GameEntryForm({
     }
 
     const submit = form.handleSubmit(async (values) => {
-        const input = toWriteInput(values, matchup, gameNumber, existingGame?.version ?? null);
+        const input = toWriteInput(values, matchup, gameNumber, loaded?.version ?? null);
         onSubmitStart?.();
         try {
-            await recordGame.mutateAsync(input);
-            onSaved?.(existingGame ? 'updated' : 'created');
+            const recorded = await recordGame.mutateAsync(input);
+            // The saved game is the new baseline, so its own refetch is no change from elsewhere.
+            load(recorded);
+            onSaved?.(loaded ? 'updated' : 'created');
         } catch (error) {
             if (error instanceof ApiError && error.code === 'GAME_CONFIRMED') {
-                // The round locked mid-edit: latch read-only. The read-only banner
-                // at the top carries the explanation, so the root error needs no
-                // message of its own (avoids a duplicate).
-                form.setError('root', { type: 'confirmed' });
+                // The table froze mid-edit: latch read-only and reload the table
+                // state so the page can say who confirmed.
+                form.setError('root', { type: 'confirmed', message: t('error.gameConfirmed') });
+                onFrozen?.();
                 return;
             }
             if (error instanceof ApiError && error.code === 'GAME_CONCURRENT_MODIFICATION') {
@@ -179,7 +229,14 @@ export function GameEntryForm({
 
     return (
         <form onSubmit={submit} noValidate className="flex flex-col gap-4" aria-label={t('scoring.form.title')}>
-            {readOnly ? <FormAlert message={t('scoring.locked.explanation')} /> : null}
+            {newer && !readOnly ? (
+                <div className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p>{t('scoring.changedElsewhere')}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={() => load(newer)}>
+                        {t('scoring.changedElsewhere.load')}
+                    </Button>
+                </div>
+            ) : null}
 
             {/* One group per team. Phones stack each player's name above three equal
                 44px controls; from `sm` up name and controls share one row. */}
@@ -330,14 +387,15 @@ export function GameEntryForm({
                 </output>
             </div>
 
-            <FormAlert message={rootError?.message} />
-            {rootError?.type === 'exists' && onLoadExisting ? (
-                <Button type="button" variant="outline" onClick={onLoadExisting}>
+            {/* Once the page explains the freeze, the latched rejection needs no message of its own. */}
+            <FormAlert message={rootError?.type === 'confirmed' && frozen ? undefined : rootError?.message} />
+            {rootError?.type === 'exists' && onReload ? (
+                <Button type="button" variant="outline" onClick={() => void reload()}>
                     {t('scoring.alreadyExists.load')}
                 </Button>
             ) : null}
-            {rootError?.type === 'concurrent' && onReloadRequested ? (
-                <Button type="button" variant="outline" onClick={onReloadRequested}>
+            {rootError?.type === 'concurrent' && onReload ? (
+                <Button type="button" variant="outline" onClick={() => void reload()}>
                     {t('scoring.concurrent.reload')}
                 </Button>
             ) : null}
@@ -357,7 +415,7 @@ export function GameEntryForm({
                 <Button type="submit" size="touch" disabled={readOnly || pending} aria-busy={pending}>
                     {pending
                         ? t('scoring.save.saving')
-                        : existingGame
+                        : loaded
                           ? t('scoring.save.update')
                           : t('scoring.save.create')}
                 </Button>

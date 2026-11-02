@@ -1,6 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
@@ -47,7 +47,7 @@ function table(overrides: Partial<TeamTable> = {}): TeamTable {
         tournamentId: 't-1',
         roundNumber: 1,
         tableNumber: 1,
-        locked: false,
+        confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
         allowGrandTichu: true,
         teams: [
             {
@@ -297,19 +297,57 @@ describe('/team/score', () => {
         expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
     });
 
-    it('loads an existing game read-only when the round is locked', async () => {
-        scoring.currentTable.mockResolvedValue(table({ locked: true }));
-        scoring.games.mockResolvedValue([recordedGame()]);
+    describe('on a frozen table', () => {
+        it('names who confirmed and links to the overview while another team confirmed', async () => {
+            scoring.currentTable.mockResolvedValue(
+                table({ confirmation: { status: 'CONFIRMING', confirmedTeamIds: ['team-b'] } }),
+            );
+            scoring.games.mockResolvedValue([recordedGame()]);
 
-        renderApp('/team/score');
+            renderApp('/team/score');
 
-        expect(
-            await screen.findByText('Diese Runde ist gesperrt; ihre Spiele sind schreibgeschützt.'),
-        ).toBeInTheDocument();
-        // Every interactive control is disabled in a locked round.
-        await userEvent.click(screen.getAllByRole('tab')[0]!);
-        expect(screen.getByRole('slider')).toBeDisabled();
-        expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
+            expect(
+                await screen.findByText(
+                    'Bestätigt von: Team Beta. Um ein Spiel zu ändern, muss das bestätigende Team in seiner Teamübersicht zurückziehen.',
+                ),
+            ).toBeInTheDocument();
+            expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute('href', '/team');
+            // Every interactive control is disabled while frozen.
+            await userEvent.click(screen.getAllByRole('tab')[0]!);
+            expect(screen.getByRole('slider')).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
+        });
+
+        it('addresses the viewer when its own team confirmed', async () => {
+            scoring.currentTable.mockResolvedValue(
+                table({ confirmation: { status: 'CONFIRMING', confirmedTeamIds: ['team-a'] } }),
+            );
+            scoring.games.mockResolvedValue([recordedGame()]);
+
+            renderApp('/team/score');
+
+            expect(
+                await screen.findByText(
+                    'Dein Team hat diese Spiele bestätigt. Um eines zu ändern, ziehe die Bestätigung in der Teamübersicht zurück.',
+                ),
+            ).toBeInTheDocument();
+            expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toBeInTheDocument();
+        });
+
+        it('says the games are final once the table is completed', async () => {
+            scoring.currentTable.mockResolvedValue(
+                table({ confirmation: { status: 'COMPLETED', confirmedTeamIds: ['team-a', 'team-b'] } }),
+            );
+            scoring.games.mockResolvedValue([recordedGame()]);
+
+            renderApp('/team/score');
+
+            expect(
+                await screen.findByText('Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.'),
+            ).toBeInTheDocument();
+            expect(screen.queryByRole('link', { name: 'Zur Teamübersicht' })).not.toBeInTheDocument();
+            expect(screen.getByRole('slider')).toBeDisabled();
+        });
     });
 
     it('marks an entered game in the selector and preloads it for editing', async () => {
@@ -397,8 +435,10 @@ describe('/team/score', () => {
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
 
         expect(
-            await screen.findByText('Diese Runde ist gesperrt; ihre Spiele sind schreibgeschützt.'),
+            await screen.findByText('Dieser Tisch ist bestätigt; seine Spiele können nicht mehr geändert werden.'),
         ).toBeInTheDocument();
+        // The table state reloads, so the frozen explanation can name who confirmed.
+        await waitFor(() => expect(scoring.currentTable.mock.calls.length).toBeGreaterThan(1));
         // The form latched read-only: the slider and save button are now disabled.
         await waitFor(() => expect(screen.getByRole('slider')).toBeDisabled());
         expect(screen.getByRole('button', { name: 'Spiel speichern' })).toBeDisabled();
@@ -428,6 +468,106 @@ describe('/team/score', () => {
             await screen.findByText(/Dieses Spiel wurde zwischenzeitlich geändert/),
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Spiel neu laden' })).toBeInTheDocument();
+    });
+
+    describe('while polling', () => {
+        beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+        afterEach(() => vi.useRealTimers());
+
+        const theirEdit = () =>
+            recordedGame({
+                version: 3,
+                teams: [
+                    { ...recordedGame().teams[0], baseScore: 80 },
+                    { ...recordedGame().teams[1], baseScore: 20 },
+                ],
+            });
+
+        async function openGameOne() {
+            const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+            scoring.currentTable.mockResolvedValue(table());
+            scoring.games.mockResolvedValue([recordedGame()]);
+            renderApp('/team/score');
+            await screen.findByText('Team Alpha gegen Team Beta');
+            await user.click(screen.getAllByRole('tab')[0]!);
+            return user;
+        }
+
+        it('quietly loads the other team\'s newer version into an untouched form', async () => {
+            await openGameOne();
+            expect(screen.getByRole('slider')).toHaveValue('60');
+
+            scoring.games.mockResolvedValue([theirEdit()]);
+            await act(() => vi.advanceTimersByTimeAsync(31_000));
+
+            await waitFor(() => expect(screen.getByRole('slider')).toHaveValue('80'));
+            expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
+        });
+
+        it('keeps unsaved input and offers their version when the game changed elsewhere', async () => {
+            const user = await openGameOne();
+            await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
+
+            scoring.games.mockResolvedValue([theirEdit()]);
+            await act(() => vi.advanceTimersByTimeAsync(31_000));
+
+            expect(await screen.findByText('Das andere Team hat dieses Spiel geändert.')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
+            expect(screen.getByRole('slider')).toHaveValue('60');
+
+            await user.click(screen.getByRole('button', { name: 'Deren Version laden' }));
+            expect(screen.getByRole('slider')).toHaveValue('80');
+            expect(screen.getByRole('button', { name: 'Bomben – Alice: 0' })).toBeInTheDocument();
+            expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
+        });
+
+        it('saving over a change from elsewhere still sends the version the form was loaded with', async () => {
+            const user = await openGameOne();
+            await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
+            scoring.games.mockResolvedValue([theirEdit()]);
+            await act(() => vi.advanceTimersByTimeAsync(31_000));
+            await screen.findByText('Das andere Team hat dieses Spiel geändert.');
+            scoring.update.mockRejectedValue(
+                new ApiError({ code: 'GAME_CONCURRENT_MODIFICATION', status: 409, field: null, message: 'stale' }),
+            );
+
+            await user.click(screen.getByRole('button', { name: 'Spiel aktualisieren' }));
+
+            await waitFor(() => expect(scoring.update).toHaveBeenCalledTimes(1));
+            expect(scoring.update.mock.calls[0]![1]).toMatchObject({ gameNumber: 1, version: 2 });
+        });
+
+        it('keeps a new entry when the other team creates the same game meanwhile', async () => {
+            const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+            scoring.currentTable.mockResolvedValue(table());
+            scoring.games.mockResolvedValue([]);
+            renderApp('/team/score');
+            await screen.findByText('Team Alpha gegen Team Beta');
+            await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
+
+            scoring.games.mockResolvedValue([recordedGame()]);
+            await act(() => vi.advanceTimersByTimeAsync(31_000));
+
+            expect(await screen.findByText('Das andere Team hat dieses Spiel geändert.')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
+        });
+    });
+
+    it('does not mistake its own save for a change from elsewhere while the games catch up', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        // The games read still returns version 2 after the save answered version 3.
+        scoring.games.mockResolvedValue([recordedGame()]);
+        scoring.update.mockResolvedValue(recordedGame({ version: 3 }));
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+        await user.click(screen.getAllByRole('tab')[0]!);
+        await user.click(screen.getByRole('button', { name: 'Spiel aktualisieren' }));
+
+        expect(await screen.findByText('Spiel 1 aktualisiert.')).toBeInTheDocument();
+        await waitFor(() => expect(scoring.games.mock.calls.length).toBeGreaterThan(1));
+        expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
     });
 
     it('opens on game 1 when every game is entered', async () => {

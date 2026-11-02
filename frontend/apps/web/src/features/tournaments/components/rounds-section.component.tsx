@@ -4,9 +4,9 @@ import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
-import { type RecordedGame, teamPoints } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
+import { GameSummaryRow, TeamDot } from '@/features/scoring/components/game-summary-row.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
@@ -184,7 +184,7 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
             {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}
             <ul id={gamesId} hidden={!open} className="flex flex-col gap-1 pb-1 pl-6">
                 {table.schedule.map((scheduled) => (
-                    <GameRow
+                    <GameSummaryRow
                         key={scheduled.gameNumber}
                         gameNumber={scheduled.gameNumber}
                         playing={scheduled.teamIds}
@@ -194,58 +194,6 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                     />
                 ))}
             </ul>
-        </li>
-    );
-}
-
-/** Small colour marker tying a team to its seat colour. */
-function TeamDot({ tone }: { tone: string }) {
-    return <span aria-hidden="true" className={cn('mr-1 inline-block size-2 rounded-full align-middle', tone)} />;
-}
-
-/**
- * One game of a table: its matchup, then either the total Tichu Points of the two
- * playing teams in seat order (the stored team order may differ) with the Beschiss
- * and double-win markers, or a muted "missing" when not yet entered.
- */
-function GameRow({
-    gameNumber,
-    playing,
-    game,
-    teamName,
-    seatOfTeam,
-}: {
-    gameNumber: number;
-    playing: readonly [string, string];
-    game: RecordedGame | undefined;
-    teamName: (id: string) => string;
-    seatOfTeam: (teamId: string) => number;
-}) {
-    const { t } = useI18n();
-    const label = `${t('rounds.game')} ${gameNumber}`;
-    // A team missing from the outcome shows a dash, never a misleading 0.
-    const points = (teamId: string) => (game && teamPoints(game, teamId)) ?? '–';
-
-    return (
-        <li aria-label={label} className="flex flex-wrap items-center gap-2">
-            <span className="w-16 text-muted-foreground">{label}</span>
-            <span>
-                <TeamDot tone={seatTone(seatOfTeam(playing[0])).dot} />
-                {`${teamName(playing[0])} ${t('rounds.versus')} `}
-                <TeamDot tone={seatTone(seatOfTeam(playing[1])).dot} />
-                {teamName(playing[1])}
-            </span>
-            {game ? (
-                <>
-                    <span className="tabular-nums">{`${points(playing[0])} : ${points(playing[1])}`}</span>
-                    {game.beschiss ? <Badge variant="warning">{t('rounds.game.beschiss')}</Badge> : null}
-                    {game.outcome.doubleWinTeam !== null ? (
-                        <Badge variant="secondary">{t('rounds.game.doubleWin')}</Badge>
-                    ) : null}
-                </>
-            ) : (
-                <span className="text-muted-foreground">{t('rounds.game.missing')}</span>
-            )}
         </li>
     );
 }

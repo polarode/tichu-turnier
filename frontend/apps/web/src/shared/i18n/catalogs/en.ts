@@ -252,8 +252,10 @@ export const en = {
     'error.gameAlreadyExists': 'This game has already been entered.',
     'error.gameConcurrentModification':
         'This game was changed in the meantime. Reload it and apply your changes again.',
-    'error.gameConfirmed': 'This round is locked; its games can no longer be changed.',
+    'error.gameConfirmed': 'This table is confirmed; its games can no longer be changed.',
     'error.gameNotFound': 'This game has not been entered yet.',
+    'error.tableIncomplete': 'All games must be entered before confirming.',
+    'error.tableCompleted': 'This table is completed; confirmations are final.',
 
     'teamOverview.tournament': 'Tournament',
     'teamOverview.teamName': 'Team',
@@ -261,6 +263,25 @@ export const en = {
     'teamOverview.playerTwo': 'Player 2',
     'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
     'teamOverview.scoringLink': 'Enter results',
+    'confirmation.games.label': 'Games',
+    'confirmation.status.label': 'Status',
+    'confirmation.status.playing': 'Playing',
+    'confirmation.status.confirming': 'Confirming',
+    'confirmation.status.completed': 'Completed',
+    'confirmation.count.of': 'of',
+    'confirmation.count.confirmed': 'confirmed',
+    'confirmation.confirmedBy': 'Confirmed by',
+    'confirmation.gamesEntered': 'games entered',
+    'confirmation.confirm': 'Confirm all games',
+    'confirmation.dialog.title': 'Confirm all games?',
+    'confirmation.dialog.description': 'Nobody can change them until your team retracts its confirmation.',
+    'confirmation.dialog.confirm': 'Confirm',
+    'confirmation.retract': 'Retract confirmation',
+    'confirmation.waiting.one': 'Waiting for the other team.',
+    'confirmation.waiting.many': 'Waiting for the other teams.',
+    'confirmation.frozen': 'The games are frozen. Review them and confirm too.',
+    'confirmation.final': 'The games are final.',
+    'confirmation.stale': 'The games changed since you looked at them. Review them and confirm again.',
 
     'public.title': 'Public area',
     'public.description': 'Browse tournaments, standings and live statistics.',
@@ -298,7 +319,12 @@ export const en = {
     'scoring.concurrent.reloadPrompt':
         'This game was changed in the meantime. Reload it to see the current entry, then redo your changes.',
     'scoring.concurrent.reload': 'Reload the game',
-    'scoring.locked.explanation': 'This round is locked. Its games are read-only.',
+    'scoring.frozen.byOwn': 'Your team confirmed these games. To change one, retract the confirmation on the team overview.',
+    'scoring.frozen.byOthers': 'To change a game, the confirming team must retract on its team overview.',
+    'scoring.frozen.overviewLink': 'Go to the team overview',
+    'scoring.completed': 'This table is completed; its games are final.',
+    'scoring.changedElsewhere': 'The other team changed this game.',
+    'scoring.changedElsewhere.load': 'Load their version',
 } as const satisfies Record<string, string>;
 
 /** Union of every user-facing string the app can render. */

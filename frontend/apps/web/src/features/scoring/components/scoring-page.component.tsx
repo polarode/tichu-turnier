@@ -1,11 +1,20 @@
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { CircleCheck, Info, Pause } from 'lucide-react';
 import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
-import { matchupOf, type RecordedGame, sitsOut, type TeamTable } from '@/domain/game.domain.ts';
+import {
+    isCompleted,
+    isFrozen,
+    matchupOf,
+    type RecordedGame,
+    sitsOut,
+    teamNameOf,
+    type TeamTable,
+} from '@/domain/game.domain.ts';
 import { GameEntryForm } from '@/features/scoring/components/game-entry-form.component.tsx';
-import { useTableGames } from '@/features/scoring/hooks/scoring-queries.hook.ts';
+import { useReloadCurrentTable, useTableGames } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -16,14 +25,17 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
  * not-entered state, and the entry grid for the selected game's matchup. Games may
  * be entered in any order; the screen opens on the first one not yet entered. At a
  * trio table the games [viewerTeamId] sits out are marked but stay enterable.
- * Editing an entered game loads it (with its version); a locked round renders every
- * game read-only. A successful save is confirmed in a status line below the form
- * until the next save or game switch.
+ * Editing an entered game loads it (with its version). A frozen table (someone
+ * confirmed, ADR 0006) renders every game read-only with an explanation of who
+ * confirmed and how to edit again. The table state and games poll until the
+ * table is completed (#106). A successful save is confirmed in a status line
+ * below the form until the next save or game switch.
  */
 export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerTeamId?: string }) {
     const { t } = useI18n();
+    const reloadCurrentTable = useReloadCurrentTable();
     const gamesQuery = useTableGames(table);
-    // Null until the viewer picks a game: the default follows the entered games.
+    // Null until the games load: the default is the first game not yet entered.
     const [picked, setPicked] = useState<number | null>(null);
     // Lives here, not in the form: a successful save bumps the game's version,
     // which remounts the form and would drop any state it held.
@@ -35,6 +47,9 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
     const byNumber = new Map<number, RecordedGame>(games.map((g) => [g.gameNumber, g]));
     const gameNumbers = table.schedule.map((game) => game.gameNumber);
     const selected = picked ?? gameNumbers.find((n) => !byNumber.has(n)) ?? gameNumbers[0] ?? 1;
+    // Pin the opening game once the games are in, so a poll that fills it does
+    // not move the viewer to another game mid-entry.
+    if (picked === null && gamesQuery.isSuccess) setPicked(selected);
     const existingGame = byNumber.get(selected);
     const matchup = matchupOf(table, selected);
     // Without the viewer's identity (overview unavailable) no game is marked as sat out.
@@ -49,6 +64,7 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
         <section className="flex w-full max-w-xl flex-col gap-4">
             <PageHeader titleKey="scoring.title" descriptionKey="scoring.description" />
             <p className="text-sm text-muted-foreground">{header}</p>
+            {isFrozen(table.confirmation) ? <FrozenNotice table={table} viewerTeamId={viewerTeamId} /> : null}
 
             <TabList
                 id="game"
@@ -99,16 +115,18 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
                     </p>
                 ) : null}
                 <GameEntryForm
-                    // Remount on game switch / existence change so the grid state resets cleanly.
-                    key={`${selected}-${existingGame?.version ?? 'new'}`}
+                    // Remount on game switch only: a newer version is merged by the form itself.
+                    key={selected}
                     table={table}
                     matchup={matchup}
                     gameNumber={selected}
                     existingGame={existingGame}
-                    onLoadExisting={() => void gamesQuery.refetch()}
-                    onReloadRequested={() => void gamesQuery.refetch()}
+                    onReload={async () =>
+                        (await gamesQuery.refetch()).data?.find((game) => game.gameNumber === selected)
+                    }
                     onSubmitStart={() => setSaved(null)}
                     onSaved={(kind) => setSaved({ gameNumber: selected, kind })}
+                    onFrozen={() => void reloadCurrentTable()}
                 />
             </TabPanel>
 
@@ -130,5 +148,33 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
                 ) : null}
             </p>
         </section>
+    );
+}
+
+/**
+ * Why a frozen table's games are read-only: final once completed; while
+ * confirming, who confirmed and that the confirming team must retract on its
+ * team overview to edit again (addressing the viewer when that is its own team).
+ */
+function FrozenNotice({ table, viewerTeamId }: { table: TeamTable; viewerTeamId?: string }) {
+    const { t } = useI18n();
+    const { confirmedTeamIds } = table.confirmation;
+    if (isCompleted(table.confirmation)) {
+        return <p className="rounded-md bg-muted px-3 py-2 text-sm">{t('scoring.completed')}</p>;
+    }
+
+    const names = confirmedTeamIds.map((teamId) => teamNameOf(table, teamId)).join(', ');
+    const message =
+        viewerTeamId !== undefined && confirmedTeamIds.includes(viewerTeamId)
+            ? t('scoring.frozen.byOwn')
+            : `${t('confirmation.confirmedBy')}: ${names}. ${t('scoring.frozen.byOthers')}`;
+
+    return (
+        <div className="flex flex-col gap-1 rounded-md bg-muted px-3 py-2 text-sm">
+            <p>{message}</p>
+            <Link to="/team" className="font-medium underline underline-offset-4">
+                {t('scoring.frozen.overviewLink')}
+            </Link>
+        </div>
     );
 }

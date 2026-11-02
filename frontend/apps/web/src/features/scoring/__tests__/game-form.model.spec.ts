@@ -17,7 +17,7 @@ const table: TeamTable = {
     tournamentId: 't-1',
     roundNumber: 1,
     tableNumber: 1,
-    locked: false,
+    confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
     allowGrandTichu: true,
     teams: [
         {

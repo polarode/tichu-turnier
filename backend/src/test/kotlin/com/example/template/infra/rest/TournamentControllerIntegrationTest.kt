@@ -444,7 +444,7 @@ class TournamentControllerIntegrationTest(
     private fun enterGameAtTableOne(tournamentId: String, gameNumber: Int, beschiss: Boolean): String {
         val tid = TournamentId(tournamentId)
         val table = roundRepository.findByTournamentAndNumber(tid, 1)!!.table(1)!!
-        val (home, away) = table.playingTeams.map { teamRepository.findById(it, tid)!! }
+        val (home, away) = table.seatedTeams.map { teamRepository.findById(it, tid)!! }
         transactionTemplate.execute {
             gameRepository.create(
                 Game.record(

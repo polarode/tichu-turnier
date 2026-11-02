@@ -1,6 +1,5 @@
 package com.example.template.domain
 
-import com.example.template.vocabulary.PairingUnsupportedException
 import kotlin.random.Random
 
 /**
@@ -18,6 +17,11 @@ data class PairingHistory(val pairings: List<Pair<TeamId, TeamId>>) {
     private val played: Set<Set<TeamId>> = pairings.map { setOf(it.first, it.second) }.toSet()
 
     fun hasRematch(a: TeamId, b: TeamId): Boolean = setOf(a, b) in played
+
+    companion object {
+        /** The history of the given previous-round [tables]; every pair of a trio table counts as having met. */
+        fun of(tables: List<Table>): PairingHistory = PairingHistory(tables.flatMap { it.pairs })
+    }
 }
 
 /** Identifier of a [Table]; a sequential 1-based number assigned in pairing order. */
@@ -25,25 +29,59 @@ data class PairingHistory(val pairings: List<Pair<TeamId, TeamId>>) {
 value class TableId(val value: Int)
 
 /**
- * One table of a round: two teams meeting, with the table's own id. The id is
- * explicit (not an implicit list index) so configurable table names can be added
- * later without changing the shape of a pairing.
+ * One table of a round: two seated teams, or three at a trio table (GLOSSARY.md),
+ * in seat order A/B/C, with the table's own id. The id is explicit (not an
+ * implicit list index) so configurable table names can be added later without
+ * changing the shape of a pairing.
+ *
+ * "Who sits here" ([seats], [seatedTeams]) and "who plays game n"
+ * ([playingTeams]) are kept apart: at a trio table one seated team sits out
+ * each game.
  */
 data class Table(
     val id: TableId,
-    val home: TeamId,
-    val away: TeamId,
+    val seatedTeams: List<TeamId>,
 ) {
-    /** The teams seated at this table, `[home, away]` — the two playing teams of every game here. */
-    val playingTeams: List<TeamId>
-        get() = listOf(home, away)
+    init {
+        require(seatedTeams.size in 2..TRIO_SIZE) { "A table seats 2 or 3 teams, got ${seatedTeams.size}" }
+        require(seatedTeams.distinct().size == seatedTeams.size) { "The seated teams of a table must be distinct" }
+    }
 
-    /** Games played here per round: a normal table hosts four (trio tables host six, #32). */
+    /** Whether this is the round's trio table, seating three teams. */
+    val isTrio: Boolean
+        get() = seatedTeams.size == TRIO_SIZE
+
+    /** Games played here per round: four at a normal table, six at a trio table. */
     val gameCount: Int
-        get() = 4
+        get() = if (isTrio) TRIO_SCHEDULE.size else NORMAL_GAME_COUNT
 
-    /** Whether [teamId] is seated at this table. */
-    fun seats(teamId: TeamId): Boolean = teamId in playingTeams
+    /** Whether [teamId] is seated at this table, whether or not it plays a given game. */
+    fun seats(teamId: TeamId): Boolean = teamId in seatedTeams
+
+    /**
+     * The two teams playing game [gameNumber] (1-based), in seat order. Both teams
+     * play every game at a normal table; a trio table follows the fixed schedule
+     * 1 AB, 2 AC, 3 BC, 4 AB, 5 AC, 6 BC.
+     */
+    fun playingTeams(gameNumber: Int): List<TeamId> {
+        require(gameNumber in 1..gameCount) { "Game number must be in 1..$gameCount, got $gameNumber" }
+        if (!isTrio) return seatedTeams
+        return TRIO_SCHEDULE[gameNumber - 1].map { seatedTeams[it] }
+    }
+
+    /** Every pair of teams meeting at this table: one pair, or all three at a trio table. */
+    val pairs: List<Pair<TeamId, TeamId>>
+        get() = seatedTeams.flatMapIndexed { i, a -> seatedTeams.drop(i + 1).map { b -> Pair(a, b) } }
+
+    companion object {
+        /** Teams seated at a trio table. */
+        const val TRIO_SIZE = 3
+
+        private const val NORMAL_GAME_COUNT = 4
+
+        /** Seat indexes playing each trio game: every pair twice, no team sits out twice in a row. */
+        private val TRIO_SCHEDULE = listOf(listOf(0, 1), listOf(0, 2), listOf(1, 2), listOf(0, 1), listOf(0, 2), listOf(1, 2))
+    }
 }
 
 /** The pairing of a round: every participating team sits at exactly one [Table]. */
@@ -58,46 +96,55 @@ object SwissPairing {
 
     /**
      * Round 1: a uniform random shuffle of the teams, paired adjacent and seated
-     * at sequentially numbered tables (Table 1 = first shuffled pair).
+     * at sequentially numbered tables (Table 1 = first shuffled pair). With an odd
+     * count the last three shuffled teams form the trio table, seated last.
      */
     fun pairFirstRound(teamIds: List<TeamId>, random: Random): Pairing {
-        requireEvenTeamCount(teamIds.size)
         val shuffled = teamIds.shuffled(random)
-        return pairingOf(shuffled.chunked(2).map { (home, away) -> Pair(home, away) })
-    }
-
-    private fun requireEvenTeamCount(count: Int) {
-        if (count % 2 == 1) {
-            throw PairingUnsupportedException(
-                "Swiss pairing needs an even number of teams, got $count. " +
-                    "Trio tables are not supported yet.",
-            )
-        }
+        if (shuffled.size % 2 == 0) return pairingOf(shuffled.chunked(2))
+        val trio = shuffled.takeLast(Table.TRIO_SIZE)
+        return pairingOf(shuffled.dropLast(Table.TRIO_SIZE).chunked(2) + listOf(trio))
     }
 
     /**
      * Rounds 2+: classic Swiss — standings sorted by VP desc, TP desc, team id asc.
-     * Pairing searches for a rematch-free assignment (backtracking); when none exists,
-     * it picks the one with the fewest rematches. Among equally good pairings the one
-     * closest to the standings order wins, so the result is fully deterministic given
-     * the input alone — no randomness involved in a Swiss round.
+     * With an odd count the bottom three form the trio table, seated last in
+     * standings order, regardless of history; teams tied exactly (VP and TP) across
+     * that cut-off are drawn with [random]. The rest pair by a search for a
+     * rematch-free assignment (backtracking); when none exists, it picks the one
+     * with the fewest rematches. Among equally good pairings the one closest to the
+     * standings order wins. Only the trio draw is random: even counts never
+     * consume [random], so they depend on the input alone.
      */
-    fun pairNextRound(entries: List<PairingEntry>, history: PairingHistory): Pairing {
-        requireEvenTeamCount(entries.size)
+    fun pairNextRound(entries: List<PairingEntry>, history: PairingHistory, random: Random): Pairing {
         val standings = entries.sortedWith(
             compareByDescending<PairingEntry> { it.victoryPoints }
                 .thenByDescending { it.tichuPoints }
                 .thenBy { it.teamId.value },
         )
-        val pairs = bestPairing(standings.map { it.teamId }, history)
-        return pairingOf(pairs)
+        val trio = if (standings.size % 2 == 1) bottomThree(standings, random) else emptyList()
+        val pairs = bestPairing(standings.map { it.teamId } - trio.toSet(), history)
+        val seatings = pairs.map { it.toList() }
+        return pairingOf(if (trio.isEmpty()) seatings else seatings + listOf(trio))
     }
 
-    /** Seats the pairs at sequentially numbered tables: Table 1 = first pair. */
-    private fun pairingOf(pairs: List<Pair<TeamId, TeamId>>): Pairing = Pairing(
-        tables = pairs.mapIndexed { index, (home, away) ->
-            Table(TableId(index + 1), home, away)
-        },
+    /**
+     * The bottom three of [standings] (already sorted), in standings order. The tie
+     * group straddling the cut-off (same VP and TP as the third-from-bottom team)
+     * fills the trio's open seats by a draw with [random].
+     */
+    private fun bottomThree(standings: List<PairingEntry>, random: Random): List<TeamId> {
+        val cutOff = standings[standings.size - Table.TRIO_SIZE]
+        val tied = standings.filter { it.victoryPoints == cutOff.victoryPoints && it.tichuPoints == cutOff.tichuPoints }
+        val below = standings.drop(standings.indexOf(tied.last()) + 1)
+        val openSeats = Table.TRIO_SIZE - below.size
+        val drawn = if (tied.size > openSeats) tied.shuffled(random).take(openSeats) else tied
+        return standings.filter { it in drawn || it in below }.map { it.teamId }
+    }
+
+    /** Seats each seating, in seat order, at sequentially numbered tables: Table 1 = first seating. */
+    private fun pairingOf(seatings: List<List<TeamId>>): Pairing = Pairing(
+        tables = seatings.mapIndexed { index, seatedTeams -> Table(TableId(index + 1), seatedTeams) },
     )
 
     /**

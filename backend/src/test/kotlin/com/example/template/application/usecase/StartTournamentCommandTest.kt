@@ -92,7 +92,7 @@ class StartTournamentCommandTest {
         assertEquals(TournamentStatus.ACTIVE, started.tournament.status)
         assertEquals(1, started.round.number)
         assertEquals(listOf(1, 2), started.round.pairing.tables.map { it.id.value })
-        val teamIds = started.round.pairing.tables.flatMap { listOf(it.home, it.away) }
+        val teamIds = started.round.pairing.tables.flatMap { it.seatedTeams }
         assertEquals(4, teamIds.distinct().size, "every team sits at exactly one table")
     }
 
@@ -123,7 +123,7 @@ class StartTournamentCommandTest {
             val start = StartTournamentCommand(tournaments, teams, rounds, idGenerator, Random(seed), fixedClock)
             val started = start.start(id, owner)
             return started.round.pairing.tables.map { table ->
-                teams.findById(table.home)!!.name to teams.findById(table.away)!!.name
+                teams.findById(table.seatedTeams[0])!!.name to teams.findById(table.seatedTeams[1])!!.name
             }
         }
 

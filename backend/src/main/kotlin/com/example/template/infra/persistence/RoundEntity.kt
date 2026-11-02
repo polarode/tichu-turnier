@@ -74,18 +74,20 @@ class RoundTableEntity(
 ) {
     fun toDomain(): PairingTable = PairingTable(
         id = TableId(tableNumber),
-        home = TeamId(homeTeamId),
-        away = TeamId(awayTeamId),
+        seatedTeams = listOf(TeamId(homeTeamId), TeamId(awayTeamId)),
     )
 
     companion object {
-        fun from(roundId: String, tournamentId: String, table: PairingTable): RoundTableEntity =
-            RoundTableEntity(
+        fun from(roundId: String, tournamentId: String, table: PairingTable): RoundTableEntity {
+            // Two columns until trio tables are persisted (#109); the start guard keeps trios out.
+            check(!table.isTrio) { "Trio tables cannot be persisted yet (#109)" }
+            return RoundTableEntity(
                 roundId = roundId,
                 tournamentId = tournamentId,
                 tableNumber = table.id.value,
-                homeTeamId = table.home.value,
-                awayTeamId = table.away.value,
+                homeTeamId = table.seatedTeams[0].value,
+                awayTeamId = table.seatedTeams[1].value,
             )
+        }
     }
 }

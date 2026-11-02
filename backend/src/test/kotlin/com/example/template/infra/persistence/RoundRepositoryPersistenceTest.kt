@@ -65,8 +65,8 @@ class RoundRepositoryPersistenceTest(
         number = number,
         pairing = com.example.template.domain.Pairing(
             tables = listOf(
-                Table(TableId(1), TeamId("team-a"), TeamId("team-b")),
-                Table(TableId(2), TeamId("team-c"), TeamId("team-d")),
+                Table(TableId(1), listOf(TeamId("team-a"), TeamId("team-b"))),
+                Table(TableId(2), listOf(TeamId("team-c"), TeamId("team-d"))),
             ),
         ),
     )
@@ -109,8 +109,8 @@ class RoundRepositoryPersistenceTest(
         val reshuffled = round("r-1", "t-1", 1).copy(
             pairing = com.example.template.domain.Pairing(
                 tables = listOf(
-                    Table(TableId(1), TeamId("team-d"), TeamId("team-c")),
-                    Table(TableId(2), TeamId("team-b"), TeamId("team-a")),
+                    Table(TableId(1), listOf(TeamId("team-d"), TeamId("team-c"))),
+                    Table(TableId(2), listOf(TeamId("team-b"), TeamId("team-a"))),
                 ),
             ),
         )

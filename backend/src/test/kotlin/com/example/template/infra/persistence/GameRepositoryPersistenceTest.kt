@@ -119,7 +119,7 @@ class GameRepositoryPersistenceTest(
         tournamentId = tournamentId,
         number = number,
         pairing = com.example.template.domain.Pairing(
-            tables = listOf(Table(TableId(1), TeamId("team-a"), TeamId("team-b"))),
+            tables = listOf(Table(TableId(1), listOf(TeamId("team-a"), TeamId("team-b")))),
         ),
         locked = locked,
     )

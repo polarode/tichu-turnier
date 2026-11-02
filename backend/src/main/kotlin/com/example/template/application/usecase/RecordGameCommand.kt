@@ -88,7 +88,7 @@ class RecordGameCommand(
             ?: throw GameNotFoundException("Tournament ${tournamentId.value} not found")
 
         val teamResults = toTeamResults(request)
-        requirePlayingTeams(tournamentId, teamResults, table.playingTeams)
+        requirePlayingTeams(tournamentId, teamResults, table.playingTeams(request.gameNumber))
 
         val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
         val baseGame = Game.record(key, teamResults, request.beschiss, tournament.settings)

@@ -1,10 +1,11 @@
 package com.example.template.domain
 
-import com.example.template.vocabulary.PairingUnsupportedException
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -21,7 +22,7 @@ class SwissPairingTest {
 
         val pairing = SwissPairing.pairFirstRound(teams, Random(1))
 
-        val paired = pairing.tables.flatMap { listOf(it.home, it.away) }
+        val paired = pairing.tables.flatMap { it.seatedTeams }
         assertEquals(teams.size, paired.size)
         assertEquals(teams.toSet(), paired.toSet())
         assertEquals(3, pairing.tables.size)
@@ -49,15 +50,41 @@ class SwissPairingTest {
         assertTrue(pairings.distinct().size > 1, "20 seeds produced only identical pairings")
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = [3, 5, 7, 9, 11])
+    fun `odd first round seats exactly one trio table, last, after the normal tables`(count: Int) {
+        val teams = (1..count).map { TeamId("t$it") }
+
+        val pairing = SwissPairing.pairFirstRound(teams, Random(count))
+
+        assertEquals((1..(count - 1) / 2).toList(), pairing.tables.map { it.id.value })
+        assertEquals(listOf(true), pairing.tables.filter { it.isTrio }.map { pairing.tables.last() == it })
+        assertEquals(teams.toSet(), pairing.tables.flatMap { it.seatedTeams }.toSet())
+        assertEquals(count, pairing.tables.sumOf { it.seatedTeams.size })
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [2, 4, 6, 8])
+    fun `even first round has no trio table`(count: Int) {
+        val teams = (1..count).map { TeamId("t$it") }
+
+        val pairing = SwissPairing.pairFirstRound(teams, Random(count))
+
+        assertEquals(count / 2, pairing.tables.size)
+        assertTrue(pairing.tables.none { it.isTrio })
+    }
+
     @Test
-    fun `odd team count is rejected in the first round`() {
+    fun `odd first round seats the last three shuffled teams at the trio table`() {
         val teams = teamIds("a", "b", "c", "d", "e")
 
-        val exception = assertFailsWith<PairingUnsupportedException> {
-            SwissPairing.pairFirstRound(teams, Random(1))
-        }
+        val pairing = SwissPairing.pairFirstRound(teams, Random(7))
 
-        assertTrue(exception.message!!.contains("even"))
+        val shuffled = teams.shuffled(Random(7))
+        assertEquals(
+            listOf(shuffled.take(2), shuffled.drop(2)),
+            pairing.tables.map { it.seatedTeams },
+        )
     }
 
     @Test
@@ -69,14 +96,14 @@ class SwissPairingTest {
             PairingEntry(TeamId("a"), victoryPoints = 4, tichuPoints = 0),
         )
 
-        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()))
+        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(1))
 
         assertEquals(
             listOf(
                 Pair(TeamId("a"), TeamId("b")),
                 Pair(TeamId("c"), TeamId("d")),
             ),
-            pairing.tables.map { Pair(it.home, it.away) },
+            pairing.tables.map { Pair(it.seatedTeams[0], it.seatedTeams[1]) },
         )
         assertEquals(listOf(1, 2), pairing.tables.map { it.id.value })
     }
@@ -91,14 +118,14 @@ class SwissPairingTest {
             PairingEntry(TeamId("x"), victoryPoints = 2, tichuPoints = 5),
         )
 
-        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()))
+        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(1))
 
         assertEquals(
             listOf(
                 Pair(TeamId("w"), TeamId("x")),
                 Pair(TeamId("y"), TeamId("z")),
             ),
-            pairing.tables.map { Pair(it.home, it.away) },
+            pairing.tables.map { Pair(it.seatedTeams[0], it.seatedTeams[1]) },
         )
     }
 
@@ -114,9 +141,9 @@ class SwissPairingTest {
         )
         val history = PairingHistory(listOf(Pair(TeamId("a"), TeamId("b")), Pair(TeamId("c"), TeamId("d"))))
 
-        val pairing = SwissPairing.pairNextRound(standings, history)
+        val pairing = SwissPairing.pairNextRound(standings, history, Random(1))
 
-        val pairs = pairing.tables.map { Pair(it.home, it.away) }
+        val pairs = pairing.tables.map { Pair(it.seatedTeams[0], it.seatedTeams[1]) }
         assertTrue(
             history.pairings.none { it in pairs },
             "pairing repeated a previous matchup: $pairs",
@@ -144,9 +171,9 @@ class SwissPairingTest {
             ),
         )
 
-        val pairing = SwissPairing.pairNextRound(standings, history)
+        val pairing = SwissPairing.pairNextRound(standings, history, Random(1))
 
-        val pairs = pairing.tables.map { Pair(it.home, it.away) }
+        val pairs = pairing.tables.map { Pair(it.seatedTeams[0], it.seatedTeams[1]) }
         assertEquals(emptyList(), pairs.filter { (a, b) -> history.hasRematch(a, b) })
     }
 
@@ -165,22 +192,150 @@ class SwissPairingTest {
             teams.flatMap { first -> teams.filter { it != first }.map { Pair(first, it) } }.distinct(),
         )
 
-        val pairing = SwissPairing.pairNextRound(standings, history)
-        val again = SwissPairing.pairNextRound(standings, history)
+        val pairing = SwissPairing.pairNextRound(standings, history, Random(1))
+        val again = SwissPairing.pairNextRound(standings, history, Random(1))
 
-        val pairs = pairing.tables.map { Pair(it.home, it.away) }
+        val pairs = pairing.tables.map { Pair(it.seatedTeams[0], it.seatedTeams[1]) }
         assertEquals(2, pairs.count { (a, b) -> history.hasRematch(a, b) })
         assertEquals(standings.map { it.teamId }.toSet(), pairs.flatMap { listOf(it.first, it.second) }.toSet())
         assertEquals(pairing, again, "same input must produce the same pairing")
     }
 
     @Test
-    fun `odd team count is rejected in the next round too`() {
-        val standings = (1..5).map { PairingEntry(TeamId("t$it"), 0, 0) }
+    fun `odd next round seats the bottom three in standings order at the last table`() {
+        val standings = listOf(
+            PairingEntry(TeamId("e"), victoryPoints = 0, tichuPoints = 0),
+            PairingEntry(TeamId("c"), victoryPoints = 4, tichuPoints = 0),
+            PairingEntry(TeamId("a"), victoryPoints = 8, tichuPoints = 0),
+            PairingEntry(TeamId("d"), victoryPoints = 2, tichuPoints = 0),
+            PairingEntry(TeamId("b"), victoryPoints = 6, tichuPoints = 0),
+        )
 
-        assertFailsWith<PairingUnsupportedException> {
-            SwissPairing.pairNextRound(standings, PairingHistory(emptyList()))
+        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(1))
+
+        assertEquals(
+            listOf(teamIds("a", "b"), teamIds("c", "d", "e")),
+            pairing.tables.map { it.seatedTeams },
+        )
+        assertEquals(listOf(1, 2), pairing.tables.map { it.id.value })
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [3, 5, 7, 9])
+    fun `odd next round seats exactly one trio table, last`(count: Int) {
+        val standings = (1..count).map { PairingEntry(TeamId("t$it"), victoryPoints = 2 * it, tichuPoints = 0) }
+
+        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(1))
+
+        assertEquals((1..(count - 1) / 2).toList(), pairing.tables.map { it.id.value })
+        assertTrue(pairing.tables.last().isTrio)
+        assertEquals(1, pairing.tables.count { it.isTrio })
+        assertEquals(teamIds("t3", "t2", "t1"), pairing.tables.last().seatedTeams)
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [2, 4, 6, 8])
+    fun `even next round has no trio table and ignores the random source`(count: Int) {
+        val standings = (1..count).map { PairingEntry(TeamId("t$it"), victoryPoints = 2, tichuPoints = 0) }
+
+        val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(1))
+        val otherSeed = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(99))
+
+        assertTrue(pairing.tables.none { it.isTrio })
+        assertEquals(pairing, otherSeed)
+    }
+
+    @Test
+    fun `the trio takes the bottom three even when they have all met before`() {
+        val standings = listOf(
+            PairingEntry(TeamId("a"), victoryPoints = 8, tichuPoints = 0),
+            PairingEntry(TeamId("b"), victoryPoints = 6, tichuPoints = 0),
+            PairingEntry(TeamId("c"), victoryPoints = 4, tichuPoints = 0),
+            PairingEntry(TeamId("d"), victoryPoints = 2, tichuPoints = 0),
+            PairingEntry(TeamId("e"), victoryPoints = 0, tichuPoints = 0),
+        )
+        val history = PairingHistory.of(listOf(Table(TableId(1), teamIds("c", "d", "e"))))
+
+        val pairing = SwissPairing.pairNextRound(standings, history, Random(1))
+
+        assertEquals(teamIds("c", "d", "e"), pairing.tables.last().seatedTeams)
+    }
+
+    @Test
+    fun `teams tied exactly across the trio cut-off are drawn at random`() {
+        // b, c and d tie on VP and TP; e is clearly last. The trio is e plus two of
+        // b/c/d, drawn by the injected random; the third pairs with a.
+        val standings = listOf(
+            PairingEntry(TeamId("a"), victoryPoints = 8, tichuPoints = 0),
+            PairingEntry(TeamId("b"), victoryPoints = 4, tichuPoints = 10),
+            PairingEntry(TeamId("c"), victoryPoints = 4, tichuPoints = 10),
+            PairingEntry(TeamId("d"), victoryPoints = 4, tichuPoints = 10),
+            PairingEntry(TeamId("e"), victoryPoints = 0, tichuPoints = 0),
+        )
+
+        val partnersOfA = (0 until 30).map { seed ->
+            val pairing = SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(seed))
+            val trio = pairing.tables.last().seatedTeams
+            assertEquals(TeamId("e"), trio.last(), "the clear last team always sits in the trio, seat C")
+            assertEquals(pairing, SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(seed)))
+            pairing.tables.first().seatedTeams.single { it != TeamId("a") }
         }
+
+        assertEquals(teamIds("b", "c", "d").toSet(), partnersOfA.toSet(), "every tied team is drawn out at some seed")
+    }
+
+    @Test
+    fun `a tie entirely below the cut-off draws nothing`() {
+        // c, d, e tie but all three fall into the trio anyway; b is clearly above.
+        val standings = listOf(
+            PairingEntry(TeamId("a"), victoryPoints = 8, tichuPoints = 0),
+            PairingEntry(TeamId("b"), victoryPoints = 6, tichuPoints = 0),
+            PairingEntry(TeamId("c"), victoryPoints = 2, tichuPoints = 0),
+            PairingEntry(TeamId("d"), victoryPoints = 2, tichuPoints = 0),
+            PairingEntry(TeamId("e"), victoryPoints = 2, tichuPoints = 0),
+        )
+
+        val trios = (0 until 10).map { seed ->
+            SwissPairing.pairNextRound(standings, PairingHistory(emptyList()), Random(seed)).tables.last().seatedTeams
+        }
+
+        assertEquals(setOf(teamIds("c", "d", "e")), trios.toSet())
+    }
+
+    @Test
+    fun `odd next round still avoids rematches among the normal tables`() {
+        val standings = listOf(
+            PairingEntry(TeamId("a"), victoryPoints = 8, tichuPoints = 0),
+            PairingEntry(TeamId("b"), victoryPoints = 6, tichuPoints = 0),
+            PairingEntry(TeamId("c"), victoryPoints = 5, tichuPoints = 0),
+            PairingEntry(TeamId("d"), victoryPoints = 4, tichuPoints = 0),
+            PairingEntry(TeamId("e"), victoryPoints = 2, tichuPoints = 0),
+            PairingEntry(TeamId("f"), victoryPoints = 1, tichuPoints = 0),
+            PairingEntry(TeamId("g"), victoryPoints = 0, tichuPoints = 0),
+        )
+        val history = PairingHistory.of(
+            listOf(Table(TableId(1), teamIds("a", "b")), Table(TableId(2), teamIds("c", "d"))),
+        )
+
+        val pairing = SwissPairing.pairNextRound(standings, history, Random(1))
+
+        assertEquals(
+            listOf(teamIds("a", "c"), teamIds("b", "d"), teamIds("e", "f", "g")),
+            pairing.tables.map { it.seatedTeams },
+        )
+    }
+
+    @Test
+    fun `every pair of a trio table counts as having met`() {
+        val history = PairingHistory.of(
+            listOf(Table(TableId(1), teamIds("a", "b")), Table(TableId(2), teamIds("c", "d", "e"))),
+        )
+
+        assertTrue(history.hasRematch(TeamId("a"), TeamId("b")))
+        assertTrue(history.hasRematch(TeamId("c"), TeamId("d")))
+        assertTrue(history.hasRematch(TeamId("e"), TeamId("c")))
+        assertTrue(history.hasRematch(TeamId("d"), TeamId("e")))
+        assertFalse(history.hasRematch(TeamId("a"), TeamId("c")))
     }
 
     @Test
@@ -197,9 +352,9 @@ class SwissPairingTest {
             }.filter { setOf(it.first, it.second) !in free }.distinct(),
         )
 
-        val pairing = SwissPairing.pairNextRound(standings, history)
+        val pairing = SwissPairing.pairNextRound(standings, history, Random(1))
 
-        val pairs = pairing.tables.map { Pair(it.home, it.away) }
+        val pairs = pairing.tables.map { Pair(it.seatedTeams[0], it.seatedTeams[1]) }
         assertEquals(1, pairs.count { (a, b) -> history.hasRematch(a, b) })
         assertEquals(
             setOf(setOf(TeamId("a"), TeamId("b")), setOf(TeamId("c"), TeamId("d")), setOf(TeamId("e"), TeamId("f"))),

@@ -112,7 +112,7 @@ class TeamScoringControllerIntegrationTest(
         id = RoundId("r-$number"),
         tournamentId = TournamentId(tournamentId),
         number = number,
-        pairing = com.example.template.domain.Pairing(tables = listOf(Table(TableId(1), TeamId(teamA), TeamId(teamB)))),
+        pairing = com.example.template.domain.Pairing(tables = listOf(Table(TableId(1), listOf(TeamId(teamA), TeamId(teamB))))),
         locked = locked,
     )
 
@@ -225,7 +225,7 @@ class TeamScoringControllerIntegrationTest(
                 tournamentId = TournamentId(tournamentId),
                 number = 2,
                 pairing = com.example.template.domain.Pairing(
-                    tables = listOf(Table(TableId(1), TeamId(teamB), TeamId(teamA))),
+                    tables = listOf(Table(TableId(1), listOf(TeamId(teamB), TeamId(teamA)))),
                 ),
             ),
         )

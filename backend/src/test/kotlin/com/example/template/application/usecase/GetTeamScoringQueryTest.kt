@@ -95,7 +95,7 @@ class GetTeamScoringQueryTest {
         id = RoundId("r-$number"),
         tournamentId = tournamentId,
         number = number,
-        pairing = Pairing(tables = listOf(Table(TableId(1), home, away))),
+        pairing = Pairing(tables = listOf(Table(TableId(1), listOf(home, away)))),
         locked = locked,
     )
 

@@ -41,7 +41,7 @@ class GetTeamScoringQuery(
             )
         val settings = tournamentSettings(tournamentId)
 
-        val teams = table.playingTeams.map { teamId ->
+        val teams = table.seatedTeams.map { teamId ->
             val team = requireTeam(teamId, tournamentId)
             TeamTableTeam(
                 teamId = team.id,

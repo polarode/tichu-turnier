@@ -67,7 +67,7 @@ class ListRoundsQueryTest {
                 id = RoundId("r-1"),
                 tournamentId = tournamentId,
                 number = 1,
-                pairing = Pairing(listOf(Table(TableId(1), teamA, teamB), Table(TableId(2), teamC, teamD))),
+                pairing = Pairing(listOf(Table(TableId(1), listOf(teamA, teamB)), Table(TableId(2), listOf(teamC, teamD)))),
             ),
         )
     }
@@ -116,7 +116,7 @@ class ListRoundsQueryTest {
                 id = RoundId("r-2"),
                 tournamentId = tournamentId,
                 number = 2,
-                pairing = Pairing(listOf(Table(TableId(1), teamA, teamB), Table(TableId(2), teamC, teamD))),
+                pairing = Pairing(listOf(Table(TableId(1), listOf(teamA, teamB)), Table(TableId(2), listOf(teamC, teamD)))),
             ),
         )
         seedGame(1, roundNumber = 1)

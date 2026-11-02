@@ -112,12 +112,16 @@ data class TableResponse(
     val games: List<RecordedGameDto>,
 ) {
     companion object {
-        fun from(table: Table, games: List<RecordedGame>): TableResponse = TableResponse(
-            tableNumber = table.id.value,
-            homeTeamId = table.home.value,
-            awayTeamId = table.away.value,
-            gameCount = table.gameCount,
-            games = games.map(RecordedGameDto::from),
-        )
+        fun from(table: Table, games: List<RecordedGame>): TableResponse {
+            // Two seats on the wire until trio tables are exposed (#109); the start guard keeps trios out.
+            check(!table.isTrio) { "Trio tables cannot be exposed yet (#109)" }
+            return TableResponse(
+                tableNumber = table.id.value,
+                homeTeamId = table.seatedTeams[0].value,
+                awayTeamId = table.seatedTeams[1].value,
+                gameCount = table.gameCount,
+                games = games.map(RecordedGameDto::from),
+            )
+        }
     }
 }

@@ -107,7 +107,7 @@ class RecordGameCommandTest {
         id = RoundId("r-$number"),
         tournamentId = tournamentId,
         number = number,
-        pairing = Pairing(tables = listOf(Table(TableId(1), teamA, teamB))),
+        pairing = Pairing(tables = listOf(Table(TableId(1), listOf(teamA, teamB)))),
         locked = locked,
     )
 

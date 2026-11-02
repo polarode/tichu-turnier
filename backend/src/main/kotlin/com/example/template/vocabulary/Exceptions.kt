@@ -228,10 +228,9 @@ class InsufficientTeamsException(message: String) :
     ApiException(ErrorCode.INSUFFICIENT_TEAMS, message)
 
 /**
- * Raised by the Swiss pairing domain component when pairing is impossible under the
- * current rules — today, an odd team count. A temporary contract until the trio-table
- * slice supports three-team tables. Mapped to HTTP 409 by the start-tournament use
- * case (#53).
+ * Raised by the start-tournament use case for an odd team count: the pairing seats
+ * trio tables, but persistence and the API do not yet (#109). A temporary contract
+ * until then. Mapped to HTTP 409 (#53).
  */
 class PairingUnsupportedException(message: String) :
     ApiException(ErrorCode.PAIRING_UNSUPPORTED, message)

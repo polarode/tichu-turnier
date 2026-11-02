@@ -4,7 +4,7 @@ import { Minus, Plus, X } from 'lucide-react';
 import { Button } from '@tichu/ui/button.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
-import type { RecordedGame, TeamTable, TichuCall } from '@/domain/game.domain.ts';
+import { type Matchup, type RecordedGame, seatOf, type TeamTable, type TichuCall } from '@/domain/game.domain.ts';
 import {
     complementBaseScore,
     displayTotals,
@@ -21,12 +21,10 @@ import {
 import { gameFormSchema, type GameFormValues } from '@/features/scoring/scoring-schemas.ts';
 import { useRecordGame } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
-
-/** Team identity colours: team 1 (slots 0–1) is Jade, team 2 (slots 2–3) is Star. */
-const TEAM_TONE = ['bg-team-1-soft text-team-1', 'bg-team-2-soft text-team-2'] as const;
 
 /** Card points per team range from −25 to 125 in steps of 5. */
 const BASE_SCORE_MIN = -25;
@@ -43,6 +41,8 @@ const BASE_SCORE_STEP = 5;
  */
 interface GameEntryFormProps {
     table: TeamTable;
+    /** The selected game's two playing teams, in seat order: slots 0–1 and 2–3. */
+    matchup: Matchup;
     gameNumber: number;
     /** The already-entered game for this slot, when editing; absent in create mode. */
     existingGame?: RecordedGame;
@@ -57,11 +57,12 @@ interface GameEntryFormProps {
 }
 
 /**
- * The v1-style game entry grid (S5c, #101): a per-player finish-cycling button,
- * tri-state Tichu toggle, bomb counter, one base-score slider for team 1 with the
- * complement derived, and a Beschiss toggle. Built on react-hook-form + a zod
- * resolver; the client math is display-only and the form submits raw facts, with
- * the server returning the authoritative outcome (ADR 0004).
+ * The v1-style game entry grid (S5c, #101) for one game's [matchup]: a per-player
+ * finish-cycling button, tri-state Tichu toggle, bomb counter, one base-score
+ * slider for team 1 with the complement derived, and a Beschiss toggle. Each team
+ * keeps its seat colour. Built on react-hook-form + a zod resolver; the client
+ * math is display-only and the form submits raw facts, with the server returning
+ * the authoritative outcome (ADR 0004).
  *
  * Read-only has two sources: the round being locked on arrival (`table.locked`),
  * or the server rejecting a write with `GAME_CONFIRMED` because the round locked
@@ -71,6 +72,7 @@ interface GameEntryFormProps {
  */
 export function GameEntryForm({
     table,
+    matchup,
     gameNumber,
     existingGame,
     onLoadExisting,
@@ -83,7 +85,7 @@ export function GameEntryForm({
 
     const form = useForm<GameFormValues>({
         resolver: zodResolver(gameFormSchema(t)),
-        defaultValues: existingGame ? fromRecordedGame(existingGame, table) : emptyFormState(),
+        defaultValues: existingGame ? fromRecordedGame(existingGame, matchup) : emptyFormState(),
     });
 
     const state: GameFormValues = form.watch();
@@ -97,7 +99,7 @@ export function GameEntryForm({
     const readOnly = table.locked || confirmed;
 
     const players = PLAYER_SLOTS.map((slot) => {
-        const team = table.teams[teamOfSlot(slot)];
+        const team = matchup[teamOfSlot(slot)];
         const player = team.players[slot % 2 === 0 ? 0 : 1];
         return { slot, player, teamName: team.teamName };
     });
@@ -134,7 +136,7 @@ export function GameEntryForm({
     }
 
     const submit = form.handleSubmit(async (values) => {
-        const input = toWriteInput(values, table, gameNumber, existingGame?.version ?? null);
+        const input = toWriteInput(values, matchup, gameNumber, existingGame?.version ?? null);
         onSubmitStart?.();
         try {
             await recordGame.mutateAsync(input);
@@ -168,6 +170,9 @@ export function GameEntryForm({
         GRAND: t('scoring.call.grand'),
     };
 
+    // Each team keeps its seat colour across games (A Jade, B Star, C Pagoda).
+    const tones = [seatTone(seatOf(table, matchup[0].teamId)), seatTone(seatOf(table, matchup[1].teamId))] as const;
+
     const rootError = form.formState.errors.root;
     const positionsError = form.formState.errors.positions?.message;
     const pending = form.formState.isSubmitting || recordGame.isPending;
@@ -180,8 +185,8 @@ export function GameEntryForm({
                 44px controls; from `sm` up name and controls share one row. */}
             {([0, 1] as const).map((team) => (
                 <fieldset key={team} className="flex flex-col gap-3 rounded-md border border-border bg-card p-3">
-                    <legend className={cn('rounded-full px-2.5 py-0.5 text-sm font-semibold', TEAM_TONE[team])}>
-                        {table.teams[team].teamName}
+                    <legend className={cn('rounded-full px-2.5 py-0.5 text-sm font-semibold', tones[team].chip)}>
+                        {matchup[team].teamName}
                     </legend>
                     {players
                         .filter(({ slot }) => teamOfSlot(slot) === team)
@@ -263,14 +268,14 @@ export function GameEntryForm({
 
             <div className="grid grid-cols-2 gap-4 text-center text-sm">
                 <div>
-                    <p className="font-medium text-team-1">{table.teams[0].teamName}</p>
+                    <p className={cn('font-medium', tones[0].text)}>{matchup[0].teamName}</p>
                     <p className="text-lg font-semibold">
                         {dw === null ? state.baseScoreTeam0 : 0}
                         <span className="text-muted-foreground"> → {totals[0]}</span>
                     </p>
                 </div>
                 <div>
-                    <p className="font-medium text-team-2">{table.teams[1].teamName}</p>
+                    <p className={cn('font-medium', tones[1].text)}>{matchup[1].teamName}</p>
                     <p className="text-lg font-semibold">
                         {team1Base}
                         <span className="text-muted-foreground"> → {totals[1]}</span>
@@ -280,7 +285,7 @@ export function GameEntryForm({
 
             <div className="flex flex-col gap-1">
                 <label htmlFor="base-score" className="text-sm font-medium">
-                    {t('scoring.baseScore.label')} – {table.teams[0].teamName}
+                    {t('scoring.baseScore.label')} – {matchup[0].teamName}
                 </label>
                 {/* ±5 steppers: dragging a 30-step slider precisely is fiddly on a phone. */}
                 <div className="flex items-center gap-2">

@@ -185,6 +185,8 @@ export const de: Catalog = {
     'rounds.game': 'Spiel',
     'rounds.game.beschiss': 'Beschiss',
     'rounds.game.doubleWin': 'Doppelsieg',
+    'rounds.game.missing': 'fehlt',
+    'rounds.trio': 'Trio',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',
@@ -271,6 +273,9 @@ export const de: Catalog = {
     'scoring.selector.label': 'Spiel auswählen',
     'scoring.game.label': 'Spiel',
     'scoring.game.entered': 'eingetragen',
+    'scoring.game.sitsOut': 'Dein Team setzt aus',
+    'scoring.matchup.trio': 'Trio-Tisch',
+    'scoring.sitOut.note': 'Dein Team setzt dieses Spiel aus – du kannst es trotzdem eintragen.',
     'scoring.form.title': 'Spielergebnis',
     'scoring.finish.label': 'Fertig',
     'scoring.finish.assign': 'Nächste Platzierung setzen',

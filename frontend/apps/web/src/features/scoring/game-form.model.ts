@@ -1,8 +1,8 @@
 import type {
     GameWriteInput,
+    Matchup,
     PlayerResultInput,
     RecordedGame,
-    TeamTable,
     TichuCall,
 } from '@/domain/game.domain.ts';
 
@@ -107,13 +107,14 @@ export function displayTotals(state: GameFormState): [number, number] {
 }
 
 /**
- * Builds the write payload from the grid state and the table's roster. Groups the
- * four slots back into the two teams; on a double win both base scores are 0 and
- * the losing players carry no position (ADR 0004). [version] null → create.
+ * Builds the write payload from the grid state and the game's [matchup] (the two
+ * playing teams and their rosters). Groups the four slots back into the two
+ * teams; on a double win both base scores are 0 and the losing players carry no
+ * position (ADR 0004). [version] null → create.
  */
 export function toWriteInput(
     state: GameFormState,
-    table: TeamTable,
+    matchup: Matchup,
     gameNumber: number,
     version: number | null,
 ): GameWriteInput {
@@ -127,19 +128,19 @@ export function toWriteInput(
         version,
         teams: [
             {
-                teamId: table.teams[0].teamId,
+                teamId: matchup[0].teamId,
                 baseScore: baseTeam0,
                 players: [
-                    slotToPlayer(state, 0, table.teams[0].players[0].playerId),
-                    slotToPlayer(state, 1, table.teams[0].players[1].playerId),
+                    slotToPlayer(state, 0, matchup[0].players[0].playerId),
+                    slotToPlayer(state, 1, matchup[0].players[1].playerId),
                 ],
             },
             {
-                teamId: table.teams[1].teamId,
+                teamId: matchup[1].teamId,
                 baseScore: baseTeam1,
                 players: [
-                    slotToPlayer(state, 2, table.teams[1].players[0].playerId),
-                    slotToPlayer(state, 3, table.teams[1].players[1].playerId),
+                    slotToPlayer(state, 2, matchup[1].players[0].playerId),
+                    slotToPlayer(state, 3, matchup[1].players[1].playerId),
                 ],
             },
         ],
@@ -159,11 +160,11 @@ function slotToPlayer(state: GameFormState, slot: PlayerSlot, playerId: string):
  * Rebuilds grid state from a stored game, for edit mode. Deliberately order-
  * independent: players are matched by id (not by the stored team/player order)
  * and the slot-0 team's base score is found by team id, so a stored game whose
- * `team1`/`team2` order differs from the current table's `[home, away]` still
- * loads each player and the base slider onto the correct slot. Do not replace
+ * `team1`/`team2` order differs from the [matchup]'s seat order still loads each
+ * player and the base slider onto the correct slot. Do not replace
  * these id lookups with positional access.
  */
-export function fromRecordedGame(game: RecordedGame, table: TeamTable): GameFormState {
+export function fromRecordedGame(game: RecordedGame, matchup: Matchup): GameFormState {
     const positions: Quad<number | null> = [null, null, null, null];
     const calls: Quad<TichuCall> = ['NONE', 'NONE', 'NONE', 'NONE'];
     const bombs: Quad<number> = [0, 0, 0, 0];
@@ -172,7 +173,7 @@ export function fromRecordedGame(game: RecordedGame, table: TeamTable): GameForm
         game.teams.flatMap((team) => team.players.map((p) => [p.playerId, p] as const)),
     );
     for (const slot of PLAYER_SLOTS) {
-        const team = table.teams[teamOfSlot(slot)];
+        const team = matchup[teamOfSlot(slot)];
         const playerId = team.players[slot % 2 === 0 ? 0 : 1].playerId;
         const recorded = recordedById.get(playerId);
         if (recorded) {
@@ -182,7 +183,7 @@ export function fromRecordedGame(game: RecordedGame, table: TeamTable): GameForm
         }
     }
 
-    const team0 = game.teams.find((t) => t.teamId === table.teams[0].teamId);
+    const team0 = game.teams.find((t) => t.teamId === matchup[0].teamId);
     return {
         positions,
         calls,

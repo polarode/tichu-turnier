@@ -210,6 +210,8 @@ describe('/team/score', () => {
 
         renderApp('/team/score');
         await screen.findByText('Team Alpha gegen Team Beta');
+        // The page opens on the first unentered game; pick the entered game 1.
+        await user.click(screen.getAllByRole('tab')[0]!);
 
         await user.click(await screen.findByRole('button', { name: 'Spiel aktualisieren' }));
 
@@ -305,6 +307,7 @@ describe('/team/score', () => {
             await screen.findByText('Diese Runde ist gesperrt. Ihre Spiele sind schreibgeschützt.'),
         ).toBeInTheDocument();
         // Every interactive control is disabled in a locked round.
+        await userEvent.click(screen.getAllByRole('tab')[0]!);
         expect(screen.getByRole('slider')).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
     });
@@ -316,10 +319,13 @@ describe('/team/score', () => {
         renderApp('/team/score');
         await screen.findByText('Team Alpha gegen Team Beta');
 
-        // Game 1 is entered → its tab carries the ✓ marker and the update label shows.
+        // Game 1 is entered → its tab carries the ✓ marker; the page opens on the
+        // first unentered game (2), and selecting game 1 preloads it for editing.
         const firstTab = screen.getAllByRole('tab')[0]!;
         expect(within(firstTab).getByText(/✓/)).toBeInTheDocument();
         expect(firstTab).toHaveAccessibleName('Spiel 1 eingetragen');
+        expect(screen.getAllByRole('tab')[1]).toHaveAttribute('aria-selected', 'true');
+        await userEvent.click(firstTab);
         expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeInTheDocument();
     });
 
@@ -415,12 +421,126 @@ describe('/team/score', () => {
         await screen.findByText('Team Alpha gegen Team Beta');
 
         // Game 1 is already entered → edit mode; submitting triggers a PUT that loses the race.
+        await user.click(screen.getAllByRole('tab')[0]!);
         await user.click(screen.getByRole('button', { name: 'Spiel aktualisieren' }));
 
         expect(
             await screen.findByText(/Dieses Spiel wurde zwischenzeitlich geändert/),
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Spiel neu laden' })).toBeInTheDocument();
+    });
+
+    it('opens on game 1 when every game is entered', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([1, 2, 3, 4].map((gameNumber) => recordedGame({ gameNumber })));
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('shows no per-game matchup line at a normal table', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        expect(screen.queryByText(/^Spiel 1:/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/setzt.*aus/)).not.toBeInTheDocument();
+    });
+
+    describe('at a trio table', () => {
+        // Seats A/B/C = Alpha/Beta/Gamma; the viewing team is Alpha (team-a), which
+        // sits out games 3 and 6 (BC).
+        function trioTable(): TeamTable {
+            const base = table();
+            return {
+                ...base,
+                teams: [
+                    base.teams[0],
+                    base.teams[1],
+                    {
+                        teamId: 'team-c',
+                        teamName: 'Team Gamma',
+                        players: [
+                            { playerId: 'c1', name: 'Cleo' },
+                            { playerId: 'c2', name: 'Carl' },
+                        ],
+                    },
+                ],
+                trio: true,
+                schedule: [
+                    { gameNumber: 1, teamIds: ['team-a', 'team-b'] },
+                    { gameNumber: 2, teamIds: ['team-a', 'team-c'] },
+                    { gameNumber: 3, teamIds: ['team-b', 'team-c'] },
+                    { gameNumber: 4, teamIds: ['team-a', 'team-b'] },
+                    { gameNumber: 5, teamIds: ['team-a', 'team-c'] },
+                    { gameNumber: 6, teamIds: ['team-b', 'team-c'] },
+                ],
+            };
+        }
+
+        it('lists all three teams and six games, opening on the first unentered one with its matchup', async () => {
+            scoring.currentTable.mockResolvedValue(trioTable());
+            scoring.games.mockResolvedValue([recordedGame({ gameNumber: 1 })]);
+
+            renderApp('/team/score');
+
+            expect(await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma')).toBeInTheDocument();
+            const tabs = screen.getAllByRole('tab');
+            expect(tabs).toHaveLength(6);
+            expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+            expect(screen.getByText('Spiel 2: Team Alpha gegen Team Gamma')).toBeInTheDocument();
+            // The form takes game 2's playing teams: Gamma's players replace Beta's.
+            expect(screen.getByText('Cleo')).toBeInTheDocument();
+            expect(screen.queryByText('Bob')).not.toBeInTheDocument();
+        });
+
+        it('marks the games the viewing team sits out, which stay enterable', async () => {
+            scoring.currentTable.mockResolvedValue(trioTable());
+            scoring.games.mockResolvedValue([]);
+
+            renderApp('/team/score');
+            await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma');
+
+            const tabs = screen.getAllByRole('tab');
+            expect(tabs[2]).toHaveAccessibleName('Spiel 3 – Dein Team setzt aus');
+            expect(tabs[5]).toHaveAccessibleName('Spiel 6 – Dein Team setzt aus');
+            expect(tabs[1]).toHaveAccessibleName('Spiel 2');
+
+            await userEvent.click(tabs[2]!);
+
+            expect(screen.getByText('Spiel 3: Team Beta gegen Team Gamma')).toBeInTheDocument();
+            expect(screen.getByText(/Dein Team setzt dieses Spiel aus/)).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Spiel speichern' })).toBeEnabled();
+        });
+
+        it('submits the selected game\'s playing teams', async () => {
+            scoring.currentTable.mockResolvedValue(trioTable());
+            scoring.games.mockResolvedValue([]);
+            scoring.create.mockResolvedValue(recordedGame({ gameNumber: 3 }));
+            const user = userEvent.setup();
+
+            renderApp('/team/score');
+            await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma');
+            await user.click(screen.getAllByRole('tab')[2]!);
+
+            // Slot order: Bob(0), Ben(1), Cleo(2), Carl(3).
+            const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+            await user.click(finishButtons[0]!);
+            await user.click(finishButtons[2]!);
+            await user.click(finishButtons[1]!);
+            await user.click(finishButtons[3]!);
+            await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
+
+            await waitFor(() => expect(scoring.create).toHaveBeenCalledTimes(1));
+            const [, input] = scoring.create.mock.calls[0]!;
+            expect(input.gameNumber).toBe(3);
+            expect(input.teams.map((team) => team.teamId)).toEqual(['team-b', 'team-c']);
+            expect(input.teams[1].players.map((player) => player.playerId)).toEqual(['c1', 'c2']);
+        });
     });
 
     it('shows the not-seated placeholder on a 404', async () => {

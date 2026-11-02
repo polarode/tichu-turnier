@@ -236,7 +236,12 @@ describe('rounds section', () => {
         await userEvent.click(toggle);
         expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
-        const [first, second] = within(section).getAllByRole('listitem', { name: /^Spiel/ });
+        // Every game of the table is listed; the two entered ones carry their scores.
+        const rows = within(section).getAllByRole('listitem', { name: /^Spiel/ });
+        expect(rows).toHaveLength(4);
+        expect(within(rows[2]!).getByText('fehlt')).toBeInTheDocument();
+        expect(within(section).queryByText('Trio')).not.toBeInTheDocument();
+        const [first, second] = rows;
         expect(within(first!).getByText('155 : 45')).toBeInTheDocument();
         expect(within(first!).getByText('Beschiss')).toBeInTheDocument();
         expect(within(first!).queryByText('Doppelsieg')).not.toBeInTheDocument();
@@ -245,7 +250,7 @@ describe('rounds section', () => {
         expect(within(second!).queryByText('Beschiss')).not.toBeInTheDocument();
     });
 
-    it('lists all three trio teams and orders each game\'s scores by its playing teams', async () => {
+    it('shows a trio table with its badge, three teams and six matchup rows', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta'), team('team-c', 'Gamma')]);
         const trioGame: RecordedGame = {
@@ -280,10 +285,25 @@ describe('rounds section', () => {
 
         const section = await screen.findByRole('region', { name: 'Runden' });
         expect(await within(section).findByText('1/6 eingetragen')).toBeInTheDocument();
+        expect(within(section).getByText('Trio')).toBeInTheDocument();
         await userEvent.click(within(section).getByRole('button', { name: /Tisch 1.*Alpha vs Beta vs Gamma/ }));
 
-        const [row] = within(section).getAllByRole('listitem', { name: /^Spiel/ });
-        expect(within(row!).getByText('120 : 80')).toBeInTheDocument();
+        // All six games are listed with their matchup; only game 2 is entered.
+        const rows = within(section).getAllByRole('listitem', { name: /^Spiel/ });
+        expect(rows).toHaveLength(6);
+        expect(rows.map((row) => within(row).getByText(/ vs /).textContent)).toEqual([
+            'Alpha vs Beta',
+            'Alpha vs Gamma',
+            'Beta vs Gamma',
+            'Alpha vs Beta',
+            'Alpha vs Gamma',
+            'Beta vs Gamma',
+        ]);
+        expect(within(rows[1]!).getByText('Alpha vs Gamma')).toBeInTheDocument();
+        expect(within(rows[1]!).getByText('120 : 80')).toBeInTheDocument();
+        expect(within(rows[2]!).getByText('Beta vs Gamma')).toBeInTheDocument();
+        expect(within(rows[2]!).getByText('fehlt')).toBeInTheDocument();
+        expect(within(rows[5]!).getByText('fehlt')).toBeInTheDocument();
     });
 
     it('opens on the latest round and switches rounds through the selector', async () => {

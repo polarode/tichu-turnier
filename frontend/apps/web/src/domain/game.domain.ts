@@ -53,6 +53,33 @@ export interface TeamTableTeam {
     players: [TeamTablePlayer, TeamTablePlayer];
 }
 
+/** The two teams playing one game at a table (GLOSSARY.md: Matchup), in seat order. */
+export type Matchup = [TeamTableTeam, TeamTableTeam];
+
+/**
+ * The matchup of game [gameNumber] at [table], resolved from the server schedule
+ * (the frontend never re-derives the trio schedule). Throws for a game number the
+ * schedule does not list — callers only ever pass numbers taken from it.
+ */
+export function matchupOf(table: TeamTable, gameNumber: number): Matchup {
+    const scheduled = table.schedule.find((game) => game.gameNumber === gameNumber);
+    const team = (teamId: string) => table.teams.find((seated) => seated.teamId === teamId);
+    const first = scheduled && team(scheduled.teamIds[0]);
+    const second = scheduled && team(scheduled.teamIds[1]);
+    if (!first || !second) throw new Error(`Game ${gameNumber} is not on table ${table.tableNumber}'s schedule`);
+    return [first, second];
+}
+
+/** Whether [teamId] sits out game [gameNumber] at [table] (only ever true at a trio table). */
+export function sitsOut(table: TeamTable, teamId: string, gameNumber: number): boolean {
+    return !matchupOf(table, gameNumber).some((team) => team.teamId === teamId);
+}
+
+/** The 0-based seat of [teamId] at [table] (A = 0, B = 1, C = 2); drives the seat colour. */
+export function seatOf(table: TeamTable, teamId: string): number {
+    return table.teams.findIndex((team) => team.teamId === teamId);
+}
+
 export interface TeamTablePlayer {
     playerId: string;
     name: string;

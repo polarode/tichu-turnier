@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
+import type { Matchup, RecordedGame, TeamTable, TeamTableTeam } from '@/domain/game.domain.ts';
 import {
     complementBaseScore,
     displayTotals,
@@ -39,6 +39,18 @@ const table: TeamTable = {
     ],
     trio: false,
     schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
+};
+
+/** A normal table's matchup: both seated teams play every game. */
+const matchup: Matchup = [table.teams[0], table.teams[1]];
+
+const gamma: TeamTableTeam = {
+    teamId: 'team-c',
+    teamName: 'Team Gamma',
+    players: [
+        { playerId: 'c1', name: 'Cleo' },
+        { playerId: 'c2', name: 'Carl' },
+    ],
 };
 
 describe('nextFinishPosition', () => {
@@ -135,7 +147,7 @@ describe('toWriteInput', () => {
             baseScoreTeam0: 55,
             beschiss: true,
         };
-        const input = toWriteInput(state, table, 1, null);
+        const input = toWriteInput(state, matchup, 1, null);
 
         expect(input).toEqual({
             gameNumber: 1,
@@ -170,12 +182,19 @@ describe('toWriteInput', () => {
             baseScoreTeam0: 55,
             beschiss: false,
         };
-        const input = toWriteInput(state, table, 2, 7);
+        const input = toWriteInput(state, matchup, 2, 7);
 
         expect(input.version).toBe(7);
         expect(input.teams[0].baseScore).toBe(0);
         expect(input.teams[1].baseScore).toBe(0);
         expect(input.teams[1].players.map((p) => p.position)).toEqual([null, null]);
+    });
+
+    it('builds the payload for the selected game\'s matchup, e.g. Alpha vs Gamma at a trio table', () => {
+        const input = toWriteInput(emptyFormState(), [table.teams[0], gamma], 2, null);
+
+        expect(input.teams.map((team) => team.teamId)).toEqual(['team-a', 'team-c']);
+        expect(input.teams[1].players.map((p) => p.playerId)).toEqual(['c1', 'c2']);
     });
 });
 
@@ -211,7 +230,7 @@ describe('fromRecordedGame', () => {
             },
         };
 
-        expect(fromRecordedGame(game, table)).toEqual({
+        expect(fromRecordedGame(game, matchup)).toEqual({
             positions: [1, 4, 2, 3],
             calls: ['GRAND', 'NONE', 'NONE', 'NONE'],
             bombs: [2, 0, 0, 0],
@@ -256,7 +275,7 @@ describe('fromRecordedGame', () => {
 
         // Slots follow the TABLE order (a1, a2, b1, b2), not the stored order,
         // and baseScoreTeam0 is team-a's 60 (slot-0 team), not team-b's 40.
-        expect(fromRecordedGame(game, table)).toEqual({
+        expect(fromRecordedGame(game, matchup)).toEqual({
             positions: [1, 4, 2, 3],
             calls: ['SMALL', 'NONE', 'NONE', 'NONE'],
             bombs: [0, 0, 1, 0],

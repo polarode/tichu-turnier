@@ -5,10 +5,11 @@ import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import { type RecordedGame, teamPoints } from '@/domain/game.domain.ts';
-import { playingTeamIds, type Round, type TableOverview } from '@/domain/round.domain.ts';
+import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
+import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
@@ -23,10 +24,11 @@ interface RoundsSectionProps {
 /**
  * The rounds view. One round shows at a time, picked from a selector that opens on
  * the latest round and follows new rounds until the admin picks one. Each table
- * collapses to a summary line, "Table N: Team A vs Team B · x/n entered"; its
- * entered games (S5d, #102) unfold behind that line, read-only — scoring happens
- * in the team area. Team names resolve from the teams query; a team that has
- * since disappeared falls back to its raw id so the pairing stays legible.
+ * collapses to a summary line, "Table N: Team A vs Team B · x/n entered"; all its
+ * games (S5d, #102; trio tables #110) unfold behind that line with their matchup
+ * and entered/missing status, read-only — scoring happens in the team area. Team
+ * names resolve from the teams query; a team that has since disappeared falls
+ * back to its raw id so the pairing stays legible.
  */
 export function RoundsSection({ tournamentId, teams, live = false }: RoundsSectionProps) {
     const { t } = useI18n();
@@ -133,8 +135,9 @@ function RoundView({
 }
 
 /**
- * A table's summary line. With games entered it is a disclosure button that
- * unfolds them; with none there is nothing to show, so it stays plain text.
+ * A table's summary line, a disclosure button that unfolds every game of the
+ * table (4, or 6 at the trio table) with its matchup and entered/missing status.
+ * Each team keeps its seat colour; the trio table carries a "Trio" badge.
  */
 function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: string) => string }) {
     const { t } = useI18n();
@@ -146,59 +149,54 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
         entered >= table.gameCount ? 'bg-secondary text-secondary-foreground'
         : entered > 0 ? 'bg-warning-soft text-warning'
         : 'bg-muted text-muted-foreground';
-
-    const summary = (
-        <>
-            <span className="min-w-0 flex-1">
-                <span className="font-medium">{`${t('rounds.table')} ${table.tableNumber}`}</span>
-                {': '}
-                {table.teamIds.map((teamId, seat) => (
-                    <Fragment key={teamId}>
-                        {seat > 0 ? ` ${t('rounds.versus')} ` : null}
-                        <TeamDot tone={SEAT_TONES[seat] ?? SEAT_TONES[0]} />
-                        {teamName(teamId)}
-                    </Fragment>
-                ))}
-            </span>
-            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', progressTone)}>
-                {`${entered}/${table.gameCount} ${t('rounds.games.entered')}`}
-            </span>
-        </>
-    );
+    const byNumber = new Map(table.games.map((game) => [game.gameNumber, game]));
+    const seatOfTeam = (teamId: string) => table.teamIds.indexOf(teamId);
 
     return (
         <li className="flex flex-col gap-1 py-2 text-sm">
-            {table.games.length > 0 ? (
-                <button
-                    type="button"
-                    aria-expanded={open}
-                    aria-controls={gamesId}
-                    onClick={() => setOpen((wasOpen) => !wasOpen)}
-                    className="-mx-2 flex min-h-10 flex-wrap items-center gap-x-2 gap-y-1 rounded-md px-2 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                    <ChevronRight
-                        aria-hidden="true"
-                        className={cn('size-4 shrink-0 transition-transform', open && 'rotate-90')}
-                    />
-                    {summary}
-                </button>
-            ) : (
-                <div className="flex min-h-10 flex-wrap items-center gap-x-2 gap-y-1 pl-6">{summary}</div>
-            )}
-            {table.games.length > 0 ? (
-                // Stays mounted while collapsed so the toggle's aria-controls always resolves.
-                <ul id={gamesId} hidden={!open} className="flex flex-col gap-1 pb-1 pl-6">
-                    {table.games.map((game) => (
-                        <GameRow key={game.gameNumber} table={table} game={game} />
+            <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={gamesId}
+                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                className="-mx-2 flex min-h-10 flex-wrap items-center gap-x-2 gap-y-1 rounded-md px-2 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+            >
+                <ChevronRight
+                    aria-hidden="true"
+                    className={cn('size-4 shrink-0 transition-transform', open && 'rotate-90')}
+                />
+                <span className="min-w-0 flex-1">
+                    <span className="font-medium">{`${t('rounds.table')} ${table.tableNumber}`}</span>
+                    {': '}
+                    {table.teamIds.map((teamId, seat) => (
+                        <Fragment key={teamId}>
+                            {seat > 0 ? ` ${t('rounds.versus')} ` : null}
+                            <TeamDot tone={seatTone(seat).dot} />
+                            {teamName(teamId)}
+                        </Fragment>
                     ))}
-                </ul>
-            ) : null}
+                </span>
+                {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
+                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', progressTone)}>
+                    {`${entered}/${table.gameCount} ${t('rounds.games.entered')}`}
+                </span>
+            </button>
+            {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}
+            <ul id={gamesId} hidden={!open} className="flex flex-col gap-1 pb-1 pl-6">
+                {table.schedule.map((scheduled) => (
+                    <GameRow
+                        key={scheduled.gameNumber}
+                        gameNumber={scheduled.gameNumber}
+                        playing={scheduled.teamIds}
+                        game={byNumber.get(scheduled.gameNumber)}
+                        teamName={teamName}
+                        seatOfTeam={seatOfTeam}
+                    />
+                ))}
+            </ul>
         </li>
     );
 }
-
-/** Seat colours: seat 1 = team 1, seat 2 = team 2; the trio table's third seat stays neutral (#110). */
-const SEAT_TONES = ['bg-team-1', 'bg-team-2', 'bg-muted-foreground'] as const;
 
 /** Small colour marker tying a team to its seat colour. */
 function TeamDot({ tone }: { tone: string }) {
@@ -206,25 +204,48 @@ function TeamDot({ tone }: { tone: string }) {
 }
 
 /**
- * One entered game: total Tichu Points of the game's two playing teams in seat order,
- * per the server schedule (the stored team order may differ), plus the Beschiss and
- * double-win markers.
+ * One game of a table: its matchup, then either the total Tichu Points of the two
+ * playing teams in seat order (the stored team order may differ) with the Beschiss
+ * and double-win markers, or a muted "missing" when not yet entered.
  */
-function GameRow({ table, game }: { table: TableOverview; game: RecordedGame }) {
+function GameRow({
+    gameNumber,
+    playing,
+    game,
+    teamName,
+    seatOfTeam,
+}: {
+    gameNumber: number;
+    playing: readonly [string, string];
+    game: RecordedGame | undefined;
+    teamName: (id: string) => string;
+    seatOfTeam: (teamId: string) => number;
+}) {
     const { t } = useI18n();
-    const label = `${t('rounds.game')} ${game.gameNumber}`;
+    const label = `${t('rounds.game')} ${gameNumber}`;
     // A team missing from the outcome shows a dash, never a misleading 0.
-    const points = (teamId: string) => teamPoints(game, teamId) ?? '–';
-    const playing = playingTeamIds(table, game.gameNumber);
+    const points = (teamId: string) => (game && teamPoints(game, teamId)) ?? '–';
 
     return (
         <li aria-label={label} className="flex flex-wrap items-center gap-2">
             <span className="w-16 text-muted-foreground">{label}</span>
-            <span className="tabular-nums">{playing ? `${points(playing[0])} : ${points(playing[1])}` : '–'}</span>
-            {game.beschiss ? <Badge variant="warning">{t('rounds.game.beschiss')}</Badge> : null}
-            {game.outcome.doubleWinTeam !== null ? (
-                <Badge variant="secondary">{t('rounds.game.doubleWin')}</Badge>
-            ) : null}
+            <span>
+                <TeamDot tone={seatTone(seatOfTeam(playing[0])).dot} />
+                {`${teamName(playing[0])} ${t('rounds.versus')} `}
+                <TeamDot tone={seatTone(seatOfTeam(playing[1])).dot} />
+                {teamName(playing[1])}
+            </span>
+            {game ? (
+                <>
+                    <span className="tabular-nums">{`${points(playing[0])} : ${points(playing[1])}`}</span>
+                    {game.beschiss ? <Badge variant="warning">{t('rounds.game.beschiss')}</Badge> : null}
+                    {game.outcome.doubleWinTeam !== null ? (
+                        <Badge variant="secondary">{t('rounds.game.doubleWin')}</Badge>
+                    ) : null}
+                </>
+            ) : (
+                <span className="text-muted-foreground">{t('rounds.game.missing')}</span>
+            )}
         </li>
     );
 }

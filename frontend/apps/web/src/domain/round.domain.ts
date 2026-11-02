@@ -17,11 +17,6 @@ export interface TableOverview {
     games: readonly RecordedGame[];
 }
 
-/** The two teams playing [gameNumber] at [table], per the server schedule; undefined for an unknown game. */
-export function playingTeamIds(table: TableOverview, gameNumber: number): ScheduledGame['teamIds'] | undefined {
-    return table.schedule.find((scheduled) => scheduled.gameNumber === gameNumber)?.teamIds;
-}
-
 /** One iteration of the tournament: every team plays exactly one match. */
 export interface Round {
     /** 1-based round number within the tournament; round 1 is the first round. */

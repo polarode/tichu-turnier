@@ -66,6 +66,11 @@ the round's last table, so it can be the same physical table every round. Round 
 seats three random teams there; from round 2 on, the bottom three in the standings.
 _Avoid_: triple table, odd table
 
+**Matchup**:
+The two teams playing one game at a table. At a normal table every game has the
+same matchup; at a trio table it changes with the game number.
+_Avoid_: pairing (that is the whole round's table assignment), fixture
+
 **Sit-out**:
 A game at a trio table in which one of its three teams does not play. Each trio
 team sits out two of the six games.

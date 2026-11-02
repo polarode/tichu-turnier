@@ -1,4 +1,4 @@
-import type { RecordedGame, ScheduledGame, SeatedTeams } from '@/domain/game.domain.ts';
+import type { RecordedGame, ScheduledGame, SeatedTeams, TableConfirmation } from '@/domain/game.domain.ts';
 
 /**
  * One table of a round as the admin follows it: the seating (two teams, or three at
@@ -10,6 +10,8 @@ export interface TableOverview {
     tableNumber: number;
     teamIds: SeatedTeams<string>;
     trio: boolean;
+    /** The table status and which teams confirmed (ADR 0006). */
+    confirmation: TableConfirmation;
     /** Games played at this table per round (4 at a normal table, 6 at the trio table). */
     gameCount: number;
     schedule: readonly ScheduledGame[];

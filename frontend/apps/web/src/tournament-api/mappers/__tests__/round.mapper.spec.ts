@@ -10,6 +10,8 @@ const dto: RoundDto = {
             tableNumber: 1,
             teamIds: ['team-a', 'team-b'],
             trio: false,
+            status: 'CONFIRMING',
+            confirmedTeamIds: ['team-b'],
             gameCount: 4,
             schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
             games: [
@@ -62,6 +64,12 @@ describe('roundDtoToDomain', () => {
         expect(table?.games[0]?.beschiss).toBe(true);
         expect(table?.games[0]?.outcome.teamPoints).toEqual({ 'team-a': 155, 'team-b': 45 });
     });
+
+    it("maps each table's confirmation status and who confirmed", () => {
+        const [table] = roundDtoToDomain(dto).tables;
+
+        expect(table?.confirmation).toEqual({ status: 'CONFIRMING', confirmedTeamIds: ['team-b'] });
+    });
 });
 
 describe('roundDtoToDomain with a trio table', () => {
@@ -73,6 +81,8 @@ describe('roundDtoToDomain with a trio table', () => {
                     tableNumber: 1,
                     teamIds: ['team-c', 'team-a', 'team-b'],
                     trio: true,
+                    status: 'PLAYING',
+                    confirmedTeamIds: [],
                     gameCount: 6,
                     schedule: [
                         { gameNumber: 1, teamIds: ['team-c', 'team-a'] },

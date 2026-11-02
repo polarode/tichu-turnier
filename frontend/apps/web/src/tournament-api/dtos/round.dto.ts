@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-import { recordedGameDtoSchema, scheduledGameDtoSchema, seatedSchema } from '@/scoring-api/dtos/scoring.dto.ts';
+import {
+    recordedGameDtoSchema,
+    scheduledGameDtoSchema,
+    seatedSchema,
+    tableConfirmationDtoSchema,
+} from '@/scoring-api/dtos/scoring.dto.ts';
 import { tournamentDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 
 /**
@@ -13,6 +18,8 @@ export const tableOverviewDtoSchema = z.object({
     /** The seated teams in seat order: two, or three at the trio table. */
     teamIds: seatedSchema(z.string()),
     trio: z.boolean(),
+    /** The table status and who confirmed (ADR 0006), as the team's current table carries it. */
+    ...tableConfirmationDtoSchema.shape,
     /** Games played at this table per round — the denominator of "x/n entered". */
     gameCount: z.number(),
     schedule: z.array(scheduledGameDtoSchema),

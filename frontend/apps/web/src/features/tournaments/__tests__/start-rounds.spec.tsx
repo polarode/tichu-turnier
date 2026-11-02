@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
-import type { RecordedGame } from '@/domain/game.domain.ts';
+import type { RecordedGame, TableConfirmation } from '@/domain/game.domain.ts';
 import type { Player } from '@/domain/player.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
@@ -12,6 +12,7 @@ import { ApiError } from '@/shared/api/api-error.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
+import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
     AuthRepository: { register: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
@@ -73,12 +74,17 @@ function table(
     homeTeamId: string,
     awayTeamId: string,
     games: RecordedGame[] = [],
+    confirmation: TableConfirmation = { status: TableStatus.PLAYING, confirmedTeamIds: [] },
 ): TableOverview {
     const schedule = [1, 2, 3, 4].map((gameNumber) => ({
         gameNumber,
         teamIds: [homeTeamId, awayTeamId] as [string, string],
     }));
-    return { tableNumber, teamIds: [homeTeamId, awayTeamId], trio: false, gameCount: 4, schedule, games };
+    return { tableNumber, teamIds: [homeTeamId, awayTeamId], trio: false, confirmation, gameCount: 4, schedule, games };
+}
+
+function allGames(): RecordedGame[] {
+    return [1, 2, 3, 4].map((gameNumber) => game(gameNumber, { a: 100, b: 0 }));
 }
 
 /**
@@ -250,6 +256,45 @@ describe('rounds section', () => {
         expect(within(second!).queryByText('Beschiss')).not.toBeInTheDocument();
     });
 
+    it("shows each table's status and marks the teams that confirmed", async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([
+            team('team-a', 'Alpha'),
+            team('team-b', 'Beta'),
+            team('team-c', 'Gamma'),
+            team('team-d', 'Delta'),
+            team('team-e', 'Epsilon'),
+            team('team-f', 'Zeta'),
+        ]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                table(1, 'team-a', 'team-b', allGames().slice(0, 3)),
+                table(2, 'team-c', 'team-d', allGames(), { status: TableStatus.CONFIRMING, confirmedTeamIds: ['team-c'] }),
+                table(3, 'team-e', 'team-f', allGames(), {
+                    status: TableStatus.COMPLETED,
+                    confirmedTeamIds: ['team-e', 'team-f'],
+                }),
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        const playing = await within(section).findByRole('button', { name: /^Tisch 1/ });
+        const confirming = within(section).getByRole('button', { name: /^Tisch 2/ });
+        const completed = within(section).getByRole('button', { name: /^Tisch 3/ });
+
+        // Playing keeps the entry progress; once someone confirms, the chip shows the status.
+        expect(within(playing).getByText('3/4 eingetragen')).toBeInTheDocument();
+        expect(within(confirming).getByText('Bestätigung läuft · 1/2 bestätigt')).toBeInTheDocument();
+        expect(within(confirming).queryByText(/eingetragen/)).not.toBeInTheDocument();
+        expect(within(completed).getByText('Abgeschlossen')).toBeInTheDocument();
+
+        // A ✓ follows each team that confirmed.
+        expect(playing).toHaveTextContent('Tisch 1: Alpha vs Beta');
+        expect(confirming).toHaveTextContent('Tisch 2: Gamma ✓ bestätigt vs Delta');
+        expect(completed).toHaveTextContent('Tisch 3: Epsilon ✓ bestätigt vs Zeta ✓ bestätigt');
+    });
+
     it('shows a trio table with its badge, three teams and six matchup rows', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta'), team('team-c', 'Gamma')]);
@@ -268,6 +313,7 @@ describe('rounds section', () => {
                     tableNumber: 1,
                     teamIds: ['team-a', 'team-b', 'team-c'],
                     trio: true,
+                    confirmation: { status: TableStatus.PLAYING, confirmedTeamIds: [] },
                     gameCount: 6,
                     schedule: [
                         { gameNumber: 1, teamIds: ['team-a', 'team-b'] },
@@ -309,17 +355,15 @@ describe('rounds section', () => {
     it('opens on the latest round and switches rounds through the selector', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
-        const fullTable = table(1, 'team-a', 'team-b', [
-            game(1, { a: 100, b: 0 }),
-            game(2, { a: 100, b: 0 }),
-            game(3, { a: 100, b: 0 }),
-            game(4, { a: 100, b: 0 }),
-        ]);
-        tournaments.rounds.mockResolvedValue([round(1, [fullTable]), round(2, [table(1, 'team-b', 'team-a')])]);
+        const completedTable = table(1, 'team-a', 'team-b', allGames(), {
+            status: TableStatus.COMPLETED,
+            confirmedTeamIds: ['team-a', 'team-b'],
+        });
+        tournaments.rounds.mockResolvedValue([round(1, [completedTable]), round(2, [table(1, 'team-b', 'team-a')])]);
         renderApp('/admin/tournaments/t-1');
 
         const selector = await screen.findByRole('tablist', { name: 'Runde auswählen' });
-        // Round 1 has every game entered, so it is marked complete.
+        // Round 1 has every table completed, so it is marked complete.
         expect(within(selector).getByRole('tab', { name: 'Runde 1 vollständig' })).toBeInTheDocument();
         expect(within(selector).getByRole('tab', { name: 'Runde 2' })).toHaveAttribute('aria-selected', 'true');
         expect(screen.getByRole('heading', { name: 'Runde 2' })).toBeInTheDocument();
@@ -327,7 +371,24 @@ describe('rounds section', () => {
 
         await userEvent.click(within(selector).getByRole('tab', { name: 'Runde 1 vollständig' }));
         expect(screen.getByRole('heading', { name: 'Runde 1' })).toBeInTheDocument();
-        expect(screen.getByText('4/4 eingetragen')).toBeInTheDocument();
+        expect(screen.getByText('Abgeschlossen')).toBeInTheDocument();
+    });
+
+    it('marks a round complete only once every table is completed, not when all games are entered', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        const enteredTable = table(1, 'team-a', 'team-b', allGames());
+        const confirmingTable = table(1, 'team-a', 'team-b', allGames(), {
+            status: TableStatus.CONFIRMING,
+            confirmedTeamIds: ['team-a'],
+        });
+        tournaments.rounds.mockResolvedValue([round(1, [enteredTable]), round(2, [confirmingTable])]);
+        renderApp('/admin/tournaments/t-1');
+
+        const selector = await screen.findByRole('tablist', { name: 'Runde auswählen' });
+        expect(within(selector).getByRole('tab', { name: 'Runde 1' })).toBeInTheDocument();
+        expect(within(selector).getByRole('tab', { name: 'Runde 2' })).toBeInTheDocument();
+        expect(within(selector).queryByRole('tab', { name: /vollständig/ })).not.toBeInTheDocument();
     });
 
     it('splits a started tournament into Rounds and Teams tabs, Rounds first', async () => {

@@ -16,19 +16,13 @@ import {
     useRetractTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
+import { TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
-import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
-
-const STATUS_LABEL: Record<TableStatus, TranslationKey> = {
-    PLAYING: 'confirmation.status.playing',
-    CONFIRMING: 'confirmation.status.confirming',
-    COMPLETED: 'confirmation.status.completed',
-};
 
 /**
  * The team overview's confirmation panel (S6b, #106; ADR 0006) for the team's
@@ -112,7 +106,7 @@ function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTe
             ) : null}
 
             <p>
-                {`${t('confirmation.status.label')}: ${t(STATUS_LABEL[status])} · ${confirmedTeamIds.length}${outOf}${table.teams.length} ${t('confirmation.count.confirmed')}`}
+                {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedTeamIds.length}${outOf}${table.teams.length} ${t('confirmation.count.confirmed')}`}
             </p>
             {confirmedTeamIds.length > 0 ? (
                 <p className="text-muted-foreground">

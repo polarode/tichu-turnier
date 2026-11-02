@@ -4,14 +4,17 @@ import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
+import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import { GameSummaryRow, TeamDot } from '@/features/scoring/components/game-summary-row.component.tsx';
+import { TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 interface RoundsSectionProps {
     tournamentId: string;
@@ -24,9 +27,10 @@ interface RoundsSectionProps {
 /**
  * The rounds view. One round shows at a time, picked from a selector that opens on
  * the latest round and follows new rounds until the admin picks one. Each table
- * collapses to a summary line, "Table N: Team A vs Team B · x/n entered"; all its
+ * collapses to a summary line, "Table N: Team A ✓ vs Team B · status"; all its
  * games (S5d, #102; trio tables #110) unfold behind that line with their matchup
- * and entered/missing status, read-only — scoring happens in the team area. Team
+ * and entered/missing status, read-only — scoring and confirming happen in the
+ * team area; a round is complete once every table is (glossary: Table Status). Team
  * names resolve from the teams query; a team that has since disappeared falls
  * back to its raw id so the pairing stays legible.
  */
@@ -101,7 +105,7 @@ export function RoundsSection({ tournamentId, teams, live = false }: RoundsSecti
 }
 
 function isRoundComplete(round: Round): boolean {
-    return round.tables.every((table) => table.games.length >= table.gameCount);
+    return round.tables.every((table) => isCompleted(table.confirmation));
 }
 
 /** One round's tables; inside the round selector's tab panel when there is more than one round. */
@@ -137,16 +141,27 @@ function RoundView({
 /**
  * A table's summary line, a disclosure button that unfolds every game of the
  * table (4, or 6 at the trio table) with its matchup and entered/missing status.
- * Each team keeps its seat colour; the trio table carries a "Trio" badge.
+ * Each team keeps its seat colour and a ✓ once it confirmed; the trio table
+ * carries a "Trio" badge. The chip shows how far the table is (S6c, #107): the
+ * entry progress while Playing, then the status with the confirmed count.
  */
 function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: string) => string }) {
     const { t } = useI18n();
     const [open, setOpen] = useState(false);
     const gamesId = useId();
     const entered = table.games.length;
-    // Done in the "done" tint, partly entered in amber, untouched in grey.
-    const progressTone =
-        entered >= table.gameCount ? 'bg-secondary text-secondary-foreground'
+    const { status, confirmedTeamIds } = table.confirmation;
+    const statusLabel = t(TABLE_STATUS_LABEL_KEYS[status]);
+    const chip =
+        status === TableStatus.COMPLETED ? statusLabel
+        : status === TableStatus.CONFIRMING ?
+            `${statusLabel} · ${confirmedTeamIds.length}/${table.teamIds.length} ${t('confirmation.count.confirmed')}`
+        :   `${entered}/${table.gameCount} ${t('rounds.games.entered')}`;
+    // Done in the "done" tint, partly entered or awaiting confirmations in amber, untouched in grey.
+    const chipTone =
+        status === TableStatus.COMPLETED ? 'bg-secondary text-secondary-foreground'
+        : status === TableStatus.CONFIRMING ? 'bg-warning-soft text-warning'
+        : entered >= table.gameCount ? 'bg-secondary text-secondary-foreground'
         : entered > 0 ? 'bg-warning-soft text-warning'
         : 'bg-muted text-muted-foreground';
     const byNumber = new Map(table.games.map((game) => [game.gameNumber, game]));
@@ -173,12 +188,19 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                             {seat > 0 ? ` ${t('rounds.versus')} ` : null}
                             <TeamDot tone={seatTone(seat).dot} />
                             {teamName(teamId)}
+                            {confirmedTeamIds.includes(teamId) ? (
+                                <>
+                                    {' '}
+                                    <span aria-hidden="true">✓</span>{' '}
+                                    <span className="sr-only">{t('confirmation.count.confirmed')}</span>
+                                </>
+                            ) : null}
                         </Fragment>
                     ))}
                 </span>
                 {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
-                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', progressTone)}>
-                    {`${entered}/${table.gameCount} ${t('rounds.games.entered')}`}
+                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', chipTone)}>
+                    {chip}
                 </span>
             </button>
             {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}

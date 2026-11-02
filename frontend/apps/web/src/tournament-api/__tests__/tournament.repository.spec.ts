@@ -34,8 +34,8 @@ const startedResponse = {
     round: {
         roundNumber: 1,
         tables: [
-            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
-            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
+            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, status: 'PLAYING', confirmedTeamIds: [], gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
+            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, status: 'PLAYING', confirmedTeamIds: [], gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
         ],
     },
 };
@@ -43,7 +43,7 @@ const startedResponse = {
 const roundsResponse = [
     {
         roundNumber: 1,
-        tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
+        tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, status: 'PLAYING', confirmedTeamIds: [], gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
     },
 ];
 
@@ -142,8 +142,8 @@ describe('TournamentRepository start/rounds', () => {
         expect(tournament.status).toBe(TournamentStatus.ACTIVE);
         expect(round.number).toBe(1);
         expect(round.tables).toEqual([
-            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
-            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
+            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, confirmation: { status: 'PLAYING', confirmedTeamIds: [] }, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
+            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, confirmation: { status: 'PLAYING', confirmedTeamIds: [] }, gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
         ]);
     });
 
@@ -173,7 +173,7 @@ describe('TournamentRepository start/rounds', () => {
         expect(rounds).toEqual([
             {
                 number: 1,
-                tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
+                tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, confirmation: { status: 'PLAYING', confirmedTeamIds: [] }, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
             },
         ]);
     });
@@ -187,6 +187,8 @@ describe('TournamentRepository start/rounds', () => {
                         tableNumber: 1,
                         teamIds: ['team-a', 'team-b', 'team-c', 'team-d'],
                         trio: true,
+                        status: 'PLAYING',
+                        confirmedTeamIds: [],
                         gameCount: 6,
                         schedule: [],
                         games: [],

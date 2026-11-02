@@ -23,8 +23,8 @@ import jakarta.validation.constraints.Size
  */
 data class GameRequestDto(
     @field:NotNull
+    // The upper bound depends on the table (4, or 6 at a trio table); the use case checks it.
     @field:Min(value = 1, message = "must be at least 1")
-    @field:Max(value = 4, message = "must be at most 4")
     val gameNumber: Int,
     @field:NotNull
     val beschiss: Boolean,

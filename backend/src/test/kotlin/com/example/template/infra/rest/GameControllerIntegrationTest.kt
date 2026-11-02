@@ -542,6 +542,23 @@ class GameControllerIntegrationTest(
     }
 
     @Test
+    fun `a trio table accepts game numbers beyond four`() {
+        seatTrioAndLoginTeamC()
+
+        // Game 5 is A vs C: team B's ids swapped for team C's.
+        createGame(body = createBody(gameNumber = 5).replace(teamB, "team-c"))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.gameNumber").value(5))
+    }
+
+    @Test
+    fun `a game number beyond a normal table's four is rejected`() {
+        createGame(body = createBody(gameNumber = 5))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.field").value("gameNumber"))
+    }
+
+    @Test
     fun `a wrong pair for a trio game number answers GAME_VALIDATION_INVALID`() {
         seatTrioAndLoginTeamC()
 

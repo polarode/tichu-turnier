@@ -16,8 +16,8 @@ import {
     useRetractTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
-import { ConfirmDialog } from '@/features/teams/components/confirm-dialog.component.tsx';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';

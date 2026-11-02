@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@tichu/ui/button.tsx';
 
-import { ConfirmDialog } from '@/features/teams/components/confirm-dialog.component.tsx';
+import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import type { Team } from '@/domain/team.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { useStartTournament } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';

@@ -13,7 +13,7 @@ import {
     useRevealAccessLink,
     useRotateAccessLink,
 } from '@/features/teams/hooks/team-queries.hook.ts';
-import { ConfirmDialog } from '@/features/teams/components/confirm-dialog.component.tsx';
+import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 
 type ConfirmAction = 'rotate' | 'revoke';
 

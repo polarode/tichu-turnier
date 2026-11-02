@@ -8,7 +8,7 @@ import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TeamFormDialog } from '@/features/teams/components/team-form-dialog.component.tsx';
 import { AccessLinkDialog } from '@/features/teams/components/access-link-dialog.component.tsx';
-import { ConfirmDialog } from '@/features/teams/components/confirm-dialog.component.tsx';
+import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 
 interface TeamsSectionProps {
     tournamentId: string;

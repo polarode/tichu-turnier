@@ -304,7 +304,7 @@ describe('/team/score', () => {
         renderApp('/team/score');
 
         expect(
-            await screen.findByText('Diese Runde ist gesperrt. Ihre Spiele sind schreibgeschützt.'),
+            await screen.findByText('Diese Runde ist gesperrt; ihre Spiele sind schreibgeschützt.'),
         ).toBeInTheDocument();
         // Every interactive control is disabled in a locked round.
         await userEvent.click(screen.getAllByRole('tab')[0]!);
@@ -397,7 +397,7 @@ describe('/team/score', () => {
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
 
         expect(
-            await screen.findByText('Diese Runde ist gesperrt. Ihre Spiele sind schreibgeschützt.'),
+            await screen.findByText('Diese Runde ist gesperrt; ihre Spiele sind schreibgeschützt.'),
         ).toBeInTheDocument();
         // The form latched read-only: the slider and save button are now disabled.
         await waitFor(() => expect(screen.getByRole('slider')).toBeDisabled());

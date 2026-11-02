@@ -299,5 +299,5 @@ export const de: Catalog = {
     'scoring.concurrent.reloadPrompt':
         'Dieses Spiel wurde zwischenzeitlich geändert. Lade es neu, um den aktuellen Eintrag zu sehen, und wiederhole deine Änderungen.',
     'scoring.concurrent.reload': 'Spiel neu laden',
-    'scoring.locked.explanation': 'Diese Runde ist gesperrt. Ihre Spiele sind schreibgeschützt.',
+    'scoring.locked.explanation': 'Diese Runde ist gesperrt; ihre Spiele sind schreibgeschützt.',
 };

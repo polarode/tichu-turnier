@@ -98,7 +98,7 @@ frontend/
 │   ├── features/        # feature folders: components + hooks + queries
 │   ├── shared/
 │   │   ├── api/         # shared axios client + typed ApiError (ProblemDetail mapping)
-│   │   ├── constants/   # centralized query keys
+│   │   ├── constants/   # centralized query keys and other shared constants (seat tones)
 │   │   ├── i18n/        # de/en catalogs + provider
 │   │   ├── components/  # cross-cutting components (AppShell)
 │   │   └── stores/      # zustand client-state stores

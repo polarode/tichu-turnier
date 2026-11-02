@@ -54,7 +54,7 @@ Hexagonal (ports & adapters). Dependencies point inward: `infra` → `applicatio
 → `domain`. `domain` depends on nothing framework-specific.
 
 ```
-backend/src/main/kotlin/com/example/template/
+backend/src/main/kotlin/tichu/
 ├── domain/              # entities + port interfaces (TaskRepository). No Spring.
 ├── application/
 │   ├── api/             # inbound ports: use-case interfaces (CreateTask, ListTasks, ...)

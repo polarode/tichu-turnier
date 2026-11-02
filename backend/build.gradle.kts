@@ -6,7 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "com.example"
+group = "tichu"
 version = "0.0.1"
 
 // Spring Boot 3.4 manages Testcontainers 1.20.x, whose docker-java cannot talk to

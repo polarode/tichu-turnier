@@ -12,6 +12,7 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "@radix-ui/react-select": "catalog:",
         "class-variance-authority": "catalog:",
         "clsx": "catalog:",
         "lucide-react": "catalog:",

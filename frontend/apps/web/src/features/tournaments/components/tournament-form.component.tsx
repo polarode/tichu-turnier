@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@tichu/ui/button.tsx';
-import { Select } from '@tichu/ui/select.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tichu/ui/select.tsx';
 import { Controller, useForm } from 'react-hook-form';
 
 import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
@@ -105,23 +105,24 @@ export function TournamentForm({
                     control={form.control}
                     name="grandTichuBonus"
                     render={({ field }) => (
-                        // Controlled with explicit string <-> number conversion: the
-                        // option values are strings, the form value is a number.
-                        <Select
-                            id="tournament-grand-tichu-bonus"
-                            aria-invalid={bonusError ? true : undefined}
-                            aria-describedby={bonusError ? 'tournament-grand-tichu-bonus-error' : undefined}
-                            name={field.name}
-                            ref={field.ref}
-                            value={String(field.value)}
-                            onChange={(event) => field.onChange(Number(event.target.value))}
-                            onBlur={field.onBlur}
-                        >
-                            {GRAND_TICHU_BONUS_OPTIONS.map((bonus) => (
-                                <option key={bonus} value={String(bonus)}>
-                                    {bonus}
-                                </option>
-                            ))}
+                        // Select values are strings; the form value is a number.
+                        <Select value={String(field.value)} onValueChange={(value) => field.onChange(Number(value))}>
+                            <SelectTrigger
+                                id="tournament-grand-tichu-bonus"
+                                ref={field.ref}
+                                onBlur={field.onBlur}
+                                aria-invalid={bonusError ? true : undefined}
+                                aria-describedby={bonusError ? 'tournament-grand-tichu-bonus-error' : undefined}
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {GRAND_TICHU_BONUS_OPTIONS.map((bonus) => (
+                                    <SelectItem key={bonus} value={String(bonus)}>
+                                        {bonus}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                     )}
                 />

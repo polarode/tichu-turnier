@@ -7,7 +7,7 @@ import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
-import { GameSummaryRow, TeamDot } from '@/features/scoring/components/game-summary-row.component.tsx';
+import { GameResultsTable, TeamDot } from '@/features/scoring/components/game-results-table.component.tsx';
 import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS, tableHeading } from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
@@ -28,8 +28,8 @@ interface RoundsSectionProps {
  * The rounds view. One round shows at a time, picked from a selector that opens on
  * the latest round and follows new rounds until the admin picks one. Each table
  * collapses to a summary line, "Table C: Falcons ✓ vs Owls · status"; all its
- * games (S5d, #102; trio tables #110) unfold behind that line with their matchup
- * and entered/missing status, read-only — scoring and confirming happen in the
+ * games (S5d, #102; trio tables #110) unfold behind that line as a results table
+ * (one column per team), read-only — scoring and confirming happen in the
  * team area; a round is complete once every table is (glossary: Table Status). Team
  * names resolve from the teams query; a team that has since disappeared falls
  * back to its raw id so the pairing stays legible.
@@ -139,8 +139,8 @@ function RoundView({
 }
 
 /**
- * A table's summary line, a disclosure button that unfolds every game of the
- * table (4, or 6 at the trio table) with its matchup and entered/missing status.
+ * A table's summary line, a disclosure button that unfolds the table's results:
+ * every game (4, or 6 at the trio table) with each team's points or missing status.
  * Each team keeps its seat colour and a ✓ once it confirmed; the trio table
  * carries a "Trio" badge. The chip shows how far the table is (S6c, #107): the
  * entry progress while Playing, then the status with the confirmed count.
@@ -151,8 +151,6 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
     const gamesId = useId();
     const { confirmedTeamIds } = table.confirmation;
     const chip = tableChip(table, t);
-    const byNumber = new Map(table.games.map((game) => [game.gameNumber, game]));
-    const seatOfTeam = (teamId: string) => table.teamIds.indexOf(teamId);
 
     return (
         <li className="flex flex-col gap-1 py-2 text-sm">
@@ -191,18 +189,14 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                 </span>
             </button>
             {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}
-            <ul id={gamesId} hidden={!open} className="flex flex-col gap-1 pb-1 pl-6">
-                {table.schedule.map((scheduled) => (
-                    <GameSummaryRow
-                        key={scheduled.gameNumber}
-                        gameNumber={scheduled.gameNumber}
-                        playing={scheduled.teamIds}
-                        game={byNumber.get(scheduled.gameNumber)}
-                        teamName={teamName}
-                        seatOfTeam={seatOfTeam}
-                    />
-                ))}
-            </ul>
+            <div id={gamesId} hidden={!open} className="pb-1 pl-6">
+                <GameResultsTable
+                    caption={`${t('rounds.games.caption')} – ${tableHeading(table.tableNumber, t)}`}
+                    teams={table.teamIds.map((id) => ({ id, name: teamName(id) }))}
+                    schedule={table.schedule}
+                    games={table.games}
+                />
+            </div>
         </li>
     );
 }

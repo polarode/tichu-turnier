@@ -12,6 +12,7 @@ import { ApiError } from '@/shared/api/api-error.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
+import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
@@ -89,8 +90,8 @@ function allGames(): RecordedGame[] {
 
 /**
  * A recorded game between team-a and team-b. The teams are stored away-first
- * (team-b, then team-a) on purpose: the view must order scores home : away by
- * team id, not by stored order.
+ * (team-b, then team-a) on purpose: the view must place each score under its
+ * team's column, not by stored order.
  */
 function game(
     gameNumber: number,
@@ -219,7 +220,7 @@ describe('rounds section', () => {
         expect(tableRow).toBeInTheDocument();
     });
 
-    it('shows per-table game status and the entered scores home : away with markers', async () => {
+    it('shows per-table game status and each entered score under its team with markers', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
         tournaments.rounds.mockResolvedValue([
@@ -236,24 +237,22 @@ describe('rounds section', () => {
         expect(await within(section).findByText('2/4 eingetragen')).toBeInTheDocument();
 
         // Games stay collapsed behind the table's summary line until it is opened.
-        expect(within(section).queryAllByRole('listitem', { name: /^Spiel/ })).toHaveLength(0);
+        expect(within(section).queryByRole('table')).not.toBeInTheDocument();
         const toggle = within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta/ });
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
         await userEvent.click(toggle);
         expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
-        // Every game of the table is listed; the two entered ones carry their scores.
-        const rows = within(section).getAllByRole('listitem', { name: /^Spiel/ });
-        expect(rows).toHaveLength(4);
-        expect(within(rows[2]!).getByText('fehlt')).toBeInTheDocument();
+        // One row per game, one column per team in seat order (not stored order).
+        const games = within(section).getByRole('table', { name: 'Spiele – Tisch A' });
+        expect(columnHeaders(games)).toEqual(['Spiel', 'Alpha', 'Beta', 'Hinweise']);
+        expect(bodyRows(games)).toEqual([
+            ['1', '155', '45', 'Beschiss'],
+            ['2', '0', '300', 'Doppelsieg'],
+            ['3', '–', '–', 'fehlt'],
+            ['4', '–', '–', 'fehlt'],
+        ]);
         expect(within(section).queryByText('Trio')).not.toBeInTheDocument();
-        const [first, second] = rows;
-        expect(within(first!).getByText('155 : 45')).toBeInTheDocument();
-        expect(within(first!).getByText('Beschiss')).toBeInTheDocument();
-        expect(within(first!).queryByText('Doppelsieg')).not.toBeInTheDocument();
-        expect(within(second!).getByText('0 : 300')).toBeInTheDocument();
-        expect(within(second!).getByText('Doppelsieg')).toBeInTheDocument();
-        expect(within(second!).queryByText('Beschiss')).not.toBeInTheDocument();
     });
 
     it("shows each table's status and marks the teams that confirmed", async () => {
@@ -295,7 +294,7 @@ describe('rounds section', () => {
         expect(completed).toHaveTextContent('Tisch C: Epsilon ✓ bestätigt vs Zeta ✓ bestätigt');
     });
 
-    it('shows a trio table with its badge, three teams and six matchup rows', async () => {
+    it('shows a trio table with its badge, three team columns and six games', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta'), team('team-c', 'Gamma')]);
         const trioGame: RecordedGame = {
@@ -334,22 +333,18 @@ describe('rounds section', () => {
         expect(within(section).getByText('Trio')).toBeInTheDocument();
         await userEvent.click(within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta vs Gamma/ }));
 
-        // All six games are listed with their matchup; only game 2 is entered.
-        const rows = within(section).getAllByRole('listitem', { name: /^Spiel/ });
-        expect(rows).toHaveLength(6);
-        expect(rows.map((row) => within(row).getByText(/ vs /).textContent)).toEqual([
-            'Alpha vs Beta',
-            'Alpha vs Gamma',
-            'Beta vs Gamma',
-            'Alpha vs Beta',
-            'Alpha vs Gamma',
-            'Beta vs Gamma',
+        // Six games, three team columns; the team sitting a game out reads "Pause".
+        // Only game 2 (Alpha vs Gamma, stored Gamma first) is entered.
+        const games = within(section).getByRole('table', { name: 'Spiele – Tisch A' });
+        expect(columnHeaders(games)).toEqual(['Spiel', 'Alpha', 'Beta', 'Gamma', 'Hinweise']);
+        expect(bodyRows(games)).toEqual([
+            ['1', '–', '–', 'Pause', 'fehlt'],
+            ['2', '120', 'Pause', '80', ''],
+            ['3', 'Pause', '–', '–', 'fehlt'],
+            ['4', '–', '–', 'Pause', 'fehlt'],
+            ['5', '–', 'Pause', '–', 'fehlt'],
+            ['6', 'Pause', '–', '–', 'fehlt'],
         ]);
-        expect(within(rows[1]!).getByText('Alpha vs Gamma')).toBeInTheDocument();
-        expect(within(rows[1]!).getByText('120 : 80')).toBeInTheDocument();
-        expect(within(rows[2]!).getByText('Beta vs Gamma')).toBeInTheDocument();
-        expect(within(rows[2]!).getByText('fehlt')).toBeInTheDocument();
-        expect(within(rows[5]!).getByText('fehlt')).toBeInTheDocument();
     });
 
     it('opens on the latest round and switches rounds through the selector', async () => {

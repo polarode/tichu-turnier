@@ -186,6 +186,9 @@ export const de: Catalog = {
     'rounds.game.beschiss': 'Beschiss',
     'rounds.game.doubleWin': 'Doppelsieg',
     'rounds.game.missing': 'fehlt',
+    'rounds.game.sitsOut': 'Pause',
+    'rounds.game.notes': 'Hinweise',
+    'rounds.games.caption': 'Spiele',
     'rounds.trio': 'Trio',
 
     'teams.section.title': 'Teams',

@@ -8,6 +8,7 @@ import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
+import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
 
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     TeamAuthRepository: {
@@ -298,7 +299,7 @@ async function renderPanel(table: TeamTable, games: RecordedGame[]) {
     const result = renderApp('/team');
     const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
     // The summary renders once the games are in.
-    await within(panel).findByRole('list', { name: 'Spiele' });
+    await within(panel).findByRole('table', { name: 'Spiele' });
     return { ...result, panel };
 }
 
@@ -314,10 +315,12 @@ describe('/team confirmation panel', () => {
     it('summarizes entered and missing games and keeps Confirm disabled with a hint until all are in', async () => {
         const { panel } = await renderPanel(seatedTable(), [game(1), game(3)]);
 
-        const rows = within(within(panel).getByRole('list', { name: 'Spiele' })).getAllByRole('listitem');
-        expect(rows).toHaveLength(4);
-        expect(within(rows[0]!).getByText('60 : 40')).toBeInTheDocument();
-        expect(within(rows[1]!).getByText('fehlt')).toBeInTheDocument();
+        expect(bodyRows(within(panel).getByRole('table', { name: 'Spiele' }))).toEqual([
+            ['1', '60', '40', ''],
+            ['2', '–', '–', 'fehlt'],
+            ['3', '60', '40', ''],
+            ['4', '–', '–', 'fehlt'],
+        ]);
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
         expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeDisabled();
         expect(within(panel).getByText('2 von 4 Spielen eingetragen')).toBeInTheDocument();
@@ -393,11 +396,17 @@ describe('/team confirmation panel', () => {
         const { panel } = await renderPanel(trioTable(['team-2']), trioGames);
 
         expect(within(panel).getByText('Status: Bestätigung läuft · 1 von 3 bestätigt')).toBeInTheDocument();
-        const rows = within(within(panel).getByRole('list', { name: 'Spiele' })).getAllByRole('listitem');
-        expect(rows).toHaveLength(6);
-        // Team Alpha (the viewer) sits out games 3 and 6.
-        expect(within(rows[2]!).getByText('Dein Team setzt aus')).toBeInTheDocument();
-        expect(within(rows[0]!).queryByText('Dein Team setzt aus')).not.toBeInTheDocument();
+        // Every team sits out two games; the viewer (Team Alpha) games 3 and 6.
+        const games = within(panel).getByRole('table', { name: 'Spiele' });
+        expect(columnHeaders(games)).toEqual(['Spiel', 'Team Alpha', 'Team Beta', 'Team Gamma', 'Hinweise']);
+        expect(bodyRows(games).map((row) => row.slice(0, 4))).toEqual([
+            ['1', '60', '40', 'Pause'],
+            ['2', '60', 'Pause', '40'],
+            ['3', 'Pause', '60', '40'],
+            ['4', '60', '40', 'Pause'],
+            ['5', '60', 'Pause', '40'],
+            ['6', 'Pause', '60', '40'],
+        ]);
     });
 
     it('explains a stale confirm and refetches the games', async () => {

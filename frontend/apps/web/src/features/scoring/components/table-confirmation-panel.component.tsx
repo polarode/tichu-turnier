@@ -4,12 +4,10 @@ import { Button } from '@tichu/ui/button.tsx';
 import {
     isCompleted,
     type RecordedGame,
-    seatOf,
-    sitsOut,
     teamNameOf,
     type TeamTable,
 } from '@/domain/game.domain.ts';
-import { GameSummaryRow } from '@/features/scoring/components/game-summary-row.component.tsx';
+import { GameResultsTable } from '@/features/scoring/components/game-results-table.component.tsx';
 import {
     useConfirmTable,
     useCurrentTable,
@@ -90,19 +88,12 @@ function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTe
         <section aria-label={heading} className="flex flex-col gap-3 rounded-md border border-border bg-card p-4 text-sm">
             <h2 className="font-semibold">{heading}</h2>
             {games ? (
-                <ul aria-label={t('confirmation.games.label')} className="flex flex-col gap-1">
-                    {table.schedule.map((scheduled) => (
-                        <GameSummaryRow
-                            key={scheduled.gameNumber}
-                            gameNumber={scheduled.gameNumber}
-                            playing={scheduled.teamIds}
-                            game={byNumber.get(scheduled.gameNumber)}
-                            teamName={teamName}
-                            seatOfTeam={(teamId) => seatOf(table, teamId)}
-                            sitsOut={sitsOut(table, viewerTeamId, scheduled.gameNumber)}
-                        />
-                    ))}
-                </ul>
+                <GameResultsTable
+                    caption={t('confirmation.games.label')}
+                    teams={table.teams.map((team) => ({ id: team.teamId, name: team.teamName }))}
+                    schedule={table.schedule}
+                    games={games}
+                />
             ) : null}
 
             <p>

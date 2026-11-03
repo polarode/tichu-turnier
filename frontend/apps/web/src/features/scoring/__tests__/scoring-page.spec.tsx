@@ -133,6 +133,35 @@ describe('/team/score', () => {
         );
     });
 
+    it('links back to the team overview', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+
+        renderApp('/team/score');
+
+        expect(await screen.findByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute('href', '/team');
+    });
+
+    it('does not prompt to confirm while a game is still missing', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([1, 2, 3].map((gameNumber) => recordedGame({ gameNumber })));
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        expect(screen.queryByText('Alle Spiele sind eingetragen.')).not.toBeInTheDocument();
+    });
+
+    it('points to the overview to confirm once every game is entered', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([1, 2, 3, 4].map((gameNumber) => recordedGame({ gameNumber })));
+
+        renderApp('/team/score');
+
+        const prompt = (await screen.findByText('Alle Spiele sind eingetragen.')).parentElement!;
+        expect(within(prompt).getByRole('link', { name: 'Zur Bestätigung' })).toHaveAttribute('href', '/team');
+    });
+
     it('renders the matchup, roster and a game selector', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);
@@ -338,7 +367,8 @@ describe('/team/score', () => {
                     'Bestätigt von: Team Beta. Um ein Spiel zu ändern, muss das bestätigende Team in seiner Teamübersicht zurückziehen.',
                 ),
             ).toBeInTheDocument();
-            expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute('href', '/team');
+            // Frozen: the confirm prompt gives way to the notice.
+            expect(screen.queryByText('Alle Spiele sind eingetragen.')).not.toBeInTheDocument();
             // Every interactive control is disabled while frozen.
             await userEvent.click(screen.getAllByRole('tab')[0]!);
             expect(screen.getByRole('slider')).toBeDisabled();
@@ -358,7 +388,8 @@ describe('/team/score', () => {
                     'Dein Team hat diese Spiele bestätigt. Um eines zu ändern, ziehe die Bestätigung in der Teamübersicht zurück.',
                 ),
             ).toBeInTheDocument();
-            expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toBeInTheDocument();
+            // The back link at the top is the way to the overview; the notice does not repeat it.
+            expect(screen.getAllByRole('link', { name: 'Zur Teamübersicht' })).toHaveLength(1);
         });
 
         it('says the games are final once the table is completed', async () => {
@@ -372,7 +403,6 @@ describe('/team/score', () => {
             expect(
                 await screen.findByText('Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.'),
             ).toBeInTheDocument();
-            expect(screen.queryByRole('link', { name: 'Zur Teamübersicht' })).not.toBeInTheDocument();
             expect(screen.getByRole('slider')).toBeDisabled();
         });
     });
@@ -720,5 +750,6 @@ describe('/team/score', () => {
         expect(
             await screen.findByText('Dein Tisch erscheint, sobald das Turnier gestartet ist.'),
         ).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute('href', '/team');
     });
 });

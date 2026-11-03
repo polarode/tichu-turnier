@@ -6,6 +6,7 @@ import { ScoringPage } from '@/features/scoring/components/scoring-page.componen
 import { teamCurrentTableQueryOptions } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { isMissingTeamSession, teamOverviewQueryOptions } from '@/features/teams/hooks/team-auth-queries.hook.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { PagePlaceholder } from '@/shared/components/page-placeholder.component.tsx';
 
@@ -53,7 +54,10 @@ function ScoringRoute() {
 
     if (query.error instanceof ApiError && query.error.status === 404) {
         return (
-            <PagePlaceholder titleKey="scoring.title" descriptionKey="scoring.notSeated" />
+            <div className="flex flex-col gap-4">
+                <BackLink to="/team" labelKey="scoring.overviewLink" />
+                <PagePlaceholder titleKey="scoring.title" descriptionKey="scoring.notSeated" />
+            </div>
         );
     }
 

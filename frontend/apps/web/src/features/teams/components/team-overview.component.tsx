@@ -2,7 +2,6 @@ import type { TeamOverview } from '@/domain/team-overview.domain.ts';
 import { TableConfirmationPanel } from '@/features/scoring/components/table-confirmation-panel.component.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
-import { PageHeader } from '@/shared/components/page-header.component.tsx';
 
 /**
  * The team's identity view (S2b): a compact card with tournament name, team
@@ -18,14 +17,16 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
 
     return (
         <section className="flex w-full max-w-md flex-col gap-4">
-            <PageHeader titleKey="team.title" />
             {/* A compact identity card: the hierarchy (tournament, team, players)
-                carries the meaning visually; the labels stay for screen readers. */}
+                carries the meaning visually; the labels stay for screen readers.
+                The team name doubles as the page heading. */}
             <dl className="flex flex-col gap-0.5 rounded-md border border-border bg-card px-4 py-3 break-words">
                 <dt className="sr-only">{t('teamOverview.tournament')}</dt>
                 <dd className="text-xs text-muted-foreground">{overview.tournamentName}</dd>
                 <dt className="sr-only">{t('teamOverview.teamName')}</dt>
-                <dd className="text-lg font-semibold">{overview.teamName}</dd>
+                <dd>
+                    <h1 className="text-lg font-semibold">{overview.teamName}</h1>
+                </dd>
                 <dt className="sr-only">{t('teamOverview.players')}</dt>
                 <dd className="text-sm text-muted-foreground">
                     <span>{playerOne?.name}</span>

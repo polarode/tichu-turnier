@@ -234,7 +234,6 @@ export const en = {
     'tournament.status.active': 'Active',
     'tournament.status.completed': 'Completed',
 
-    'team.title': 'Team area',
 
     'teamLogin.exchangingTitle': 'Opening your team area',
     'teamLogin.exchangingDescription': 'Your access link is being validated. One moment, please.',

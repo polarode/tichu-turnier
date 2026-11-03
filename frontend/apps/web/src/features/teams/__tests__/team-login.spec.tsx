@@ -59,7 +59,7 @@ describe('/team/login', () => {
         await waitFor(() => expect(searchDuringExchange).not.toBeNull());
         expect(searchDuringExchange).not.toContain('raw-secret-token');
         await waitFor(() =>
-            expect(screen.getByText('Teambereich')).toBeInTheDocument(),
+            expect(screen.getByRole('heading', { level: 1, name: 'Team Alpha' })).toBeInTheDocument(),
         );
         expect(router.state.location.pathname).toBe('/team');
         expect(mockedExchange).toHaveBeenCalledWith('raw-secret-token');

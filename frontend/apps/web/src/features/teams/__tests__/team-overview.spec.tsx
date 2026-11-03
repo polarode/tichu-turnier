@@ -68,6 +68,9 @@ describe('/team', () => {
         expect(screen.getByText('Team Alpha')).toBeInTheDocument();
         expect(screen.getByText('Alice')).toBeInTheDocument();
         expect(screen.getByText('Bob')).toBeInTheDocument();
+        // The team name is the page heading; no generic "Teambereich" title above it.
+        expect(screen.getByRole('heading', { level: 1, name: 'Team Alpha' })).toBeInTheDocument();
+        expect(screen.queryByText('Teambereich')).not.toBeInTheDocument();
         // A compact card: the labels are there for screen readers only, the intro line is gone.
         expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual(['Turnier', 'Team', 'Spieler']);
         expect(screen.queryByText('Verfolge deinen Tisch und trage deine Spielergebnisse ein.')).not.toBeInTheDocument();

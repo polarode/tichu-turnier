@@ -234,7 +234,6 @@ export const de: Catalog = {
     'tournament.status.active': 'Läuft',
     'tournament.status.completed': 'Beendet',
 
-    'team.title': 'Teambereich',
 
     'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',
     'teamLogin.exchangingDescription': 'Dein Zugriffslink wird geprüft. Einen Moment bitte.',

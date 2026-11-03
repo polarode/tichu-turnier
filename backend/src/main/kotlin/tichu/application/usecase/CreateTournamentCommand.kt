@@ -22,7 +22,7 @@ class CreateTournamentCommand(
 
     override fun create(command: TournamentWriteRequest, owner: AdminUserId): Tournament {
         val name = command.name.trim()
-        TournamentInputValidator.validate(name, command.maxTeams)
+        TournamentInputValidator.validate(name, command.maxTeams, command.settings)
 
         val now = clock.instant()
         val tournament = Tournament(

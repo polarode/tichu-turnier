@@ -68,7 +68,7 @@ class TeamAccessIntegrationTest(
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        mapOf("name" to name, "description" to "", "maxTeams" to 16, "settings" to mapOf("allowGrandTichu" to true)),
+                        mapOf("name" to name, "description" to "", "maxTeams" to 16, "settings" to mapOf("grandTichuBonus" to 200)),
                     ),
                 ),
         ).andExpect(status().isCreated).andReturn().response.contentAsString

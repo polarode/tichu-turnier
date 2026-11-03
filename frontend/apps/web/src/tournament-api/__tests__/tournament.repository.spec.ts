@@ -1,6 +1,7 @@
 import MockAdapter from 'axios-mock-adapter';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { TournamentWriteInput } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
@@ -11,17 +12,17 @@ const dto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { allowGrandTichu: true },
+    settings: { grandTichuBonus: 200 },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-const writeRequest = {
+const writeRequest: TournamentWriteInput = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { allowGrandTichu: true },
+    settings: { grandTichuBonus: 200 },
 };
 
 

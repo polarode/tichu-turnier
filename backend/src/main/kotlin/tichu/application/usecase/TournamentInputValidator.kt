@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.domain.TournamentSettings
 import tichu.vocabulary.InvalidFieldException
 
 /**
@@ -11,7 +12,7 @@ internal object TournamentInputValidator {
 
     const val MAX_NAME_LENGTH = 255
 
-    fun validate(name: String, maxTeams: Int) {
+    fun validate(name: String, maxTeams: Int, settings: TournamentSettings) {
         if (name.isBlank()) {
             throw InvalidFieldException("name", "Tournament name must not be blank")
         }
@@ -20,6 +21,12 @@ internal object TournamentInputValidator {
         }
         if (maxTeams <= 0) {
             throw InvalidFieldException("maxTeams", "Tournament max teams must be a positive number")
+        }
+        if (settings.grandTichuBonus !in TournamentSettings.GRAND_TICHU_BONUS_OPTIONS) {
+            throw InvalidFieldException(
+                "grandTichuBonus",
+                "Grand Tichu bonus must be one of ${TournamentSettings.GRAND_TICHU_BONUS_OPTIONS}",
+            )
         }
     }
 }

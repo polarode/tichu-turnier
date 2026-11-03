@@ -203,7 +203,7 @@ class TeamScoringControllerIntegrationTest(
             .andExpect(jsonPath("$.tableNumber").value(1))
             .andExpect(jsonPath("$.status").value("PLAYING"))
             .andExpect(jsonPath("$.confirmedTeamIds.length()").value(0))
-            .andExpect(jsonPath("$.allowGrandTichu").value(true))
+            .andExpect(jsonPath("$.grandTichuBonus").value(200))
             .andExpect(jsonPath("$.teams[0].teamId").value(teamA))
             .andExpect(jsonPath("$.teams[0].teamName").value("Team Alpha"))
             .andExpect(jsonPath("$.teams[0].players[0].playerId").value(playerA1))
@@ -242,15 +242,15 @@ class TeamScoringControllerIntegrationTest(
     }
 
     @Test
-    fun `current-table exposes allowGrandTichu=false so the form can hide grand Tichu`() {
+    fun `current-table exposes the grand tichu bonus so the form's totals match`() {
         tournamentRepository.save(
             tournamentRepository.findById(TournamentId(tournamentId))!!
-                .copy(settings = TournamentSettings(allowGrandTichu = false)),
+                .copy(settings = TournamentSettings(grandTichuBonus = 100)),
         )
 
         mockMvc.perform(get("/api/team/me/current-table").cookie(teamCookie))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.allowGrandTichu").value(false))
+            .andExpect(jsonPath("$.grandTichuBonus").value(100))
     }
 
     @Test

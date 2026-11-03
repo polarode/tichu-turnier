@@ -119,8 +119,9 @@ _Avoid_: cheating (too grave), foul
 
 **Tichu Call**:
 A player's pre-deal announcement: none, small Tichu (after first card) or grand
-Tichu (before any card). Success is derived: called and finished first. Grand Tichu
-may be disabled by the tournament settings.
+Tichu (before any card). Success is derived: called and finished first. A small
+Tichu wins or loses 100 Tichu Points; a grand Tichu the tournament's **Grand Tichu
+Bonus**: 200 normally, or 100 to score it like a small Tichu.
 _Avoid_: announcement, bet
 
 **Base Score**:

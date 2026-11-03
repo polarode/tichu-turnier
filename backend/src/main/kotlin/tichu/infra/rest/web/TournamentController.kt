@@ -104,6 +104,6 @@ class TournamentController(
             name = name,
             description = description,
             maxTeams = maxTeams,
-            settings = TournamentSettings(allowGrandTichu = settings.allowGrandTichu),
+            settings = TournamentSettings(grandTichuBonus = settings.grandTichuBonus),
         )
 }

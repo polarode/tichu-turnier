@@ -95,9 +95,7 @@ function TournamentDetailComponent() {
                         {`${t('tournament.form.maxTeams')}: ${tournament.maxTeams}`}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        {t('tournament.form.allowGrandTichu')}
-                        {': '}
-                        {tournament.settings.allowGrandTichu ? t('common.yes') : t('common.no')}
+                        {`${t('tournament.form.grandTichuBonus')}: ${tournament.settings.grandTichuBonus}`}
                     </p>
                 </div>
 

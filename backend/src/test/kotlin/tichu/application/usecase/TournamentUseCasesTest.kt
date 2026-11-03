@@ -84,7 +84,7 @@ class TournamentUseCasesTest {
                 name = "  Spring Classic  ",
                 description = "  annual invitational  ",
                 maxTeams = 16,
-                settings = TournamentSettings(allowGrandTichu = false),
+                settings = TournamentSettings(grandTichuBonus = 100),
             ),
             owner,
         )
@@ -94,17 +94,17 @@ class TournamentUseCasesTest {
         assertEquals("Spring Classic", tournament.name, "name is trimmed")
         assertEquals("annual invitational", tournament.description, "description is trimmed")
         assertEquals(16, tournament.maxTeams)
-        assertEquals(TournamentSettings(allowGrandTichu = false), tournament.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 100), tournament.settings)
         assertEquals(TournamentStatus.SETUP, tournament.status, "new tournaments start in setup")
         assertEquals(fixedClock.instant(), tournament.createdAt)
         assertEquals(fixedClock.instant(), tournament.updatedAt)
     }
 
     @Test
-    fun `defaults the grand tichu setting to allowed`() {
+    fun `defaults the grand tichu bonus to 200`() {
         val tournament = create()
 
-        assertEquals(TournamentSettings(allowGrandTichu = true), tournament.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 200), tournament.settings)
     }
 
     @Test
@@ -139,6 +139,19 @@ class TournamentUseCasesTest {
                 )
             }
             assertEquals("maxTeams", ex.field)
+        }
+    }
+
+    @Test
+    fun `rejects a grand tichu bonus other than 100 or 200 anchored to the grandTichuBonus field`() {
+        for (bonus in listOf(0, 150, 300)) {
+            val ex = assertFailsWith<InvalidFieldException> {
+                createTournament.create(
+                    TournamentWriteRequest("Classic", "", 16, TournamentSettings(grandTichuBonus = bonus)),
+                    owner,
+                )
+            }
+            assertEquals("grandTichuBonus", ex.field)
         }
     }
 
@@ -184,7 +197,7 @@ class TournamentUseCasesTest {
                 name = "  Renamed Classic  ",
                 description = "  new description  ",
                 maxTeams = 8,
-                settings = TournamentSettings(allowGrandTichu = false),
+                settings = TournamentSettings(grandTichuBonus = 100),
             ),
             owner,
         )
@@ -194,7 +207,7 @@ class TournamentUseCasesTest {
         assertEquals("Renamed Classic", updated.name, "name is trimmed")
         assertEquals("new description", updated.description, "description is trimmed")
         assertEquals(8, updated.maxTeams)
-        assertEquals(TournamentSettings(allowGrandTichu = false), updated.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 100), updated.settings)
         assertEquals(TournamentStatus.SETUP, updated.status, "update does not change status")
         assertEquals(created.createdAt, updated.createdAt, "createdAt is preserved")
         assertEquals(laterClock.instant(), updated.updatedAt, "updatedAt is bumped")
@@ -223,6 +236,16 @@ class TournamentUseCasesTest {
             }
             assertEquals("maxTeams", ex.field)
         }
+    }
+
+    @Test
+    fun `update rejects a grand tichu bonus other than 100 or 200 anchored to the grandTichuBonus field`() {
+        val created = create()
+
+        val ex = assertFailsWith<InvalidFieldException> {
+            updateTournament.update(created.id, updateRequest(settings = TournamentSettings(grandTichuBonus = 150)), owner)
+        }
+        assertEquals("grandTichuBonus", ex.field)
     }
 
     @Test

@@ -40,7 +40,7 @@ export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
         roundNumber: dto.roundNumber,
         tableNumber: dto.tableNumber,
         confirmation: tableConfirmationDtoToDomain(dto),
-        allowGrandTichu: dto.allowGrandTichu,
+        grandTichuBonus: dto.grandTichuBonus,
         teams: mapSeated(dto.teams, teamTableTeamDtoToDomain),
         trio: dto.trio,
         schedule: dto.schedule.map(scheduledGameDtoToDomain),

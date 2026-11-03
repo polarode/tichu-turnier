@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
@@ -7,8 +8,10 @@ import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
  * these at the repository boundary, so a backend change that breaks the contract fails
  * loudly instead of propagating `any` through the app.
  */
+export const grandTichuBonusDtoSchema = z.union(GRAND_TICHU_BONUS_OPTIONS.map((bonus) => z.literal(bonus)));
+
 export const tournamentSettingsDtoSchema = z.object({
-    allowGrandTichu: z.boolean(),
+    grandTichuBonus: grandTichuBonusDtoSchema,
 });
 
 export type TournamentSettingsDto = z.infer<typeof tournamentSettingsDtoSchema>;

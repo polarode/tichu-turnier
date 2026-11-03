@@ -223,7 +223,7 @@ class RecordGameCommandTest {
     fun `the game's tournament settings govern scoring`() {
         tournamentRepository.save(
             tournamentRepository.findById(tournamentId)!!.copy(
-                settings = TournamentSettings(allowGrandTichu = false),
+                settings = TournamentSettings(grandTichuBonus = 100),
             ),
         )
         val withGrand = validRequest().let { request ->
@@ -236,7 +236,8 @@ class RecordGameCommandTest {
             ))
         }
 
-        assertFailsWith<GameValidationException> { create(withGrand) }
+        // B2 finished fourth, so the grand call failed: base 45 - the configured 100.
+        assertEquals(-55, create(withGrand).outcome.teamPoints[teamB])
     }
 
     @Test

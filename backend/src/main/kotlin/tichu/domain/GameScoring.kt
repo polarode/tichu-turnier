@@ -4,7 +4,7 @@ import tichu.vocabulary.GameValidationException
 
 /**
  * A player's pre-deal announcement: none, small Tichu (after first card) or grand
- * Tichu (before any card). Grand Tichu may be disabled by the tournament settings.
+ * Tichu (before any card). Its bonus amount comes from the tournament settings.
  */
 enum class TichuCall {
     NONE,
@@ -59,7 +59,6 @@ data class GameOutcome(
 object GameScoring {
 
     private const val SMALL_TICHU_BONUS = 100
-    private const val GRAND_TICHU_BONUS = 200
     private const val DOUBLE_WIN_BONUS = 200
 
     fun score(teams: List<TeamResult>, settings: TournamentSettings): GameOutcome {
@@ -67,7 +66,7 @@ object GameScoring {
         val doubleWinTeam = findDoubleWinTeam(teams)
         validateBaseScores(teams, doubleWinTeam)
         validatePositions(teams, doubleWinTeam)
-        validateCalls(teams, settings)
+        validateBombs(teams)
 
         val successes = teams
             .flatMap { it.players }
@@ -75,7 +74,7 @@ object GameScoring {
             .map { it.playerId }
             .toSet()
 
-        val teamPoints = teams.associate { it.teamId to totalPoints(it, doubleWinTeam) }
+        val teamPoints = teams.associate { it.teamId to totalPoints(it, doubleWinTeam, settings.grandTichuBonus) }
         val tie = teamPoints.values.distinct().size == 1
         val victoryPoints = teams.associate { team ->
             val vp = when (team.teamId) {
@@ -98,13 +97,13 @@ object GameScoring {
             .firstOrNull { team -> team.players.mapNotNull { it.position }.sorted() == listOf(1, 2) }
             ?.teamId
 
-    private fun totalPoints(team: TeamResult, doubleWinTeam: TeamId?): Int {
+    private fun totalPoints(team: TeamResult, doubleWinTeam: TeamId?, grandTichuBonus: Int): Int {
         var points = team.baseScore
         for (player in team.players) {
             points += when {
-                player.isSuccess && player.call == TichuCall.GRAND -> GRAND_TICHU_BONUS
+                player.isSuccess && player.call == TichuCall.GRAND -> grandTichuBonus
                 player.isSuccess -> SMALL_TICHU_BONUS
-                player.call == TichuCall.GRAND -> -GRAND_TICHU_BONUS
+                player.call == TichuCall.GRAND -> -grandTichuBonus
                 player.call == TichuCall.SMALL -> -SMALL_TICHU_BONUS
                 else -> 0
             }
@@ -162,12 +161,9 @@ object GameScoring {
         }
     }
 
-    private fun validateCalls(teams: List<TeamResult>, settings: TournamentSettings) {
+    private fun validateBombs(teams: List<TeamResult>) {
         for (team in teams) {
             for (player in team.players) {
-                if (player.call == TichuCall.GRAND && !settings.allowGrandTichu) {
-                    throw GameValidationException("call", "Grand Tichu is disabled by the tournament settings")
-                }
                 if (player.bombs !in 0..3) {
                     throw GameValidationException("bombs", "Bomb count must be between 0 and 3")
                 }

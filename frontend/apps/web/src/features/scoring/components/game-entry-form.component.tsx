@@ -137,7 +137,7 @@ export function GameEntryForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingGame?.version]);
     const dw = doubleWinTeam(state.positions);
-    const totals = displayTotals(state);
+    const totals = displayTotals(state, table.grandTichuBonus);
     const team1Base = complementBaseScore(state.baseScoreTeam0, dw !== null);
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
@@ -163,9 +163,7 @@ export function GameEntryForm({
     }
 
     function cycleCall(slot: PlayerSlot) {
-        const order: TichuCall[] = table.allowGrandTichu
-            ? ['NONE', 'SMALL', 'GRAND']
-            : ['NONE', 'SMALL'];
+        const order: TichuCall[] = ['NONE', 'SMALL', 'GRAND'];
         const current = order.indexOf(state.calls[slot]);
         const nextCall = order[(current + 1) % order.length] ?? 'NONE';
         form.setValue('calls', withSlot(state.calls, slot, nextCall));

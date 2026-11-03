@@ -14,7 +14,7 @@ const dto: TournamentDto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { allowGrandTichu: false },
+    settings: { grandTichuBonus: 100 },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T12:00:00.000Z',
     updatedAt: '2026-01-02T08:30:00.000Z',
@@ -28,7 +28,7 @@ describe('tournamentDtoToDomain', () => {
         expect(tournament.name).toBe('Spring Classic');
         expect(tournament.maxTeams).toBe(16);
         expect(tournament.status).toBe(TournamentStatus.SETUP);
-        expect(tournament.settings).toEqual({ allowGrandTichu: false });
+        expect(tournament.settings).toEqual({ grandTichuBonus: 100 });
         expect(tournament.createdAt).toBeInstanceOf(Date);
         expect(tournament.createdAt.toISOString()).toBe('2026-01-01T12:00:00.000Z');
         expect(tournament.updatedAt.toISOString()).toBe('2026-01-02T08:30:00.000Z');
@@ -37,14 +37,14 @@ describe('tournamentDtoToDomain', () => {
 
 describe('tournament settings mapping', () => {
     it('maps settings DTO → domain', () => {
-        expect(tournamentSettingsDtoToDomain({ allowGrandTichu: true })).toEqual({
-            allowGrandTichu: true,
+        expect(tournamentSettingsDtoToDomain({ grandTichuBonus: 200 })).toEqual({
+            grandTichuBonus: 200,
         });
     });
 
     it('maps settings domain → DTO', () => {
-        expect(tournamentSettingsToDto({ allowGrandTichu: false })).toEqual({
-            allowGrandTichu: false,
+        expect(tournamentSettingsToDto({ grandTichuBonus: 100 })).toEqual({
+            grandTichuBonus: 100,
         });
     });
 });
@@ -56,13 +56,13 @@ describe('tournamentWriteInputToDto', () => {
                 name: 'Spring Classic',
                 description: 'annual invitational',
                 maxTeams: 16,
-                settings: { allowGrandTichu: true },
+                settings: { grandTichuBonus: 200 },
             }),
         ).toEqual({
             name: 'Spring Classic',
             description: 'annual invitational',
             maxTeams: 16,
-            settings: { allowGrandTichu: true },
+            settings: { grandTichuBonus: 200 },
         });
     });
 });

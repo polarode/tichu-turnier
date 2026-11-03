@@ -25,8 +25,6 @@ export const en = {
     'language.en': 'English',
 
     'common.loading': 'Loading…',
-    'common.yes': 'Yes',
-    'common.no': 'No',
     'common.retry': 'Try again',
     'common.cancel': 'Cancel',
     'common.confirm': 'Confirm',
@@ -186,7 +184,9 @@ export const en = {
     'tournament.form.name': 'Name',
     'tournament.form.description': 'Description',
     'tournament.form.maxTeams': 'Max team count',
-    'tournament.form.allowGrandTichu': 'Allow grand Tichu',
+    'tournament.form.grandTichuBonus': 'Grand Tichu bonus',
+    'tournament.form.grandTichuBonus.100': '100 (same as Tichu)',
+    'tournament.form.grandTichuBonus.200': '200 (standard)',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Add team',

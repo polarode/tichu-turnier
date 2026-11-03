@@ -56,7 +56,7 @@ const setupTournament = {
     name: 'Jahresturnier',
     description: '',
     maxTeams: 8,
-    settings: { allowGrandTichu: false },
+    settings: { grandTichuBonus: 100 as const },
     status: 'SETUP' as const,
     createdAt: new Date('2025-01-01T10:00:00Z'),
     updatedAt: new Date('2025-01-01T10:00:00Z'),
@@ -66,7 +66,7 @@ const fillAndSubmitCreateForm = async (overrides: {
     name?: string;
     description?: string;
     maxTeams?: string;
-    allowGrandTichu?: boolean;
+    grandTichuBonus?: 100 | 200;
 } = {}) => {
     await userEvent.type(await screen.findByLabelText('Name'), overrides.name ?? 'Jahresturnier');
     if (overrides.description !== undefined) {
@@ -77,8 +77,8 @@ const fillAndSubmitCreateForm = async (overrides: {
         screen.getByLabelText('Maximale Teamanzahl'),
         overrides.maxTeams ?? '8',
     );
-    if (overrides.allowGrandTichu === true) {
-        await userEvent.click(screen.getByLabelText('Grand Tichu erlauben'));
+    if (overrides.grandTichuBonus === 100) {
+        await userEvent.click(screen.getByLabelText('100 (wie Tichu)'));
     }
     await userEvent.click(screen.getByRole('button', { name: 'Turnier erstellen' }));
 };
@@ -109,16 +109,28 @@ describe('tournament create/edit forms', () => {
         tournamentRepo.get.mockResolvedValue(setupTournament);
         renderApp('/admin/tournaments/new');
 
-        await fillAndSubmitCreateForm({ allowGrandTichu: true });
+        await fillAndSubmitCreateForm({ grandTichuBonus: 100 });
 
         expect(tournamentRepo.create).toHaveBeenCalledWith({
             name: 'Jahresturnier',
             description: '',
             maxTeams: 8,
-            settings: { allowGrandTichu: true },
+            settings: { grandTichuBonus: 100 },
         });
         expect(await screen.findByText('Jahresturnier')).toBeInTheDocument();
         expect(tournamentRepo.get).toHaveBeenCalledWith('t-1');
+    });
+
+    it('starts a new tournament with the normal grand Tichu bonus of 200', async () => {
+        tournamentRepo.create.mockResolvedValue(setupTournament);
+        tournamentRepo.get.mockResolvedValue(setupTournament);
+        renderApp('/admin/tournaments/new');
+
+        await fillAndSubmitCreateForm();
+
+        expect(tournamentRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({ settings: { grandTichuBonus: 200 } }),
+        );
     });
 
     it('anchors MAX_TEAMS_BELOW_TEAM_COUNT to the max-teams field', async () => {
@@ -184,7 +196,7 @@ describe('tournament create/edit forms', () => {
 
         const nameInput = await screen.findByLabelText('Name');
         expect(nameInput).toHaveValue('Jahresturnier');
-        expect(screen.getByLabelText('Grand Tichu erlauben')).not.toBeChecked();
+        expect(screen.getByLabelText('100 (wie Tichu)')).toBeChecked();
 
         await userEvent.clear(nameInput);
         await userEvent.type(nameInput, 'Renommiert');
@@ -194,7 +206,7 @@ describe('tournament create/edit forms', () => {
             name: 'Renommiert',
             description: '',
             maxTeams: 8,
-            settings: { allowGrandTichu: false },
+            settings: { grandTichuBonus: 100 },
         });
         expect(await screen.findByText('Renommiert')).toBeInTheDocument();
         expect(tournamentRepo.get).toHaveBeenCalledWith('t-1');

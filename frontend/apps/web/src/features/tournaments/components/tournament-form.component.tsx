@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@tichu/ui/button.tsx';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
+import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
 import {
     tournamentFormSchema,
     type TournamentFormValues,
@@ -19,7 +20,7 @@ import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
  * `maxTeams` itself, so the `fields` map handles it.
  */
 const SERVER_ERROR_ANCHORS = {
-    fields: { name: 'name', maxTeams: 'maxTeams' },
+    fields: { name: 'name', maxTeams: 'maxTeams', grandTichuBonus: 'grandTichuBonus' },
     codes: { MAX_TEAMS_BELOW_TEAM_COUNT: 'maxTeams' },
 } as const;
 
@@ -52,7 +53,7 @@ export function TournamentForm({
             name: '',
             description: '',
             maxTeams: 8,
-            allowGrandTichu: false,
+            grandTichuBonus: 200,
             ...defaultValues,
         },
     });
@@ -94,17 +95,34 @@ export function TournamentForm({
                 {...form.register('maxTeams', { valueAsNumber: true })}
             />
 
-            <div className="flex flex-col gap-1.5">
-                <label htmlFor="tournament-grand-tichu" className="flex items-center gap-2 text-sm font-medium">
-                    <input
-                        id="tournament-grand-tichu"
-                        type="checkbox"
-                        className="size-4 accent-primary"
-                        {...form.register('allowGrandTichu')}
-                    />
-                    {t('tournament.form.allowGrandTichu')}
-                </label>
-            </div>
+            <Controller
+                control={form.control}
+                name="grandTichuBonus"
+                render={({ field, fieldState }) => (
+                    <fieldset className="flex flex-col gap-1.5">
+                        <legend className="mb-1.5 text-sm font-medium">{t('tournament.form.grandTichuBonus')}</legend>
+                        {GRAND_TICHU_BONUS_OPTIONS.map((bonus) => (
+                            <label key={bonus} className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="radio"
+                                    name={field.name}
+                                    value={bonus}
+                                    checked={field.value === bonus}
+                                    onChange={() => field.onChange(bonus)}
+                                    onBlur={field.onBlur}
+                                    className="size-4 accent-primary"
+                                />
+                                {t(`tournament.form.grandTichuBonus.${bonus}`)}
+                            </label>
+                        ))}
+                        {fieldState.error?.message ? (
+                            <p role="alert" className="text-sm text-destructive">
+                                {fieldState.error.message}
+                            </p>
+                        ) : null}
+                    </fieldset>
+                )}
+            />
 
             <Button type="submit" disabled={pending}>
                 {pending ? t(pendingLabelKey) : t(submitLabelKey)}

@@ -48,7 +48,7 @@ Example:
 ```bash
 curl -X POST localhost:8080/api/tournaments \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Spring Classic","description":"annual invitational","maxTeams":16,"settings":{"allowGrandTichu":true}}'
+  -d '{"name":"Spring Classic","description":"annual invitational","maxTeams":16,"settings":{"grandTichuBonus":200}}'
 ```
 
 ### Auth (admin accounts)

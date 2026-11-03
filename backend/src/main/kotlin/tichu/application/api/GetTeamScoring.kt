@@ -38,8 +38,8 @@ interface GetTeamScoring {
  * (the games endpoints address a game by tournament/round/table/game), which
  * round and table (the numbers the write endpoints address), the table's
  * [confirmation] state (games are read-only from the first confirmation),
- * whether grand Tichu is accepted
- * ([allowGrandTichu], so the form can hide the option), and the seated [teams]
+ * what a grand Tichu call is worth
+ * ([grandTichuBonus], so the form's live totals match the server), and the seated [teams]
  * (two, or three at the [trio] table) with their names and players — the matchup
  * label and the grid's roster — plus the [schedule] of who plays which game.
  */
@@ -48,7 +48,7 @@ data class TeamTable(
     val roundNumber: Int,
     val tableNumber: Int,
     val confirmation: TableConfirmationState,
-    val allowGrandTichu: Boolean,
+    val grandTichuBonus: Int,
     val teams: List<TeamTableTeam>,
     val trio: Boolean,
     val schedule: List<ScheduledGame>,

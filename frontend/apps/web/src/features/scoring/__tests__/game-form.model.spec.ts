@@ -18,7 +18,7 @@ const table: TeamTable = {
     roundNumber: 1,
     tableNumber: 1,
     confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
-    allowGrandTichu: true,
+    grandTichuBonus: 200,
     teams: [
         {
             teamId: 'team-a',
@@ -103,7 +103,7 @@ describe('displayTotals', () => {
             baseScoreTeam0: 55,
             beschiss: false,
         };
-        expect(displayTotals(state)).toEqual([155, 45]);
+        expect(displayTotals(state, 200)).toEqual([155, 45]);
     });
 
     it('subtracts a failed grand-Tichu bonus', () => {
@@ -117,7 +117,19 @@ describe('displayTotals', () => {
         // team 1 took 1+2 -> double win, so both base scores are forced to 0.
         // team 0 called grand and did not finish first: 0 - 200 = -200.
         // team 1: base 0 + 200 double-win bonus = 200.
-        expect(displayTotals(state)).toEqual([-200, 200]);
+        expect(displayTotals(state, 200)).toEqual([-200, 200]);
+    });
+
+    it('counts a grand Tichu with the tournament bonus, here 100', () => {
+        const state: GameFormState = {
+            positions: [1, 3, 2, 4],
+            calls: ['GRAND', 'NONE', 'GRAND', 'NONE'],
+            bombs: [0, 0, 0, 0],
+            baseScoreTeam0: 50,
+            beschiss: false,
+        };
+        // team 0's grand succeeded: 50 + 100; team 1's failed: 50 - 100.
+        expect(displayTotals(state, 100)).toEqual([150, -50]);
     });
 
     it('awards the +200 double-win bonus and forces base 0/0', () => {
@@ -128,7 +140,7 @@ describe('displayTotals', () => {
             baseScoreTeam0: 55, // ignored on a double win
             beschiss: false,
         };
-        expect(displayTotals(state)).toEqual([200, 0]);
+        expect(displayTotals(state, 200)).toEqual([200, 0]);
     });
 });
 

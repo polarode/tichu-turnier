@@ -45,11 +45,11 @@ data class TournamentResponse(
 }
 
 data class TournamentSettingsResponse(
-    val allowGrandTichu: Boolean,
+    val grandTichuBonus: Int,
 ) {
     companion object {
         fun from(settings: TournamentSettings): TournamentSettingsResponse =
-            TournamentSettingsResponse(allowGrandTichu = settings.allowGrandTichu)
+            TournamentSettingsResponse(grandTichuBonus = settings.grandTichuBonus)
     }
 }
 
@@ -66,7 +66,8 @@ data class TournamentWriteRequestBody(
 )
 
 data class TournamentSettingsRequestBody(
-    val allowGrandTichu: Boolean = true,
+    /** Validated by the use case (100 or 200), so the error anchors to the field. */
+    val grandTichuBonus: Int = TournamentSettings().grandTichuBonus,
 )
 
 /**

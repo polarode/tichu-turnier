@@ -48,7 +48,7 @@ function table(overrides: Partial<TeamTable> = {}): TeamTable {
         roundNumber: 1,
         tableNumber: 1,
         confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
-        allowGrandTichu: true,
+        grandTichuBonus: 200,
         teams: [
             {
                 teamId: 'team-a',
@@ -280,6 +280,33 @@ describe('/team/score', () => {
         await user.keyboard('{ArrowLeft}{ArrowLeft}');
         expect(screen.getByRole('tab', { name: 'Spiel 4' })).toHaveAttribute('aria-selected', 'true');
         expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Spiel 4');
+    });
+
+    it('offers grand Tichu at a bonus of 100 and totals it like a small Tichu', async () => {
+        scoring.currentTable.mockResolvedValue(table({ grandTichuBonus: 100 }));
+        scoring.games.mockResolvedValue([]);
+        scoring.create.mockResolvedValue(recordedGame());
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }));
+        expect(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Großes' })).toBeInTheDocument();
+
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+        await user.click(finishButtons[2]!); // Bob → 2
+        await user.click(finishButtons[1]!); // Anna → 3
+        await user.click(finishButtons[3]!); // Ben → 4
+
+        // Alice's grand Tichu succeeded: base 50 + 100.
+        expect(screen.getByText('→ 150')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
+        await waitFor(() => expect(scoring.create).toHaveBeenCalledTimes(1));
+        expect(scoring.create.mock.calls[0]![1].teams[0].players[0].call).toBe('GRAND');
     });
 
     it('announces each player\'s current call and bomb count, not just the control name', async () => {

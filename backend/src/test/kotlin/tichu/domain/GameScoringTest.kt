@@ -227,16 +227,19 @@ class GameScoringTest {
     }
 
     @Test
-    fun `rejects grand tichu when the setting disables it`() {
-        assertFailsWith<GameValidationException> {
-            GameScoring.score(
-                teams = listOf(
-                    TeamResult(TeamId("t1"), 50, listOf(playerResult(1, TichuCall.GRAND), playerResult(3))),
-                    TeamResult(TeamId("t2"), 50, listOf(playerResult(2), playerResult(4))),
-                ),
-                settings = TournamentSettings(allowGrandTichu = false),
-            )
-        }
+    fun `grand tichu is worth the tournament's bonus, here 100 like a small tichu`() {
+        val outcome = GameScoring.score(
+            teams = listOf(
+                TeamResult(TeamId("t1"), 50, listOf(playerResult(1, TichuCall.GRAND), playerResult(3))),
+                TeamResult(TeamId("t2"), 50, listOf(playerResult(2, TichuCall.GRAND), playerResult(4))),
+            ),
+            settings = TournamentSettings(grandTichuBonus = 100),
+        )
+
+        assertEquals(setOf(PlayerId("a")), outcome.tichuSuccesses)
+        // 50 base + 100 successful grand; 50 base - 100 failed grand.
+        assertEquals(150, outcome.teamPoints[TeamId("t1")])
+        assertEquals(-50, outcome.teamPoints[TeamId("t2")])
     }
 
     @Test
@@ -248,23 +251,6 @@ class GameScoringTest {
                     TeamResult(TeamId("t2"), 50, listOf(playerResult(2), playerResult(4))),
                 ),
                 settings = settings,
-            )
-        }
-    }
-
-    @Test
-    fun `rejects a grand tichu call when the setting disables it, multiple players alike`() {
-        // v1's "no simultaneous small+grand Tichu" rule is unrepresentable by
-        // construction: TichuCall is a single enum per player, so a dual call
-        // cannot be built. Multiple players may each call grand in one game; the
-        // setting governs them all.
-        assertFailsWith<GameValidationException> {
-            GameScoring.score(
-                teams = listOf(
-                    TeamResult(TeamId("t1"), 50, listOf(playerResult(1, TichuCall.GRAND), playerResult(3, TichuCall.GRAND))),
-                    TeamResult(TeamId("t2"), 50, listOf(playerResult(2), playerResult(4))),
-                ),
-                settings = TournamentSettings(allowGrandTichu = false),
             )
         }
     }

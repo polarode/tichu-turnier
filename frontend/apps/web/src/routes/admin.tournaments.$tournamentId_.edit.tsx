@@ -58,7 +58,7 @@ function TournamentEditComponent() {
                         name: tournament.name,
                         description: tournament.description,
                         maxTeams: tournament.maxTeams,
-                        allowGrandTichu: tournament.settings.allowGrandTichu,
+                        grandTichuBonus: tournament.settings.grandTichuBonus,
                     }}
                     submitLabelKey="tournament.edit.submit"
                     pendingLabelKey="tournament.edit.pending"

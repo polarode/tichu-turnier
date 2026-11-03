@@ -398,10 +398,10 @@ class GameControllerIntegrationTest(
     }
 
     @Test
-    fun `grand Tichu is rejected when the tournament setting disables it`() {
+    fun `grand Tichu scores the tournament's bonus`() {
         tournamentRepository.save(
             tournamentRepository.findById(TournamentId(tournamentId))!!
-                .copy(settings = TournamentSettings(allowGrandTichu = false)),
+                .copy(settings = TournamentSettings(grandTichuBonus = 100)),
         )
         val grandBody = objectMapper.writeValueAsString(
             mapOf(
@@ -413,14 +413,14 @@ class GameControllerIntegrationTest(
                         "baseScore" to 55,
                         "players" to listOf(
                             mapOf("playerId" to playerA1, "position" to 1, "call" to "NONE", "bombs" to 0),
-                            mapOf("playerId" to playerA2, "position" to 2, "call" to "NONE", "bombs" to 0),
+                            mapOf("playerId" to playerA2, "position" to 3, "call" to "NONE", "bombs" to 0),
                         ),
                     ),
                     mapOf(
                         "teamId" to teamB,
                         "baseScore" to 45,
                         "players" to listOf(
-                            mapOf("playerId" to playerB1, "position" to 3, "call" to "NONE", "bombs" to 0),
+                            mapOf("playerId" to playerB1, "position" to 2, "call" to "NONE", "bombs" to 0),
                             mapOf("playerId" to playerB2, "position" to 4, "call" to "GRAND", "bombs" to 0),
                         ),
                     ),
@@ -428,9 +428,10 @@ class GameControllerIntegrationTest(
             ),
         )
 
+        // B2's failed grand Tichu costs the configured 100, not 200.
         createGame(body = grandBody)
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.code").value("GAME_VALIDATION_INVALID"))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.outcome.teamPoints.$teamB").value(-55))
     }
 
     // ---- not-found paths ---------------------------------------------------------

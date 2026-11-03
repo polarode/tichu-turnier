@@ -5,6 +5,7 @@ import type {
     RecordedGame,
     TichuCall,
 } from '@/domain/game.domain.ts';
+import type { GrandTichuBonus } from '@/domain/tournament.domain.ts';
 
 /**
  * Client-side model for the game entry grid. Mirrors v1's input model: four
@@ -15,7 +16,6 @@ import type {
  */
 
 const SMALL_TICHU_BONUS = 100;
-const GRAND_TICHU_BONUS = 200;
 const DOUBLE_WIN_BONUS = 200;
 
 /** The four grid slots, in a fixed order: team 0's two players, then team 1's. */
@@ -85,10 +85,11 @@ export function complementBaseScore(baseScoreTeam0: number, isDoubleWin: boolean
 }
 
 /**
- * The per-team display totals (base + bonuses). Display-only — never submitted;
- * the server recomputes (ADR 0004). Returns totals for [team0, team1].
+ * The per-team display totals (base + bonuses), with a grand Tichu worth the
+ * tournament's [grandTichuBonus]. Display-only — never submitted; the server
+ * recomputes (ADR 0004). Returns totals for [team0, team1].
  */
-export function displayTotals(state: GameFormState): [number, number] {
+export function displayTotals(state: GameFormState, grandTichuBonus: GrandTichuBonus): [number, number] {
     const dw = doubleWinTeam(state.positions);
     const base: [number, number] = [
         dw === null ? state.baseScoreTeam0 : 0,
@@ -100,7 +101,7 @@ export function displayTotals(state: GameFormState): [number, number] {
         const call = state.calls[slot];
         const success = state.positions[slot] === 1;
         if (call === 'SMALL') bonus[team] += success ? SMALL_TICHU_BONUS : -SMALL_TICHU_BONUS;
-        else if (call === 'GRAND') bonus[team] += success ? GRAND_TICHU_BONUS : -GRAND_TICHU_BONUS;
+        else if (call === 'GRAND') bonus[team] += success ? grandTichuBonus : -grandTichuBonus;
     }
     if (dw !== null) bonus[dw] += DOUBLE_WIN_BONUS;
     return [base[0] + bonus[0], base[1] + bonus[1]];

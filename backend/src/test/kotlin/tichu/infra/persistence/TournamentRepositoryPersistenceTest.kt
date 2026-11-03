@@ -49,7 +49,7 @@ class TournamentRepositoryPersistenceTest(
         val tournament = tournament(
             id = "t-1",
             name = "Spring Classic",
-            settings = TournamentSettings(allowGrandTichu = false),
+            settings = TournamentSettings(grandTichuBonus = 100),
         )
 
         val stored = tournamentRepository.save(tournament)
@@ -58,21 +58,40 @@ class TournamentRepositoryPersistenceTest(
         assertEquals(tournament, stored)
         assertEquals(tournament, loaded)
         assertEquals(owner, loaded?.ownerId)
-        assertEquals(TournamentSettings(allowGrandTichu = false), loaded?.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 100), loaded?.settings)
         assertEquals(TournamentStatus.SETUP, loaded?.status)
     }
 
     @Test
     fun `settings round-trip through the JSONB column`() {
-        tournamentRepository.save(tournament(id = "t-1", settings = TournamentSettings(allowGrandTichu = false)))
+        tournamentRepository.save(tournament(id = "t-1", settings = TournamentSettings(grandTichuBonus = 100)))
 
         // Stored as a real JSON document, not a flattened column set.
         val rawSettings = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = 't-1'", String::class.java)
-        assertEquals("""{"allowGrandTichu": false}""", rawSettings)
+        assertEquals("""{"grandTichuBonus": 100}""", rawSettings)
 
         // And the adapter maps it back into the domain value object.
         val freshAdapter = JpaTournamentRepository(springDataTournamentRepository)
-        assertEquals(TournamentSettings(allowGrandTichu = false), freshAdapter.findById(TournamentId("t-1"))?.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 100), freshAdapter.findById(TournamentId("t-1"))?.settings)
+    }
+
+    @Test
+    fun `V17 turns the legacy grand tichu toggle into the matching bonus`() {
+        val legacy = mapOf("t-off" to """{"allowGrandTichu": false}""", "t-on" to """{"allowGrandTichu": true}""", "t-unset" to "{}")
+        for ((id, settings) in legacy) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Legacy', '', 16, ?::jsonb, 'SETUP', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V17__grand_tichu_bonus_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        assertEquals(TournamentSettings(grandTichuBonus = 100), tournamentRepository.findById(TournamentId("t-off"))?.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 200), tournamentRepository.findById(TournamentId("t-on"))?.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 200), tournamentRepository.findById(TournamentId("t-unset"))?.settings)
     }
 
     @Test

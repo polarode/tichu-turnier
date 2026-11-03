@@ -21,6 +21,11 @@ never persisted**; in fact client totals are not submitted at all (see Amendment
 below). Bonus amounts and the grand-Tichu toggle (`settings.allow_grand_tichu`)
 are server configuration, not per-request input.
 
+> **Amendment 2026-11-03**: the grand-Tichu toggle is replaced by
+> `settings.grandTichuBonus` (100 or 200, default 200). Grand calls are always
+> accepted; 100 scores them like a small Tichu. Migration V17 maps a disabled
+> toggle to 100 and an enabled one to 200.
+
 > **Amendment 2026-10-31** (issue #99 grilling): the payload carries raw facts
 > only — no client-computed totals — so the proposed mismatch validation error
 > and its error path are dropped. Client-side math stays display-only; the

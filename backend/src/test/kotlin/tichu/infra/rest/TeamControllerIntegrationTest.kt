@@ -418,7 +418,7 @@ class TeamControllerIntegrationTest(
         mockMvc.perform(
             put("/api/tournaments/$tournamentId").cookie(sessionCookie)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"name":"Small","description":"","maxTeams":1,"settings":{"allowGrandTichu":true}}"""),
+                .content("""{"name":"Small","description":"","maxTeams":1,"settings":{"grandTichuBonus":200}}"""),
         )
             .andExpect(status().isConflict)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
@@ -434,7 +434,7 @@ class TeamControllerIntegrationTest(
         mockMvc.perform(
             put("/api/tournaments/$tournamentId").cookie(sessionCookie)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"name":"Small","description":"","maxTeams":2,"settings":{"allowGrandTichu":true}}"""),
+                .content("""{"name":"Small","description":"","maxTeams":2,"settings":{"grandTichuBonus":200}}"""),
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.maxTeams").value(2))
@@ -461,7 +461,7 @@ class TeamControllerIntegrationTest(
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        mapOf("name" to name, "description" to "", "maxTeams" to maxTeams, "settings" to mapOf("allowGrandTichu" to true)),
+                        mapOf("name" to name, "description" to "", "maxTeams" to maxTeams, "settings" to mapOf("grandTichuBonus" to 200)),
                     ),
                 ),
         )

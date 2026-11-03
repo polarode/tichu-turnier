@@ -1,8 +1,15 @@
 import type { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
+/**
+ * Tichu Points a grand Tichu call wins or loses: 200 under the normal rules, or 100 to
+ * score it like a small Tichu.
+ */
+export const GRAND_TICHU_BONUS_OPTIONS = [100, 200] as const;
+export type GrandTichuBonus = (typeof GRAND_TICHU_BONUS_OPTIONS)[number];
+
 /** Organizer-configurable tournament rules. Mirrors the backend settings value type. */
 export interface TournamentSettings {
-    allowGrandTichu: boolean;
+    grandTichuBonus: GrandTichuBonus;
 }
 
 /**

@@ -145,7 +145,7 @@ class GetTeamScoringQueryTest {
         assertEquals(1, table.tableNumber)
         assertEquals(TableStatus.PLAYING, table.confirmation.status)
         assertEquals(emptyList(), table.confirmation.confirmedTeamIds)
-        assertEquals(true, table.allowGrandTichu)
+        assertEquals(200, table.grandTichuBonus)
         assertEquals(listOf(teamA, teamB), table.teams.map { it.teamId })
         assertEquals("Team Alpha", table.teams[0].teamName)
         assertEquals(listOf(playerA1, playerA2), table.teams[0].players.map { it.playerId })

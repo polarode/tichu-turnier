@@ -6,6 +6,7 @@
  * derived by the server and returned in the outcome.
  */
 
+import type { GrandTichuBonus } from '@/domain/tournament.domain.ts';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 /** A player's pre-deal announcement. Mirrors the backend `TichuCall` enum. */
@@ -53,15 +54,15 @@ export function isCompleted(confirmation: TableConfirmation): boolean {
 /**
  * The team's current table: which round and table it is entering, the seated
  * teams and their rosters, whether it is the trio table and who plays which
- * game, its [confirmation] state and whether grand Tichu is accepted (so the
- * form can hide the option). From `GET /api/team/me/current-table`.
+ * game, its [confirmation] state and what a grand Tichu call is worth (so the
+ * form's live totals match the server). From `GET /api/team/me/current-table`.
  */
 export interface TeamTable {
     tournamentId: string;
     roundNumber: number;
     tableNumber: number;
     confirmation: TableConfirmation;
-    allowGrandTichu: boolean;
+    grandTichuBonus: GrandTichuBonus;
     teams: SeatedTeams<TeamTableTeam>;
     trio: boolean;
     schedule: readonly ScheduledGame[];

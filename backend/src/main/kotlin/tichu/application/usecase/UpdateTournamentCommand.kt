@@ -43,7 +43,7 @@ class UpdateTournamentCommand(
         }
 
         val name = command.name.trim()
-        TournamentInputValidator.validate(name, command.maxTeams)
+        TournamentInputValidator.validate(name, command.maxTeams, command.settings)
 
         val teamCount = teamRepository.countByTournament(id)
         if (command.maxTeams < teamCount) {

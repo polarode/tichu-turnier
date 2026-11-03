@@ -44,6 +44,13 @@ enum class TournamentStatus {
  * across the domain.
  */
 data class TournamentSettings(
-    /** Whether grand Tichu announcements are accepted in game scoring (Phase 8 enforces it). */
-    val allowGrandTichu: Boolean = true,
-)
+    /**
+     * Tichu Points a grand Tichu call wins or loses: 200 under the normal rules, or
+     * 100 to score it like a small Tichu. One of [GRAND_TICHU_BONUS_OPTIONS].
+     */
+    val grandTichuBonus: Int = 200,
+) {
+    companion object {
+        val GRAND_TICHU_BONUS_OPTIONS = setOf(100, 200)
+    }
+}

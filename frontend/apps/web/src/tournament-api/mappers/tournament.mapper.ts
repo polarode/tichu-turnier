@@ -1,4 +1,5 @@
 import type {
+    GrandTichuBonus,
     Tournament,
     TournamentSettings,
     TournamentWriteInput,
@@ -25,14 +26,14 @@ export function tournamentDtoToDomain(dto: TournamentDto): Tournament {
 
 export function tournamentSettingsDtoToDomain(dto: TournamentSettingsDto): TournamentSettings {
     return {
-        allowGrandTichu: dto.allowGrandTichu,
+        grandTichuBonus: dto.grandTichuBonus,
     };
 }
 
 /** Domain settings → wire, used when building create/update request payloads. */
 export function tournamentSettingsToDto(settings: TournamentSettings): TournamentSettingsDto {
     return {
-        allowGrandTichu: settings.allowGrandTichu,
+        grandTichuBonus: settings.grandTichuBonus,
     };
 }
 
@@ -44,13 +45,13 @@ export function tournamentFormToWriteInput(values: {
     name: string;
     description: string;
     maxTeams: number;
-    allowGrandTichu: boolean;
+    grandTichuBonus: GrandTichuBonus;
 }): TournamentWriteInput {
     return {
         name: values.name,
         description: values.description,
         maxTeams: values.maxTeams,
-        settings: { allowGrandTichu: values.allowGrandTichu },
+        settings: { grandTichuBonus: values.grandTichuBonus },
     };
 }
 

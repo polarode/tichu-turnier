@@ -235,7 +235,6 @@ export const de: Catalog = {
     'tournament.status.completed': 'Beendet',
 
     'team.title': 'Teambereich',
-    'team.description': 'Verfolge deinen Tisch und trage deine Spielergebnisse ein.',
 
     'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',
     'teamLogin.exchangingDescription': 'Dein Zugriffslink wird geprüft. Einen Moment bitte.',
@@ -264,8 +263,7 @@ export const de: Catalog = {
 
     'teamOverview.tournament': 'Turnier',
     'teamOverview.teamName': 'Team',
-    'teamOverview.playerOne': 'Spieler 1',
-    'teamOverview.playerTwo': 'Spieler 2',
+    'teamOverview.players': 'Spieler',
     'teamOverview.scheduleNote': 'Der Spielplan erscheint, sobald das Turnier gestartet ist.',
     'teamOverview.scoringLink': 'Ergebnisse eintragen',
     'confirmation.games.label': 'Spiele',

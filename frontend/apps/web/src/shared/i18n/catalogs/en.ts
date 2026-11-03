@@ -235,7 +235,6 @@ export const en = {
     'tournament.status.completed': 'Completed',
 
     'team.title': 'Team area',
-    'team.description': 'Follow your table and enter your game results.',
 
     'teamLogin.exchangingTitle': 'Opening your team area',
     'teamLogin.exchangingDescription': 'Your access link is being validated. One moment, please.',
@@ -263,8 +262,7 @@ export const en = {
 
     'teamOverview.tournament': 'Tournament',
     'teamOverview.teamName': 'Team',
-    'teamOverview.playerOne': 'Player 1',
-    'teamOverview.playerTwo': 'Player 2',
+    'teamOverview.players': 'Players',
     'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
     'teamOverview.scoringLink': 'Enter results',
     'confirmation.games.label': 'Games',

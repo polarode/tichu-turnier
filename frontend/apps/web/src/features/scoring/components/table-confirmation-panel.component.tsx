@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Button } from '@tichu/ui/button.tsx';
+import { Link } from '@tanstack/react-router';
+import { Button, buttonVariants } from '@tichu/ui/button.tsx';
 
 import {
     isCompleted,
+    isFrozen,
     type RecordedGame,
     teamNameOf,
     type TeamTable,
@@ -24,12 +26,33 @@ import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 /**
  * The team overview's confirmation panel (S6b, #106; ADR 0006) for the team's
- * current table. Hidden while the team is not seated (current table 404s).
+ * current table, holding the entry point to the scoring screen. Nothing shows
+ * while the table loads (so the link does not jump into the panel); when the
+ * team is not seated (current table 404s) only the entry point shows, and the
+ * scoring screen explains the rest.
  */
 export function TableConfirmationPanel({ viewerTeamId }: { viewerTeamId: string }) {
     const tableQuery = useCurrentTable();
-    if (!tableQuery.data) return null;
+    if (tableQuery.isPending) return null;
+    if (!tableQuery.data) return <ScoringLink primary />;
     return <ConfirmationPanel table={tableQuery.data} viewerTeamId={viewerTeamId} />;
+}
+
+/** "Enter results": the primary action until every game is in, then it yields to Confirm. */
+function ScoringLink({ primary }: { primary: boolean }) {
+    const { t } = useI18n();
+    return (
+        <Link
+            to="/team/score"
+            className={buttonVariants({
+                variant: primary ? 'default' : 'outline',
+                size: 'touch',
+                className: 'w-full sm:w-auto sm:self-start',
+            })}
+        >
+            {t('teamOverview.scoringLink')}
+        </Link>
+    );
 }
 
 /**
@@ -95,6 +118,7 @@ function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTe
                     games={games}
                 />
             ) : null}
+            <ScoringLink primary={!allEntered && !isFrozen(table.confirmation)} />
 
             <p>
                 {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}

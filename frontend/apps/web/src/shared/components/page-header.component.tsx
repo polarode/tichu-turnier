@@ -3,17 +3,17 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 interface PageHeaderProps {
     titleKey: TranslationKey;
-    descriptionKey: TranslationKey;
+    descriptionKey?: TranslationKey;
 }
 
-/** Localized page title and description, shared by the standalone screens. */
+/** Localized page title and optional description, shared by the standalone screens. */
 export function PageHeader({ titleKey, descriptionKey }: PageHeaderProps) {
     const { t } = useI18n();
 
     return (
         <div className="flex flex-col gap-2">
             <h1 className="text-xl font-semibold sm:text-2xl">{t(titleKey)}</h1>
-            <p className="text-muted-foreground">{t(descriptionKey)}</p>
+            {descriptionKey ? <p className="text-muted-foreground">{t(descriptionKey)}</p> : null}
         </div>
     );
 }

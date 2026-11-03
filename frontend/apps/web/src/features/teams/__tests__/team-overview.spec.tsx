@@ -68,6 +68,9 @@ describe('/team', () => {
         expect(screen.getByText('Team Alpha')).toBeInTheDocument();
         expect(screen.getByText('Alice')).toBeInTheDocument();
         expect(screen.getByText('Bob')).toBeInTheDocument();
+        // A compact card: the labels are there for screen readers only, the intro line is gone.
+        expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual(['Turnier', 'Team', 'Spieler']);
+        expect(screen.queryByText('Verfolge deinen Tisch und trage deine Spielergebnisse ein.')).not.toBeInTheDocument();
         expect(screen.getByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Ergebnisse eintragen' })).not.toBeInTheDocument();
         expect(mockedMe).toHaveBeenCalledTimes(1);
@@ -95,7 +98,7 @@ describe('/team', () => {
 
     it('links to the scoring screen, which loads the team’s current table', async () => {
         mockedMe.mockResolvedValue(overview);
-        // The overview link renders unconditionally; the scoring route resolves
+        // The link sits in the current table's panel; the scoring route resolves
         // the seat itself (a 404 there would show the not-seated placeholder).
         mockedCurrentTable.mockResolvedValue({
             tournamentId: 't-1',
@@ -126,9 +129,8 @@ describe('/team', () => {
         });
 
         const { router } = renderApp('/team');
-        await screen.findByText('Spring Classic');
 
-        await userEvent.click(screen.getByRole('link', { name: 'Ergebnisse eintragen' }));
+        await userEvent.click(await screen.findByRole('link', { name: 'Ergebnisse eintragen' }));
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));
         expect(await screen.findByText('Team Alpha gegen Team Beta')).toBeInTheDocument();
@@ -327,8 +329,9 @@ describe('/team confirmation panel', () => {
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
         expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeDisabled();
         expect(within(panel).getByText('2 von 4 Spielen eingetragen')).toBeInTheDocument();
-        // The scoring link stays below the panel.
-        expect(screen.getByRole('link', { name: 'Ergebnisse eintragen' })).toBeInTheDocument();
+        // The scoring link sits inside the round's box, the only one on the page.
+        expect(within(panel).getByRole('link', { name: 'Ergebnisse eintragen' })).toHaveAttribute('href', '/team/score');
+        expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
     });
 
     it('confirms through the dialog with the versions the team saw', async () => {

@@ -101,6 +101,22 @@ class GameScoringTest {
     }
 
     @Test
+    fun `double win is recognised when the team's second player finished first`() {
+        val outcome = GameScoring.score(
+            teams = listOf(
+                TeamResult(TeamId("t1"), 0, listOf(playerResult(2), playerResult(1, TichuCall.SMALL))),
+                TeamResult(TeamId("t2"), 0, listOf(playerResult(null), playerResult(null))),
+            ),
+            settings = settings,
+        )
+
+        assertEquals(TeamId("t1"), outcome.doubleWinTeam)
+        // 0 base + 100 small tichu + 200 double win.
+        assertEquals(300, outcome.teamPoints[TeamId("t1")])
+        assertEquals(setOf(PlayerId("b")), outcome.tichuSuccesses)
+    }
+
+    @Test
     fun `multiple players may call tichu in the same game`() {
         val outcome = GameScoring.score(
             teams = listOf(

@@ -154,7 +154,7 @@ object GameScoring {
         val positions = teams.flatMap { it.players }.map { it.position }.filterNotNull()
         if (doubleWinTeam != null) {
             // All-or-nothing: winners hold exactly 1 and 2, every loser has no position.
-            if (positions != listOf(1, 2)) {
+            if (positions.sorted() != listOf(1, 2)) {
                 throw GameValidationException("position", "In a double win the winners hold positions 1 and 2")
             }
         } else if (positions.sorted() != listOf(1, 2, 3, 4)) {

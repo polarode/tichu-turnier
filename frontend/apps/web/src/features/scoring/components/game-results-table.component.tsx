@@ -1,7 +1,12 @@
 import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
-import { type RecordedGame, type ScheduledGame, teamPoints } from '@/domain/game.domain.ts';
+import {
+    type RecordedGame,
+    type ScheduledGame,
+    teamPoints,
+    totalVictoryPoints,
+} from '@/domain/game.domain.ts';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
@@ -31,7 +36,8 @@ interface GameResultsTableProps {
  * one column per team in seat order, so each Tichu Points total sits under its
  * team whatever order the game stored the teams in. At the trio table the team
  * sitting a game out reads "Pause". A last column carries the Beschiss and
- * double-win markers, or "missing" for a game not entered yet.
+ * double-win markers, or "missing" for a game not entered yet. The footer sums
+ * each team's Victory Points over the games entered so far.
  */
 export function GameResultsTable({ caption, teams, schedule, games }: GameResultsTableProps) {
     const { t } = useI18n();
@@ -122,6 +128,25 @@ export function GameResultsTable({ caption, teams, schedule, games }: GameResult
                         );
                     })}
                 </tbody>
+                <tfoot className="border-t-2 border-border">
+                    <tr>
+                        <th
+                            scope="row"
+                            className="py-1.5 pr-2 text-left font-medium whitespace-nowrap"
+                        >
+                            {t('rounds.victoryPoints')}
+                        </th>
+                        {teams.map((team) => (
+                            <td
+                                key={team.id}
+                                className="px-2 py-1.5 text-right font-semibold tabular-nums"
+                            >
+                                {totalVictoryPoints(games, team.id)}
+                            </td>
+                        ))}
+                        <td className="py-1.5 pl-3" />
+                    </tr>
+                </tfoot>
             </table>
         </div>
     );

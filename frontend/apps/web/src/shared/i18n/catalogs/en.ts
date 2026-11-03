@@ -184,6 +184,7 @@ export const en = {
     'rounds.game.sitsOut': 'Bye',
     'rounds.game.notes': 'Notes',
     'rounds.games.caption': 'Games',
+    'rounds.victoryPoints': 'Victory Points',
     'rounds.trio': 'Trio',
     'tournament.detail.edit': 'Edit',
     'tournament.form.name': 'Name',

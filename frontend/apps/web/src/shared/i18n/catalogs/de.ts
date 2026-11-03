@@ -189,6 +189,7 @@ export const de: Catalog = {
     'rounds.game.sitsOut': 'Pause',
     'rounds.game.notes': 'Hinweise',
     'rounds.games.caption': 'Spiele',
+    'rounds.victoryPoints': 'Siegpunkte',
     'rounds.trio': 'Trio',
 
     'teams.section.title': 'Teams',

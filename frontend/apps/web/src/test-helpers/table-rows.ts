@@ -9,9 +9,18 @@ export function columnHeaders(table: HTMLElement): string[] {
 
 /** A table's body rows as text: the row header first, then each cell. */
 export function bodyRows(table: HTMLElement): string[][] {
+    return rowsIn(table, 'tbody');
+}
+
+/** A table's footer rows (totals) as text, shaped like [bodyRows]. */
+export function footerRows(table: HTMLElement): string[][] {
+    return rowsIn(table, 'tfoot');
+}
+
+function rowsIn(table: HTMLElement, section: 'tbody' | 'tfoot'): string[][] {
     return within(table)
         .getAllByRole('row')
-        .filter((row) => within(row).queryByRole('rowheader') !== null)
+        .filter((row) => row.closest(section) !== null)
         .map((row) => [
             within(row).getByRole('rowheader').textContent ?? '',
             ...within(row)

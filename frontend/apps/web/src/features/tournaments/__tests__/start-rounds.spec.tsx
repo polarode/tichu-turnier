@@ -12,7 +12,7 @@ import { ApiError } from '@/shared/api/api-error.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
-import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
+import { bodyRows, columnHeaders, footerRows } from '@/test-helpers/table-rows.ts';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
@@ -117,9 +117,17 @@ function game(
             tichuSuccesses: [],
             doubleWinTeam: options.doubleWinTeam ?? null,
             teamPoints: { 'team-a': points.a, 'team-b': points.b },
-            victoryPoints: {},
+            victoryPoints: {
+                'team-a': victoryPoints(points.a, points.b) + (options.doubleWinTeam === 'team-a' ? 1 : 0),
+                'team-b': victoryPoints(points.b, points.a) + (options.doubleWinTeam === 'team-b' ? 1 : 0),
+            },
         },
     };
+}
+
+/** Glossary: win 2, tie 1, loss 0 (the double-win bonus is added by the caller). */
+function victoryPoints(own: number, other: number): number {
+    return own > other ? 2 : own === other ? 1 : 0;
 }
 
 beforeEach(() => {
@@ -252,6 +260,8 @@ describe('rounds section', () => {
             ['3', '–', '–', 'fehlt'],
             ['4', '–', '–', 'fehlt'],
         ]);
+        // Victory Points over the entered games: Alpha won game 1 (2), Beta game 2 with a double win (3).
+        expect(footerRows(games)).toEqual([['Siegpunkte', '2', '3', '']]);
         expect(within(section).queryByText('Trio')).not.toBeInTheDocument();
     });
 
@@ -345,6 +355,7 @@ describe('rounds section', () => {
             ['5', '–', 'Pause', '–', 'fehlt'],
             ['6', 'Pause', '–', '–', 'fehlt'],
         ]);
+        expect(footerRows(games)).toEqual([['Siegpunkte', '0', '0', '0', '']]);
     });
 
     it('opens on the latest round and switches rounds through the selector', async () => {

@@ -8,7 +8,7 @@ import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
-import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
+import { bodyRows, columnHeaders, footerRows } from '@/test-helpers/table-rows.ts';
 
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     TeamAuthRepository: {
@@ -321,6 +321,9 @@ describe('/team confirmation panel', () => {
             ['3', '60', '40', ''],
             ['4', '–', '–', 'fehlt'],
         ]);
+        expect(footerRows(within(panel).getByRole('table', { name: 'Spiele' }))).toEqual([
+            ['Siegpunkte', '4', '0', ''],
+        ]);
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
         expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeDisabled();
         expect(within(panel).getByText('2 von 4 Spielen eingetragen')).toBeInTheDocument();
@@ -407,6 +410,8 @@ describe('/team confirmation panel', () => {
             ['5', '60', 'Pause', '40'],
             ['6', 'Pause', '60', '40'],
         ]);
+        // Each team's Victory Points over the four games it played.
+        expect(footerRows(games)).toEqual([['Siegpunkte', '8', '4', '0', '']]);
     });
 
     it('explains a stale confirm and refetches the games', async () => {

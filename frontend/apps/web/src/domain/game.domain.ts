@@ -175,3 +175,8 @@ export interface GameOutcome {
 export function teamPoints(game: RecordedGame, teamId: string): number | undefined {
     return game.outcome.teamPoints[teamId];
 }
+
+/** A team's Victory Points summed over [games]; a game it did not play adds nothing. */
+export function totalVictoryPoints(games: readonly RecordedGame[], teamId: string): number {
+    return games.reduce((sum, game) => sum + (game.outcome.victoryPoints[teamId] ?? 0), 0);
+}

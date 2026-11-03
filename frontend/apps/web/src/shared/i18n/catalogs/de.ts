@@ -144,6 +144,7 @@ export const de: Catalog = {
     'ownerConsole.inviteStatus.revoked': 'Zurückgezogen',
 
     'dashboard.title': 'Meine Turniere',
+    'dashboard.backLink': 'Zu meinen Turnieren',
     'dashboard.description': 'Die Turniere, die du organisierst.',
     'dashboard.create': 'Neues Turnier',
     'dashboard.open': 'Öffnen',
@@ -166,6 +167,7 @@ export const de: Catalog = {
     'tournament.form.maxTeams': 'Maximale Teamanzahl',
     'tournament.form.grandTichuBonus': 'Grand-Tichu-Bonus',
     'tournament.detail.title': 'Turnier',
+    'tournament.detail.backLink': 'Zum Turnier',
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',
     'tournament.detail.sections': 'Turnierbereiche',
 

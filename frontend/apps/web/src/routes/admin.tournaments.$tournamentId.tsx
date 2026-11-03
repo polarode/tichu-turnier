@@ -9,6 +9,7 @@ import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hoo
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
+import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -29,6 +30,16 @@ interface DetailSearch {
  * The active tab lives in `?tab=` so a reload or the back button keeps it.
  */
 function TournamentDetailComponent() {
+    // Outside the body, so loading and error states keep a way back too.
+    return (
+        <div className="flex flex-col gap-4">
+            <BackLink to="/admin" labelKey="dashboard.backLink" />
+            <TournamentDetailBody />
+        </div>
+    );
+}
+
+function TournamentDetailBody() {
         const { t } = useI18n();
         const { tournamentId } = Route.useParams();
         const tournamentQuery = useTournament(tournamentId);

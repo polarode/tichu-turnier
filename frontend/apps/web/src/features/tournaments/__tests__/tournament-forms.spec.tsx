@@ -281,4 +281,31 @@ describe('tournament create/edit forms', () => {
             await screen.findByRole('link', { name: 'Bearbeiten' }),
         ).toHaveAttribute('href', '/admin/tournaments/t-1/edit');
     });
+
+    describe('back links', () => {
+        it('lead from the create form to my tournaments', async () => {
+            renderApp('/admin/tournaments/new');
+
+            expect(await screen.findByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
+        });
+
+        it('lead from the detail page to my tournaments, even when it fails to load', async () => {
+            tournamentRepo.get.mockRejectedValue(
+                new ApiError({ code: 'NOT_FOUND', status: 404, field: null, message: 'gone' }),
+            );
+            renderApp('/admin/tournaments/t-1');
+
+            expect(await screen.findByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
+        });
+
+        it('lead from the edit form back to its tournament, also when it can no longer be edited', async () => {
+            tournamentRepo.get.mockResolvedValue({ ...setupTournament, status: 'ACTIVE' as const });
+            renderApp('/admin/tournaments/t-1/edit');
+
+            expect(await screen.findByRole('link', { name: 'Zum Turnier' })).toHaveAttribute(
+                'href',
+                '/admin/tournaments/t-1',
+            );
+        });
+    });
 });

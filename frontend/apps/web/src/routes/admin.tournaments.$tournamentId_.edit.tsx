@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { TournamentForm } from '@/features/tournaments/components/tournament-form.component.tsx';
 import { useTournament, useUpdateTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { tournamentFormToWriteInput } from '@/tournament-api/mappers/tournament.mapper.ts';
+import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
@@ -16,6 +17,18 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
  * link can never open an editable view of a running or finished tournament.
  */
 function TournamentEditComponent() {
+    const { tournamentId } = Route.useParams();
+    // Outside the body, so loading, error and not-editable states keep a way back
+    // too; leaving here is also how an edit is cancelled.
+    return (
+        <div className="flex flex-col gap-4">
+            <BackLink to="/admin/tournaments/$tournamentId" params={{ tournamentId }} labelKey="tournament.detail.backLink" />
+            <TournamentEditBody />
+        </div>
+    );
+}
+
+function TournamentEditBody() {
     const { t } = useI18n();
     const navigate = useNavigate();
     const { tournamentId } = Route.useParams();

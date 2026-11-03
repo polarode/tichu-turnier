@@ -144,6 +144,7 @@ export const en = {
     'ownerConsole.inviteStatus.revoked': 'Revoked',
 
     'dashboard.title': 'My tournaments',
+    'dashboard.backLink': 'Back to my tournaments',
     'dashboard.description': 'The tournaments you organize.',
     'dashboard.create': 'New tournament',
     'dashboard.open': 'Open',
@@ -161,6 +162,7 @@ export const en = {
     'tournament.edit.submit': 'Save changes',
     'tournament.edit.pending': 'Saving changes…',
     'tournament.detail.title': 'Tournament',
+    'tournament.detail.backLink': 'Back to tournament',
     'tournament.detail.description': 'Manage teams and settings.',
     'tournament.detail.sections': 'Tournament sections',
 

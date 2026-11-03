@@ -91,6 +91,7 @@ describe('owner console', () => {
 
         // Owners reach the console; the pending request is listed.
         expect(await screen.findByText('newbie@example.com')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
 
         await userEvent.click(screen.getByRole('button', { name: 'Freigeben' }));
 
@@ -161,6 +162,7 @@ describe('owner console', () => {
         renderApp('/admin/console');
 
         expect(await screen.findByRole('heading', { name: 'Nicht verfügbar' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
         // Only owners get the console entry in the avatar menu.
         await userEvent.click(screen.getByRole('button', { name: 'Konto' }));
         expect(screen.getByRole('menu', { name: 'Konto' })).toBeInTheDocument();

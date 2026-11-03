@@ -25,7 +25,7 @@ Two players competing together in a tournament, registered by an admin.
 _Avoid_: participant, pair
 
 **Team access link**:
-The one secret link per team that grants the team access to their own matches. Multi-use: both team members share it as a bearer secret. Valid until rotated, revoked, or the tournament completes.
+The one secret link per team that grants the team access to their own matches. Multi-use: both team members share it as a bearer secret. Valid until rotated or revoked; after the tournament completes it still grants read access, but no writes.
 _Avoid_: token (when speaking of the whole link), login link
 
 **Team session**:

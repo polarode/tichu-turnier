@@ -7,10 +7,24 @@ teams of two players each, and hand out magic links so players can join.
 
 ### Tournament lifecycle
 
+**Tournament Status**:
+**Setup** (preparing), **Active** (rounds being played), **Completed** (finished;
+the final ranking is fixed but only the organizer sees it), **Published** (the
+organizer announced the results; the final ranking is visible to teams and the
+public). Each step is one-way; there is no reopen.
+_Avoid_: draft, closed, archived
+
 **Setup Phase**:
 The tournament status in which teams may be managed (added, edited, deleted) and
-settings edited. Once the tournament leaves it, both are locked.
+settings edited. Once the tournament leaves it, both are locked — except the
+**Total Rounds**, which stay adjustable until the tournament is finished.
 _Avoid_: preparation, draft mode
+
+**Total Rounds**:
+The organizer's chosen number of rounds the tournament runs. Never below the
+rounds already played; once the last round is complete, the tournament can only
+be finished, not advanced.
+_Avoid_: round limit, max rounds
 
 ### Teams
 
@@ -87,6 +101,18 @@ _Avoid_: repeat, replay
 The primary standings score awarded per game result: win 2, tie 1, plus 1 bonus
 for a double win.
 _Avoid_: points (ambiguous with Tichu points)
+
+**Standings**:
+The teams ordered by summed Victory Points, then summed Tichu Points, over the
+games of completed tables only. Teams equal in both share a rank, and the next rank
+skips (1, 2, 2, 4); within a shared rank they are listed by name.
+_Avoid_: leaderboard, ranking table
+
+**Final Ranking**:
+The standings of a completed tournament. Until the results are published, only
+the organizer sees standings at all — during play and after finishing — so the
+ranking stays a surprise until it is announced.
+_Avoid_: results, final standings
 
 **Tichu Points (TP)**:
 The card points a team accumulates from playing games (base scores summing to

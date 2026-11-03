@@ -296,7 +296,7 @@ async function renderPanel(table: TeamTable, games: RecordedGame[]) {
     mockedCurrentTable.mockResolvedValue(table);
     mockedGames.mockResolvedValue(games);
     const result = renderApp('/team');
-    const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch 2' });
+    const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
     // The summary renders once the games are in.
     await within(panel).findByRole('list', { name: 'Spiele' });
     return { ...result, panel };

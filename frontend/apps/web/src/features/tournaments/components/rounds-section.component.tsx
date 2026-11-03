@@ -8,7 +8,7 @@ import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import { GameSummaryRow, TeamDot } from '@/features/scoring/components/game-summary-row.component.tsx';
-import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS } from '@/features/scoring/labels.ts';
+import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS, tableHeading } from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
@@ -27,7 +27,7 @@ interface RoundsSectionProps {
 /**
  * The rounds view. One round shows at a time, picked from a selector that opens on
  * the latest round and follows new rounds until the admin picks one. Each table
- * collapses to a summary line, "Table N: Team A ✓ vs Team B · status"; all its
+ * collapses to a summary line, "Table C: Falcons ✓ vs Owls · status"; all its
  * games (S5d, #102; trio tables #110) unfold behind that line with their matchup
  * and entered/missing status, read-only — scoring and confirming happen in the
  * team area; a round is complete once every table is (glossary: Table Status). Team
@@ -168,7 +168,7 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                     className={cn('size-4 shrink-0 transition-transform', open && 'rotate-90')}
                 />
                 <span className="min-w-0 flex-1">
-                    <span className="font-medium">{`${t('rounds.table')} ${table.tableNumber}`}</span>
+                    <span className="font-medium">{tableHeading(table.tableNumber, t)}</span>
                     {': '}
                     {table.teamIds.map((teamId, seat) => (
                         <Fragment key={teamId}>

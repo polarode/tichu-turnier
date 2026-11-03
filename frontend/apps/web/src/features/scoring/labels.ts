@@ -1,4 +1,5 @@
 import type { TableConfirmation } from '@/domain/game.domain.ts';
+import { tableLabel } from '@/domain/round.domain.ts';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import type { I18n } from '@/shared/i18n/i18n.context.tsx';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
@@ -13,4 +14,9 @@ export const TABLE_STATUS_LABEL_KEYS: Record<TableStatus, TranslationKey> = {
 /** "k of n confirmed" for a table seating [seatedTeams] teams, worded alike in both views. */
 export function confirmedCountLabel(confirmation: TableConfirmation, seatedTeams: number, t: I18n['t']): string {
     return `${confirmation.confirmedTeamIds.length} ${t('confirmation.count.of')} ${seatedTeams} ${t('confirmation.count.confirmed')}`;
+}
+
+/** "Table A" for table [tableNumber], worded alike in both views. */
+export function tableHeading(tableNumber: number, t: I18n['t']): string {
+    return `${t('rounds.table')} ${tableLabel(tableNumber)}`;
 }

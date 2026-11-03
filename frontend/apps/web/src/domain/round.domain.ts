@@ -3,8 +3,8 @@ import type { RecordedGame, ScheduledGame, SeatedTeams, TableConfirmation } from
 /**
  * One table of a round as the admin follows it: the seating (two teams, or three at
  * the trio table), who plays which game, plus the games entered there so far. Table
- * numbers are the backend's 1-based sequential numbers; the ids reference teams of
- * the same tournament.
+ * numbers are the backend's 1-based sequential numbers, shown as letters (tableLabel);
+ * the ids reference teams of the same tournament.
  */
 export interface TableOverview {
     tableNumber: number;
@@ -24,4 +24,16 @@ export interface Round {
     /** 1-based round number within the tournament; round 1 is the first round. */
     number: number;
     tables: readonly TableOverview[];
+}
+
+/**
+ * The letter a table is shown by: table 1 is "A", 26 is "Z", then "AA", "AB", ...
+ * (spreadsheet columns). Display only; the number stays the table's key.
+ */
+export function tableLabel(tableNumber: number): string {
+    let label = '';
+    for (let n = tableNumber; n > 0; n = Math.floor((n - 1) / 26)) {
+        label = String.fromCharCode(65 + ((n - 1) % 26)) + label;
+    }
+    return label;
 }

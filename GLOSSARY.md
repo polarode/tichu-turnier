@@ -55,7 +55,9 @@ _Avoid_: rank, placement
 
 **Pairing**:
 The assignment of teams to opponents for a round, produced by the Swiss pairing
-component. Each pairing assigns every team to exactly one numbered table.
+component. Each pairing assigns every team to exactly one table. Tables are shown
+by letter (A, B, C, ...; after Z come AA, AB, ...) so they are not confused with
+round and game numbers; internally they keep their 1-based number.
 _Avoid_: draw, bracket
 
 **Trio Table**:

@@ -212,9 +212,9 @@ describe('rounds section', () => {
 
         const section = await screen.findByRole('region', { name: 'Runden' });
         expect(await within(section).findByText('Runde 1')).toBeInTheDocument();
-        expect(within(section).getByText('Tisch 1')).toBeInTheDocument();
+        expect(within(section).getByText('Tisch A')).toBeInTheDocument();
         const tableRow = within(section).getByText((_, element) =>
-            element?.textContent === 'Tisch 1: Alpha vs Beta',
+            element?.textContent === 'Tisch A: Alpha vs Beta',
         );
         expect(tableRow).toBeInTheDocument();
     });
@@ -237,7 +237,7 @@ describe('rounds section', () => {
 
         // Games stay collapsed behind the table's summary line until it is opened.
         expect(within(section).queryAllByRole('listitem', { name: /^Spiel/ })).toHaveLength(0);
-        const toggle = within(section).getByRole('button', { name: /Tisch 1.*Alpha vs Beta/ });
+        const toggle = within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta/ });
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
         await userEvent.click(toggle);
         expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -279,9 +279,9 @@ describe('rounds section', () => {
         renderApp('/admin/tournaments/t-1');
 
         const section = await screen.findByRole('region', { name: 'Runden' });
-        const playing = await within(section).findByRole('button', { name: /^Tisch 1/ });
-        const confirming = within(section).getByRole('button', { name: /^Tisch 2/ });
-        const completed = within(section).getByRole('button', { name: /^Tisch 3/ });
+        const playing = await within(section).findByRole('button', { name: /^Tisch A/ });
+        const confirming = within(section).getByRole('button', { name: /^Tisch B/ });
+        const completed = within(section).getByRole('button', { name: /^Tisch C/ });
 
         // Playing keeps the entry progress; once someone confirms, the chip shows the status.
         expect(within(playing).getByText('3/4 eingetragen')).toBeInTheDocument();
@@ -290,9 +290,9 @@ describe('rounds section', () => {
         expect(within(completed).getByText('Abgeschlossen')).toBeInTheDocument();
 
         // A ✓ follows each team that confirmed.
-        expect(playing).toHaveTextContent('Tisch 1: Alpha vs Beta');
-        expect(confirming).toHaveTextContent('Tisch 2: Gamma ✓ bestätigt vs Delta');
-        expect(completed).toHaveTextContent('Tisch 3: Epsilon ✓ bestätigt vs Zeta ✓ bestätigt');
+        expect(playing).toHaveTextContent('Tisch A: Alpha vs Beta');
+        expect(confirming).toHaveTextContent('Tisch B: Gamma ✓ bestätigt vs Delta');
+        expect(completed).toHaveTextContent('Tisch C: Epsilon ✓ bestätigt vs Zeta ✓ bestätigt');
     });
 
     it('shows a trio table with its badge, three teams and six matchup rows', async () => {
@@ -332,7 +332,7 @@ describe('rounds section', () => {
         const section = await screen.findByRole('region', { name: 'Runden' });
         expect(await within(section).findByText('1/6 eingetragen')).toBeInTheDocument();
         expect(within(section).getByText('Trio')).toBeInTheDocument();
-        await userEvent.click(within(section).getByRole('button', { name: /Tisch 1.*Alpha vs Beta vs Gamma/ }));
+        await userEvent.click(within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta vs Gamma/ }));
 
         // All six games are listed with their matchup; only game 2 is entered.
         const rows = within(section).getAllByRole('listitem', { name: /^Spiel/ });

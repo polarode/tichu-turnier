@@ -185,8 +185,6 @@ export const en = {
     'tournament.form.description': 'Description',
     'tournament.form.maxTeams': 'Max team count',
     'tournament.form.grandTichuBonus': 'Grand Tichu bonus',
-    'tournament.form.grandTichuBonus.100': '100 (same as Tichu)',
-    'tournament.form.grandTichuBonus.200': '200 (standard)',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Add team',

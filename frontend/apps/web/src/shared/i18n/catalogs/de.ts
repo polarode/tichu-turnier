@@ -165,8 +165,6 @@ export const de: Catalog = {
     'tournament.form.description': 'Beschreibung',
     'tournament.form.maxTeams': 'Maximale Teamanzahl',
     'tournament.form.grandTichuBonus': 'Grand-Tichu-Bonus',
-    'tournament.form.grandTichuBonus.100': '100 (wie Tichu)',
-    'tournament.form.grandTichuBonus.200': '200 (normal)',
     'tournament.detail.title': 'Turnier',
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',
     'tournament.detail.sections': 'Turnierbereiche',

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@tichu/ui/button.tsx';
+import { Select } from '@tichu/ui/select.tsx';
 import { Controller, useForm } from 'react-hook-form';
 
 import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
@@ -67,6 +68,7 @@ export function TournamentForm({
     });
 
     const rootError = form.formState.errors.root?.message;
+    const bonusError = form.formState.errors.grandTichuBonus?.message;
     const pending = form.formState.isSubmitting;
 
     return (
@@ -95,34 +97,40 @@ export function TournamentForm({
                 {...form.register('maxTeams', { valueAsNumber: true })}
             />
 
-            <Controller
-                control={form.control}
-                name="grandTichuBonus"
-                render={({ field, fieldState }) => (
-                    <fieldset className="flex flex-col gap-1.5">
-                        <legend className="mb-1.5 text-sm font-medium">{t('tournament.form.grandTichuBonus')}</legend>
-                        {GRAND_TICHU_BONUS_OPTIONS.map((bonus) => (
-                            <label key={bonus} className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="radio"
-                                    name={field.name}
-                                    value={bonus}
-                                    checked={field.value === bonus}
-                                    onChange={() => field.onChange(bonus)}
-                                    onBlur={field.onBlur}
-                                    className="size-4 accent-primary"
-                                />
-                                {t(`tournament.form.grandTichuBonus.${bonus}`)}
-                            </label>
-                        ))}
-                        {fieldState.error?.message ? (
-                            <p role="alert" className="text-sm text-destructive">
-                                {fieldState.error.message}
-                            </p>
-                        ) : null}
-                    </fieldset>
-                )}
-            />
+            <div className="flex flex-col gap-1.5">
+                <label htmlFor="tournament-grand-tichu-bonus" className="text-sm font-medium">
+                    {t('tournament.form.grandTichuBonus')}
+                </label>
+                <Controller
+                    control={form.control}
+                    name="grandTichuBonus"
+                    render={({ field }) => (
+                        // Controlled with explicit string <-> number conversion: the
+                        // option values are strings, the form value is a number.
+                        <Select
+                            id="tournament-grand-tichu-bonus"
+                            aria-invalid={bonusError ? true : undefined}
+                            aria-describedby={bonusError ? 'tournament-grand-tichu-bonus-error' : undefined}
+                            name={field.name}
+                            ref={field.ref}
+                            value={String(field.value)}
+                            onChange={(event) => field.onChange(Number(event.target.value))}
+                            onBlur={field.onBlur}
+                        >
+                            {GRAND_TICHU_BONUS_OPTIONS.map((bonus) => (
+                                <option key={bonus} value={String(bonus)}>
+                                    {bonus}
+                                </option>
+                            ))}
+                        </Select>
+                    )}
+                />
+                {bonusError ? (
+                    <p id="tournament-grand-tichu-bonus-error" role="alert" className="text-sm text-destructive">
+                        {bonusError}
+                    </p>
+                ) : null}
+            </div>
 
             <Button type="submit" disabled={pending}>
                 {pending ? t(pendingLabelKey) : t(submitLabelKey)}

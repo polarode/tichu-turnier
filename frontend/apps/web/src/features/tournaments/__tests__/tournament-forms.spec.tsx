@@ -78,7 +78,7 @@ const fillAndSubmitCreateForm = async (overrides: {
         overrides.maxTeams ?? '8',
     );
     if (overrides.grandTichuBonus === 100) {
-        await userEvent.click(screen.getByLabelText('100 (wie Tichu)'));
+        await userEvent.selectOptions(screen.getByLabelText('Grand-Tichu-Bonus'), '100');
     }
     await userEvent.click(screen.getByRole('button', { name: 'Turnier erstellen' }));
 };
@@ -196,7 +196,7 @@ describe('tournament create/edit forms', () => {
 
         const nameInput = await screen.findByLabelText('Name');
         expect(nameInput).toHaveValue('Jahresturnier');
-        expect(screen.getByLabelText('100 (wie Tichu)')).toBeChecked();
+        expect(screen.getByLabelText('Grand-Tichu-Bonus')).toHaveValue('100');
 
         await userEvent.clear(nameInput);
         await userEvent.type(nameInput, 'Renommiert');

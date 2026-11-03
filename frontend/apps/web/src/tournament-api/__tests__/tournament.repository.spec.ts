@@ -12,7 +12,7 @@ const dto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 200 },
+    settings: { grandTichuBonus: 200, totalRounds: 4 },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -22,7 +22,7 @@ const writeRequest: TournamentWriteInput = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 200 },
+    settings: { grandTichuBonus: 200, totalRounds: 4 },
 };
 
 
@@ -205,5 +205,48 @@ describe('TournamentRepository start/rounds', () => {
         mock.onGet('/api/tournaments/t-1/rounds').reply(200, [{ roundNumber: 'one' }]);
 
         await expect(TournamentRepository.rounds('t-1')).rejects.toThrow();
+    });
+});
+
+describe('TournamentRepository standings/total rounds', () => {
+    let mock: MockAdapter;
+
+    beforeEach(() => {
+        mock = new MockAdapter(apiClient);
+    });
+
+    afterEach(() => {
+        mock.restore();
+    });
+
+    it('reads the standings in server order, mapped to domain', async () => {
+        mock.onGet('/api/tournaments/t-1/standings').reply(200, [
+            { rank: 1, teamId: 'team-a', teamName: 'Alpha', gamesPlayed: 4, victoryPoints: 6, tichuPoints: 240 },
+            { rank: 2, teamId: 'team-b', teamName: 'Beta', gamesPlayed: 4, victoryPoints: 2, tichuPoints: 160 },
+        ]);
+
+        const standings = await TournamentRepository.standings('t-1');
+
+        expect(standings).toEqual([
+            { rank: 1, teamId: 'team-a', teamName: 'Alpha', gamesPlayed: 4, victoryPoints: 6, tichuPoints: 240 },
+            { rank: 2, teamId: 'team-b', teamName: 'Beta', gamesPlayed: 4, victoryPoints: 2, tichuPoints: 160 },
+        ]);
+    });
+
+    it('rejects a standings line without a rank at the zod boundary', async () => {
+        mock.onGet('/api/tournaments/t-1/standings').reply(200, [
+            { teamId: 'team-a', teamName: 'Alpha', gamesPlayed: 4, victoryPoints: 6, tichuPoints: 240 },
+        ]);
+
+        await expect(TournamentRepository.standings('t-1')).rejects.toThrow();
+    });
+
+    it('sets the total rounds and returns the updated tournament', async () => {
+        mock.onPut('/api/tournaments/t-1/total-rounds').reply(200, { ...dto, settings: { grandTichuBonus: 200, totalRounds: 6 } });
+
+        const tournament = await TournamentRepository.setTotalRounds('t-1', 6);
+
+        expect(tournament.settings.totalRounds).toBe(6);
+        expect(JSON.parse(mock.history.put[0]!.data)).toEqual({ totalRounds: 6 });
     });
 });

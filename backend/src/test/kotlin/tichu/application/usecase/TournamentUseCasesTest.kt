@@ -108,6 +108,31 @@ class TournamentUseCasesTest {
     }
 
     @Test
+    fun `defaults the total rounds to 4`() {
+        assertEquals(4, create().settings.totalRounds)
+    }
+
+    @Test
+    fun `rejects total rounds outside 1 to 20 anchored to the totalRounds field`() {
+        for (totalRounds in listOf(0, 21)) {
+            val ex = assertFailsWith<InvalidFieldException> {
+                createTournament.create(
+                    TournamentWriteRequest("Classic", "", 16, TournamentSettings(totalRounds = totalRounds)),
+                    owner,
+                )
+            }
+            assertEquals("totalRounds", ex.field)
+        }
+        for (totalRounds in listOf(1, 20)) {
+            val tournament = createTournament.create(
+                TournamentWriteRequest("Classic", "", 16, TournamentSettings(totalRounds = totalRounds)),
+                owner,
+            )
+            assertEquals(totalRounds, tournament.settings.totalRounds)
+        }
+    }
+
+    @Test
     fun `rejects a blank name anchored to the name field`() {
         val ex = assertFailsWith<InvalidFieldException> {
             createTournament.create(

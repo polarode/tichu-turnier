@@ -14,7 +14,7 @@ const dto: TournamentDto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 100 },
+    settings: { grandTichuBonus: 100, totalRounds: 4 },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T12:00:00.000Z',
     updatedAt: '2026-01-02T08:30:00.000Z',
@@ -28,7 +28,7 @@ describe('tournamentDtoToDomain', () => {
         expect(tournament.name).toBe('Spring Classic');
         expect(tournament.maxTeams).toBe(16);
         expect(tournament.status).toBe(TournamentStatus.SETUP);
-        expect(tournament.settings).toEqual({ grandTichuBonus: 100 });
+        expect(tournament.settings).toEqual({ grandTichuBonus: 100, totalRounds: 4 });
         expect(tournament.createdAt).toBeInstanceOf(Date);
         expect(tournament.createdAt.toISOString()).toBe('2026-01-01T12:00:00.000Z');
         expect(tournament.updatedAt.toISOString()).toBe('2026-01-02T08:30:00.000Z');
@@ -37,14 +37,16 @@ describe('tournamentDtoToDomain', () => {
 
 describe('tournament settings mapping', () => {
     it('maps settings DTO → domain', () => {
-        expect(tournamentSettingsDtoToDomain({ grandTichuBonus: 200 })).toEqual({
+        expect(tournamentSettingsDtoToDomain({ grandTichuBonus: 200, totalRounds: 6 })).toEqual({
             grandTichuBonus: 200,
+            totalRounds: 6,
         });
     });
 
     it('maps settings domain → DTO', () => {
-        expect(tournamentSettingsToDto({ grandTichuBonus: 100 })).toEqual({
+        expect(tournamentSettingsToDto({ grandTichuBonus: 100, totalRounds: 6 })).toEqual({
             grandTichuBonus: 100,
+            totalRounds: 6,
         });
     });
 });
@@ -56,13 +58,13 @@ describe('tournamentWriteInputToDto', () => {
                 name: 'Spring Classic',
                 description: 'annual invitational',
                 maxTeams: 16,
-                settings: { grandTichuBonus: 200 },
+                settings: { grandTichuBonus: 200, totalRounds: 4 },
             }),
         ).toEqual({
             name: 'Spring Classic',
             description: 'annual invitational',
             maxTeams: 16,
-            settings: { grandTichuBonus: 200 },
+            settings: { grandTichuBonus: 200, totalRounds: 4 },
         });
     });
 });

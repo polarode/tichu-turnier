@@ -30,7 +30,9 @@ import tichu.application.api.LoginAdmin
 import tichu.application.api.LogoutAdmin
 import tichu.application.api.RefreshSession
 import tichu.application.api.RegisterAdmin
+import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
+import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartTournament
 import tichu.domain.AdminInviteRepository
 import tichu.domain.AdminSessionRepository
@@ -85,6 +87,22 @@ class UseCaseConfiguration(
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
     ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository, confirmationRepository)
+
+    @Bean
+    fun getStandings(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        roundRepository: RoundRepository,
+        gameRepository: GameRepository,
+        confirmationRepository: TableConfirmationRepository,
+    ): GetStandings = GetStandingsQuery(tournamentRepository, teamRepository, roundRepository, gameRepository, confirmationRepository)
+
+    @Bean
+    fun setTotalRounds(
+        tournamentRepository: TournamentRepository,
+        roundRepository: RoundRepository,
+        clock: Clock,
+    ): SetTotalRounds = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock)
 
     @Bean
     fun recordGame(

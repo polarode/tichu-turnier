@@ -56,7 +56,7 @@ const setupTournament = {
     name: 'Jahresturnier',
     description: '',
     maxTeams: 8,
-    settings: { grandTichuBonus: 100 as const },
+    settings: { grandTichuBonus: 100 as const, totalRounds: 4 },
     status: 'SETUP' as const,
     createdAt: new Date('2025-01-01T10:00:00Z'),
     updatedAt: new Date('2025-01-01T10:00:00Z'),
@@ -67,6 +67,7 @@ const fillAndSubmitCreateForm = async (overrides: {
     description?: string;
     maxTeams?: string;
     grandTichuBonus?: 100 | 200;
+    totalRounds?: string;
 } = {}) => {
     await userEvent.type(await screen.findByLabelText('Name'), overrides.name ?? 'Jahresturnier');
     if (overrides.description !== undefined) {
@@ -77,6 +78,10 @@ const fillAndSubmitCreateForm = async (overrides: {
         screen.getByLabelText('Maximale Teamanzahl'),
         overrides.maxTeams ?? '8',
     );
+    if (overrides.totalRounds !== undefined) {
+        await userEvent.clear(screen.getByLabelText('Runden insgesamt'));
+        await userEvent.type(screen.getByLabelText('Runden insgesamt'), overrides.totalRounds);
+    }
     if (overrides.grandTichuBonus === 100) {
         await userEvent.click(screen.getByRole('combobox', { name: 'Grand-Tichu-Bonus' }));
         await userEvent.click(await screen.findByRole('option', { name: '100' }));
@@ -116,7 +121,7 @@ describe('tournament create/edit forms', () => {
             name: 'Jahresturnier',
             description: '',
             maxTeams: 8,
-            settings: { grandTichuBonus: 100 },
+            settings: { grandTichuBonus: 100, totalRounds: 4 },
         });
         expect(await screen.findByText('Jahresturnier')).toBeInTheDocument();
         expect(tournamentRepo.get).toHaveBeenCalledWith('t-1');
@@ -130,7 +135,7 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm();
 
         expect(tournamentRepo.create).toHaveBeenCalledWith(
-            expect.objectContaining({ settings: { grandTichuBonus: 200 } }),
+            expect.objectContaining({ settings: { grandTichuBonus: 200, totalRounds: 4 } }),
         );
     });
 
@@ -161,6 +166,30 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm();
 
         expect(await screen.findByText('Bitte die Eingaben prüfen.')).toBeInTheDocument();
+    });
+
+    it('creates a tournament with the chosen total rounds, 4 by default', async () => {
+        tournamentRepo.create.mockResolvedValue(setupTournament);
+        tournamentRepo.get.mockResolvedValue(setupTournament);
+        renderApp('/admin/tournaments/new');
+
+        expect(await screen.findByLabelText('Runden insgesamt')).toHaveValue(4);
+        await fillAndSubmitCreateForm({ totalRounds: '6' });
+
+        expect(tournamentRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({ settings: { grandTichuBonus: 200, totalRounds: 6 } }),
+        );
+    });
+
+    it('rejects total rounds outside 1 to 20 on the client', async () => {
+        renderApp('/admin/tournaments/new');
+
+        await fillAndSubmitCreateForm({ totalRounds: '21' });
+
+        expect(
+            await screen.findByText('Die Rundenzahl muss zwischen 1 und 20 liegen.'),
+        ).toBeInTheDocument();
+        expect(tournamentRepo.create).not.toHaveBeenCalled();
     });
 
     it('rejects a max team count below 2 on the client', async () => {
@@ -207,7 +236,7 @@ describe('tournament create/edit forms', () => {
             name: 'Renommiert',
             description: '',
             maxTeams: 8,
-            settings: { grandTichuBonus: 100 },
+            settings: { grandTichuBonus: 100, totalRounds: 4 },
         });
         expect(await screen.findByText('Renommiert')).toBeInTheDocument();
         expect(tournamentRepo.get).toHaveBeenCalledWith('t-1');

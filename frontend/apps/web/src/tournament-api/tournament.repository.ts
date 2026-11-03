@@ -2,6 +2,10 @@ import { tournamentDtoToDomain, tournamentWriteInputToDto } from '@/tournament-a
 import { roundDtoToDomain } from '@/tournament-api/mappers/round.mapper.ts';
 import { tournamentDtoSchema, tournamentListDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 import { roundListDtoSchema, startedTournamentDtoSchema } from '@/tournament-api/dtos/round.dto.ts';
+import { standingsDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
+import type { TotalRoundsRequestDto } from '@/tournament-api/dtos/tournament.dto.ts';
+import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
+import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type { Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
 import type { Round } from '@/domain/round.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
@@ -51,6 +55,19 @@ async function rounds(id: string): Promise<Round[]> {
     return roundListDtoSchema.parse(data).map(roundDtoToDomain);
 }
 
+/** The admin-only standings, in the server's order (ranks and ties computed there). */
+async function standings(id: string): Promise<StandingsEntry[]> {
+    const { data } = await apiClient.get<unknown>(`/api/tournaments/${id}/standings`);
+    return standingsDtoSchema.parse(data).map(standingsEntryDtoToDomain);
+}
+
+/** Changes only the Total Rounds; the one setting still editable while ACTIVE. */
+async function setTotalRounds(id: string, totalRounds: number): Promise<Tournament> {
+    const body: TotalRoundsRequestDto = { totalRounds };
+    const { data } = await apiClient.put<unknown>(`/api/tournaments/${id}/total-rounds`, body);
+    return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
+}
+
 async function remove(id: string): Promise<void> {
     await apiClient.delete(`/api/tournaments/${id}`);
 }
@@ -63,4 +80,6 @@ export const TournamentRepository = {
     remove,
     start,
     rounds,
+    standings,
+    setTotalRounds,
 };

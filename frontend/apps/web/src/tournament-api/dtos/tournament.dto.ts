@@ -12,6 +12,7 @@ export const grandTichuBonusDtoSchema = z.union(GRAND_TICHU_BONUS_OPTIONS.map((b
 
 export const tournamentSettingsDtoSchema = z.object({
     grandTichuBonus: grandTichuBonusDtoSchema,
+    totalRounds: z.number().int(),
 });
 
 export type TournamentSettingsDto = z.infer<typeof tournamentSettingsDtoSchema>;
@@ -40,4 +41,9 @@ export interface TournamentWriteRequestDto {
     description: string;
     maxTeams: number;
     settings: TournamentSettingsDto;
+}
+
+/** The body of `PUT /api/tournaments/{id}/total-rounds`. */
+export interface TotalRoundsRequestDto {
+    totalRounds: number;
 }

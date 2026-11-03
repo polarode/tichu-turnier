@@ -2,16 +2,6 @@ package tichu.domain
 
 import kotlin.random.Random
 
-/**
- * One team's standing going into the next round: [victoryPoints] (primary rank)
- * and [tichuPoints] (tie-breaker), see GLOSSARY.md.
- */
-data class PairingEntry(
-    val teamId: TeamId,
-    val victoryPoints: Int,
-    val tichuPoints: Int,
-)
-
 /** The pairings of all previous rounds, consulted to avoid rematches. */
 data class PairingHistory(val pairings: List<Pair<TeamId, TeamId>>) {
     private val played: Set<Set<TeamId>> = pairings.map { setOf(it.first, it.second) }.toSet()
@@ -114,39 +104,35 @@ object SwissPairing {
     }
 
     /**
-     * Rounds 2+: classic Swiss — standings sorted by VP desc, TP desc, team id asc.
-     * With an odd count the bottom three form the trio table, seated last in
-     * standings order, regardless of history; teams tied exactly (VP and TP) across
-     * that cut-off are drawn with [random]. The rest pair by a search for a
-     * rematch-free assignment (backtracking); when none exists, it picks the one
-     * with the fewest rematches. Among equally good pairings the one closest to the
-     * standings order wins. Only the trio draw is random: even counts never
-     * consume [random], so they depend on the input alone.
+     * Rounds 2+: classic Swiss in the order of the current [standings] (the one
+     * ordering, see [Standings.rank]). With an odd count the bottom three form the
+     * trio table, seated last in standings order, regardless of history; teams
+     * sharing the rank at that cut-off are drawn with [random]. The rest pair by a
+     * search for a rematch-free assignment (backtracking); when none exists, it
+     * picks the one with the fewest rematches. Among equally good pairings the one
+     * closest to the standings order wins. Only the trio draw is random: even
+     * counts never consume [random], so they depend on the input alone.
      */
-    fun pairNextRound(entries: List<PairingEntry>, history: PairingHistory, random: Random): Pairing {
-        val standings = entries.sortedWith(
-            compareByDescending<PairingEntry> { it.victoryPoints }
-                .thenByDescending { it.tichuPoints }
-                .thenBy { it.teamId.value },
-        )
-        val trio = if (standings.size % 2 == 1) bottomThree(standings, random) else emptyList()
-        val pairs = bestPairing(standings.map { it.teamId } - trio.toSet(), history)
+    fun pairNextRound(standings: Standings, history: PairingHistory, random: Random): Pairing {
+        val entries = standings.entries
+        val trio = if (entries.size % 2 == 1) bottomThree(entries, random) else emptyList()
+        val pairs = bestPairing(entries.map { it.team.teamId } - trio.toSet(), history)
         val seatings = pairs.map { it.toList() }
         return pairingOf(if (trio.isEmpty()) seatings else seatings + listOf(trio))
     }
 
     /**
-     * The bottom three of [standings] (already sorted), in standings order. The tie
-     * group straddling the cut-off (same VP and TP as the third-from-bottom team)
-     * fills the trio's open seats by a draw with [random].
+     * The bottom three of [standings] (already ranked), in standings order. The tie
+     * group straddling the cut-off (the third-from-bottom team's shared rank) fills
+     * the trio's open seats by a draw with [random].
      */
-    private fun bottomThree(standings: List<PairingEntry>, random: Random): List<TeamId> {
+    private fun bottomThree(standings: List<StandingsEntry>, random: Random): List<TeamId> {
         val cutOff = standings[standings.size - Table.TRIO_SIZE]
-        val tied = standings.filter { it.victoryPoints == cutOff.victoryPoints && it.tichuPoints == cutOff.tichuPoints }
+        val tied = standings.filter { it.rank == cutOff.rank }
         val below = standings.drop(standings.indexOf(tied.last()) + 1)
         val openSeats = Table.TRIO_SIZE - below.size
         val drawn = if (tied.size > openSeats) tied.shuffled(random).take(openSeats) else tied
-        return standings.filter { it in drawn || it in below }.map { it.teamId }
+        return standings.filter { it in drawn || it in below }.map { it.team.teamId }
     }
 
     /** Seats each seating, in seat order, at sequentially numbered tables: Table 1 = first seating. */

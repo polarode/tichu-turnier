@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
+import {
+    GRAND_TICHU_BONUS_OPTIONS,
+    TOTAL_ROUNDS_MAX,
+    TOTAL_ROUNDS_MIN,
+} from '@/domain/tournament.domain.ts';
 import type { I18n } from '@/shared/i18n/i18n.context.tsx';
 
 /**
@@ -21,6 +25,11 @@ export function tournamentFormSchema(t: I18n['t']) {
             .min(2, t('validation.tournamentMaxTeams.min'))
             .max(64, t('validation.tournamentMaxTeams.max')),
         grandTichuBonus: z.union(GRAND_TICHU_BONUS_OPTIONS.map((bonus) => z.literal(bonus))),
+        totalRounds: z
+            .number({ message: t('validation.tournamentTotalRounds.range') })
+            .int(t('validation.tournamentTotalRounds.range'))
+            .min(TOTAL_ROUNDS_MIN, t('validation.tournamentTotalRounds.range'))
+            .max(TOTAL_ROUNDS_MAX, t('validation.tournamentTotalRounds.range')),
     });
 }
 

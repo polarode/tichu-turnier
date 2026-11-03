@@ -72,6 +72,7 @@ function TournamentEditBody() {
                         description: tournament.description,
                         maxTeams: tournament.maxTeams,
                         grandTichuBonus: tournament.settings.grandTichuBonus,
+                        totalRounds: tournament.settings.totalRounds,
                     }}
                     submitLabelKey="tournament.edit.submit"
                     pendingLabelKey="tournament.edit.pending"

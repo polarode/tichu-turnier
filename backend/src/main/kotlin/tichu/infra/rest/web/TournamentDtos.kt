@@ -6,6 +6,7 @@ import tichu.application.api.StartedTournament
 import tichu.application.api.TableConfirmationState
 import tichu.domain.Round
 import tichu.domain.ScheduledGame
+import tichu.domain.StandingsEntry
 import tichu.domain.Table
 import tichu.domain.Tournament
 import tichu.domain.TournamentSettings
@@ -46,10 +47,11 @@ data class TournamentResponse(
 
 data class TournamentSettingsResponse(
     val grandTichuBonus: Int,
+    val totalRounds: Int,
 ) {
     companion object {
         fun from(settings: TournamentSettings): TournamentSettingsResponse =
-            TournamentSettingsResponse(grandTichuBonus = settings.grandTichuBonus)
+            TournamentSettingsResponse(grandTichuBonus = settings.grandTichuBonus, totalRounds = settings.totalRounds)
     }
 }
 
@@ -68,7 +70,35 @@ data class TournamentWriteRequestBody(
 data class TournamentSettingsRequestBody(
     /** Validated by the use case (100 or 200), so the error anchors to the field. */
     val grandTichuBonus: Int = TournamentSettings().grandTichuBonus,
+    /** Validated by the use case (1–20), so the error anchors to the field. */
+    val totalRounds: Int = TournamentSettings().totalRounds,
 )
+
+/** The body of `PUT /api/tournaments/{id}/total-rounds`; the range is validated by the use case. */
+data class TotalRoundsRequestBody(
+    @field:NotNull val totalRounds: Int,
+)
+
+/** One line of the admin standings read, in standings order. */
+data class StandingsEntryResponse(
+    val rank: Int,
+    val teamId: String,
+    val teamName: String,
+    val gamesPlayed: Int,
+    val victoryPoints: Int,
+    val tichuPoints: Int,
+) {
+    companion object {
+        fun from(entry: StandingsEntry): StandingsEntryResponse = StandingsEntryResponse(
+            rank = entry.rank,
+            teamId = entry.team.teamId.value,
+            teamName = entry.team.teamName,
+            gamesPlayed = entry.team.gamesPlayed,
+            victoryPoints = entry.team.victoryPoints,
+            tichuPoints = entry.team.tichuPoints,
+        )
+    }
+}
 
 /**
  * Wire representation of the start result: the activated tournament plus the newly

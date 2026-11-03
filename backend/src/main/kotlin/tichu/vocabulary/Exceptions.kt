@@ -37,6 +37,9 @@ enum class ErrorCode {
     /** A tournament edit would drop `max_teams` below the number of teams already registered. */
     MAX_TEAMS_BELOW_TEAM_COUNT,
 
+    /** A Total Rounds change would drop below the number of rounds already drawn. */
+    TOTAL_ROUNDS_BELOW_ROUND_COUNT,
+
     /**
      * An admin-management mutation conflicts with the target account's current lifecycle
      * state (approving a non-pending request, reactivating a non-disabled account, ...).
@@ -66,6 +69,9 @@ enum class ErrorCode {
 
     /** A tournament with fewer than two teams cannot be started. */
     INSUFFICIENT_TEAMS,
+
+    /** A read that needs a started tournament (e.g. the standings) on one still in `setup`. */
+    TOURNAMENT_NOT_STARTED,
 
     /** A submitted game result violates the scoring rules (#99); field-anchored where sensible. */
     GAME_VALIDATION_INVALID,
@@ -227,6 +233,14 @@ class InsufficientTeamsException(message: String) :
     ApiException(ErrorCode.INSUFFICIENT_TEAMS, message)
 
 /**
+ * Thrown when something that only exists once the tournament has started (its
+ * standings) is requested while it is still in `setup`. A state problem, not invalid
+ * input. Mapped to HTTP 409.
+ */
+class TournamentNotStartedException(message: String) :
+    ApiException(ErrorCode.TOURNAMENT_NOT_STARTED, message)
+
+/**
  * Thrown when a team name clashes with an existing team of the same tournament.
  * Field-anchored to the team `name` so the frontend can highlight the input.
  * Mapped to HTTP 409.
@@ -271,6 +285,16 @@ class MaxTeamsBelowTeamCountException(
     val field: String,
     message: String,
 ) : ApiException(ErrorCode.MAX_TEAMS_BELOW_TEAM_COUNT, message)
+
+/**
+ * Thrown when the Total Rounds would drop below the number of rounds already
+ * drawn. Field-anchored to `totalRounds` so the frontend shows it at the
+ * control. Mapped to HTTP 409.
+ */
+class TotalRoundsBelowRoundCountException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.TOTAL_ROUNDS_BELOW_ROUND_COUNT, message)
 
 /**
  * Thrown by the game scoring domain component (#99) when a submitted game violates

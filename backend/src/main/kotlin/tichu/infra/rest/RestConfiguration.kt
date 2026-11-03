@@ -30,7 +30,9 @@ import tichu.application.api.LoginAdmin
 import tichu.application.api.LogoutAdmin
 import tichu.application.api.RefreshSession
 import tichu.application.api.RegisterAdmin
+import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
+import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartTournament
 import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
@@ -71,8 +73,19 @@ class RestConfiguration(
         deleteTournament: DeleteTournament,
         startTournament: StartTournament,
         listRounds: ListRounds,
-    ): TournamentController =
-        TournamentController(createTournament, listTournaments, getTournament, updateTournament, deleteTournament, startTournament, listRounds)
+        getStandings: GetStandings,
+        setTotalRounds: SetTotalRounds,
+    ): TournamentController = TournamentController(
+        createTournament,
+        listTournaments,
+        getTournament,
+        updateTournament,
+        deleteTournament,
+        startTournament,
+        listRounds,
+        getStandings,
+        setTotalRounds,
+    )
 
     @Bean
     fun teamController(

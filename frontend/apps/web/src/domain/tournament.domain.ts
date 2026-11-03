@@ -7,9 +7,16 @@ import type { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 export const GRAND_TICHU_BONUS_OPTIONS = [100, 200] as const;
 export type GrandTichuBonus = (typeof GRAND_TICHU_BONUS_OPTIONS)[number];
 
+/** The bounds of the Total Rounds (glossary), mirroring the backend's range. */
+export const TOTAL_ROUNDS_MIN = 1;
+export const TOTAL_ROUNDS_MAX = 20;
+export const TOTAL_ROUNDS_DEFAULT = 4;
+
 /** Organizer-configurable tournament rules. Mirrors the backend settings value type. */
 export interface TournamentSettings {
     grandTichuBonus: GrandTichuBonus;
+    /** How many rounds the tournament runs; the one setting still adjustable while ACTIVE. */
+    totalRounds: number;
 }
 
 /**

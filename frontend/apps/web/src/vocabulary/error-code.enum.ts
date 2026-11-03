@@ -18,6 +18,8 @@ export const ERROR_CODES = [
     'DUPLICATE_TEAM_PLAYERS',
     'TEAM_LIMIT_REACHED',
     'MAX_TEAMS_BELOW_TEAM_COUNT',
+    /** A Total Rounds change below the rounds already drawn. */
+    'TOTAL_ROUNDS_BELOW_ROUND_COUNT',
     'ADMIN_STATUS_CONFLICT',
     'INVITE_INVALID',
     'INVITE_EXPIRED',
@@ -32,6 +34,9 @@ export const ERROR_CODES = [
 
     /** A tournament with fewer than two teams cannot be started. */
     'INSUFFICIENT_TEAMS',
+
+    /** Standings requested for a tournament still in setup. */
+    'TOURNAMENT_NOT_STARTED',
 
     // --- Scoring (S5) ---
     /** A submitted game failed the scoring engine's validation; field-anchored where sensible. */

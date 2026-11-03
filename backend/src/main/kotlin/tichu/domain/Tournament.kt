@@ -49,8 +49,14 @@ data class TournamentSettings(
      * 100 to score it like a small Tichu. One of [GRAND_TICHU_BONUS_OPTIONS].
      */
     val grandTichuBonus: Int = 200,
+    /**
+     * The Total Rounds (GLOSSARY.md): how many rounds the tournament runs, within
+     * [TOTAL_ROUNDS_RANGE]. The one setting still adjustable while ACTIVE.
+     */
+    val totalRounds: Int = 4,
 ) {
     companion object {
         val GRAND_TICHU_BONUS_OPTIONS = setOf(100, 200)
+        val TOTAL_ROUNDS_RANGE = 1..20
     }
 }

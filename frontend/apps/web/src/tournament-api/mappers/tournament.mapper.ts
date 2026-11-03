@@ -27,6 +27,7 @@ export function tournamentDtoToDomain(dto: TournamentDto): Tournament {
 export function tournamentSettingsDtoToDomain(dto: TournamentSettingsDto): TournamentSettings {
     return {
         grandTichuBonus: dto.grandTichuBonus,
+        totalRounds: dto.totalRounds,
     };
 }
 
@@ -34,6 +35,7 @@ export function tournamentSettingsDtoToDomain(dto: TournamentSettingsDto): Tourn
 export function tournamentSettingsToDto(settings: TournamentSettings): TournamentSettingsDto {
     return {
         grandTichuBonus: settings.grandTichuBonus,
+        totalRounds: settings.totalRounds,
     };
 }
 
@@ -46,12 +48,13 @@ export function tournamentFormToWriteInput(values: {
     description: string;
     maxTeams: number;
     grandTichuBonus: GrandTichuBonus;
+    totalRounds: number;
 }): TournamentWriteInput {
     return {
         name: values.name,
         description: values.description,
         maxTeams: values.maxTeams,
-        settings: { grandTichuBonus: values.grandTichuBonus },
+        settings: { grandTichuBonus: values.grandTichuBonus, totalRounds: values.totalRounds },
     };
 }
 

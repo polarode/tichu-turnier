@@ -3,7 +3,7 @@ import { Button } from '@tichu/ui/button.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tichu/ui/select.tsx';
 import { Controller, useForm } from 'react-hook-form';
 
-import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
+import { GRAND_TICHU_BONUS_OPTIONS, TOTAL_ROUNDS_DEFAULT } from '@/domain/tournament.domain.ts';
 import {
     tournamentFormSchema,
     type TournamentFormValues,
@@ -21,7 +21,7 @@ import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
  * `maxTeams` itself, so the `fields` map handles it.
  */
 const SERVER_ERROR_ANCHORS = {
-    fields: { name: 'name', maxTeams: 'maxTeams', grandTichuBonus: 'grandTichuBonus' },
+    fields: { name: 'name', maxTeams: 'maxTeams', grandTichuBonus: 'grandTichuBonus', totalRounds: 'totalRounds' },
     codes: { MAX_TEAMS_BELOW_TEAM_COUNT: 'maxTeams' },
 } as const;
 
@@ -38,7 +38,7 @@ interface TournamentFormProps {
 
 /**
  * The tournament settings form shared by create and edit: name, description, max team
- * count and the grand-Tichu toggle. Client validation is instant; server failures are
+ * count, the total rounds and the grand Tichu bonus. Client validation is instant; server failures are
  * localized and anchored to the offending field where the code allows it.
  */
 export function TournamentForm({
@@ -55,6 +55,7 @@ export function TournamentForm({
             description: '',
             maxTeams: 8,
             grandTichuBonus: 200,
+            totalRounds: TOTAL_ROUNDS_DEFAULT,
             ...defaultValues,
         },
     });
@@ -95,6 +96,13 @@ export function TournamentForm({
                 label={t('tournament.form.maxTeams')}
                 error={form.formState.errors.maxTeams?.message}
                 {...form.register('maxTeams', { valueAsNumber: true })}
+            />
+            <FormField
+                id="tournament-total-rounds"
+                type="number"
+                label={t('tournament.form.totalRounds')}
+                error={form.formState.errors.totalRounds?.message}
+                {...form.register('totalRounds', { valueAsNumber: true })}
             />
 
             <div className="flex flex-col gap-1.5">

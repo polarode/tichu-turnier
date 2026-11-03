@@ -28,5 +28,16 @@ internal object TournamentInputValidator {
                 "Grand Tichu bonus must be one of ${TournamentSettings.GRAND_TICHU_BONUS_OPTIONS}",
             )
         }
+        validateTotalRounds(settings.totalRounds)
+    }
+
+    fun validateTotalRounds(totalRounds: Int) {
+        val range = TournamentSettings.TOTAL_ROUNDS_RANGE
+        if (totalRounds !in range) {
+            throw InvalidFieldException(
+                "totalRounds",
+                "Total rounds must be between ${range.first} and ${range.last}",
+            )
+        }
     }
 }

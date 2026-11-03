@@ -5,7 +5,9 @@ import tichu.application.api.CreateTournament
 import tichu.application.api.DeleteTournament
 import tichu.application.api.GetTournament
 import tichu.application.api.ListTournaments
+import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
+import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartTournament
 import tichu.application.api.TournamentWriteRequest
 import tichu.application.api.UpdateTournament
@@ -43,6 +45,8 @@ class TournamentController(
     private val deleteTournament: DeleteTournament,
     private val startTournament: StartTournament,
     private val listRounds: ListRounds,
+    private val getStandings: GetStandings,
+    private val setTotalRounds: SetTotalRounds,
 ) {
 
     @PostMapping
@@ -80,6 +84,24 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): List<RoundResponse> = listRounds.list(TournamentId(id), principal.adminUserId).map(RoundResponse::fromOverview)
 
+    /** Admin-only: teams and the public never see standings before the results are published. */
+    @GetMapping("/{id}/standings")
+    fun standings(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): List<StandingsEntryResponse> =
+        getStandings.get(TournamentId(id), principal.adminUserId).entries.map(StandingsEntryResponse::from)
+
+    /** Changes only the Total Rounds — the one setting still adjustable while active. */
+    @PutMapping("/{id}/total-rounds")
+    fun totalRounds(
+        @PathVariable id: String,
+        @Valid @RequestBody body: TotalRoundsRequestBody,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentResponse = TournamentResponse.from(
+        setTotalRounds.set(TournamentId(id), body.totalRounds, principal.adminUserId),
+    )
+
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: String,
@@ -104,6 +126,6 @@ class TournamentController(
             name = name,
             description = description,
             maxTeams = maxTeams,
-            settings = TournamentSettings(grandTichuBonus = settings.grandTichuBonus),
+            settings = TournamentSettings(grandTichuBonus = settings.grandTichuBonus, totalRounds = settings.totalRounds),
         )
 }

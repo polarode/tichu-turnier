@@ -4,7 +4,9 @@ import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import { TeamsSection } from '@/features/teams/components/teams-section.component.tsx';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
+import { ProgressCard } from '@/features/tournaments/components/progress-card.component.tsx';
 import { RoundsSection } from '@/features/tournaments/components/rounds-section.component.tsx';
+import { StandingsSection } from '@/features/tournaments/components/standings-section.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
@@ -15,8 +17,14 @@ import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
-/** The two sections of a started tournament, switched by tabs and kept in the URL. */
-type DetailTab = 'rounds' | 'teams';
+/** The sections of a started tournament, switched by tabs and kept in the URL. */
+type DetailTab = 'rounds' | 'standings' | 'teams';
+
+const DETAIL_TABS: readonly DetailTab[] = ['rounds', 'standings', 'teams'];
+
+function isDetailTab(value: unknown): value is DetailTab {
+    return DETAIL_TABS.some((tab) => tab === value);
+}
 
 interface DetailSearch {
     tab?: DetailTab;
@@ -25,9 +33,11 @@ interface DetailSearch {
 /**
  * The tournament detail screen: identity and status, the start and edit entries
  * (edit only while in setup, since editing is locked afterwards), and the content
- * below. In setup that is the team list alone; once started, Rounds and Teams sit
- * behind tabs — Rounds first, since that is what an admin follows during play.
- * The active tab lives in `?tab=` so a reload or the back button keeps it.
+ * below. In setup that is the team list alone; once started, a progress card
+ * (round x of the Total Rounds, the current round's completed tables) sits above
+ * Rounds · Standings · Teams tabs — Rounds first, since that is what an admin
+ * follows during play. The active tab lives in `?tab=` so a reload or the back
+ * button keeps it.
  */
 function TournamentDetailComponent() {
     // Outside the body, so loading and error states keep a way back too.
@@ -108,7 +118,17 @@ function TournamentDetailBody() {
                     <p className="text-sm text-muted-foreground">
                         {`${t('tournament.form.grandTichuBonus')}: ${tournament.settings.grandTichuBonus}`}
                     </p>
+                    {editable ? (
+                        // Once started, the progress card shows (and adjusts) the Total Rounds.
+                        <p className="text-sm text-muted-foreground">
+                            {`${t('tournament.form.totalRounds')}: ${tournament.settings.totalRounds}`}
+                        </p>
+                    ) : null}
                 </div>
+
+                {!editable && roundsQuery.data ? (
+                    <ProgressCard tournament={tournament} rounds={roundsQuery.data} />
+                ) : null}
 
                 {teamsQuery.isPending ? (
                     <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -141,6 +161,7 @@ function TournamentDetailBody() {
                                         ? t('rounds.section.title')
                                         : `${t('rounds.section.title')} (${roundCount})`,
                                 },
+                                { value: 'standings', label: t('standings.title') },
                                 {
                                     value: 'teams',
                                     label: `${t('teams.section.title')} (${teams.length})`,
@@ -154,6 +175,8 @@ function TournamentDetailBody() {
                                     teams={teams}
                                     live={live}
                                 />
+                            ) : tab === 'standings' ? (
+                                <StandingsSection tournamentId={tournament.id} live={live} />
                             ) : (
                                 <TeamsSection
                                     tournamentId={tournament.id}
@@ -171,6 +194,6 @@ function TournamentDetailBody() {
 
 export const Route = createFileRoute('/admin/tournaments/$tournamentId')({
     validateSearch: (search: Record<string, unknown>): DetailSearch =>
-        search.tab === 'rounds' || search.tab === 'teams' ? { tab: search.tab } : {},
+        isDetailTab(search.tab) ? { tab: search.tab } : {},
     component: TournamentDetailComponent,
 });

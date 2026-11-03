@@ -22,7 +22,7 @@ _Avoid_: preparation, draft mode
 
 **Total Rounds**:
 The organizer's chosen number of rounds the tournament runs. Never below the
-rounds already played; once the last round is complete, the tournament can only
+rounds already drawn; once the last round is complete, the tournament can only
 be finished, not advanced.
 _Avoid_: round limit, max rounds
 

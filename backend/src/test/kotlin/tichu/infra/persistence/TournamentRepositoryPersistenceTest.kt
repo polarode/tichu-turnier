@@ -68,7 +68,7 @@ class TournamentRepositoryPersistenceTest(
 
         // Stored as a real JSON document, not a flattened column set.
         val rawSettings = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = 't-1'", String::class.java)
-        assertEquals("""{"grandTichuBonus": 100}""", rawSettings)
+        assertEquals("""{"totalRounds": 4, "grandTichuBonus": 100}""", rawSettings)
 
         // And the adapter maps it back into the domain value object.
         val freshAdapter = JpaTournamentRepository(springDataTournamentRepository)
@@ -92,6 +92,26 @@ class TournamentRepositoryPersistenceTest(
         assertEquals(TournamentSettings(grandTichuBonus = 100), tournamentRepository.findById(TournamentId("t-off"))?.settings)
         assertEquals(TournamentSettings(grandTichuBonus = 200), tournamentRepository.findById(TournamentId("t-on"))?.settings)
         assertEquals(TournamentSettings(grandTichuBonus = 200), tournamentRepository.findById(TournamentId("t-unset"))?.settings)
+    }
+
+    @Test
+    fun `V18 gives tournaments without total rounds the default 4 and keeps a stored value`() {
+        // Raw JSON is asserted: reading through the adapter would hide a missing key behind the domain default.
+        val stored = mapOf("t-old" to """{"grandTichuBonus": 100}""", "t-set" to """{"grandTichuBonus": 200, "totalRounds": 6}""")
+        for ((id, settings) in stored) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Stored', '', 16, ?::jsonb, 'ACTIVE', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V18__total_rounds_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)
+        assertEquals("""{"totalRounds": 4, "grandTichuBonus": 100}""", rawSettings("t-old"))
+        assertEquals("""{"totalRounds": 6, "grandTichuBonus": 200}""", rawSettings("t-set"))
     }
 
     @Test

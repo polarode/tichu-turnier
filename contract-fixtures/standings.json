@@ -1,0 +1,17 @@
+{
+  "scenario": [
+    "Five teams. Every game is decided by base score alone (no calls, no bombs): the stated base goes to the first team, the rest to the second.",
+    "Round 1, table A (Falcons vs Owls), completed: four 50/50 ties -> 4 VP and 200 TP each.",
+    "Round 1, trio table B (Ravens, Badgers, Wolves), completed: Ravens beat Badgers 70/30 twice and Wolves 70/30 twice; Badgers beat Wolves 70/30 twice -> Ravens 8 VP 280 TP, Badgers 4 VP 200 TP, Wolves 0 VP 120 TP.",
+    "Round 2, table A (Falcons vs Ravens): all four games 90/10 entered, only Falcons confirmed -> not completed, does not count.",
+    "Round 2, trio table B (Owls, Badgers, Wolves): no games entered.",
+    "Result: Badgers, Falcons and Owls tie exactly at 4 VP / 200 TP and share rank 2 (listed by name); Wolves follow at rank 5."
+  ],
+  "response": [
+    { "rank": 1, "teamId": "team-ravens", "teamName": "Ravens", "gamesPlayed": 4, "victoryPoints": 8, "tichuPoints": 280 },
+    { "rank": 2, "teamId": "team-badgers", "teamName": "Badgers", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200 },
+    { "rank": 2, "teamId": "team-falcons", "teamName": "Falcons", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200 },
+    { "rank": 2, "teamId": "team-owls", "teamName": "Owls", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200 },
+    { "rank": 5, "teamId": "team-wolves", "teamName": "Wolves", "gamesPlayed": 4, "victoryPoints": 0, "tichuPoints": 120 }
+  ]
+}

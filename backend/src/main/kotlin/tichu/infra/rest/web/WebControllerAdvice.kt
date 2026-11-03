@@ -23,6 +23,7 @@ import tichu.vocabulary.InviteInvalidException
 import tichu.vocabulary.InviteStatusConflictException
 import tichu.vocabulary.InsufficientTeamsException
 import tichu.vocabulary.MaxTeamsBelowTeamCountException
+import tichu.vocabulary.TotalRoundsBelowRoundCountException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
@@ -31,6 +32,7 @@ import tichu.vocabulary.TeamAccessLinkConflictException
 import tichu.vocabulary.TeamLimitReachedException
 import tichu.vocabulary.TournamentNotEditableException
 import tichu.vocabulary.TournamentNotStartableException
+import tichu.vocabulary.TournamentNotStartedException
 import tichu.vocabulary.UnauthenticatedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -145,6 +147,11 @@ class WebControllerAdvice {
         problem(HttpStatus.CONFLICT, ex)
 
     /** The tournament cannot start because it holds fewer than two teams: HTTP 409. */
+    /** Standings requested while still in setup: HTTP 409. */
+    @ExceptionHandler(TournamentNotStartedException::class)
+    fun handleTournamentNotStarted(ex: TournamentNotStartedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
     @ExceptionHandler(InsufficientTeamsException::class)
     fun handleInsufficientTeams(ex: InsufficientTeamsException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
@@ -170,6 +177,11 @@ class WebControllerAdvice {
     /** Lowering `max_teams` below the registered team count: 409, anchored to `maxTeams`. */
     @ExceptionHandler(MaxTeamsBelowTeamCountException::class)
     fun handleMaxTeamsBelowTeamCount(ex: MaxTeamsBelowTeamCountException): ProblemDetail =
+        anchoredConflict(ex, ex.field)
+
+    /** Lowering the Total Rounds below the created rounds: 409, anchored to `totalRounds`. */
+    @ExceptionHandler(TotalRoundsBelowRoundCountException::class)
+    fun handleTotalRoundsBelowRoundCount(ex: TotalRoundsBelowRoundCountException): ProblemDetail =
         anchoredConflict(ex, ex.field)
 
     /** A submitted game violates the scoring rules: 400, field-anchored where sensible (#100). */

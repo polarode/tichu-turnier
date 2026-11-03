@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { TournamentWriteInput } from '@/domain/tournament.domain.ts';
+import type { Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
 import { QueryKeys, tournamentQueryKey } from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 
@@ -45,5 +45,33 @@ export function useDeleteTournament() {
     return useMutation({
         mutationFn: (id: string) => TournamentRepository.remove(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: [QueryKeys.TOURNAMENTS] }),
+    });
+}
+
+/**
+ * Changes the Total Rounds, one step per call. Optimistic: the detail shows the new
+ * value at once and rolls back when the server rejects it (e.g. below the rounds
+ * already drawn); the caller shows the error.
+ */
+export function useSetTotalRounds(id: string) {
+    const queryClient = useQueryClient();
+    const key = tournamentQueryKey(id);
+    return useMutation({
+        mutationFn: (totalRounds: number) => TournamentRepository.setTotalRounds(id, totalRounds),
+        onMutate: async (totalRounds) => {
+            await queryClient.cancelQueries({ queryKey: key });
+            const previous = queryClient.getQueryData<Tournament>(key);
+            if (previous) {
+                queryClient.setQueryData<Tournament>(key, {
+                    ...previous,
+                    settings: { ...previous.settings, totalRounds },
+                });
+            }
+            return { previous };
+        },
+        onError: (_error, _totalRounds, context) => {
+            if (context?.previous) queryClient.setQueryData(key, context.previous);
+        },
+        onSuccess: (tournament) => queryClient.setQueryData(key, tournament),
     });
 }

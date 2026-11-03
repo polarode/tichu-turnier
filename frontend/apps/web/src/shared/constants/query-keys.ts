@@ -4,6 +4,7 @@ export const QueryKeys = {
     TOURNAMENTS: 'tournaments',
     TEAMS: 'teams',
     ROUNDS: 'rounds',
+    STANDINGS: 'standings',
     ADMIN_ACCOUNTS: 'admin-accounts',
     ADMIN_INVITES: 'admin-invites',
     TEAM_ME: 'team-me',
@@ -26,6 +27,9 @@ export const teamQueryKey = (tournamentId: string, teamId: string) =>
 
 /** Key for a tournament's rounds list. */
 export const roundsQueryKey = (tournamentId: string) => [QueryKeys.ROUNDS, tournamentId] as const;
+
+/** Key for a tournament's admin-only standings. */
+export const standingsQueryKey = (tournamentId: string) => [QueryKeys.STANDINGS, tournamentId] as const;
 
 /** Key for the owner console's admin-account list. */
 export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;

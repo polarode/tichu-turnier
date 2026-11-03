@@ -43,6 +43,7 @@ export const de: Catalog = {
     'validation.tournamentMaxTeams.integer': 'Die maximale Teamanzahl muss eine ganze Zahl sein.',
     'validation.tournamentMaxTeams.min': 'Das Turnier benötigt mindestens 2 Teams.',
     'validation.tournamentMaxTeams.max': 'Die maximale Teamanzahl darf höchstens 64 betragen.',
+    'validation.tournamentTotalRounds.range': 'Die Rundenzahl muss zwischen 1 und 20 liegen.',
     'validation.scoring.positions':
         'Setze die Platzierung jedes Spielers (1–4, oder 1 und 2 bei einem Doppelsieg).',
 
@@ -61,6 +62,7 @@ export const de: Catalog = {
     'error.duplicateTeamPlayers': 'Die beiden Spieler müssen unterschiedlich sein.',
     'error.teamLimitReached': 'Dieses Turnier hat bereits die maximale Teamanzahl erreicht.',
     'error.maxTeamsBelowTeamCount': 'Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.',
+    'error.totalRoundsBelowRoundCount': 'Die Rundenzahl darf nicht unter den bereits ausgelosten Runden liegen.',
     'error.adminStatusConflict': 'Das Konto ist nicht in einem Zustand, der diese Aktion erlaubt.',
     'error.inviteInvalid': 'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
     'error.inviteExpired': 'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
@@ -165,6 +167,7 @@ export const de: Catalog = {
     'tournament.form.name': 'Name',
     'tournament.form.description': 'Beschreibung',
     'tournament.form.maxTeams': 'Maximale Teamanzahl',
+    'tournament.form.totalRounds': 'Runden insgesamt',
     'tournament.form.grandTichuBonus': 'Grand-Tichu-Bonus',
     'tournament.detail.title': 'Turnier',
     'tournament.detail.backLink': 'Zum Turnier',
@@ -191,6 +194,21 @@ export const de: Catalog = {
     'rounds.games.caption': 'Spiele',
     'rounds.victoryPoints': 'Siegpunkte',
     'rounds.trio': 'Trio',
+    'standings.title': 'Rangliste',
+    'standings.empty': 'Die Rangliste erscheint, sobald der erste Tisch abgeschlossen ist.',
+    'standings.rank': 'Platz',
+    'standings.team': 'Team',
+    'standings.games': 'Spiele',
+    'standings.victoryPoints': 'SP',
+    'standings.tichuPoints': 'TP',
+    'standings.victoryPoints.long': 'Siegpunkte',
+    'standings.tichuPoints.long': 'Tichu-Punkte',
+    'progress.title': 'Fortschritt',
+    'progress.of': 'von',
+    'progress.addRound': 'Runde hinzufügen',
+    'progress.removeRound': 'Runde entfernen',
+    'progress.tables': 'Abgeschlossene Tische',
+    'progress.tablesCompleted': 'Tische abgeschlossen',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',
@@ -248,6 +266,7 @@ export const de: Catalog = {
         'Dieser Zugriffslink ist ungültig oder nicht mehr aktiv. Bitte wende dich an deinen Turnier-Organisator.',
     'error.tournamentNotStartable':
         'Dieses Turnier kann nicht gestartet werden, weil es nicht mehr in der Vorbereitung ist.',
+    'error.tournamentNotStarted': 'Dieses Turnier hat noch nicht begonnen.',
     'error.insufficientTeams':
         'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
     'error.gameValidationInvalid':

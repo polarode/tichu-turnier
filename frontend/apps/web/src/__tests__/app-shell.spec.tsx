@@ -21,6 +21,9 @@ describe('AppShell', () => {
             'href',
             '/public',
         );
+        // The active area is announced, not only shown by its suit-coloured bar.
+        expect(within(nav).getByRole('link', { name: 'Öffentlich' })).toHaveAttribute('aria-current', 'page');
+        expect(within(nav).getByRole('link', { name: 'Team' })).not.toHaveAttribute('aria-current');
         // Signed-out visitors see neither a login entry nor an avatar in the shell.
         expect(screen.queryByRole('link', { name: 'Anmelden' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();

@@ -33,13 +33,13 @@
     --color-border: #e1e2e0;
     --color-ring: #1f3a8a;
 
-    /* The app header: a white bar under the suit stripe; the active nav item takes the soft ink tint. */
+    /* The app header: a white bar under the suit stripe; header controls take the soft ink tint on hover. */
     --color-header: #ffffff;
     --color-header-foreground: #15161a;
     --color-header-muted: #5c5f68;
     --color-header-active: #e6ebf8;
 
-    /* The four suits (Jade, Pagoda, Star, Sword), used for the header stripe. */
+    /* The four suits (Jade, Pagoda, Star, Sword): the header stripe and the active nav tab's underline. */
     --color-suit-jade: #0f7a5c;
     --color-suit-pagoda: #2563a8;
     --color-suit-star: #b4233c;

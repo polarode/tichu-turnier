@@ -73,6 +73,15 @@ enum class ErrorCode {
     /** A read that needs a started tournament (e.g. the standings) on one still in `setup`. */
     TOURNAMENT_NOT_STARTED,
 
+    /** An action that needs an `active` tournament (e.g. starting the next round) on one that is not. */
+    TOURNAMENT_NOT_ACTIVE,
+
+    /** The next round can only start once every table of the current round is completed. */
+    ROUND_INCOMPLETE,
+
+    /** The Total Rounds are reached: the tournament can only be finished, not advanced. */
+    TOTAL_ROUNDS_REACHED,
+
     /** A submitted game result violates the scoring rules (#99); field-anchored where sensible. */
     GAME_VALIDATION_INVALID,
 
@@ -239,6 +248,27 @@ class InsufficientTeamsException(message: String) :
  */
 class TournamentNotStartedException(message: String) :
     ApiException(ErrorCode.TOURNAMENT_NOT_STARTED, message)
+
+/**
+ * Thrown when an action that needs an `active` tournament is requested in any other
+ * status (still in setup, or already finished). A state problem. Mapped to HTTP 409.
+ */
+class TournamentNotActiveException(message: String) :
+    ApiException(ErrorCode.TOURNAMENT_NOT_ACTIVE, message)
+
+/**
+ * Thrown when the next round is started while a table of the current round is not
+ * yet completed. Mapped to HTTP 409.
+ */
+class RoundIncompleteException(message: String) :
+    ApiException(ErrorCode.ROUND_INCOMPLETE, message)
+
+/**
+ * Thrown when the next round is started although the Total Rounds are reached.
+ * Mapped to HTTP 409.
+ */
+class TotalRoundsReachedException(message: String) :
+    ApiException(ErrorCode.TOTAL_ROUNDS_REACHED, message)
 
 /**
  * Thrown when a team name clashes with an existing team of the same tournament.

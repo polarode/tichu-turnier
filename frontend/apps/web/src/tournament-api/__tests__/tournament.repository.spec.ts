@@ -250,3 +250,35 @@ describe('TournamentRepository standings/total rounds', () => {
         expect(JSON.parse(mock.history.put[0]!.data)).toEqual({ totalRounds: 6 });
     });
 });
+
+describe('TournamentRepository next round', () => {
+    let mock: MockAdapter;
+
+    beforeEach(() => {
+        mock = new MockAdapter(apiClient);
+    });
+
+    afterEach(() => {
+        mock.restore();
+    });
+
+    it('starts the next round and maps the new round to domain', async () => {
+        mock.onPost('/api/tournaments/t-1/rounds').reply(200, { ...roundsResponse[0], roundNumber: 2 });
+
+        const round = await TournamentRepository.startNextRound('t-1');
+
+        expect(round.number).toBe(2);
+        expect(round.tables[0]!.teamIds).toEqual(['team-a', 'team-b']);
+    });
+
+    it('surfaces advance-rejection codes as a typed ApiError', async () => {
+        for (const code of ['ROUND_INCOMPLETE', 'TOTAL_ROUNDS_REACHED', 'TOURNAMENT_NOT_ACTIVE'] as const) {
+            mock.onPost('/api/tournaments/t-1/rounds').replyOnce(409, { status: 409, code, detail: 'rejected' });
+
+            const error = await TournamentRepository.startNextRound('t-1').catch((e: unknown) => e);
+
+            expect(error).toBeInstanceOf(ApiError);
+            expect((error as ApiError).code).toBe(code);
+        }
+    });
+});

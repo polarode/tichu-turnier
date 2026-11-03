@@ -8,6 +8,7 @@ import tichu.application.api.ListTournaments
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
 import tichu.application.api.SetTotalRounds
+import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
 import tichu.application.api.TournamentWriteRequest
 import tichu.application.api.UpdateTournament
@@ -47,6 +48,7 @@ class TournamentController(
     private val listRounds: ListRounds,
     private val getStandings: GetStandings,
     private val setTotalRounds: SetTotalRounds,
+    private val startNextRound: StartNextRound,
 ) {
 
     @PostMapping
@@ -83,6 +85,13 @@ class TournamentController(
         @PathVariable id: String,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): List<RoundResponse> = listRounds.list(TournamentId(id), principal.adminUserId).map(RoundResponse::fromOverview)
+
+    /** Starts the next round, drawn from the current standings; answers the new round. */
+    @PostMapping("/{id}/rounds")
+    fun startNextRound(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): RoundResponse = RoundResponse.from(startNextRound.start(TournamentId(id), principal.adminUserId))
 
     /** Admin-only: teams and the public never see standings before the results are published. */
     @GetMapping("/{id}/standings")

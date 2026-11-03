@@ -56,9 +56,7 @@ class GetStandingsQueryTest {
     private val query = GetStandingsQuery(
         tournamentRepository,
         teamRepository,
-        roundRepository,
-        gameRepository,
-        confirmationRepository,
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
     )
 
     private fun team(id: String, name: String) = teamRepository.save(

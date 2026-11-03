@@ -209,6 +209,11 @@ export const de: Catalog = {
     'progress.removeRound': 'Runde entfernen',
     'progress.tables': 'Abgeschlossene Tische',
     'progress.tablesCompleted': 'Tische abgeschlossen',
+    'progress.nextRound.action': 'Nächste Runde starten',
+    'progress.nextRound.confirmDescription':
+        'Die Paarungen werden aus der aktuellen Rangliste ausgelost. Die Teams sehen ihren neuen Tisch sofort.',
+    'progress.nextRound.openTables': 'Noch offene Tische:',
+    'progress.lastRound': 'Letzte Runde – als Nächstes wird das Turnier abgeschlossen.',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',
@@ -267,6 +272,9 @@ export const de: Catalog = {
     'error.tournamentNotStartable':
         'Dieses Turnier kann nicht gestartet werden, weil es nicht mehr in der Vorbereitung ist.',
     'error.tournamentNotStarted': 'Dieses Turnier hat noch nicht begonnen.',
+    'error.tournamentNotActive': 'Das ist nur möglich, solange das Turnier läuft.',
+    'error.roundIncomplete': 'Die nächste Runde kann erst starten, wenn alle Tische abgeschlossen sind.',
+    'error.totalRoundsReached': 'Alle Runden sind gespielt; das Turnier kann nur noch abgeschlossen werden.',
     'error.insufficientTeams':
         'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
     'error.gameValidationInvalid':

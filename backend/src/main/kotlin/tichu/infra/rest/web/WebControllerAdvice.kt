@@ -33,6 +33,9 @@ import tichu.vocabulary.TeamLimitReachedException
 import tichu.vocabulary.TournamentNotEditableException
 import tichu.vocabulary.TournamentNotStartableException
 import tichu.vocabulary.TournamentNotStartedException
+import tichu.vocabulary.TournamentNotActiveException
+import tichu.vocabulary.RoundIncompleteException
+import tichu.vocabulary.TotalRoundsReachedException
 import tichu.vocabulary.UnauthenticatedException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -150,6 +153,21 @@ class WebControllerAdvice {
     /** Standings requested while still in setup: HTTP 409. */
     @ExceptionHandler(TournamentNotStartedException::class)
     fun handleTournamentNotStarted(ex: TournamentNotStartedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** An action needing an active tournament on one that is not: HTTP 409. */
+    @ExceptionHandler(TournamentNotActiveException::class)
+    fun handleTournamentNotActive(ex: TournamentNotActiveException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** The next round while a table of the current one is not completed: HTTP 409. */
+    @ExceptionHandler(RoundIncompleteException::class)
+    fun handleRoundIncomplete(ex: RoundIncompleteException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** The next round once the Total Rounds are reached: HTTP 409. */
+    @ExceptionHandler(TotalRoundsReachedException::class)
+    fun handleTotalRoundsReached(ex: TotalRoundsReachedException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
     @ExceptionHandler(InsufficientTeamsException::class)

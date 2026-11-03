@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { buttonVariants } from '@tichu/ui/button.tsx';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
@@ -64,6 +65,12 @@ function TournamentDetailBody() {
             enabled: status !== undefined && status !== TournamentStatus.SETUP,
         });
         const roundCount = roundsQuery.data?.length;
+        // Bumped when a round starts: remounts the rounds view, which then follows the latest round.
+        const [roundsViewKey, setRoundsViewKey] = useState(0);
+        const showNewRound = () => {
+            setRoundsViewKey((key) => key + 1);
+            void navigate({ search: { tab: 'rounds' }, replace: true });
+        };
 
         if (tournamentQuery.isPending) {
             return <p className="text-muted-foreground">{t('common.loading')}</p>;
@@ -127,7 +134,7 @@ function TournamentDetailBody() {
                 </div>
 
                 {!editable && roundsQuery.data ? (
-                    <ProgressCard tournament={tournament} rounds={roundsQuery.data} />
+                    <ProgressCard tournament={tournament} rounds={roundsQuery.data} onRoundStarted={showNewRound} />
                 ) : null}
 
                 {teamsQuery.isPending ? (
@@ -171,6 +178,7 @@ function TournamentDetailBody() {
                         <TabPanel id="tournament-section" value={tab}>
                             {tab === 'rounds' ? (
                                 <RoundsSection
+                                    key={roundsViewKey}
                                     tournamentId={tournament.id}
                                     teams={teams}
                                     live={live}

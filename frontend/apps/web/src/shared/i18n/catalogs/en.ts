@@ -203,6 +203,11 @@ export const en = {
     'progress.removeRound': 'Remove a round',
     'progress.tables': 'Completed tables',
     'progress.tablesCompleted': 'tables completed',
+    'progress.nextRound.action': 'Start next round',
+    'progress.nextRound.confirmDescription':
+        'Pairs are drawn from the current standings. Teams see their new table right away.',
+    'progress.nextRound.openTables': 'Tables still open:',
+    'progress.lastRound': 'Last round – the tournament is finished next.',
     'tournament.detail.edit': 'Edit',
     'tournament.form.name': 'Name',
     'tournament.form.description': 'Description',
@@ -267,6 +272,9 @@ export const en = {
     'error.tournamentNotStartable':
         'This tournament cannot be started because it is no longer in setup.',
     'error.tournamentNotStarted': 'This tournament has not started yet.',
+    'error.tournamentNotActive': 'This is only possible while the tournament is running.',
+    'error.roundIncomplete': 'The next round can only start once every table is completed.',
+    'error.totalRoundsReached': 'All rounds are played; the tournament can only be finished.',
     'error.insufficientTeams':
         'This tournament needs at least two teams before it can be started.',
     'error.gameValidationInvalid': 'The game could not be saved — check the entries and try again.',

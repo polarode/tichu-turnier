@@ -32,6 +32,7 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         rounds: vi.fn(),
         standings: vi.fn(),
         setTotalRounds: vi.fn(),
+        startNextRound: vi.fn(),
     },
 }));
 vi.mock('@/team-api/team.repository.ts', () => ({
@@ -272,5 +273,126 @@ describe('progress card', () => {
 
         expect(await screen.findByText('Runden insgesamt: 6')).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: 'Fortschritt' })).not.toBeInTheDocument();
+    });
+});
+
+describe('next round action', () => {
+    async function progressCard() {
+        return screen.findByRole('region', { name: 'Fortschritt' });
+    }
+
+    it('starts the next round after confirmation and shows it on the Rounds tab', async () => {
+        const before = rounds(2, 2, 2);
+        const next: Round = { number: 3, tables: [table(1, playing), table(2, playing)] };
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        tournaments.rounds.mockResolvedValueOnce(before).mockResolvedValue([...before, next]);
+        tournaments.startNextRound.mockResolvedValue(next);
+        renderApp('/admin/tournaments/t-1?tab=standings');
+
+        const card = await progressCard();
+        await userEvent.click(
+            await within(card).findByRole('button', { name: 'Nächste Runde starten' }),
+        );
+        const dialog = await screen.findByRole('dialog');
+        expect(dialog).toHaveTextContent(
+            'Die Paarungen werden aus der aktuellen Rangliste ausgelost.',
+        );
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Bestätigen' }));
+
+        expect(tournaments.startNextRound).toHaveBeenCalledWith('t-1');
+        expect(await screen.findByRole('heading', { name: 'Runde 3' })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Runden (3)' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
+    });
+
+    it('selects the new round even when an older round was picked', async () => {
+        const before = rounds(2, 2, 2);
+        const next: Round = { number: 3, tables: [table(1, playing), table(2, playing)] };
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        tournaments.rounds.mockResolvedValueOnce(before).mockResolvedValue([...before, next]);
+        tournaments.startNextRound.mockResolvedValue(next);
+        renderApp('/admin/tournaments/t-1?tab=rounds');
+
+        await userEvent.click(await screen.findByRole('tab', { name: /^Runde 1/ }));
+        expect(await screen.findByRole('heading', { name: 'Runde 1' })).toBeInTheDocument();
+
+        const card = await progressCard();
+        await userEvent.click(within(card).getByRole('button', { name: 'Nächste Runde starten' }));
+        await userEvent.click(
+            within(await screen.findByRole('dialog')).getByRole('button', { name: 'Bestätigen' }),
+        );
+
+        expect(await screen.findByRole('heading', { name: 'Runde 3' })).toBeInTheDocument();
+    });
+
+    it('is disabled with the number of open tables while the round is incomplete', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        tournaments.rounds.mockResolvedValue(rounds(2, 3, 2));
+        renderApp('/admin/tournaments/t-1');
+
+        const card = await progressCard();
+        expect(
+            await within(card).findByRole('button', { name: 'Nächste Runde starten' }),
+        ).toBeDisabled();
+        expect(card).toHaveTextContent('Noch offene Tische: 1');
+    });
+
+    it('is not offered once the tournament is finished', async () => {
+        tournaments.get.mockResolvedValue(tournament('COMPLETED'));
+        tournaments.rounds.mockResolvedValue(rounds(4, 2, 2));
+        renderApp('/admin/tournaments/t-1');
+
+        const card = await progressCard();
+        await waitFor(() => expect(card).toHaveTextContent('Runde 4 von 4'));
+        expect(
+            within(card).queryByRole('button', { name: 'Nächste Runde starten' }),
+        ).not.toBeInTheDocument();
+        expect(within(card).queryByText(/Letzte Runde/)).not.toBeInTheDocument();
+    });
+
+    it('gives way to a hint in the last round', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE', 2));
+        tournaments.rounds.mockResolvedValue(rounds(2, 2, 2));
+        renderApp('/admin/tournaments/t-1');
+
+        const card = await progressCard();
+        expect(
+            await within(card).findByText(
+                'Letzte Runde – als Nächstes wird das Turnier abgeschlossen.',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            within(card).queryByRole('button', { name: 'Nächste Runde starten' }),
+        ).not.toBeInTheDocument();
+    });
+
+    it('shows the localized reason when the server rejects the advance', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        tournaments.rounds.mockResolvedValue(rounds(2, 2, 2));
+        tournaments.startNextRound.mockRejectedValue(
+            new ApiError({
+                code: 'ROUND_INCOMPLETE',
+                status: 409,
+                field: null,
+                message: 'incomplete',
+            }),
+        );
+        renderApp('/admin/tournaments/t-1');
+
+        const card = await progressCard();
+        await userEvent.click(
+            await within(card).findByRole('button', { name: 'Nächste Runde starten' }),
+        );
+        await userEvent.click(
+            within(await screen.findByRole('dialog')).getByRole('button', { name: 'Bestätigen' }),
+        );
+
+        expect(
+            await within(card).findByText(
+                'Die nächste Runde kann erst starten, wenn alle Tische abgeschlossen sind.',
+            ),
+        ).toBeInTheDocument();
     });
 });

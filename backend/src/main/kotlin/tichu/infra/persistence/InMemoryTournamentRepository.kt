@@ -23,6 +23,8 @@ class InMemoryTournamentRepository : TournamentRepository {
 
     override fun findById(id: TournamentId): Tournament? = store[id.value]
 
+    override fun lock(id: TournamentId) = Unit
+
     override fun findAllByOwner(owner: AdminUserId): List<Tournament> =
         store.values.filter { it.isOwnedBy(owner) }
 

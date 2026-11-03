@@ -33,6 +33,7 @@ import tichu.application.api.RegisterAdmin
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
 import tichu.application.api.SetTotalRounds
+import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
 import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
@@ -75,6 +76,7 @@ class RestConfiguration(
         listRounds: ListRounds,
         getStandings: GetStandings,
         setTotalRounds: SetTotalRounds,
+        startNextRound: StartNextRound,
     ): TournamentController = TournamentController(
         createTournament,
         listTournaments,
@@ -85,6 +87,7 @@ class RestConfiguration(
         listRounds,
         getStandings,
         setTotalRounds,
+        startNextRound,
     )
 
     @Bean

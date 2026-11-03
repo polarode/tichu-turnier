@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@tichu/ui/button.tsx';
 
 import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round } from '@/domain/round.domain.ts';
 import { TOTAL_ROUNDS_MAX, type Tournament } from '@/domain/tournament.domain.ts';
+import { useStartNextRound } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { useSetTotalRounds } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
+import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
@@ -13,6 +16,8 @@ interface ProgressCardProps {
     tournament: Tournament;
     /** The tournament's rounds so far; the last one is the current round. */
     rounds: readonly Round[];
+    /** Called with the new round's number once the next round has started. */
+    onRoundStarted: (roundNumber: number) => void;
 }
 
 /**
@@ -20,11 +25,17 @@ interface ProgressCardProps {
  * round's tables are completed. While ACTIVE the Total Rounds sit in a stepper whose
  * every step saves at once (optimistically, rolled back with the error shown); it
  * cannot go below the rounds already drawn nor above the maximum. Once finished the
- * card is read-only. The round-advance and finish actions (S7b/S7c) join it here.
+ * card is read-only.
+ *
+ * The next round starts from here, after a confirmation: disabled with the count of
+ * open tables while the current round is incomplete, and replaced by a hint in the
+ * last round (the finish action, S7c, takes that place).
  */
-export function ProgressCard({ tournament, rounds }: ProgressCardProps) {
+export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCardProps) {
     const { t } = useI18n();
     const setTotalRounds = useSetTotalRounds(tournament.id);
+    const startNextRound = useStartNextRound(tournament.id);
+    const [confirming, setConfirming] = useState(false);
     const { totalRounds } = tournament.settings;
     const editable = tournament.status === TournamentStatus.ACTIVE;
     const current = rounds[rounds.length - 1];
@@ -32,7 +43,15 @@ export function ProgressCard({ tournament, rounds }: ProgressCardProps) {
     const completedCount =
         current?.tables.filter((table) => isCompleted(table.confirmation)).length ?? 0;
 
+    const openTables = tableCount - completedCount;
+    const isLastRound = rounds.length >= totalRounds;
+
     const step = (delta: number) => setTotalRounds.mutate(totalRounds + delta);
+    const start = () =>
+        startNextRound.mutate(undefined, {
+            onSuccess: (round) => onRoundStarted(round.number),
+            onSettled: () => setConfirming(false),
+        });
 
     return (
         <section
@@ -95,6 +114,42 @@ export function ProgressCard({ tournament, rounds }: ProgressCardProps) {
                     {`${completedCount}/${tableCount} ${t('progress.tablesCompleted')}`}
                 </p>
             </div>
+            {editable ? (
+                isLastRound ? (
+                    <p className="text-sm text-muted-foreground">{t('progress.lastRound')}</p>
+                ) : (
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                            size="sm"
+                            disabled={openTables > 0}
+                            onClick={() => setConfirming(true)}
+                        >
+                            {t('progress.nextRound.action')}
+                        </Button>
+                        {openTables > 0 ? (
+                            <span className="text-sm text-muted-foreground tabular-nums">
+                                {`${t('progress.nextRound.openTables')} ${openTables}`}
+                            </span>
+                        ) : null}
+                    </div>
+                )
+            ) : null}
+            {startNextRound.isError ? (
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(startNextRound.error, t)}
+                </p>
+            ) : null}
+            {confirming ? (
+                <ConfirmDialog
+                    titleKey="progress.nextRound.action"
+                    descriptionKey="progress.nextRound.confirmDescription"
+                    confirmLabelKey="common.confirm"
+                    destructive={false}
+                    disabled={startNextRound.isPending}
+                    onConfirm={start}
+                    onCancel={() => setConfirming(false)}
+                />
+            ) : null}
         </section>
     );
 }

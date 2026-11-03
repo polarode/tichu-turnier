@@ -33,6 +33,7 @@ import tichu.application.api.RegisterAdmin
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
 import tichu.application.api.SetTotalRounds
+import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
 import tichu.domain.AdminInviteRepository
 import tichu.domain.AdminSessionRepository
@@ -81,6 +82,24 @@ class UseCaseConfiguration(
     ): StartTournament = StartTournamentCommand(tournamentRepository, teamRepository, roundRepository, idGenerator, random, clock)
 
     @Bean
+    fun playedRoundsReader(
+        roundRepository: RoundRepository,
+        gameRepository: GameRepository,
+        confirmationRepository: TableConfirmationRepository,
+    ): PlayedRoundsReader = PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository)
+
+    @Bean
+    fun startNextRound(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        roundRepository: RoundRepository,
+        playedRoundsReader: PlayedRoundsReader,
+        idGenerator: IdGenerator,
+        random: Random,
+    ): StartNextRound =
+        StartNextRoundCommand(tournamentRepository, teamRepository, roundRepository, playedRoundsReader, idGenerator, random)
+
+    @Bean
     fun listRounds(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
@@ -92,10 +111,8 @@ class UseCaseConfiguration(
     fun getStandings(
         tournamentRepository: TournamentRepository,
         teamRepository: TeamRepository,
-        roundRepository: RoundRepository,
-        gameRepository: GameRepository,
-        confirmationRepository: TableConfirmationRepository,
-    ): GetStandings = GetStandingsQuery(tournamentRepository, teamRepository, roundRepository, gameRepository, confirmationRepository)
+        playedRoundsReader: PlayedRoundsReader,
+    ): GetStandings = GetStandingsQuery(tournamentRepository, teamRepository, playedRoundsReader)
 
     @Bean
     fun setTotalRounds(

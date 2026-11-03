@@ -1,7 +1,7 @@
 import { tournamentDtoToDomain, tournamentWriteInputToDto } from '@/tournament-api/mappers/tournament.mapper.ts';
 import { roundDtoToDomain } from '@/tournament-api/mappers/round.mapper.ts';
 import { tournamentDtoSchema, tournamentListDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
-import { roundListDtoSchema, startedTournamentDtoSchema } from '@/tournament-api/dtos/round.dto.ts';
+import { roundDtoSchema, roundListDtoSchema, startedTournamentDtoSchema } from '@/tournament-api/dtos/round.dto.ts';
 import { standingsDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
 import type { TotalRoundsRequestDto } from '@/tournament-api/dtos/tournament.dto.ts';
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
@@ -55,6 +55,12 @@ async function rounds(id: string): Promise<Round[]> {
     return roundListDtoSchema.parse(data).map(roundDtoToDomain);
 }
 
+/** Starts the next round, drawn by the server from the current standings. */
+async function startNextRound(id: string): Promise<Round> {
+    const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/rounds`);
+    return roundDtoToDomain(roundDtoSchema.parse(data));
+}
+
 /** The admin-only standings, in the server's order (ranks and ties computed there). */
 async function standings(id: string): Promise<StandingsEntry[]> {
     const { data } = await apiClient.get<unknown>(`/api/tournaments/${id}/standings`);
@@ -82,4 +88,5 @@ export const TournamentRepository = {
     rounds,
     standings,
     setTotalRounds,
+    startNextRound,
 };

@@ -38,6 +38,14 @@ export const ERROR_CODES = [
     /** Standings requested for a tournament still in setup. */
     'TOURNAMENT_NOT_STARTED',
 
+    // --- Next round (S7b) ---
+    /** An action that needs an active tournament (e.g. the next round) on one that is not. */
+    'TOURNAMENT_NOT_ACTIVE',
+    /** The next round can only start once every table of the current round is completed. */
+    'ROUND_INCOMPLETE',
+    /** The Total Rounds are reached: the tournament can only be finished. */
+    'TOTAL_ROUNDS_REACHED',
+
     // --- Scoring (S5) ---
     /** A submitted game failed the scoring engine's validation; field-anchored where sensible. */
     'GAME_VALIDATION_INVALID',

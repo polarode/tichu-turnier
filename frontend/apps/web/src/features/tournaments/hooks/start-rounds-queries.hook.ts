@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Round } from '@/domain/round.domain.ts';
-import { roundsQueryKey, tournamentQueryKey } from '@/shared/constants/query-keys.ts';
+import {
+    roundsQueryKey,
+    standingsQueryKey,
+    tournamentQueryKey,
+} from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 
 /**
@@ -16,6 +20,25 @@ export function useStartTournament() {
         onSuccess: (started, id) => {
             queryClient.setQueryData(tournamentQueryKey(id), started.tournament);
             queryClient.setQueryData(roundsQueryKey(id), [started.round]);
+        },
+    });
+}
+
+/**
+ * Starts the next round. The new round is appended to the cached rounds at once (so
+ * the rounds view can show it), then rounds, standings and the tournament refetch.
+ */
+export function useStartNextRound(tournamentId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => TournamentRepository.startNextRound(tournamentId),
+        onSuccess: (round) => {
+            queryClient.setQueryData<Round[]>(roundsQueryKey(tournamentId), (rounds) =>
+                rounds ? [...rounds.filter((r) => r.number !== round.number), round] : [round],
+            );
+            void queryClient.invalidateQueries({ queryKey: roundsQueryKey(tournamentId) });
+            void queryClient.invalidateQueries({ queryKey: standingsQueryKey(tournamentId) });
+            void queryClient.invalidateQueries({ queryKey: tournamentQueryKey(tournamentId) });
         },
     });
 }

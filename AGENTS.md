@@ -121,6 +121,12 @@ Conventions:
   **Client/UI state** lives in Zustand stores under `shared/stores`.
 - **Forms** use react-hook-form + `@hookform/resolvers/zod`.
 - **Styling** is Tailwind CSS; shared primitives come from `@tichu/ui`.
+- **New `@tichu/ui` primitives** come from the shadcn CLI (`pnpm dlx shadcn@<version> add <name>` in
+  `packages/ui`, a release older than the workspace's `minimumReleaseAge`). Then adapt the output:
+  import `cn` from `./lib/utils.ts` and drop the `cn` package the CLI adds, use relative `.ts(x)`
+  sibling imports, take every visible string (e.g. a close label) as a prop, strip the
+  `animate-*` classes (`tw-animate-css` is not installed), run Prettier on the file, and add a
+  spec under `src/__tests__`.
 - **i18n:** all user-facing strings live in `shared/i18n/catalogs` (de + en);
   hardcoded JSX text is rejected by lint and catalog parity is enforced by a test.
 - File naming: `*.component.tsx`, `*.hook.ts`, `*.repository.ts`, `*.mapper.ts`,

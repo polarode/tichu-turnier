@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@tichu/ui/button.tsx';
 import { CopyButton } from '@tichu/ui/copy-button.tsx';
-import { Dialog } from '@tichu/ui/dialog.tsx';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@tichu/ui/dialog.tsx';
 
 import type { RevealedAccessLink } from '@/domain/access-link.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
@@ -75,78 +82,87 @@ export function AccessLinkDialog({ tournamentId, team, onClose }: AccessLinkDial
 
     return (
         <>
-            <Dialog open label={t('teams.accessLink.title')} onClose={onClose}>
-                <h2 className="mb-1 text-lg font-semibold">{t('teams.accessLink.title')}</h2>
-                <p className="mb-4 text-sm text-muted-foreground">{team.name}</p>
+            <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('teams.accessLink.title')}</DialogTitle>
+                        <DialogDescription>{team.name}</DialogDescription>
+                    </DialogHeader>
 
-                {error !== null ? (
-                    <>
-                        <p role="alert" className="mb-4 text-sm text-destructive">
-                            {localizedErrorMessage(error, t)}
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={onClose}>
-                                {t('common.cancel')}
-                            </Button>
-                            {/* Recovery rotate goes through the same confirmation as the
-                                normal path — there is no safe link left to lose. */}
-                            <Button disabled={rotate.isPending} onClick={() => setPendingConfirm('rotate')}>
-                                {t('teams.accessLink.rotate')}
-                            </Button>
-                        </div>
-                    </>
-                ) : revealed ? (
-                    <>
-                        <p className="mb-4 text-sm text-muted-foreground">
-                            {t('teams.accessLink.oneTime')}
-                        </p>
-                        <div className="mb-4 flex flex-col gap-2">
-                            <span className="text-sm font-medium">{t('teams.accessLink.linkLabel')}</span>
-                            <code className="block break-all rounded-md border border-border bg-muted p-2 text-xs">
-                                {revealed.link}
-                            </code>
-                        </div>
-                        <div className="mb-4 flex items-center gap-4">
-                            <QRCodeSVG
-                                value={revealed.link}
-                                size={128}
-                                role="img"
-                                aria-label={t('teams.accessLink.qr')}
-                            />
-                            {/* Keyed by link so a rotated token resets the copied state. */}
-                            <CopyButton
-                                key={revealed.link}
-                                value={revealed.link}
-                                copyLabel={t('teams.accessLink.copy')}
-                                copiedLabel={t('teams.accessLink.copied')}
-                            />
-                        </div>
-                        {revokeError !== null ? (
-                            <p role="alert" className="mb-4 text-sm text-destructive">
-                                {localizedErrorMessage(revokeError, t)}
+                    {error !== null ? (
+                        <>
+                            <p role="alert" className="text-sm text-destructive">
+                                {localizedErrorMessage(error, t)}
                             </p>
-                        ) : null}
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={onClose}>
-                                {t('common.cancel')}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                disabled={rotate.isPending}
-                                onClick={() => setPendingConfirm('rotate')}
-                            >
-                                {t('teams.accessLink.rotate')}
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                disabled={revoke.isPending}
-                                onClick={() => setPendingConfirm('revoke')}
-                            >
-                                {t('teams.accessLink.revoke')}
-                            </Button>
-                        </div>
-                    </>
-                ) : null}
+                            <DialogFooter>
+                                <Button variant="outline" onClick={onClose}>
+                                    {t('common.cancel')}
+                                </Button>
+                                {/* Recovery rotate goes through the same confirmation as the
+                                normal path — there is no safe link left to lose. */}
+                                <Button
+                                    disabled={rotate.isPending}
+                                    onClick={() => setPendingConfirm('rotate')}
+                                >
+                                    {t('teams.accessLink.rotate')}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    ) : revealed ? (
+                        <>
+                            <p className="text-sm text-muted-foreground">
+                                {t('teams.accessLink.oneTime')}
+                            </p>
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm font-medium">
+                                    {t('teams.accessLink.linkLabel')}
+                                </span>
+                                <code className="block break-all rounded-md border border-border bg-muted p-2 text-xs">
+                                    {revealed.link}
+                                </code>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <QRCodeSVG
+                                    value={revealed.link}
+                                    size={128}
+                                    role="img"
+                                    aria-label={t('teams.accessLink.qr')}
+                                />
+                                {/* Keyed by link so a rotated token resets the copied state. */}
+                                <CopyButton
+                                    key={revealed.link}
+                                    value={revealed.link}
+                                    copyLabel={t('teams.accessLink.copy')}
+                                    copiedLabel={t('teams.accessLink.copied')}
+                                />
+                            </div>
+                            {revokeError !== null ? (
+                                <p role="alert" className="text-sm text-destructive">
+                                    {localizedErrorMessage(revokeError, t)}
+                                </p>
+                            ) : null}
+                            <DialogFooter>
+                                <Button variant="outline" onClick={onClose}>
+                                    {t('common.cancel')}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    disabled={rotate.isPending}
+                                    onClick={() => setPendingConfirm('rotate')}
+                                >
+                                    {t('teams.accessLink.rotate')}
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    disabled={revoke.isPending}
+                                    onClick={() => setPendingConfirm('revoke')}
+                                >
+                                    {t('teams.accessLink.revoke')}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    ) : null}
+                </DialogContent>
             </Dialog>
 
             {pendingConfirm === 'rotate' ? (
@@ -154,7 +170,9 @@ export function AccessLinkDialog({ tournamentId, team, onClose }: AccessLinkDial
                     titleKey="teams.accessLink.rotateTitle"
                     descriptionKey="teams.accessLink.rotateDescription"
                     confirmLabelKey={
-                        rotate.isPending ? 'teams.accessLink.rotatePending' : 'teams.accessLink.rotateConfirm'
+                        rotate.isPending
+                            ? 'teams.accessLink.rotatePending'
+                            : 'teams.accessLink.rotateConfirm'
                     }
                     destructive={false}
                     disabled={pending}
@@ -168,7 +186,9 @@ export function AccessLinkDialog({ tournamentId, team, onClose }: AccessLinkDial
                     titleKey="teams.accessLink.revokeTitle"
                     descriptionKey="teams.accessLink.revokeDescription"
                     confirmLabelKey={
-                        revoke.isPending ? 'teams.accessLink.revokePending' : 'teams.accessLink.revokeConfirm'
+                        revoke.isPending
+                            ? 'teams.accessLink.revokePending'
+                            : 'teams.accessLink.revokeConfirm'
                     }
                     destructive
                     disabled={pending}

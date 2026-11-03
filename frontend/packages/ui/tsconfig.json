@@ -1,9 +1,26 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
         "jsx": "react-jsx",
-        "types": ["vitest/globals", "@testing-library/jest-dom"]
+        "types": [
+            "vitest/globals",
+            "@testing-library/jest-dom"
+        ],
+        "paths": {
+            "@tichu/ui": [
+                "./src"
+            ],
+            "@tichu/ui/*": [
+                "./src/*"
+            ]
+        }
     },
-    "include": ["src"]
+    "include": [
+        "src"
+    ]
 }

@@ -7,9 +7,7 @@ import tichu.domain.TeamRepository
 import tichu.domain.TeamTokenRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
-import tichu.domain.TournamentStatus
 import tichu.vocabulary.NotFoundException
-import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -33,12 +31,7 @@ class DeleteTeamCommand(
         val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
         teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
-        if (tournament.status != TournamentStatus.SETUP) {
-            throw TournamentNotEditableException(
-                "Tournament ${tournamentId.value} can only be edited while in setup " +
-                    "(current status: ${tournament.status})",
-            )
-        }
+        tournament.requireSetupPhase()
         teamRepository.delete(teamId, tournamentId)
         teamTokenRepository.deleteByTeamId(teamId)
     }

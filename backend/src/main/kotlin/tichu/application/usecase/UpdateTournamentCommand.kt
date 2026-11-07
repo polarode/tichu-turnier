@@ -7,9 +7,7 @@ import tichu.domain.TeamRepository
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
-import tichu.domain.TournamentStatus
 import tichu.vocabulary.MaxTeamsBelowTeamCountException
-import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
@@ -35,12 +33,7 @@ class UpdateTournamentCommand(
         owner: AdminUserId,
     ): Tournament {
         val tournament = repository.findOwnedOrThrow(id, owner)
-        if (tournament.status != TournamentStatus.SETUP) {
-            throw TournamentNotEditableException(
-                "Tournament ${id.value} can only be edited while in setup " +
-                    "(current status: ${tournament.status})",
-            )
-        }
+        tournament.requireSetupPhase()
 
         val name = command.name.trim()
         TournamentInputValidator.validate(name, command.maxTeams, command.settings)

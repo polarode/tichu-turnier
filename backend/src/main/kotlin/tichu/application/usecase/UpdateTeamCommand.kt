@@ -8,9 +8,7 @@ import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
-import tichu.domain.TournamentStatus
 import tichu.vocabulary.NotFoundException
-import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -43,12 +41,7 @@ class UpdateTeamCommand(
         val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
         val team = teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
-        if (tournament.status != TournamentStatus.SETUP) {
-            throw TournamentNotEditableException(
-                "Tournament ${tournamentId.value} can only be edited while in setup " +
-                    "(current status: ${tournament.status})",
-            )
-        }
+        tournament.requireSetupPhase()
 
         val name = command.name.trim()
         val playerOneName = command.playerOneName.trim()

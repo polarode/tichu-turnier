@@ -14,7 +14,6 @@ import tichu.domain.TeamToken
 import tichu.domain.TeamTokenRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
-import tichu.domain.TournamentStatus
 import tichu.vocabulary.TeamLimitReachedException
 import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
@@ -58,12 +57,7 @@ class CreateTeamCommand(
 
     override fun create(tournamentId: TournamentId, command: TeamWriteRequest, owner: AdminUserId): Team {
         val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
-        if (tournament.status != TournamentStatus.SETUP) {
-            throw TournamentNotEditableException(
-                "Tournament ${tournamentId.value} can only be edited while in setup " +
-                    "(current status: ${tournament.status})",
-            )
-        }
+        tournament.requireSetupPhase()
 
         val name = command.name.trim()
         val playerOneName = command.playerOneName.trim()

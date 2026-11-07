@@ -1,9 +1,39 @@
 # Tichu Turnier
 
-A tournament management app for Tichu events: organisers run tournaments, register
-teams of two players each, and hand out magic links so players can join.
+A tournament management app for Tichu events: organizers run tournaments, register
+teams of two players each, and hand out access links so players can join.
 
 ## Language
+
+### Accounts & access
+
+**Organizer**:
+The person running a tournament: creates it, registers its teams, starts, advances,
+finishes and publishes it. Logs in with an admin account.
+_Avoid_: tournament director, host
+
+**Admin**:
+The account kind an organizer logs in with: email and password, a lifecycle status
+(pending, active, disabled) and a role (admin or owner). Use it when speaking of the
+account, not of the person running a tournament.
+_Avoid_: user
+
+**Owner**:
+The single admin with the owner role, who provisions other admins by approving
+registration requests or issuing admin invites. Exists from configuration, never
+created through the app.
+_Avoid_: superadmin, root
+
+**Admin Invite**:
+An owner-issued, single-use invitation that lets one named email register as an
+active admin directly, skipping approval.
+_Avoid_: magic link (reserved for teams)
+
+**Team Session**:
+What a team's browser holds after exchanging its access link: it acts as the team
+itself, carries no per-player identity, and may only read the team's own tournament
+data and act on its own table.
+_Avoid_: user session, player login
 
 ### Tournament lifecycle
 
@@ -17,8 +47,20 @@ _Avoid_: draft, closed, archived
 **Setup Phase**:
 The tournament status in which teams may be managed (added, edited, deleted) and
 settings edited. Once the tournament leaves it, both are locked — except the
-**Total Rounds**, which stay adjustable until the tournament is finished.
+**Total Rounds**, which stay adjustable until the tournament is finished, and
+**Public Visibility**, which the organizer may switch at any time.
 _Avoid_: preparation, draft mode
+
+**Public Visibility**:
+The organizer's choice, off by default, to let spectators follow a tournament.
+A tournament that is not public does not exist for spectators.
+_Avoid_: published (that is a Tournament Status), listed
+
+**Spectator**:
+Anyone following a public tournament without logging in. Sees the teams and their
+players and the pairings while the tournament runs; sees the per-table results, the
+Final Ranking and the statistics only once the results are published.
+_Avoid_: guest, visitor, public user
 
 **Total Rounds**:
 The organizer's chosen number of rounds the tournament runs. Never below the
@@ -29,17 +71,20 @@ _Avoid_: round limit, max rounds
 ### Teams
 
 **Team**:
-A named pair of exactly two distinct players within one tournament.
-_Avoid_: group, pair
+A named pair of exactly two distinct players within one tournament, registered by
+the organizer.
+_Avoid_: group, pair, participant
 
 **Player**:
 A named participant belonging to exactly one team of a tournament.
 _Avoid_: member, user
 
 **Access Link**:
-The secret per-team link that lets a team's players log in. Its token is shown
-to the organizer exactly once (Reveal), replaced by Rotate, disabled by Revoke.
-_Avoid_: invite, share link
+The secret per-team link that lets a team's players log in. Both players share it,
+and it works any number of times. Its token is shown to the organizer exactly once
+(Reveal), replaced by Rotate, disabled by Revoke. After the tournament is finished
+it still lets the team look, but no longer act.
+_Avoid_: invite, share link, login link, token (for the whole link)
 
 **Team Capacity**:
 The tournament-level maximum number of teams (`maxTeams`). Reaching it only prevents

@@ -73,7 +73,9 @@
         "changes": [
             "Double win bonus is a tournament setting of 100 or 200",
             "Sign in directly from the header; the admin tab is hidden from visitors",
-            "This changelog"
+            "This changelog",
+            "Finish the tournament after its last round, then publish the results; the Standings tab becomes the Final Ranking",
+            "Teams keep access to their games after the tournament ends, read-only, and see the Final Ranking once you publish it"
         ]
     }
 ]

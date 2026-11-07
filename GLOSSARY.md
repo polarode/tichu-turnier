@@ -59,7 +59,7 @@ _Avoid_: published (that is a Tournament Status), listed
 
 **Spectator**:
 Anyone following a public tournament without logging in. Sees the teams and their
-players and the pairings while the tournament runs; sees the per-table results, the
+players and the pairings while the tournament runs; sees the Table Totals, the
 Final Ranking and the statistics only once the results are published.
 _Avoid_: guest, visitor, public user
 
@@ -165,6 +165,11 @@ The card points a team accumulates from playing games (base scores summing to
 100 plus Tichu bonuses); the secondary standings tie-breaker behind VP — winning
 with a bigger TP margin therefore ranks a team higher on equal VP.
 _Avoid_: points, score
+
+**Table Totals**:
+A team's summed Victory Points and Tichu Points over the games it played at one
+table of one round.
+_Avoid_: table results, table score
 
 ### Confirmation
 

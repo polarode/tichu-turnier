@@ -1,11 +1,13 @@
 import { Badge } from '@tichu/ui/badge.tsx';
 
-import type { PublicRound, PublicTable } from '@/domain/tournament.domain.ts';
+import type { StandingsEntry } from '@/domain/standings.domain.ts';
+import type { PublicRound, PublicTable, PublicTableTotals } from '@/domain/tournament.domain.ts';
 import { usePublicTournament } from '@/features/public-tournaments/hooks/public-tournaments.hook.ts';
 import { tableHeading } from '@/features/scoring/labels.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
+import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
 import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
@@ -16,9 +18,10 @@ interface PublicTournamentPageProps {
 }
 
 /**
- * The public tournament page: the pairings of every drawn round, newest on top, and
- * nothing else (no results, standings or table status, in any status). Anonymous, so
- * no session is needed; a tournament that is not public reads as not found.
+ * The public tournament page: the pairings of every drawn round, newest on top. Once the
+ * tournament is published it adds the Final Ranking above the rounds and each team's table
+ * totals (VP and TP) on its table. Never games, outcomes or table status. Anonymous, so no
+ * session is needed; a tournament that is not public reads as not found.
  */
 export function PublicTournamentPage({ tournamentId }: PublicTournamentPageProps) {
     // Outside the body, so loading, not-found and error states keep a way back too.
@@ -62,6 +65,10 @@ function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
                 <TournamentStatusBadge status={tournament.status} />
             </div>
 
+            {tournament.finalRanking ? (
+                <FinalRankingSection entries={tournament.finalRanking} />
+            ) : null}
+
             {roundsNewestFirst.length === 0 ? (
                 <p className="text-muted-foreground">{t('publicTournament.noRounds')}</p>
             ) : (
@@ -76,6 +83,18 @@ function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
 /** The backend answers NOT_FOUND for setup, non-public and unknown tournaments alike. */
 function isNotFound(error: unknown): boolean {
     return error instanceof ApiError && error.code === 'NOT_FOUND';
+}
+
+function FinalRankingSection({ entries }: { entries: StandingsEntry[] }) {
+    const { t } = useI18n();
+    const title = t('standings.finalTitle');
+
+    return (
+        <section aria-label={title} className="flex flex-col gap-3">
+            <h2 className="text-lg font-medium">{title}</h2>
+            <StandingsTable entries={entries} caption={title} />
+        </section>
+    );
 }
 
 function PublicRoundSection({ round }: { round: PublicRound }) {
@@ -106,10 +125,13 @@ function PublicTableCard({ table }: { table: PublicTable }) {
             <ul className="flex flex-col gap-2">
                 {table.teams.map((team, seat) => (
                     <li key={team.id} className="flex flex-col gap-0.5">
-                        <span className="font-medium">
-                            <TeamDot tone={seatTone(seat).dot} />
-                            {team.name}
-                        </span>
+                        <div className="flex items-baseline justify-between gap-2">
+                            <span className="font-medium">
+                                <TeamDot tone={seatTone(seat).dot} />
+                                {team.name}
+                            </span>
+                            {team.totals ? <TableTotalsLabel totals={team.totals} /> : null}
+                        </div>
                         <span className="text-sm text-muted-foreground">
                             {team.players.map((player) => player.name).join(' · ')}
                         </span>
@@ -117,5 +139,27 @@ function PublicTableCard({ table }: { table: PublicTable }) {
                 ))}
             </ul>
         </article>
+    );
+}
+
+/** A team's Table Totals at this table, as the summed VP and TP of its games. */
+function TableTotalsLabel({ totals }: { totals: PublicTableTotals }) {
+    const { t } = useI18n();
+
+    return (
+        <span className="flex shrink-0 gap-3 text-sm tabular-nums">
+            <span>
+                {totals.victoryPoints}{' '}
+                <abbr title={t('standings.victoryPoints.long')} className="no-underline">
+                    {t('standings.victoryPoints')}
+                </abbr>
+            </span>{' '}
+            <span>
+                {totals.tichuPoints}{' '}
+                <abbr title={t('standings.tichuPoints.long')} className="no-underline">
+                    {t('standings.tichuPoints')}
+                </abbr>
+            </span>
+        </span>
     );
 }

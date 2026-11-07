@@ -14,6 +14,7 @@ import type {
     PublicTournamentDetailDto,
     PublicTournamentDto,
 } from '@/tournament-api/dtos/public-tournament.dto.ts';
+import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
 export function publicTournamentDtoToDomain(dto: PublicTournamentDto): PublicTournament {
@@ -34,6 +35,12 @@ export function publicTeamDtoToDomain(dto: PublicTeamDto): PublicTeam {
         id: dto.id,
         name: dto.name,
         players: dto.players.map(publicPlayerDtoToDomain),
+        ...(dto.totals && {
+            totals: {
+                victoryPoints: dto.totals.victoryPoints,
+                tichuPoints: dto.totals.tichuPoints,
+            },
+        }),
     };
 }
 
@@ -60,5 +67,6 @@ export function publicTournamentDetailDtoToDomain(
         name: dto.name,
         status: dto.status,
         rounds: dto.rounds.map(publicRoundDtoToDomain),
+        ...(dto.finalRanking && { finalRanking: dto.finalRanking.map(standingsEntryDtoToDomain) }),
     };
 }

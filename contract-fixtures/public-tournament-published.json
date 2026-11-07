@@ -1,0 +1,149 @@
+{
+  "scenario": [
+    "Tournament Harvest Cup, Published and public. Five teams. Every game is decided by base score alone (no calls, no bombs): the stated base goes to the first-named team, the rest to the other.",
+    "Round 1, table 1 (Falcons vs Owls), completed: four 50/50 games -> Falcons and Owls 4 VP and 200 TP each.",
+    "Round 1, trio table 2 (Ravens, Badgers, Wolves), completed: schedule 1 RB, 2 RW, 3 BW, 4 RB, 5 RW, 6 BW, every game 70/30 to the first-named -> Ravens 8 VP 280 TP, Badgers 4 VP 200 TP, Wolves 0 VP 120 TP.",
+    "Round 2, table 1 (Falcons vs Ravens), completed: four 60/40 games to Falcons -> Falcons 8 VP 240 TP, Ravens 0 VP 160 TP.",
+    "Round 2, trio table 2 (Owls, Badgers, Wolves), completed: schedule 1 OB, 2 OW, 3 BW, 4 OB, 5 OW, 6 BW, every game 50/50 -> Owls, Badgers and Wolves 4 VP 200 TP each.",
+    "Final Ranking: Falcons 12 VP 440 TP (8 games) at rank 1; Ravens 8 VP 440 TP at rank 2; Badgers and Owls tie at 8 VP 400 TP and share rank 3, listed by name; Wolves 4 VP 320 TP at rank 5.",
+    "The response carries per-table totals and the Final Ranking only; no games, outcomes, table status or confirmations."
+  ],
+  "response": {
+    "id": "t-harvest-cup",
+    "name": "Harvest Cup",
+    "status": "PUBLISHED",
+    "rounds": [
+      {
+        "number": 1,
+        "tables": [
+          {
+            "tableNumber": 1,
+            "trio": false,
+            "teams": [
+              {
+                "id": "team-falcons",
+                "name": "Falcons",
+                "players": [
+                  { "id": "team-falcons-1", "name": "Falcons one" },
+                  { "id": "team-falcons-2", "name": "Falcons two" }
+                ],
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+              },
+              {
+                "id": "team-owls",
+                "name": "Owls",
+                "players": [
+                  { "id": "team-owls-1", "name": "Owls one" },
+                  { "id": "team-owls-2", "name": "Owls two" }
+                ],
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+              }
+            ]
+          },
+          {
+            "tableNumber": 2,
+            "trio": true,
+            "teams": [
+              {
+                "id": "team-ravens",
+                "name": "Ravens",
+                "players": [
+                  { "id": "team-ravens-1", "name": "Ravens one" },
+                  { "id": "team-ravens-2", "name": "Ravens two" }
+                ],
+                "totals": { "victoryPoints": 8, "tichuPoints": 280 }
+              },
+              {
+                "id": "team-badgers",
+                "name": "Badgers",
+                "players": [
+                  { "id": "team-badgers-1", "name": "Badgers one" },
+                  { "id": "team-badgers-2", "name": "Badgers two" }
+                ],
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+              },
+              {
+                "id": "team-wolves",
+                "name": "Wolves",
+                "players": [
+                  { "id": "team-wolves-1", "name": "Wolves one" },
+                  { "id": "team-wolves-2", "name": "Wolves two" }
+                ],
+                "totals": { "victoryPoints": 0, "tichuPoints": 120 }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "tables": [
+          {
+            "tableNumber": 1,
+            "trio": false,
+            "teams": [
+              {
+                "id": "team-falcons",
+                "name": "Falcons",
+                "players": [
+                  { "id": "team-falcons-1", "name": "Falcons one" },
+                  { "id": "team-falcons-2", "name": "Falcons two" }
+                ],
+                "totals": { "victoryPoints": 8, "tichuPoints": 240 }
+              },
+              {
+                "id": "team-ravens",
+                "name": "Ravens",
+                "players": [
+                  { "id": "team-ravens-1", "name": "Ravens one" },
+                  { "id": "team-ravens-2", "name": "Ravens two" }
+                ],
+                "totals": { "victoryPoints": 0, "tichuPoints": 160 }
+              }
+            ]
+          },
+          {
+            "tableNumber": 2,
+            "trio": true,
+            "teams": [
+              {
+                "id": "team-owls",
+                "name": "Owls",
+                "players": [
+                  { "id": "team-owls-1", "name": "Owls one" },
+                  { "id": "team-owls-2", "name": "Owls two" }
+                ],
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+              },
+              {
+                "id": "team-badgers",
+                "name": "Badgers",
+                "players": [
+                  { "id": "team-badgers-1", "name": "Badgers one" },
+                  { "id": "team-badgers-2", "name": "Badgers two" }
+                ],
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+              },
+              {
+                "id": "team-wolves",
+                "name": "Wolves",
+                "players": [
+                  { "id": "team-wolves-1", "name": "Wolves one" },
+                  { "id": "team-wolves-2", "name": "Wolves two" }
+                ],
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "finalRanking": [
+      { "rank": 1, "teamId": "team-falcons", "teamName": "Falcons", "gamesPlayed": 8, "victoryPoints": 12, "tichuPoints": 440 },
+      { "rank": 2, "teamId": "team-ravens", "teamName": "Ravens", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 440 },
+      { "rank": 3, "teamId": "team-badgers", "teamName": "Badgers", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 400 },
+      { "rank": 3, "teamId": "team-owls", "teamName": "Owls", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 400 },
+      { "rank": 5, "teamId": "team-wolves", "teamName": "Wolves", "gamesPlayed": 8, "victoryPoints": 4, "tichuPoints": 320 }
+    ]
+  }
+}

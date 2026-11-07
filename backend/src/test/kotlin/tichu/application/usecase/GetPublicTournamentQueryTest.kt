@@ -12,7 +12,9 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
+import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.teamOf
 import tichu.vocabulary.NotFoundException
@@ -36,8 +38,13 @@ class GetPublicTournamentQueryTest {
     private val tournamentRepository = InMemoryTournamentRepository()
     private val teamRepository = InMemoryTeamRepository()
     private val roundRepository = InMemoryRoundRepository()
+    private val playedRounds = PlayedRoundsReader(
+        roundRepository,
+        InMemoryGameRepository(),
+        InMemoryTableConfirmationRepository(),
+    )
 
-    private val query = GetPublicTournamentQuery(tournamentRepository, teamRepository, roundRepository)
+    private val query = GetPublicTournamentQuery(tournamentRepository, teamRepository, playedRounds)
 
     @BeforeEach
     fun seed() {

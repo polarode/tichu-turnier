@@ -1,11 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import type { PublicTournamentDetail } from '@/domain/tournament.domain.ts';
-import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { publicTournamentDetailDtoSchema } from '@/tournament-api/dtos/public-tournament.dto.ts';
+import { publicTournamentDetailDtoToDomain } from '@/tournament-api/mappers/public-tournament.mapper.ts';
+import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
+import { bodyRows } from '@/test-helpers/table-rows.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
@@ -19,6 +25,23 @@ vi.mock('@/tournament-api/tournament.repository.ts', async () => {
 
 const auth = vi.mocked(AuthRepository);
 const tournaments = vi.mocked(TournamentRepository);
+
+/**
+ * The shared contract fixture (a Published tournament): the backend asserts its API answers
+ * exactly `response`; here the same wire data runs through the real zod schema and mapper.
+ */
+const publishedFixture = JSON.parse(
+    readFileSync(
+        resolve(
+            __dirname,
+            '../../../../../../../contract-fixtures/public-tournament-published.json',
+        ),
+        'utf8',
+    ),
+) as { response: unknown };
+const harvestCup = publicTournamentDetailDtoToDomain(
+    publicTournamentDetailDtoSchema.parse(publishedFixture.response),
+);
 
 const noSession = new ApiError({
     code: 'UNAUTHENTICATED',
@@ -195,14 +218,59 @@ describe('public tournament page', () => {
         expect(within(round1Tables[1]!).getByText('Gus Hale · Hana Ito')).toBeInTheDocument();
     });
 
-    it('shows no results or standings', async () => {
+    it.each([TournamentStatus.ACTIVE, TournamentStatus.COMPLETED])(
+        'shows no results, standings or table totals while the tournament is %s',
+        async (status) => {
+            tournaments.getPublicTournament.mockResolvedValue({ ...autumnCup, status });
+
+            renderApp('/public/tournaments/t-1', { initialLocale: 'en' });
+
+            await screen.findByRole('heading', { name: 'Autumn Cup' });
+            expect(screen.queryByRole('heading', { name: /standings|ranking/i })).toBeNull();
+            expect(screen.queryByText(/victory points|\bVP\b|\bTP\b/i)).toBeNull();
+        },
+    );
+
+    it('shows the Final Ranking above the rounds and each team totals per table once published', async () => {
+        tournaments.getPublicTournament.mockResolvedValue(harvestCup);
+
+        renderApp('/public/tournaments/t-harvest-cup', { initialLocale: 'en' });
+
+        await screen.findByRole('heading', { name: 'Harvest Cup' });
+
+        const finalHeading = screen.getByRole('heading', { level: 2, name: 'Final Ranking' });
+        const round2Heading = screen.getByRole('heading', { level: 2, name: 'Round 2' });
+        expect(
+            finalHeading.compareDocumentPosition(round2Heading) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+
+        const ranking = screen.getByRole('table', { name: 'Final Ranking' });
+        expect(bodyRows(ranking).map(([team, rank]) => [team, rank])).toEqual([
+            ['Falcons', '1'],
+            ['Ravens', '2'],
+            ['Badgers', '3'],
+            ['Owls', '3'],
+            ['Wolves', '5'],
+        ]);
+
+        const round1 = screen.getByRole('region', { name: 'Round 1' });
+        const round1Tables = within(round1).getAllByRole('article');
+        const wolves = within(round1Tables[1]!).getByText('Wolves').closest('li')!;
+        expect(wolves).toHaveTextContent('0 VP 120 TP');
+
+        const round2 = screen.getByRole('region', { name: 'Round 2' });
+        const round2Tables = within(round2).getAllByRole('article');
+        const falcons = within(round2Tables[0]!).getByText('Falcons').closest('li')!;
+        expect(falcons).toHaveTextContent('8 VP 240 TP');
+    });
+
+    it('shows no Final Ranking before the tournament is published', async () => {
         tournaments.getPublicTournament.mockResolvedValue(autumnCup);
 
         renderApp('/public/tournaments/t-1', { initialLocale: 'en' });
 
         await screen.findByRole('heading', { name: 'Autumn Cup' });
-        expect(screen.queryByRole('heading', { name: /standings|ranking/i })).toBeNull();
-        expect(screen.queryByText(/victory points|\bVP\b/i)).toBeNull();
+        expect(screen.queryByRole('table', { name: 'Final Ranking' })).toBeNull();
     });
 
     it('shows a not-found alert with a link back to the public home for a 404', async () => {

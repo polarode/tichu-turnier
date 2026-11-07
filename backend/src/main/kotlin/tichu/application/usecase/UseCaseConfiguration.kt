@@ -254,8 +254,8 @@ class UseCaseConfiguration(
     fun getPublicTournament(
         tournamentRepository: TournamentRepository,
         teamRepository: TeamRepository,
-        roundRepository: RoundRepository,
-    ): GetPublicTournament = GetPublicTournamentQuery(tournamentRepository, teamRepository, roundRepository)
+        playedRoundsReader: PlayedRoundsReader,
+    ): GetPublicTournament = GetPublicTournamentQuery(tournamentRepository, teamRepository, playedRoundsReader)
 
     @Bean
     fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =

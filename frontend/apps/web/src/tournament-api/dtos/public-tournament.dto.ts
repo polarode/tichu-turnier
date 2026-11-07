@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
+import { standingsEntryDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
  * zod schemas describing the public wire formats (`GET /api/public/tournaments` and
  * `GET /api/public/tournaments/{id}`). Public facts only; parsed at the repository boundary.
+ * Table totals and the final ranking are only sent once the tournament is Published.
  */
 /** One entry of `GET /api/public/tournaments` (public facts only). */
 export const publicTournamentDtoSchema = z.object({
@@ -30,6 +32,13 @@ export const publicTeamDtoSchema = z.object({
     name: z.string(),
     /** The team's players in the order the server lists them. */
     players: z.array(publicPlayerDtoSchema),
+    /** The team's Table Totals at this table; present only once the tournament is Published. */
+    totals: z
+        .object({
+            victoryPoints: z.number().int(),
+            tichuPoints: z.number().int(),
+        })
+        .optional(),
 });
 
 export type PublicTeamDto = z.infer<typeof publicTeamDtoSchema>;
@@ -55,6 +64,8 @@ export const publicTournamentDetailDtoSchema = z.object({
     name: z.string(),
     status: z.enum(TOURNAMENT_STATUSES),
     rounds: z.array(publicRoundDtoSchema),
+    /** The Final Ranking; present only once the tournament is Published. */
+    finalRanking: z.array(standingsEntryDtoSchema).optional(),
 });
 
 export type PublicTournamentDetailDto = z.infer<typeof publicTournamentDetailDtoSchema>;

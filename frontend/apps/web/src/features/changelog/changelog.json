@@ -206,6 +206,10 @@
             {
                 "type": "feature",
                 "text": "Spectators can open a public tournament from the public home and follow every round's pairings: each table with its teams and their players"
+            },
+            {
+                "type": "feature",
+                "text": "Once you publish the results, spectators see the Final Ranking and each team's summed Victory Points and Tichu Points per table on the public tournament page"
             }
         ]
     }

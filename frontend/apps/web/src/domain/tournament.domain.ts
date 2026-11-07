@@ -1,3 +1,4 @@
+import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
@@ -64,11 +65,19 @@ export interface PublicPlayer {
     name: string;
 }
 
+/** A team's Table Totals at one table (GLOSSARY.md), as the public tournament page shows them. */
+export interface PublicTableTotals {
+    victoryPoints: number;
+    tichuPoints: number;
+}
+
 /** A team as the public tournament page shows it: its players in order. */
 export interface PublicTeam {
     id: string;
     name: string;
     players: PublicPlayer[];
+    /** The team's Table Totals at this table; present only once the tournament is published. */
+    totals?: PublicTableTotals;
 }
 
 /** A table of a public round: two teams, or three at the trio table. */
@@ -86,14 +95,17 @@ export interface PublicRound {
 }
 
 /**
- * A tournament as the public tournament page shows it: its pairings only (no results,
- * standings or table status), in every status.
+ * A tournament as the public tournament page shows it: its pairings in every status, plus
+ * the table totals and Final Ranking once it is published (no games, outcomes or table
+ * status).
  */
 export interface PublicTournamentDetail {
     id: string;
     name: string;
     status: TournamentStatus;
     rounds: PublicRound[];
+    /** The Final Ranking; present only once the tournament is published. */
+    finalRanking?: StandingsEntry[];
 }
 
 /**

@@ -11,7 +11,8 @@ They live under the prefix **`/api/public/**`** and are opened by a single
 the `/api/**` admin catch-all** in `SecurityConfiguration`.
 
 Public endpoints expose only public facts (id, name, status and team count for the home;
-teams, players and pairings for the tournament page) and never team tokens, session or
+teams, players and pairings for the tournament page, plus Table Totals and the Final
+Ranking once Published) and never team tokens, session or
 credential material, or access-link state. A tournament that is not
 public **does not exist** on a public endpoint: the answer is **not found**, never
 *forbidden*.
@@ -45,5 +46,8 @@ public **does not exist** on a public endpoint: the answer is **not found**, nev
 - 2026-11-07 (S9b, #126): the public surface now also carries a public tournament's teams,
   players and pairings (table number, trio flag, seat order), via `GET /api/public/tournaments/{id}`.
   It never carries games, results, table status or confirmations before publication.
+- 2026-11-07 (S9c, #127): once a tournament is Published, the public read also carries each
+  team's Table Totals per table and the Final Ranking; still never a per-game breakdown, table
+  status or confirmations.
 - The public stream (S9d) and the public tournament page (S9b/S9c) extend this same
   surface and contract rather than introducing their own.

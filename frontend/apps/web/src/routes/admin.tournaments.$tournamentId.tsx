@@ -53,163 +53,165 @@ function TournamentDetailComponent() {
 }
 
 function TournamentDetailBody() {
-        const { t } = useI18n();
-        const { tournamentId } = Route.useParams();
-        const tournamentQuery = useTournament(tournamentId);
-        const teamsQuery = useTeams(tournamentId);
-        const { tab = 'rounds' } = Route.useSearch();
-        const navigate = Route.useNavigate();
-        const status = tournamentQuery.data?.status;
-        const live = status === TournamentStatus.ACTIVE;
-        const connected = useTournamentLiveStream(tournamentId, live);
-        // Shares the rounds section's query (same key), only for the tab count.
-        const roundsQuery = useRounds(tournamentId, {
-            enabled: status !== undefined && status !== TournamentStatus.SETUP,
-        });
-        const roundCount = roundsQuery.data?.length;
-        // Bumped when a round starts: remounts the rounds view, which then follows the latest round.
-        const [roundsViewKey, setRoundsViewKey] = useState(0);
-        const showNewRound = () => {
-            setRoundsViewKey((key) => key + 1);
-            void navigate({ search: { tab: 'rounds' }, replace: true });
-        };
+    const { t } = useI18n();
+    const { tournamentId } = Route.useParams();
+    const tournamentQuery = useTournament(tournamentId);
+    const teamsQuery = useTeams(tournamentId);
+    const { tab = 'rounds' } = Route.useSearch();
+    const navigate = Route.useNavigate();
+    const status = tournamentQuery.data?.status;
+    const live = status === TournamentStatus.ACTIVE;
+    const connected = useTournamentLiveStream(tournamentId, live);
+    // Shares the rounds section's query (same key), only for the tab count.
+    const roundsQuery = useRounds(tournamentId, {
+        enabled: status !== undefined && status !== TournamentStatus.SETUP,
+    });
+    const roundCount = roundsQuery.data?.length;
+    // Bumped when a round starts: remounts the rounds view, which then follows the latest round.
+    const [roundsViewKey, setRoundsViewKey] = useState(0);
+    const showNewRound = () => {
+        setRoundsViewKey((key) => key + 1);
+        void navigate({ search: { tab: 'rounds' }, replace: true });
+    };
 
-        if (tournamentQuery.isPending) {
-            return <p className="text-muted-foreground">{t('common.loading')}</p>;
-        }
-        if (tournamentQuery.isError) {
-            return (
-                <p role="alert" className="text-sm text-destructive">
-                    {localizedErrorMessage(tournamentQuery.error, t)}
-                </p>
-            );
-        }
-        const teamsReady = !teamsQuery.isPending && !teamsQuery.isError;
-
-        const tournament = tournamentQuery.data;
-        const editable = tournament.status === TournamentStatus.SETUP;
-        const isFinal =
-            tournament.status === TournamentStatus.COMPLETED ||
-            tournament.status === TournamentStatus.PUBLISHED;
-        const teams = teamsQuery.data ?? [];
-
+    if (tournamentQuery.isPending) {
+        return <p className="text-muted-foreground">{t('common.loading')}</p>;
+    }
+    if (tournamentQuery.isError) {
         return (
-            <section className="flex flex-col gap-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <PageHeader
-                        titleKey="tournament.detail.title"
-                        descriptionKey="tournament.detail.description"
-                    />
-                    <div className="flex items-center gap-3">
-                        {teamsReady ? (
-                            <StartTournamentButton tournament={tournament} teams={teams} />
-                        ) : null}
-                        {editable ? (
-                            <Link
-                                to="/admin/tournaments/$tournamentId/edit"
-                                params={{ tournamentId: tournament.id }}
-                                className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                            >
-                                {t('tournament.detail.edit')}
-                            </Link>
-                        ) : null}
-                    </div>
-                </div>
+            <p role="alert" className="text-sm text-destructive">
+                {localizedErrorMessage(tournamentQuery.error, t)}
+            </p>
+        );
+    }
+    const teamsReady = !teamsQuery.isPending && !teamsQuery.isError;
 
-                <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4">
-                    <div className="flex items-center gap-3">
-                        <span className="text-lg font-medium">{tournament.name}</span>
-                        <TournamentStatusBadge status={tournament.status} />
-                        {live ? <LiveBadge connected={connected} /> : null}
-                    </div>
-                    {tournament.description ? (
-                        <p className="text-muted-foreground">{tournament.description}</p>
+    const tournament = tournamentQuery.data;
+    const editable = tournament.status === TournamentStatus.SETUP;
+    const isFinal =
+        tournament.status === TournamentStatus.COMPLETED ||
+        tournament.status === TournamentStatus.PUBLISHED;
+    const teams = teamsQuery.data ?? [];
+
+    return (
+        <section className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <PageHeader
+                    titleKey="tournament.detail.title"
+                    descriptionKey="tournament.detail.description"
+                />
+                <div className="flex items-center gap-3">
+                    {teamsReady ? (
+                        <StartTournamentButton tournament={tournament} teams={teams} />
                     ) : null}
-                    <p className="text-sm text-muted-foreground">
-                        {`${t('tournament.form.maxTeams')}: ${tournament.maxTeams}`}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        {`${t('tournament.form.grandTichuBonus')}: ${tournament.settings.grandTichuBonus}`}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        {`${t('tournament.form.doubleWinBonus')}: ${tournament.settings.doubleWinBonus}`}
-                    </p>
                     {editable ? (
-                        // Once started, the progress card shows (and adjusts) the Total Rounds.
-                        <p className="text-sm text-muted-foreground">
-                            {`${t('tournament.form.totalRounds')}: ${tournament.settings.totalRounds}`}
-                        </p>
+                        <Link
+                            to="/admin/tournaments/$tournamentId/edit"
+                            params={{ tournamentId: tournament.id }}
+                            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                        >
+                            {t('tournament.detail.edit')}
+                        </Link>
                     ) : null}
                 </div>
+            </div>
 
-                {!editable && roundsQuery.data ? (
-                    <ProgressCard tournament={tournament} rounds={roundsQuery.data} onRoundStarted={showNewRound} />
+            <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4">
+                <div className="flex items-center gap-3">
+                    <span className="text-lg font-medium">{tournament.name}</span>
+                    <TournamentStatusBadge status={tournament.status} />
+                    {live ? <LiveBadge connected={connected} /> : null}
+                </div>
+                {tournament.description ? (
+                    <p className="text-muted-foreground">{tournament.description}</p>
                 ) : null}
-
-                {teamsQuery.isPending ? (
-                    <p className="text-muted-foreground">{t('common.loading')}</p>
-                ) : teamsQuery.isError ? (
-                    <p role="alert" className="text-sm text-destructive">
-                        {localizedErrorMessage(teamsQuery.error, t)}
+                <p className="text-sm text-muted-foreground">
+                    {`${t('tournament.form.maxTeams')}: ${tournament.maxTeams}`}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                    {`${t('tournament.form.grandTichuBonus')}: ${tournament.settings.grandTichuBonus}`}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                    {`${t('tournament.form.doubleWinBonus')}: ${tournament.settings.doubleWinBonus}`}
+                </p>
+                {editable ? (
+                    // Once started, the progress card shows (and adjusts) the Total Rounds.
+                    <p className="text-sm text-muted-foreground">
+                        {`${t('tournament.form.totalRounds')}: ${tournament.settings.totalRounds}`}
                     </p>
-                ) : editable ? (
-                    // Setup has no rounds yet: the team list is the whole page, no tabs.
-                    <TeamsSection
-                        tournamentId={tournament.id}
-                        maxTeams={tournament.maxTeams}
-                        editable={editable}
-                        teams={teams}
-                    />
-                ) : (
-                    <div className="flex flex-col gap-4">
-                        <TabList
-                            id="tournament-section"
-                            variant="underline"
-                            label={t('tournament.detail.sections')}
-                            value={tab}
-                            onValueChange={(next) =>
-                                void navigate({ search: { tab: next }, replace: true })
-                            }
-                            items={[
-                                {
-                                    value: 'rounds',
-                                    label: roundCount === undefined
+                ) : null}
+            </div>
+
+            {!editable && roundsQuery.data ? (
+                <ProgressCard
+                    tournament={tournament}
+                    rounds={roundsQuery.data}
+                    onRoundStarted={showNewRound}
+                />
+            ) : null}
+
+            {teamsQuery.isPending ? (
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+            ) : teamsQuery.isError ? (
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(teamsQuery.error, t)}
+                </p>
+            ) : editable ? (
+                // Setup has no rounds yet: the team list is the whole page, no tabs.
+                <TeamsSection
+                    tournamentId={tournament.id}
+                    maxTeams={tournament.maxTeams}
+                    editable={editable}
+                    teams={teams}
+                />
+            ) : (
+                <div className="flex flex-col gap-4">
+                    <TabList
+                        id="tournament-section"
+                        variant="underline"
+                        label={t('tournament.detail.sections')}
+                        value={tab}
+                        onValueChange={(next) =>
+                            void navigate({ search: { tab: next }, replace: true })
+                        }
+                        items={[
+                            {
+                                value: 'rounds',
+                                label:
+                                    roundCount === undefined
                                         ? t('rounds.section.title')
                                         : `${t('rounds.section.title')} (${roundCount})`,
-                                },
-                                {
-                                    value: 'standings',
-                                    label: t(isFinal ? 'standings.finalTitle' : 'standings.title'),
-                                },
-                                {
-                                    value: 'teams',
-                                    label: `${t('teams.section.title')} (${teams.length})`,
-                                },
-                            ]}
-                        />
-                        <TabPanel id="tournament-section" value={tab}>
-                            {tab === 'rounds' ? (
-                                <RoundsSection
-                                    key={roundsViewKey}
-                                    tournamentId={tournament.id}
-                                    teams={teams}
-                                />
-                            ) : tab === 'standings' ? (
-                                <StandingsSection
-                                    tournamentId={tournament.id}
-                                    final={isFinal}
-                                />
-                            ) : (
-                                <TeamsSection
-                                    tournamentId={tournament.id}
-                                    maxTeams={tournament.maxTeams}
-                                    editable={editable}
-                                    teams={teams}
-                                />
-                            )}
-                        </TabPanel>
-                    </div>
-                )}
+                            },
+                            {
+                                value: 'standings',
+                                label: t(isFinal ? 'standings.finalTitle' : 'standings.title'),
+                            },
+                            {
+                                value: 'teams',
+                                label: `${t('teams.section.title')} (${teams.length})`,
+                            },
+                        ]}
+                    />
+                    <TabPanel id="tournament-section" value={tab}>
+                        {tab === 'rounds' ? (
+                            <RoundsSection
+                                key={roundsViewKey}
+                                tournamentId={tournament.id}
+                                teams={teams}
+                            />
+                        ) : tab === 'standings' ? (
+                            <StandingsSection tournamentId={tournament.id} final={isFinal} />
+                        ) : (
+                            <TeamsSection
+                                tournamentId={tournament.id}
+                                maxTeams={tournament.maxTeams}
+                                editable={editable}
+                                teams={teams}
+                            />
+                        )}
+                    </TabPanel>
+                </div>
+            )}
         </section>
     );
 }

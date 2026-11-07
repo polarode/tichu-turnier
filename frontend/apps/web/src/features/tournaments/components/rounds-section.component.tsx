@@ -7,8 +7,15 @@ import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
-import { GameResultsTable, TeamDot } from '@/features/scoring/components/game-results-table.component.tsx';
-import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS, tableHeading } from '@/features/scoring/labels.ts';
+import {
+    GameResultsTable,
+    TeamDot,
+} from '@/features/scoring/components/game-results-table.component.tsx';
+import {
+    confirmedCountLabel,
+    TABLE_STATUS_LABEL_KEYS,
+    tableHeading,
+} from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
@@ -76,7 +83,9 @@ export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
                                         <>
                                             {' '}
                                             <span aria-hidden="true">✓</span>{' '}
-                                            <span className="sr-only">{t('rounds.round.complete')}</span>
+                                            <span className="sr-only">
+                                                {t('rounds.round.complete')}
+                                            </span>
                                         </>
                                     ) : null}
                                 </>
@@ -175,14 +184,21 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                                 <>
                                     {' '}
                                     <span aria-hidden="true">✓</span>{' '}
-                                    <span className="sr-only">{t('confirmation.teamConfirmed')}</span>
+                                    <span className="sr-only">
+                                        {t('confirmation.teamConfirmed')}
+                                    </span>
                                 </>
                             ) : null}
                         </Fragment>
                     ))}
                 </span>
                 {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
-                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium tabular-nums', chip.tone)}>
+                <span
+                    className={cn(
+                        'rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
+                        chip.tone,
+                    )}
+                >
                     {chip.label}
                 </span>
             </button>

@@ -62,6 +62,7 @@ class GetTeamScoringQuery(
                 confirmationRepository.findByTable(TableKey(tournamentId, round.number, table.id.value)),
             ),
             grandTichuBonus = settings.grandTichuBonus,
+            doubleWinBonus = settings.doubleWinBonus,
             teams = teams,
             trio = table.isTrio,
             schedule = table.schedule,

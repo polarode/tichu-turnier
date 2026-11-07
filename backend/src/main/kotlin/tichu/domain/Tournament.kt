@@ -50,6 +50,12 @@ data class TournamentSettings(
      */
     val grandTichuBonus: Int = 200,
     /**
+     * Tichu Points the team earns for a double win: 200 under the normal rules, or
+     * 100 for a smaller reward. One of [DOUBLE_WIN_BONUS_OPTIONS]. The extra victory
+     * point is unaffected.
+     */
+    val doubleWinBonus: Int = 200,
+    /**
      * The Total Rounds (GLOSSARY.md): how many rounds the tournament runs, within
      * [TOTAL_ROUNDS_RANGE]. The one setting still adjustable while ACTIVE.
      */
@@ -57,6 +63,7 @@ data class TournamentSettings(
 ) {
     companion object {
         val GRAND_TICHU_BONUS_OPTIONS = setOf(100, 200)
+        val DOUBLE_WIN_BONUS_OPTIONS = setOf(100, 200)
         val TOTAL_ROUNDS_RANGE = 1..20
     }
 }

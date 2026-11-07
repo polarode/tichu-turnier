@@ -135,6 +135,10 @@ class TournamentController(
             name = name,
             description = description,
             maxTeams = maxTeams,
-            settings = TournamentSettings(grandTichuBonus = settings.grandTichuBonus, totalRounds = settings.totalRounds),
+            settings = TournamentSettings(
+                grandTichuBonus = settings.grandTichuBonus,
+                doubleWinBonus = settings.doubleWinBonus,
+                totalRounds = settings.totalRounds,
+            ),
         )
 }

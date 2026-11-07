@@ -49,6 +49,7 @@ function table(overrides: Partial<TeamTable> = {}): TeamTable {
         tableNumber: 1,
         confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
         grandTichuBonus: 200,
+        doubleWinBonus: 200,
         teams: [
             {
                 teamId: 'team-a',
@@ -336,6 +337,22 @@ describe('/team/score', () => {
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
         await waitFor(() => expect(scoring.create).toHaveBeenCalledTimes(1));
         expect(scoring.create.mock.calls[0]![1].teams[0].players[0].call).toBe('GRAND');
+    });
+
+    it('totals a double win with the tournament bonus, here 100', async () => {
+        scoring.currentTable.mockResolvedValue(table({ doubleWinBonus: 100 }));
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+        await user.click(finishButtons[1]!); // Anna → 2
+
+        // Team Alpha's double win: base 0 + 100.
+        expect(screen.getByText('→ 100')).toBeInTheDocument();
     });
 
     it('announces each player\'s current call and bomb count, not just the control name', async () => {

@@ -12,7 +12,7 @@ const dto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 200, totalRounds: 4 },
+    settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -22,7 +22,7 @@ const writeRequest: TournamentWriteInput = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 200, totalRounds: 4 },
+    settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
 };
 
 
@@ -242,7 +242,7 @@ describe('TournamentRepository standings/total rounds', () => {
     });
 
     it('sets the total rounds and returns the updated tournament', async () => {
-        mock.onPut('/api/tournaments/t-1/total-rounds').reply(200, { ...dto, settings: { grandTichuBonus: 200, totalRounds: 6 } });
+        mock.onPut('/api/tournaments/t-1/total-rounds').reply(200, { ...dto, settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 } });
 
         const tournament = await TournamentRepository.setTotalRounds('t-1', 6);
 

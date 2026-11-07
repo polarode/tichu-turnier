@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { grandTichuBonusDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
+import { doubleWinBonusDtoSchema, grandTichuBonusDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 import { TABLE_STATUSES } from '@/vocabulary/table-status.enum.ts';
 
 /**
@@ -47,6 +47,7 @@ export const teamTableDtoSchema = z.object({
     tableNumber: z.number(),
     ...tableConfirmationDtoSchema.shape,
     grandTichuBonus: grandTichuBonusDtoSchema,
+    doubleWinBonus: doubleWinBonusDtoSchema,
     /** The seated teams in seat order: two, or three at the trio table. */
     teams: seatedSchema(teamTableTeamDtoSchema),
     trio: z.boolean(),

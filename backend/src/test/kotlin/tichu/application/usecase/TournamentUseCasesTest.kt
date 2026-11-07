@@ -181,6 +181,19 @@ class TournamentUseCasesTest {
     }
 
     @Test
+    fun `rejects a double win bonus other than 100 or 200 anchored to the doubleWinBonus field`() {
+        for (bonus in listOf(0, 150, 300)) {
+            val ex = assertFailsWith<InvalidFieldException> {
+                createTournament.create(
+                    TournamentWriteRequest("Classic", "", 16, TournamentSettings(doubleWinBonus = bonus)),
+                    owner,
+                )
+            }
+            assertEquals("doubleWinBonus", ex.field)
+        }
+    }
+
+    @Test
     fun `owner reads their own tournament`() {
         val created = create()
 
@@ -271,6 +284,16 @@ class TournamentUseCasesTest {
             updateTournament.update(created.id, updateRequest(settings = TournamentSettings(grandTichuBonus = 150)), owner)
         }
         assertEquals("grandTichuBonus", ex.field)
+    }
+
+    @Test
+    fun `update rejects a double win bonus other than 100 or 200 anchored to the doubleWinBonus field`() {
+        val created = create()
+
+        val ex = assertFailsWith<InvalidFieldException> {
+            updateTournament.update(created.id, updateRequest(settings = TournamentSettings(doubleWinBonus = 150)), owner)
+        }
+        assertEquals("doubleWinBonus", ex.field)
     }
 
     @Test

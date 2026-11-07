@@ -125,6 +125,9 @@ function TournamentDetailBody() {
                     <p className="text-sm text-muted-foreground">
                         {`${t('tournament.form.grandTichuBonus')}: ${tournament.settings.grandTichuBonus}`}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                        {`${t('tournament.form.doubleWinBonus')}: ${tournament.settings.doubleWinBonus}`}
+                    </p>
                     {editable ? (
                         // Once started, the progress card shows (and adjusts) the Total Rounds.
                         <p className="text-sm text-muted-foreground">

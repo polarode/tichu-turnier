@@ -28,6 +28,12 @@ internal object TournamentInputValidator {
                 "Grand Tichu bonus must be one of ${TournamentSettings.GRAND_TICHU_BONUS_OPTIONS}",
             )
         }
+        if (settings.doubleWinBonus !in TournamentSettings.DOUBLE_WIN_BONUS_OPTIONS) {
+            throw InvalidFieldException(
+                "doubleWinBonus",
+                "Double win bonus must be one of ${TournamentSettings.DOUBLE_WIN_BONUS_OPTIONS}",
+            )
+        }
         validateTotalRounds(settings.totalRounds)
     }
 

@@ -243,6 +243,22 @@ class GameScoringTest {
     }
 
     @Test
+    fun `double win is worth the tournament's bonus, here 100`() {
+        val outcome = GameScoring.score(
+            teams = listOf(
+                TeamResult(TeamId("t1"), 0, listOf(playerResult(1, TichuCall.SMALL), playerResult(2))),
+                TeamResult(TeamId("t2"), 0, listOf(playerResult(null), playerResult(null))),
+            ),
+            settings = TournamentSettings(doubleWinBonus = 100),
+        )
+
+        // 0 base + 100 small tichu + 100 double win; the extra victory point is unchanged.
+        assertEquals(200, outcome.teamPoints[TeamId("t1")])
+        assertEquals(0, outcome.teamPoints[TeamId("t2")])
+        assertEquals(3, outcome.victoryPoints[TeamId("t1")])
+    }
+
+    @Test
     fun `rejects bomb count outside 0 to 3`() {
         assertFailsWith<GameValidationException> {
             GameScoring.score(

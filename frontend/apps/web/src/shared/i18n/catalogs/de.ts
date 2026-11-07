@@ -169,6 +169,7 @@ export const de: Catalog = {
     'tournament.form.maxTeams': 'Maximale Teamanzahl',
     'tournament.form.totalRounds': 'Runden insgesamt',
     'tournament.form.grandTichuBonus': 'Grand-Tichu-Bonus',
+    'tournament.form.doubleWinBonus': 'Doppelsieg-Bonus',
     'tournament.detail.title': 'Turnier',
     'tournament.detail.backLink': 'Zum Turnier',
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',

@@ -137,7 +137,7 @@ export function GameEntryForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingGame?.version]);
     const dw = doubleWinTeam(state.positions);
-    const totals = displayTotals(state, table.grandTichuBonus);
+    const totals = displayTotals(state, table);
     const team1Base = complementBaseScore(state.baseScoreTeam0, dw !== null);
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
@@ -169,7 +169,7 @@ export function GameEntryForm({
         form.setValue('calls', withSlot(state.calls, slot, nextCall));
     }
 
-    // The slider is moot on a double win (fixed 200 : 0) and in read-only mode.
+    // The slider is moot on a double win (base fixed at 0 : 0) and in read-only mode.
     const baseScoreLocked = readOnly || dw !== null;
 
     function stepBaseScore(delta: number) {

@@ -254,6 +254,18 @@ class TeamScoringControllerIntegrationTest(
     }
 
     @Test
+    fun `current-table exposes the double win bonus so the form's totals match`() {
+        tournamentRepository.save(
+            tournamentRepository.findById(TournamentId(tournamentId))!!
+                .copy(settings = TournamentSettings(doubleWinBonus = 100)),
+        )
+
+        mockMvc.perform(get("/api/team/me/current-table").cookie(teamCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.doubleWinBonus").value(100))
+    }
+
+    @Test
     fun `current-table picks the highest-numbered round the team is seated at`() {
         // A later round seats the same two teams at table 1 again; "current" is round 2.
         roundRepository.save(

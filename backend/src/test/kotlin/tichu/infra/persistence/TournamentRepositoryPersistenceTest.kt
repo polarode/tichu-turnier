@@ -68,7 +68,7 @@ class TournamentRepositoryPersistenceTest(
 
         // Stored as a real JSON document, not a flattened column set.
         val rawSettings = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = 't-1'", String::class.java)
-        assertEquals("""{"totalRounds": 4, "grandTichuBonus": 100}""", rawSettings)
+        assertEquals("""{"totalRounds": 4, "doubleWinBonus": 200, "grandTichuBonus": 100}""", rawSettings)
 
         // And the adapter maps it back into the domain value object.
         val freshAdapter = JpaTournamentRepository(springDataTournamentRepository)
@@ -112,6 +112,29 @@ class TournamentRepositoryPersistenceTest(
         fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)
         assertEquals("""{"totalRounds": 4, "grandTichuBonus": 100}""", rawSettings("t-old"))
         assertEquals("""{"totalRounds": 6, "grandTichuBonus": 200}""", rawSettings("t-set"))
+    }
+
+    @Test
+    fun `V19 gives tournaments without a double win bonus the default 200 and keeps a stored value`() {
+        // Raw JSON is asserted: reading through the adapter would hide a missing key behind the domain default.
+        val stored = mapOf(
+            "t-old" to """{"grandTichuBonus": 100, "totalRounds": 4}""",
+            "t-set" to """{"grandTichuBonus": 200, "totalRounds": 6, "doubleWinBonus": 100}""",
+        )
+        for ((id, settings) in stored) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Stored', '', 16, ?::jsonb, 'ACTIVE', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V19__double_win_bonus_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)
+        assertEquals("""{"totalRounds": 4, "doubleWinBonus": 200, "grandTichuBonus": 100}""", rawSettings("t-old"))
+        assertEquals("""{"totalRounds": 6, "doubleWinBonus": 100, "grandTichuBonus": 200}""", rawSettings("t-set"))
     }
 
     @Test

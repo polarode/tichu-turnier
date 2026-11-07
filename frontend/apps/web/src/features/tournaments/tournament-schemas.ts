@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import {
+    DOUBLE_WIN_BONUS_OPTIONS,
     GRAND_TICHU_BONUS_OPTIONS,
     TOTAL_ROUNDS_MAX,
     TOTAL_ROUNDS_MIN,
@@ -25,6 +26,7 @@ export function tournamentFormSchema(t: I18n['t']) {
             .min(2, t('validation.tournamentMaxTeams.min'))
             .max(64, t('validation.tournamentMaxTeams.max')),
         grandTichuBonus: z.union(GRAND_TICHU_BONUS_OPTIONS.map((bonus) => z.literal(bonus))),
+        doubleWinBonus: z.union(DOUBLE_WIN_BONUS_OPTIONS.map((bonus) => z.literal(bonus))),
         totalRounds: z
             .number({ message: t('validation.tournamentTotalRounds.range') })
             .int(t('validation.tournamentTotalRounds.range'))

@@ -18,6 +18,7 @@ const tableDto: TeamTableDto = {
     status: 'PLAYING',
     confirmedTeamIds: [],
     grandTichuBonus: 200,
+    doubleWinBonus: 200,
     teams: [
         {
             teamId: 'team-a',
@@ -103,6 +104,7 @@ describe('teamTableDtoToDomain', () => {
         expect(table.roundNumber).toBe(2);
         expect(table.tableNumber).toBe(3);
         expect(table.grandTichuBonus).toBe(200);
+        expect(table.doubleWinBonus).toBe(200);
         expect(table.teams[0].teamName).toBe('Team Alpha');
         expect(table.teams[1].players[1]).toEqual({ playerId: 'b2', name: 'Ben' });
         expect(table.trio).toBe(false);

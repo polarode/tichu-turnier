@@ -109,6 +109,7 @@ describe('/team', () => {
             tableNumber: 1,
             confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
             grandTichuBonus: 200,
+            doubleWinBonus: 200,
             teams: [
                 {
                     teamId: 'team-1',
@@ -212,6 +213,7 @@ function seatedTable(overrides: Partial<TeamTable> = {}): TeamTable {
         tableNumber: 2,
         confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
         grandTichuBonus: 200,
+        doubleWinBonus: 200,
         teams: [
             {
                 teamId: 'team-1',

@@ -43,7 +43,7 @@ function tournament(id: string, name: string, status: Tournament['status']): Tou
         name,
         description: '',
         maxTeams: 16,
-        settings: { grandTichuBonus: 200, totalRounds: 4 },
+        settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         updatedAt: new Date('2026-01-01T00:00:00Z'),

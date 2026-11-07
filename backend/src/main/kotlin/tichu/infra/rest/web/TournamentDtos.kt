@@ -47,11 +47,15 @@ data class TournamentResponse(
 
 data class TournamentSettingsResponse(
     val grandTichuBonus: Int,
+    val doubleWinBonus: Int,
     val totalRounds: Int,
 ) {
     companion object {
-        fun from(settings: TournamentSettings): TournamentSettingsResponse =
-            TournamentSettingsResponse(grandTichuBonus = settings.grandTichuBonus, totalRounds = settings.totalRounds)
+        fun from(settings: TournamentSettings): TournamentSettingsResponse = TournamentSettingsResponse(
+            grandTichuBonus = settings.grandTichuBonus,
+            doubleWinBonus = settings.doubleWinBonus,
+            totalRounds = settings.totalRounds,
+        )
     }
 }
 
@@ -70,6 +74,8 @@ data class TournamentWriteRequestBody(
 data class TournamentSettingsRequestBody(
     /** Validated by the use case (100 or 200), so the error anchors to the field. */
     val grandTichuBonus: Int = TournamentSettings().grandTichuBonus,
+    /** Validated by the use case (100 or 200), so the error anchors to the field. */
+    val doubleWinBonus: Int = TournamentSettings().doubleWinBonus,
     /** Validated by the use case (1–20), so the error anchors to the field. */
     val totalRounds: Int = TournamentSettings().totalRounds,
 )

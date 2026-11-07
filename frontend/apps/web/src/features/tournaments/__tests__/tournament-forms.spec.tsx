@@ -56,7 +56,7 @@ const setupTournament = {
     name: 'Jahresturnier',
     description: '',
     maxTeams: 8,
-    settings: { grandTichuBonus: 100 as const, totalRounds: 4 },
+    settings: { grandTichuBonus: 100 as const, doubleWinBonus: 100 as const, totalRounds: 4 },
     status: 'SETUP' as const,
     createdAt: new Date('2025-01-01T10:00:00Z'),
     updatedAt: new Date('2025-01-01T10:00:00Z'),
@@ -67,6 +67,7 @@ const fillAndSubmitCreateForm = async (overrides: {
     description?: string;
     maxTeams?: string;
     grandTichuBonus?: 100 | 200;
+    doubleWinBonus?: 100 | 200;
     totalRounds?: string;
 } = {}) => {
     await userEvent.type(await screen.findByLabelText('Name'), overrides.name ?? 'Jahresturnier');
@@ -84,6 +85,10 @@ const fillAndSubmitCreateForm = async (overrides: {
     }
     if (overrides.grandTichuBonus === 100) {
         await userEvent.click(screen.getByRole('combobox', { name: 'Grand-Tichu-Bonus' }));
+        await userEvent.click(await screen.findByRole('option', { name: '100' }));
+    }
+    if (overrides.doubleWinBonus === 100) {
+        await userEvent.click(screen.getByRole('combobox', { name: 'Doppelsieg-Bonus' }));
         await userEvent.click(await screen.findByRole('option', { name: '100' }));
     }
     await userEvent.click(screen.getByRole('button', { name: 'Turnier erstellen' }));
@@ -115,19 +120,19 @@ describe('tournament create/edit forms', () => {
         tournamentRepo.get.mockResolvedValue(setupTournament);
         renderApp('/admin/tournaments/new');
 
-        await fillAndSubmitCreateForm({ grandTichuBonus: 100 });
+        await fillAndSubmitCreateForm({ grandTichuBonus: 100, doubleWinBonus: 100 });
 
         expect(tournamentRepo.create).toHaveBeenCalledWith({
             name: 'Jahresturnier',
             description: '',
             maxTeams: 8,
-            settings: { grandTichuBonus: 100, totalRounds: 4 },
+            settings: { grandTichuBonus: 100, doubleWinBonus: 100, totalRounds: 4 },
         });
         expect(await screen.findByText('Jahresturnier')).toBeInTheDocument();
         expect(tournamentRepo.get).toHaveBeenCalledWith('t-1');
     });
 
-    it('starts a new tournament with the normal grand Tichu bonus of 200', async () => {
+    it('starts a new tournament with the normal grand Tichu and double win bonuses of 200', async () => {
         tournamentRepo.create.mockResolvedValue(setupTournament);
         tournamentRepo.get.mockResolvedValue(setupTournament);
         renderApp('/admin/tournaments/new');
@@ -135,7 +140,7 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm();
 
         expect(tournamentRepo.create).toHaveBeenCalledWith(
-            expect.objectContaining({ settings: { grandTichuBonus: 200, totalRounds: 4 } }),
+            expect.objectContaining({ settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 } }),
         );
     });
 
@@ -177,7 +182,7 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm({ totalRounds: '6' });
 
         expect(tournamentRepo.create).toHaveBeenCalledWith(
-            expect.objectContaining({ settings: { grandTichuBonus: 200, totalRounds: 6 } }),
+            expect.objectContaining({ settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 } }),
         );
     });
 
@@ -227,6 +232,7 @@ describe('tournament create/edit forms', () => {
         const nameInput = await screen.findByLabelText('Name');
         expect(nameInput).toHaveValue('Jahresturnier');
         expect(screen.getByRole('combobox', { name: 'Grand-Tichu-Bonus' })).toHaveTextContent('100');
+        expect(screen.getByRole('combobox', { name: 'Doppelsieg-Bonus' })).toHaveTextContent('100');
 
         await userEvent.clear(nameInput);
         await userEvent.type(nameInput, 'Renommiert');
@@ -236,7 +242,7 @@ describe('tournament create/edit forms', () => {
             name: 'Renommiert',
             description: '',
             maxTeams: 8,
-            settings: { grandTichuBonus: 100, totalRounds: 4 },
+            settings: { grandTichuBonus: 100, doubleWinBonus: 100, totalRounds: 4 },
         });
         expect(await screen.findByText('Renommiert')).toBeInTheDocument();
         expect(tournamentRepo.get).toHaveBeenCalledWith('t-1');

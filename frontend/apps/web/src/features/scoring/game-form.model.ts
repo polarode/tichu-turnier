@@ -5,7 +5,7 @@ import type {
     RecordedGame,
     TichuCall,
 } from '@/domain/game.domain.ts';
-import type { GrandTichuBonus } from '@/domain/tournament.domain.ts';
+import type { ScoringBonuses } from '@/domain/tournament.domain.ts';
 
 /**
  * Client-side model for the game entry grid. Mirrors v1's input model: four
@@ -16,7 +16,6 @@ import type { GrandTichuBonus } from '@/domain/tournament.domain.ts';
  */
 
 const SMALL_TICHU_BONUS = 100;
-const DOUBLE_WIN_BONUS = 200;
 
 /** The four grid slots, in a fixed order: team 0's two players, then team 1's. */
 export const PLAYER_SLOTS = [0, 1, 2, 3] as const;
@@ -85,11 +84,11 @@ export function complementBaseScore(baseScoreTeam0: number, isDoubleWin: boolean
 }
 
 /**
- * The per-team display totals (base + bonuses), with a grand Tichu worth the
- * tournament's [grandTichuBonus]. Display-only — never submitted; the server
+ * The per-team display totals (base + bonuses), with a grand Tichu and a double
+ * win worth the tournament's [bonuses]. Display-only — never submitted; the server
  * recomputes (ADR 0004). Returns totals for [team0, team1].
  */
-export function displayTotals(state: GameFormState, grandTichuBonus: GrandTichuBonus): [number, number] {
+export function displayTotals(state: GameFormState, bonuses: ScoringBonuses): [number, number] {
     const dw = doubleWinTeam(state.positions);
     const base: [number, number] = [
         dw === null ? state.baseScoreTeam0 : 0,
@@ -101,9 +100,9 @@ export function displayTotals(state: GameFormState, grandTichuBonus: GrandTichuB
         const call = state.calls[slot];
         const success = state.positions[slot] === 1;
         if (call === 'SMALL') bonus[team] += success ? SMALL_TICHU_BONUS : -SMALL_TICHU_BONUS;
-        else if (call === 'GRAND') bonus[team] += success ? grandTichuBonus : -grandTichuBonus;
+        else if (call === 'GRAND') bonus[team] += success ? bonuses.grandTichuBonus : -bonuses.grandTichuBonus;
     }
-    if (dw !== null) bonus[dw] += DOUBLE_WIN_BONUS;
+    if (dw !== null) bonus[dw] += bonuses.doubleWinBonus;
     return [base[0] + bonus[0], base[1] + bonus[1]];
 }
 

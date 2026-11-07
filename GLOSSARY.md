@@ -157,8 +157,8 @@ _Avoid_: raw score, card points
 
 **Double Win**:
 A game outcome where one team's two players finish first and second; the base scores
-are 0/0 and the other team's players have no position. The winning team earns a
-+200 bonus and an extra victory point.
+are 0/0 and the other team's players have no position. The winning team earns the
+tournament's **Double Win Bonus** (200 normally, or 100) and an extra victory point.
 _Avoid_: sweep, shutout
 
 ### Serving

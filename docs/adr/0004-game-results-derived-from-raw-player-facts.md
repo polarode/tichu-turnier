@@ -21,6 +21,10 @@ never persisted**; in fact client totals are not submitted at all (see Amendment
 below). Bonus amounts and the grand-Tichu toggle (`settings.allow_grand_tichu`)
 are server configuration, not per-request input.
 
+> **Amendment 2026-11-07**: the double-win bonus likewise becomes
+> `settings.doubleWinBonus` (100 or 200, default 200); the extra victory point is
+> unchanged. Migration V19 gives existing tournaments 200.
+
 > **Amendment 2026-11-03**: the grand-Tichu toggle is replaced by
 > `settings.grandTichuBonus` (100 or 200, default 200). Grand calls are always
 > accepted; 100 scores them like a small Tichu. Migration V17 maps a disabled

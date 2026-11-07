@@ -214,6 +214,7 @@ export const en = {
     'tournament.form.maxTeams': 'Max team count',
     'tournament.form.totalRounds': 'Total rounds',
     'tournament.form.grandTichuBonus': 'Grand Tichu bonus',
+    'tournament.form.doubleWinBonus': 'Double win bonus',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Add team',

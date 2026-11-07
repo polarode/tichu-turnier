@@ -83,6 +83,26 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.status").value("SETUP"))
             .andExpect(jsonPath("$.maxTeams").value(16))
             .andExpect(jsonPath("$.settings.grandTichuBonus").value(200))
+            .andExpect(jsonPath("$.settings.doubleWinBonus").value(200))
+    }
+
+    @Test
+    fun `create persists the double win bonus from the request body`() {
+        val response = mockMvc.perform(
+            post("/api/tournaments")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Small Double Win","maxTeams":16,"settings":{"doubleWinBonus":100}}"""),
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+            .response
+            .contentAsString
+        val id = objectMapper.readTree(response)["id"].asText()
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.settings.doubleWinBonus").value(100))
     }
 
     @Test
@@ -129,6 +149,19 @@ class TournamentControllerIntegrationTest(
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
             .andExpect(jsonPath("$.field").value("grandTichuBonus"))
+    }
+
+    @Test
+    fun `create rejects a double win bonus other than 100 or 200 with a field-anchored 400`() {
+        mockMvc.perform(
+            post("/api/tournaments")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Classic","maxTeams":16,"settings":{"doubleWinBonus":150}}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+            .andExpect(jsonPath("$.field").value("doubleWinBonus"))
     }
 
     @Test
@@ -208,7 +241,7 @@ class TournamentControllerIntegrationTest(
                             "name" to "Renamed",
                             "description" to "new description",
                             "maxTeams" to 8,
-                            "settings" to mapOf("grandTichuBonus" to 100),
+                            "settings" to mapOf("grandTichuBonus" to 100, "doubleWinBonus" to 100),
                         ),
                     ),
                 ),
@@ -219,11 +252,13 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.description").value("new description"))
             .andExpect(jsonPath("$.maxTeams").value(8))
             .andExpect(jsonPath("$.settings.grandTichuBonus").value(100))
+            .andExpect(jsonPath("$.settings.doubleWinBonus").value(100))
 
         mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name").value("Renamed"))
             .andExpect(jsonPath("$.settings.grandTichuBonus").value(100))
+            .andExpect(jsonPath("$.settings.doubleWinBonus").value(100))
     }
 
     @Test

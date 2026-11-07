@@ -8,8 +8,8 @@ import tichu.application.api.TeamTableTeam
  * Wire format of the team-session scoring reads (S5c, #101; ADR 0005). The
  * current-table response tells the form which round/table it is entering, the
  * matchup and roster, the table's confirmation [status] and [confirmedTeamIds]
- * (games are read-only unless PLAYING), and what a grand Tichu call is worth (so
- * the form's live totals match). The games list reuses [RecordedGameDto] — the
+ * (games are read-only unless PLAYING), and what a grand Tichu call and a double
+ * win are worth (so the form's live totals match). The games list reuses [RecordedGameDto] — the
  * same shape the write endpoints return.
  */
 data class TeamTableResponseDto(
@@ -19,6 +19,7 @@ data class TeamTableResponseDto(
     val status: String,
     val confirmedTeamIds: List<String>,
     val grandTichuBonus: Int,
+    val doubleWinBonus: Int,
     val teams: List<TeamTableTeamDto>,
     val trio: Boolean,
     /** Who plays each game at this table; the frontend never re-derives the trio schedule. */
@@ -32,6 +33,7 @@ data class TeamTableResponseDto(
             status = table.confirmation.status.name,
             confirmedTeamIds = table.confirmation.confirmedTeamIds.map { it.value },
             grandTichuBonus = table.grandTichuBonus,
+            doubleWinBonus = table.doubleWinBonus,
             teams = table.teams.map(TeamTableTeamDto::from),
             trio = table.trio,
             schedule = table.schedule.map(ScheduledGameDto::from),

@@ -59,7 +59,6 @@ data class GameOutcome(
 object GameScoring {
 
     private const val SMALL_TICHU_BONUS = 100
-    private const val DOUBLE_WIN_BONUS = 200
 
     fun score(teams: List<TeamResult>, settings: TournamentSettings): GameOutcome {
         validateTeams(teams)
@@ -74,7 +73,7 @@ object GameScoring {
             .map { it.playerId }
             .toSet()
 
-        val teamPoints = teams.associate { it.teamId to totalPoints(it, doubleWinTeam, settings.grandTichuBonus) }
+        val teamPoints = teams.associate { it.teamId to totalPoints(it, doubleWinTeam, settings) }
         val tie = teamPoints.values.distinct().size == 1
         val victoryPoints = teams.associate { team ->
             val vp = when (team.teamId) {
@@ -97,18 +96,18 @@ object GameScoring {
             .firstOrNull { team -> team.players.mapNotNull { it.position }.sorted() == listOf(1, 2) }
             ?.teamId
 
-    private fun totalPoints(team: TeamResult, doubleWinTeam: TeamId?, grandTichuBonus: Int): Int {
+    private fun totalPoints(team: TeamResult, doubleWinTeam: TeamId?, settings: TournamentSettings): Int {
         var points = team.baseScore
         for (player in team.players) {
             points += when {
-                player.isSuccess && player.call == TichuCall.GRAND -> grandTichuBonus
+                player.isSuccess && player.call == TichuCall.GRAND -> settings.grandTichuBonus
                 player.isSuccess -> SMALL_TICHU_BONUS
-                player.call == TichuCall.GRAND -> -grandTichuBonus
+                player.call == TichuCall.GRAND -> -settings.grandTichuBonus
                 player.call == TichuCall.SMALL -> -SMALL_TICHU_BONUS
                 else -> 0
             }
         }
-        if (team.teamId == doubleWinTeam) points += DOUBLE_WIN_BONUS
+        if (team.teamId == doubleWinTeam) points += settings.doubleWinBonus
         return points
     }
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
+import { DOUBLE_WIN_BONUS_OPTIONS, GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
@@ -9,9 +9,11 @@ import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
  * loudly instead of propagating `any` through the app.
  */
 export const grandTichuBonusDtoSchema = z.union(GRAND_TICHU_BONUS_OPTIONS.map((bonus) => z.literal(bonus)));
+export const doubleWinBonusDtoSchema = z.union(DOUBLE_WIN_BONUS_OPTIONS.map((bonus) => z.literal(bonus)));
 
 export const tournamentSettingsDtoSchema = z.object({
     grandTichuBonus: grandTichuBonusDtoSchema,
+    doubleWinBonus: doubleWinBonusDtoSchema,
     totalRounds: z.number().int(),
 });
 

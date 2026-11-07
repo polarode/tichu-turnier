@@ -31,7 +31,9 @@ import tichu.domain.RoundId
 import tichu.domain.RoundRepository
 import tichu.domain.SessionTokens
 import tichu.domain.Table
+import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableId
+import tichu.domain.TableKey
 import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
@@ -66,6 +68,7 @@ class TournamentEventsRollbackIntegrationTest(
     @Autowired private val teamRepository: TeamRepository,
     @Autowired private val tournamentRepository: TournamentRepository,
     @Autowired private val roundRepository: RoundRepository,
+    @Autowired private val confirmationRepository: TableConfirmationRepository,
     @Autowired private val jdbcTemplate: JdbcTemplate,
 ) : PostgresBackedIntegrationTest() {
 
@@ -180,5 +183,27 @@ class TournamentEventsRollbackIntegrationTest(
         Thread.sleep(500)
         assertFalse(stream.response.contentAsString.contains("GAME_RECORDED"), stream.response.contentAsString)
         assertEquals(0, jdbcTemplate.queryForObject("SELECT count(*) FROM games", Int::class.java))
+    }
+
+    @Test
+    fun `a rolled-back round start emits no event on the open stream`() {
+        // Round 1 is complete once both teams confirmed its only table, so the next round is allowed.
+        listOf("team-a", "team-b").forEach {
+            confirmationRepository.add(TableKey(TournamentId(tournamentId), 1, 1), TeamId(it), Instant.now())
+        }
+        val stream = mockMvc.perform(
+            get("/api/tournaments/$tournamentId/events").cookie(adminCookie).accept(MediaType.TEXT_EVENT_STREAM),
+        ).andExpect(request().asyncStarted()).andReturn()
+
+        // MockMvc rethrows the unmapped failure as a ServletException instead of answering 500.
+        assertThrows<jakarta.servlet.ServletException> {
+            mockMvc.perform(
+                post("/api/tournaments/$tournamentId/rounds").cookie(adminCookie),
+            )
+        }
+
+        Thread.sleep(500)
+        assertFalse(stream.response.contentAsString.contains("ROUND_STARTED"), stream.response.contentAsString)
+        assertEquals(1, jdbcTemplate.queryForObject("SELECT count(*) FROM rounds", Int::class.java))
     }
 }

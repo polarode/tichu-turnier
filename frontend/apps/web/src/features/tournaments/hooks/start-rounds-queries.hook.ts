@@ -43,22 +43,16 @@ export function useStartNextRound(tournamentId: string) {
     });
 }
 
-/** Poll interval while results come in; kept until the live stream carries every organizer event (S8). */
-const LIVE_ROUNDS_REFETCH_MS = 30_000;
-
 /**
- * The tournament's rounds with each table's entered games. With [live] set (the
- * tournament is ACTIVE) the query polls so the organizer sees new results;
- * with [enabled] false it does not fetch (a tournament still in setup has no rounds).
+ * The tournament's rounds with each table's entered games. Kept fresh by the live
+ * stream and by refetch on window focus, not by polling. With [enabled] false it does
+ * not fetch (a tournament still in setup has no rounds).
  */
-export function useRounds(
-    tournamentId: string,
-    { live = false, enabled = true }: { live?: boolean; enabled?: boolean } = {},
-) {
+export function useRounds(tournamentId: string, { enabled = true }: { enabled?: boolean } = {}) {
     return useQuery({
         queryKey: roundsQueryKey(tournamentId),
         queryFn: (): Promise<Round[]> => TournamentRepository.rounds(tournamentId),
-        refetchInterval: live ? LIVE_ROUNDS_REFETCH_MS : false,
+        refetchOnWindowFocus: true,
         enabled,
     });
 }

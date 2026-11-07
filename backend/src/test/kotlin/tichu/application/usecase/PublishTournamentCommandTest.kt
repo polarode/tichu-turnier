@@ -2,11 +2,14 @@ package tichu.application.usecase
 
 import tichu.domain.AdminUserId
 import tichu.domain.Tournament
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.MutableClock
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TournamentNotCompletedException
@@ -29,7 +32,8 @@ class PublishTournamentCommandTest {
     private val tournamentRepository = InMemoryTournamentRepository()
     private val clock = MutableClock(now)
 
-    private val command = PublishTournamentCommand(tournamentRepository, clock)
+    private val publishEvents = RecordingTournamentEvents()
+    private val command = PublishTournamentCommand(tournamentRepository, clock, publishEvents)
 
     private fun tournament(status: TournamentStatus) =
         tournamentRepository.save(
@@ -69,5 +73,36 @@ class PublishTournamentCommandTest {
 
         assertFailsWith<NotFoundException> { command.publish(tournamentId, AdminUserId("admin-intruder")) }
         assertEquals(TournamentStatus.COMPLETED, statusOf())
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    @Test
+    fun `publishing the results publishes exactly one results-published event`() {
+        tournament(TournamentStatus.COMPLETED)
+
+        command.publish(tournamentId, owner)
+
+        assertEquals(listOf(TournamentEvent(TournamentEventType.RESULTS_PUBLISHED, tournamentId)), publishEvents.published)
+    }
+
+    @Test
+    fun `a publish of a tournament that is not completed publishes nothing`() {
+        for (status in listOf(TournamentStatus.SETUP, TournamentStatus.ACTIVE, TournamentStatus.PUBLISHED)) {
+            tournament(status)
+
+            assertFailsWith<TournamentNotCompletedException> { command.publish(tournamentId, owner) }
+        }
+
+        assertEquals(emptyList(), publishEvents.published)
+    }
+
+    @Test
+    fun `a foreign admin's publish publishes nothing`() {
+        tournament(TournamentStatus.COMPLETED)
+
+        assertFailsWith<NotFoundException> { command.publish(tournamentId, AdminUserId("admin-intruder")) }
+
+        assertEquals(emptyList(), publishEvents.published)
     }
 }

@@ -6,8 +6,6 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 interface StandingsSectionProps {
     tournamentId: string;
-    /** The tournament is ACTIVE: tables keep completing, so the standings poll. */
-    live?: boolean;
     /** The tournament is COMPLETED or PUBLISHED: the table is the Final Ranking. */
     final?: boolean;
 }
@@ -18,14 +16,10 @@ interface StandingsSectionProps {
  * it cannot drift from the backend. Until any table is completed every team would
  * sit at zero, so a note stands in for that table of zeros.
  */
-export function StandingsSection({
-    tournamentId,
-    live = false,
-    final = false,
-}: StandingsSectionProps) {
+export function StandingsSection({ tournamentId, final = false }: StandingsSectionProps) {
     const { t } = useI18n();
     const title = t(final ? 'standings.finalTitle' : 'standings.title');
-    const standingsQuery = useStandings(tournamentId, { live });
+    const standingsQuery = useStandings(tournamentId);
 
     const body = (() => {
         if (standingsQuery.isPending) return <LoadingIndicator />;

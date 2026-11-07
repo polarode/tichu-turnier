@@ -20,8 +20,6 @@ interface RoundsSectionProps {
     tournamentId: string;
     /** Team names for the id → name resolution of the table assignments. */
     teams: readonly Team[];
-    /** The tournament is ACTIVE: results are coming in, so the rounds poll. */
-    live?: boolean;
 }
 
 /**
@@ -34,9 +32,9 @@ interface RoundsSectionProps {
  * names resolve from the teams query; a team that has since disappeared falls
  * back to its raw id so the pairing stays legible.
  */
-export function RoundsSection({ tournamentId, teams, live = false }: RoundsSectionProps) {
+export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
     const { t } = useI18n();
-    const roundsQuery = useRounds(tournamentId, { live });
+    const roundsQuery = useRounds(tournamentId);
     // null = follow the latest round; a number pins the admin's own choice.
     const [pinnedRound, setPinnedRound] = useState<number | null>(null);
 

@@ -1,5 +1,8 @@
 package tichu.infra.events
 
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import org.springframework.http.MediaType
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionSynchronizationUtils
@@ -9,6 +12,7 @@ import tichu.domain.TableId
 import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
+import tools.jackson.databind.ObjectMapper
 import java.io.IOException
 import java.time.Duration
 import kotlin.test.Test
@@ -19,13 +23,16 @@ class SseTournamentEventBroadcasterTest {
 
     private class RecordingEmitter(timeout: Long, var failure: Exception? = null) : SseEmitter(timeout) {
         val sent = mutableListOf<String>()
+        val payloads = mutableListOf<Any?>()
         var completion: Runnable? = null
         var timeoutCallback: Runnable? = null
         var errorCallback: java.util.function.Consumer<Throwable>? = null
 
         override fun send(builder: SseEventBuilder) {
             failure?.let { throw it }
-            sent += builder.build().joinToString("") { it.data.toString() }
+            val parts = builder.build()
+            sent += parts.joinToString("") { it.data.toString() }
+            payloads.addAll(parts.filter { it.mediaType == MediaType.APPLICATION_JSON }.map { it.data })
         }
 
         override fun onCompletion(callback: Runnable) {
@@ -65,6 +72,19 @@ class SseTournamentEventBroadcasterTest {
         assertEquals(0, created[2].sent.size)
         assertTrue(created[0].sent[0].contains("tournamentId=t1"))
         assertTrue(created[0].sent[0].contains("tableId=3"))
+    }
+
+    @ParameterizedTest
+    @EnumSource(TournamentEventType::class)
+    fun `every event type is sent as a thin payload of exactly the ids`(type: TournamentEventType) {
+        broadcaster.subscribe(t1)
+
+        broadcaster.publish(TournamentEvent(type, t1, RoundId("r1"), TableId(3)))
+
+        val mapper = ObjectMapper()
+        val json = mapper.readTree(mapper.writeValueAsString(created[0].payloads.single()))
+        // A thin signal: exactly these ids, no scores, standings or other results (ADR 0007).
+        assertEquals(setOf("type", "tournamentId", "roundId", "tableId"), json.propertyNames().toSet())
     }
 
     @Test

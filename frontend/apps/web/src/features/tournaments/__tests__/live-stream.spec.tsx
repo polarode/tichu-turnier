@@ -1,3 +1,4 @@
+import { focusManager } from '@tanstack/react-query';
 import { act, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -54,7 +55,7 @@ function tournament(status: Tournament['status']): Tournament {
     };
 }
 
-function tableEvent(type: string): string {
+function eventPayload(type: string): string {
     return JSON.stringify({ type, tournamentId: 't-1', roundId: 'r-1', tableId: 'tb-1' });
 }
 
@@ -68,7 +69,16 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.useRealTimers();
+    focusManager.setFocused(undefined);
 });
+
+function callCounts() {
+    return {
+        tournament: tournaments.get.mock.calls.length,
+        rounds: tournaments.rounds.mock.calls.length,
+        standings: tournaments.standings.mock.calls.length,
+    };
+}
 
 async function openedSource(): Promise<FakeEventSource> {
     await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
@@ -103,7 +113,7 @@ describe('live stream of an active tournament', () => {
             await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
             const roundsBefore = tournaments.rounds.mock.calls.length;
 
-            act(() => source.emit(type, tableEvent(type)));
+            act(() => source.emit(type, eventPayload(type)));
 
             await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(2));
             expect(tournaments.rounds.mock.calls.length).toBeGreaterThan(roundsBefore);
@@ -134,6 +144,68 @@ describe('live stream of an active tournament', () => {
         await waitFor(() =>
             calls().forEach((count, i) => expect(count).toBeGreaterThan(afterOpen[i]!)),
         );
+    });
+
+    it.each(['TOURNAMENT_STARTED', 'ROUND_STARTED', 'TOURNAMENT_FINISHED'])(
+        'refetches tournament, rounds and standings on %s',
+        async (type) => {
+            renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
+            const source = await openedSource();
+            await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
+            const before = callCounts();
+
+            act(() => source.emit(type, eventPayload(type)));
+
+            await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(2));
+            expect(tournaments.get.mock.calls.length).toBeGreaterThan(before.tournament);
+            expect(tournaments.rounds.mock.calls.length).toBeGreaterThan(before.rounds);
+        },
+    );
+
+    it.each(['TOTAL_ROUNDS_CHANGED', 'RESULTS_PUBLISHED'])(
+        'refetches only the tournament on %s',
+        async (type) => {
+            renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
+            const source = await openedSource();
+            await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
+            const before = callCounts();
+
+            act(() => source.emit(type, eventPayload(type)));
+
+            await waitFor(() =>
+                expect(tournaments.get.mock.calls.length).toBeGreaterThan(before.tournament),
+            );
+            await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+            expect(tournaments.rounds.mock.calls.length).toBe(before.rounds);
+            expect(tournaments.standings.mock.calls.length).toBe(before.standings);
+        },
+    );
+
+    it('does not poll rounds or standings while the tournament is active', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
+        await openedSource();
+        await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
+        const before = callCounts();
+
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+
+        expect(tournaments.rounds.mock.calls.length).toBe(before.rounds);
+        expect(tournaments.standings.mock.calls.length).toBe(before.standings);
+    });
+
+    it('refetches tournament, rounds and standings when the window regains focus', async () => {
+        renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
+        await openedSource();
+        await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
+        const before = callCounts();
+
+        act(() => focusManager.setFocused(false));
+        act(() => focusManager.setFocused(true));
+
+        await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(2));
+        expect(tournaments.get.mock.calls.length).toBeGreaterThan(before.tournament);
+        expect(tournaments.rounds.mock.calls.length).toBeGreaterThan(before.rounds);
     });
 
     it('closes the stream when leaving the page', async () => {

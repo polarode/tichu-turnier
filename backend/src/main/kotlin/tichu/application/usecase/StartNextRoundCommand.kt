@@ -10,6 +10,9 @@ import tichu.domain.RoundRepository
 import tichu.domain.Standings
 import tichu.domain.SwissPairing
 import tichu.domain.TeamRepository
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
@@ -38,6 +41,7 @@ class StartNextRoundCommand(
     private val playedRounds: PlayedRoundsReader,
     private val idGenerator: IdGenerator,
     private val random: Random,
+    private val tournamentEvents: TournamentEvents,
 ) : StartNextRound {
 
     override fun start(tournamentId: TournamentId, owner: AdminUserId): Round {
@@ -71,6 +75,8 @@ class StartNextRoundCommand(
             number = current.round.number + 1,
             pairing = SwissPairing.pairNextRound(standings, history, random),
         )
-        return roundRepository.save(round)
+        val saved = roundRepository.save(round)
+        tournamentEvents.publish(TournamentEvent(TournamentEventType.ROUND_STARTED, tournamentId, saved.id))
+        return saved
     }
 }

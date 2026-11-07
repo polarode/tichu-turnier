@@ -3,12 +3,15 @@ package tichu.application.usecase
 import tichu.application.api.TeamWriteRequest
 import tichu.domain.AdminUserId
 import tichu.domain.IdGenerator
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.InMemoryTeamTokenRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.testsupport.RecordingSessionTokens
 import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.InsufficientTeamsException
@@ -44,6 +47,7 @@ class StartTournamentCommandTest {
         override fun newId(): String = "id-${++counter}"
     }
     private val owner = AdminUserId("admin-owner")
+    private val startEvents = RecordingTournamentEvents()
 
     private val createTeam = CreateTeamCommand(
         tournamentRepository,
@@ -60,6 +64,7 @@ class StartTournamentCommandTest {
         idGenerator,
         Random(42),
         fixedClock,
+        startEvents,
     )
 
     private fun createTournament(): TournamentId {
@@ -119,7 +124,7 @@ class StartTournamentCommandTest {
                 .create(id, TeamWriteRequest("Team Gamma", "G1", "G2"), owner)
             CreateTeamCommand(tournaments, teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
                 .create(id, TeamWriteRequest("Team Delta", "D1", "D2"), owner)
-            val start = StartTournamentCommand(tournaments, teams, rounds, idGenerator, Random(seed), fixedClock)
+            val start = StartTournamentCommand(tournaments, teams, rounds, idGenerator, Random(seed), fixedClock, RecordingTournamentEvents())
             val started = start.start(id, owner)
             return started.round.pairing.tables.map { table ->
                 teams.findById(table.seatedTeams[0])!!.name to teams.findById(table.seatedTeams[1])!!.name
@@ -190,6 +195,47 @@ class StartTournamentCommandTest {
         addTeam(id, "Team Beta")
 
         assertFailsWith<NotFoundException> { startTournament.start(id, AdminUserId("admin-intruder")) }
+        assertEquals(emptyList(), startEvents.published)
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    @Test
+    fun `starting a tournament publishes one tournament-started event for round 1`() {
+        val id = createTournament()
+        addTeam(id, "Team Alpha")
+        addTeam(id, "Team Beta")
+
+        startTournament.start(id, owner)
+
+        val round1 = roundRepository.findByTournamentAndNumber(id, 1)!!
+        assertEquals(
+            listOf(TournamentEvent(TournamentEventType.TOURNAMENT_STARTED, id, round1.id)),
+            startEvents.published,
+        )
+    }
+
+    @Test
+    fun `starting an already started tournament publishes nothing`() {
+        val id = createTournament()
+        addTeam(id, "Team Alpha")
+        addTeam(id, "Team Beta")
+        startTournament.start(id, owner)
+        startEvents.published.clear()
+
+        assertFailsWith<TournamentNotStartableException> { startTournament.start(id, owner) }
+
+        assertEquals(emptyList(), startEvents.published)
+    }
+
+    @Test
+    fun `starting with fewer than two teams publishes nothing`() {
+        val id = createTournament()
+        addTeam(id, "Team Alpha")
+
+        assertFailsWith<InsufficientTeamsException> { startTournament.start(id, owner) }
+
+        assertEquals(emptyList(), startEvents.published)
     }
 
     @Test
@@ -224,6 +270,7 @@ class StartTournamentCommandTest {
             idGenerator,
             Random(42),
             fixedClock,
+            RecordingTournamentEvents(),
         )
 
         val ex = assertFailsWith<IllegalStateException> { failingStart.start(id, owner) }

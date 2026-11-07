@@ -6,11 +6,14 @@ import { I18nProvider } from '@/shared/i18n/i18n.context.tsx';
 import { ThemeProvider } from '@/shared/theme/theme.context.tsx';
 import type { Locale } from '@/shared/i18n/locale.ts';
 
-/** A QueryClient with retries off, so tests fail fast and deterministically. */
+/**
+ * A QueryClient with retries off, so tests fail fast and deterministically. Focus
+ * refetch is off as in router.ts, so a query that opts in has to say so.
+ */
 export function createTestQueryClient(): QueryClient {
     return new QueryClient({
         defaultOptions: {
-            queries: { retry: false },
+            queries: { retry: false, refetchOnWindowFocus: false },
             mutations: { retry: false },
         },
     });

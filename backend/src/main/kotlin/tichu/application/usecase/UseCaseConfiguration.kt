@@ -83,7 +83,11 @@ class UseCaseConfiguration(
         idGenerator: IdGenerator,
         random: Random,
         clock: Clock,
-    ): StartTournament = StartTournamentCommand(tournamentRepository, teamRepository, roundRepository, idGenerator, random, clock)
+        tournamentEvents: TournamentEvents,
+    ): StartTournament =
+        StartTournamentCommand(
+            tournamentRepository, teamRepository, roundRepository, idGenerator, random, clock, tournamentEvents,
+        )
 
     @Bean
     fun playedRoundsReader(
@@ -100,21 +104,26 @@ class UseCaseConfiguration(
         playedRoundsReader: PlayedRoundsReader,
         idGenerator: IdGenerator,
         random: Random,
+        tournamentEvents: TournamentEvents,
     ): StartNextRound =
-        StartNextRoundCommand(tournamentRepository, teamRepository, roundRepository, playedRoundsReader, idGenerator, random)
+        StartNextRoundCommand(
+            tournamentRepository, teamRepository, roundRepository, playedRoundsReader, idGenerator, random, tournamentEvents,
+        )
 
     @Bean
     fun finishTournament(
         tournamentRepository: TournamentRepository,
         playedRoundsReader: PlayedRoundsReader,
         clock: Clock,
-    ): FinishTournament = FinishTournamentCommand(tournamentRepository, playedRoundsReader, clock)
+        tournamentEvents: TournamentEvents,
+    ): FinishTournament = FinishTournamentCommand(tournamentRepository, playedRoundsReader, clock, tournamentEvents)
 
     @Bean
     fun publishTournament(
         tournamentRepository: TournamentRepository,
         clock: Clock,
-    ): PublishTournament = PublishTournamentCommand(tournamentRepository, clock)
+        tournamentEvents: TournamentEvents,
+    ): PublishTournament = PublishTournamentCommand(tournamentRepository, clock, tournamentEvents)
 
     @Bean
     fun listRounds(
@@ -143,7 +152,8 @@ class UseCaseConfiguration(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
         clock: Clock,
-    ): SetTotalRounds = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock)
+        tournamentEvents: TournamentEvents,
+    ): SetTotalRounds = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock, tournamentEvents)
 
     @Bean
     fun recordGame(

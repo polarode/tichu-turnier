@@ -3,6 +3,9 @@ package tichu.application.usecase
 import tichu.application.api.FinishTournament
 import tichu.domain.AdminUserId
 import tichu.domain.Tournament
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
@@ -26,6 +29,7 @@ class FinishTournamentCommand(
     private val tournamentRepository: TournamentRepository,
     private val playedRounds: PlayedRoundsReader,
     private val clock: Clock,
+    private val tournamentEvents: TournamentEvents,
 ) : FinishTournament {
 
     override fun finish(tournamentId: TournamentId, owner: AdminUserId): Tournament {
@@ -52,6 +56,8 @@ class FinishTournamentCommand(
         }
 
         val finished = tournament.copy(status = TournamentStatus.COMPLETED, updatedAt = clock.instant())
-        return tournamentRepository.save(finished)
+        val saved = tournamentRepository.save(finished)
+        tournamentEvents.publish(TournamentEvent(TournamentEventType.TOURNAMENT_FINISHED, tournamentId))
+        return saved
     }
 }

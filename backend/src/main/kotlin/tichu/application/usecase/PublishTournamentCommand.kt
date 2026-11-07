@@ -3,6 +3,9 @@ package tichu.application.usecase
 import tichu.application.api.PublishTournament
 import tichu.domain.AdminUserId
 import tichu.domain.Tournament
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
@@ -21,6 +24,7 @@ import java.time.Clock
 class PublishTournamentCommand(
     private val tournamentRepository: TournamentRepository,
     private val clock: Clock,
+    private val tournamentEvents: TournamentEvents,
 ) : PublishTournament {
 
     override fun publish(tournamentId: TournamentId, owner: AdminUserId): Tournament {
@@ -34,6 +38,8 @@ class PublishTournamentCommand(
         }
 
         val published = tournament.copy(status = TournamentStatus.PUBLISHED, updatedAt = clock.instant())
-        return tournamentRepository.save(published)
+        val saved = tournamentRepository.save(published)
+        tournamentEvents.publish(TournamentEvent(TournamentEventType.RESULTS_PUBLISHED, tournamentId))
+        return saved
     }
 }

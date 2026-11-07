@@ -62,9 +62,8 @@ function TournamentDetailBody() {
         const status = tournamentQuery.data?.status;
         const live = status === TournamentStatus.ACTIVE;
         const connected = useTournamentLiveStream(tournamentId, live);
-        // Shares the rounds section's query (same key and polling), only for the tab count.
+        // Shares the rounds section's query (same key), only for the tab count.
         const roundsQuery = useRounds(tournamentId, {
-            live,
             enabled: status !== undefined && status !== TournamentStatus.SETUP,
         });
         const roundCount = roundsQuery.data?.length;
@@ -194,12 +193,10 @@ function TournamentDetailBody() {
                                     key={roundsViewKey}
                                     tournamentId={tournament.id}
                                     teams={teams}
-                                    live={live}
                                 />
                             ) : tab === 'standings' ? (
                                 <StandingsSection
                                     tournamentId={tournament.id}
-                                    live={live}
                                     final={isFinal}
                                 />
                             ) : (

@@ -13,12 +13,15 @@ import tichu.domain.TeamId
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.testsupport.baseScoreGame
 import tichu.testsupport.teamOf
 import tichu.vocabulary.ErrorCode
@@ -53,6 +56,7 @@ class StartNextRoundCommandTest {
         override fun newId(): String = "id-${++counter}"
     }
 
+    private val startEvents = RecordingTournamentEvents()
     private val command = StartNextRoundCommand(
         tournamentRepository,
         teamRepository,
@@ -60,6 +64,7 @@ class StartNextRoundCommandTest {
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
         idGenerator,
         Random(7),
+        startEvents,
     )
 
     private fun tournament(status: TournamentStatus = TournamentStatus.ACTIVE, totalRounds: Int = 4) =
@@ -112,6 +117,58 @@ class StartNextRoundCommandTest {
             next.pairing.tables.map { it.seatedTeams },
         )
         assertEquals(next, roundRepository.findByTournamentAndNumber(tournamentId, 2))
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    @Test
+    fun `advancing publishes one round-started event for the new round`() {
+        tournament()
+        teams("a", "b")
+        round(1, listOf("a", "b"))
+        play(1, 1)
+
+        command.start(tournamentId, owner)
+
+        val round2 = roundRepository.findByTournamentAndNumber(tournamentId, 2)!!
+        assertEquals(
+            listOf(TournamentEvent(TournamentEventType.ROUND_STARTED, tournamentId, round2.id)),
+            startEvents.published,
+        )
+    }
+
+    @Test
+    fun `advancing while the current round is incomplete publishes nothing`() {
+        tournament()
+        teams("a", "b", "c", "d")
+        round(1, listOf("a", "b"), listOf("c", "d"))
+        play(1, 1)
+        play(1, 2, confirmed = false)
+
+        assertFailsWith<RoundIncompleteException> { command.start(tournamentId, owner) }
+
+        assertEquals(emptyList(), startEvents.published)
+    }
+
+    @Test
+    fun `advancing past the last round publishes nothing`() {
+        tournament(totalRounds = 1)
+        teams("a", "b")
+        round(1, listOf("a", "b"))
+        play(1, 1)
+
+        assertFailsWith<TotalRoundsReachedException> { command.start(tournamentId, owner) }
+
+        assertEquals(emptyList(), startEvents.published)
+    }
+
+    @Test
+    fun `advancing an inactive tournament publishes nothing`() {
+        tournament(TournamentStatus.SETUP)
+
+        assertFailsWith<TournamentNotActiveException> { command.start(tournamentId, owner) }
+
+        assertEquals(emptyList(), startEvents.published)
     }
 
     @Test
@@ -200,5 +257,6 @@ class StartNextRoundCommandTest {
 
         assertFailsWith<NotFoundException> { command.start(tournamentId, AdminUserId("admin-intruder")) }
         assertEquals(null, roundRepository.findByTournamentAndNumber(tournamentId, 2))
+        assertEquals(emptyList(), startEvents.published)
     }
 }

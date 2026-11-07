@@ -10,6 +10,8 @@ import tichu.domain.TableId
 import tichu.domain.TableKey
 import tichu.domain.TeamId
 import tichu.domain.Tournament
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
@@ -19,6 +21,7 @@ import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.MutableClock
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.testsupport.baseScoreGame
 import tichu.testsupport.teamOf
 import tichu.vocabulary.ErrorCode
@@ -48,11 +51,13 @@ class FinishTournamentCommandTest {
     private val gameRepository = InMemoryGameRepository()
     private val confirmationRepository = InMemoryTableConfirmationRepository()
     private val clock = MutableClock(now)
+    private val finishEvents = RecordingTournamentEvents()
 
     private val command = FinishTournamentCommand(
         tournamentRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
         clock,
+        finishEvents,
     )
 
     private fun tournament(status: TournamentStatus = TournamentStatus.ACTIVE, totalRounds: Int = 2) =
@@ -166,5 +171,67 @@ class FinishTournamentCommandTest {
 
         assertFailsWith<NotFoundException> { command.finish(tournamentId, AdminUserId("admin-intruder")) }
         assertEquals(TournamentStatus.ACTIVE, statusOf())
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    @Test
+    fun `finishing the tournament publishes exactly one tournament-finished event`() {
+        tournament(totalRounds = 1)
+        teams("a", "b")
+        round(1, listOf("a", "b"))
+        play(1, 1)
+
+        command.finish(tournamentId, owner)
+
+        assertEquals(listOf(TournamentEvent(TournamentEventType.TOURNAMENT_FINISHED, tournamentId)), finishEvents.published)
+    }
+
+    @Test
+    fun `finishing blocked while rounds remain publishes nothing`() {
+        tournament(totalRounds = 2)
+        teams("a", "b")
+        round(1, listOf("a", "b"))
+        play(1, 1)
+
+        assertFailsWith<RoundsRemainingException> { command.finish(tournamentId, owner) }
+
+        assertEquals(emptyList(), finishEvents.published)
+    }
+
+    @Test
+    fun `finishing blocked while the last round is incomplete publishes nothing`() {
+        tournament(totalRounds = 1)
+        teams("a", "b", "c", "d")
+        round(1, listOf("a", "b"), listOf("c", "d"))
+        play(1, 1)
+        play(1, 2, confirmed = false)
+
+        assertFailsWith<RoundIncompleteException> { command.finish(tournamentId, owner) }
+
+        assertEquals(emptyList(), finishEvents.published)
+    }
+
+    @Test
+    fun `finishing an inactive tournament publishes nothing`() {
+        for (status in listOf(TournamentStatus.SETUP, TournamentStatus.COMPLETED)) {
+            tournament(status, totalRounds = 1)
+
+            assertFailsWith<TournamentNotActiveException> { command.finish(tournamentId, owner) }
+        }
+
+        assertEquals(emptyList(), finishEvents.published)
+    }
+
+    @Test
+    fun `a foreign admin's finish publishes nothing`() {
+        tournament(totalRounds = 1)
+        teams("a", "b")
+        round(1, listOf("a", "b"))
+        play(1, 1)
+
+        assertFailsWith<NotFoundException> { command.finish(tournamentId, AdminUserId("admin-intruder")) }
+
+        assertEquals(emptyList(), finishEvents.published)
     }
 }

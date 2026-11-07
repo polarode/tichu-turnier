@@ -9,6 +9,9 @@ import tichu.domain.RoundId
 import tichu.domain.RoundRepository
 import tichu.domain.SwissPairing
 import tichu.domain.TeamRepository
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
@@ -33,6 +36,7 @@ class StartTournamentCommand(
     private val idGenerator: IdGenerator,
     private val random: Random,
     private val clock: Clock,
+    private val tournamentEvents: TournamentEvents,
 ) : StartTournament {
 
     override fun start(tournamentId: TournamentId, owner: AdminUserId): StartedTournament {
@@ -61,6 +65,7 @@ class StartTournamentCommand(
 
         val started = tournament.copy(status = TournamentStatus.ACTIVE, updatedAt = clock.instant())
         tournamentRepository.save(started)
+        tournamentEvents.publish(TournamentEvent(TournamentEventType.TOURNAMENT_STARTED, tournamentId, round.id))
         return StartedTournament(started, round)
     }
 }

@@ -20,6 +20,7 @@ export function useTournament(id: string) {
     return useQuery({
         queryKey: tournamentQueryKey(id),
         queryFn: () => TournamentRepository.get(id),
+        refetchOnWindowFocus: true,
     });
 }
 

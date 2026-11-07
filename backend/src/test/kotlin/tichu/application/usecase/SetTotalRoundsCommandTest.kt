@@ -8,11 +8,14 @@ import tichu.domain.Table
 import tichu.domain.TableId
 import tichu.domain.TeamId
 import tichu.domain.Tournament
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryRoundRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.NotFoundException
@@ -39,7 +42,8 @@ class SetTotalRoundsCommandTest {
 
     private val tournamentRepository = InMemoryTournamentRepository()
     private val roundRepository = InMemoryRoundRepository()
-    private val command = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock)
+    private val totalRoundsEvents = RecordingTournamentEvents()
+    private val command = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock, totalRoundsEvents)
 
     private fun tournament(status: TournamentStatus, settings: TournamentSettings = TournamentSettings(grandTichuBonus = 100)) =
         tournamentRepository.save(
@@ -113,5 +117,56 @@ class SetTotalRoundsCommandTest {
 
         assertFailsWith<NotFoundException> { command.set(tournamentId, 5, AdminUserId("admin-intruder")) }
         assertEquals(4, tournamentRepository.findById(tournamentId)!!.settings.totalRounds)
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    @Test
+    fun `changing the total rounds publishes one total-rounds-changed event`() {
+        tournament(TournamentStatus.ACTIVE)
+        createRounds(2)
+
+        command.set(tournamentId, 6, owner)
+
+        assertEquals(
+            listOf(TournamentEvent(TournamentEventType.TOTAL_ROUNDS_CHANGED, tournamentId)),
+            totalRoundsEvents.published,
+        )
+    }
+
+    @Test
+    fun `rejected total rounds changes publish nothing`() {
+        tournament(TournamentStatus.ACTIVE)
+        createRounds(3)
+
+        assertFailsWith<TotalRoundsBelowRoundCountException> { command.set(tournamentId, 2, owner) }
+        assertFailsWith<InvalidFieldException> { command.set(tournamentId, 21, owner) }
+        assertFailsWith<NotFoundException> { command.set(tournamentId, 5, AdminUserId("admin-intruder")) }
+
+        assertEquals(emptyList(), totalRoundsEvents.published)
+    }
+
+    @Test
+    fun `total rounds changes outside the active status publish nothing`() {
+        for (status in listOf(TournamentStatus.SETUP, TournamentStatus.COMPLETED)) {
+            tournament(status)
+
+            assertFailsWith<TournamentNotEditableException> { command.set(tournamentId, 5, owner) }
+        }
+
+        assertEquals(emptyList(), totalRoundsEvents.published)
+    }
+
+    @Test
+    fun `keeping the same total rounds publishes nothing and leaves the tournament unchanged`() {
+        tournament(TournamentStatus.ACTIVE)
+        createRounds(2)
+
+        val unchanged = command.set(tournamentId, 4, owner)
+
+        assertEquals(TournamentSettings(grandTichuBonus = 100, totalRounds = 4), unchanged.settings)
+        assertEquals(created, unchanged.updatedAt)
+        assertEquals(created, tournamentRepository.findById(tournamentId)!!.updatedAt)
+        assertEquals(emptyList(), totalRoundsEvents.published)
     }
 }

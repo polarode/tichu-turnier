@@ -186,6 +186,10 @@
             {
                 "type": "feature",
                 "text": "While a tournament is running, games entered and tables confirmed by teams appear on your tournament page right away, and a Live badge shows the page is up to date"
+            },
+            {
+                "type": "improvement",
+                "text": "The tournament page updates right away when a round starts, the total rounds change or the tournament finishes, also in other open tabs, instead of every 30 seconds"
             }
         ]
     }

@@ -10,10 +10,18 @@ import {
 import { SseClient } from '@/shared/sse/sse-client.ts';
 import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
 
+/** Events that change a table's status or a game, so rounds and standings are stale. */
+const ROUNDS_AND_STANDINGS_EVENTS = [
+    TournamentEventType.GAME_RECORDED,
+    TournamentEventType.TABLE_CONFIRMED,
+    TournamentEventType.CONFIRMATION_RETRACTED,
+];
+
 /**
- * Follows the tournament's live event stream while [enabled]: a recorded game refetches
- * rounds and standings, and every (re)connect refetches everything shown on the page, so
- * events missed while offline are caught up. Returns whether the stream is connected.
+ * Follows the tournament's live event stream while [enabled]: a recorded game or a
+ * confirmation change refetches rounds and standings, and every (re)connect refetches
+ * everything shown on the page, so events missed while offline are caught up. Returns
+ * whether the stream is connected.
  */
 export function useTournamentLiveStream(tournamentId: string, enabled: boolean): boolean {
     const queryClient = useQueryClient();
@@ -24,12 +32,10 @@ export function useTournamentLiveStream(tournamentId: string, enabled: boolean):
         const client = new SseClient({
             url: `/api/tournaments/${tournamentId}/events`,
             queryClient,
-            subscriptions: [
-                {
-                    event: TournamentEventType.GAME_RECORDED,
-                    queryKeys: [roundsQueryKey(tournamentId), standingsQueryKey(tournamentId)],
-                },
-            ],
+            subscriptions: ROUNDS_AND_STANDINGS_EVENTS.map((event) => ({
+                event,
+                queryKeys: [roundsQueryKey(tournamentId), standingsQueryKey(tournamentId)],
+            })),
             onStateChange: (isConnected) => {
                 setConnected(isConnected);
                 if (!isConnected) return;

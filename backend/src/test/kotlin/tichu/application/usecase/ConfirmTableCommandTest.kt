@@ -17,6 +17,8 @@ import tichu.domain.Table
 import tichu.domain.TableId
 import tichu.domain.TableKey
 import tichu.domain.TableStatus
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TichuCall
@@ -69,8 +71,11 @@ class ConfirmTableCommandTest {
             tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
             RecordingTournamentEvents(),
         )
+    private val confirmEvents = RecordingTournamentEvents()
     private val confirmTable: ConfirmTable =
-        ConfirmTableCommand(roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock)
+        ConfirmTableCommand(
+            roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock, confirmEvents,
+        )
 
     @BeforeEach
     fun setUp() {
@@ -261,6 +266,55 @@ class ConfirmTableCommandTest {
         assertFailsWith<TableCompletedException> { retract(teamA) }
 
         assertEquals(setOf(teamA, teamB), confirmationRepository.findByTable(tableKey))
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    @Test
+    fun `a confirmation publishes one table-confirmed event with the round and table`() {
+        enterAll(4)
+
+        confirm(teamA)
+
+        assertEquals(
+            listOf(TournamentEvent(TournamentEventType.TABLE_CONFIRMED, tournamentId, RoundId("r-1"), TableId(1))),
+            confirmEvents.published,
+        )
+    }
+
+    @Test
+    fun `a retraction publishes one confirmation-retracted event`() {
+        enterAll(4)
+        confirm(teamA)
+
+        retract(teamA)
+
+        assertEquals(
+            listOf(
+                TournamentEvent(TournamentEventType.TABLE_CONFIRMED, tournamentId, RoundId("r-1"), TableId(1)),
+                TournamentEvent(TournamentEventType.CONFIRMATION_RETRACTED, tournamentId, RoundId("r-1"), TableId(1)),
+            ),
+            confirmEvents.published,
+        )
+    }
+
+    @Test
+    fun `confirming twice or retracting when not confirmed publishes nothing more`() {
+        enterAll(4)
+        confirm(teamA)
+        confirm(teamA, emptyList())
+        retract(teamB)
+
+        assertEquals(listOf(TournamentEventType.TABLE_CONFIRMED), confirmEvents.published.map { it.type })
+    }
+
+    @Test
+    fun `a rejected confirmation publishes nothing`() {
+        enterAll(3)
+
+        assertFailsWith<TableIncompleteException> { confirm(teamA, seen(3)) }
+
+        assertEquals(emptyList(), confirmEvents.published)
     }
 
     // ---- tournament status ------------------------------------------------------

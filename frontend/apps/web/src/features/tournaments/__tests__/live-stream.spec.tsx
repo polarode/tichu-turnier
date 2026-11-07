@@ -54,12 +54,9 @@ function tournament(status: Tournament['status']): Tournament {
     };
 }
 
-const gameRecorded = JSON.stringify({
-    type: 'GAME_RECORDED',
-    tournamentId: 't-1',
-    roundId: 'r-1',
-    tableId: 'tb-1',
-});
+function tableEvent(type: string): string {
+    return JSON.stringify({ type, tournamentId: 't-1', roundId: 'r-1', tableId: 'tb-1' });
+}
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -98,17 +95,20 @@ describe('live stream of an active tournament', () => {
         expect(await screen.findByText('Offline')).toBeInTheDocument();
     });
 
-    it('refetches rounds and standings when a game is recorded', async () => {
-        renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
-        const source = await openedSource();
-        await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
-        const roundsBefore = tournaments.rounds.mock.calls.length;
+    it.each(['GAME_RECORDED', 'TABLE_CONFIRMED', 'CONFIRMATION_RETRACTED'])(
+        'refetches rounds and standings on %s',
+        async (type) => {
+            renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
+            const source = await openedSource();
+            await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(1));
+            const roundsBefore = tournaments.rounds.mock.calls.length;
 
-        act(() => source.emit('GAME_RECORDED', gameRecorded));
+            act(() => source.emit(type, tableEvent(type)));
 
-        await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(2));
-        expect(tournaments.rounds.mock.calls.length).toBeGreaterThan(roundsBefore);
-    });
+            await waitFor(() => expect(tournaments.standings).toHaveBeenCalledTimes(2));
+            expect(tournaments.rounds.mock.calls.length).toBeGreaterThan(roundsBefore);
+        },
+    );
 
     it('refetches tournament, teams, rounds and standings on every open, including a reconnect', async () => {
         renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });

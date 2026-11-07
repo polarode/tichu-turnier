@@ -5,12 +5,16 @@ import tichu.application.api.ConfirmTable
 import tichu.application.api.SeenGame
 import tichu.application.api.TableConfirmationState
 import tichu.domain.GameRepository
+import tichu.domain.Round
 import tichu.domain.RoundRepository
 import tichu.domain.Table
 import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableConfirmations
 import tichu.domain.TableKey
 import tichu.domain.TeamId
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
 import tichu.vocabulary.GameConcurrentModificationException
@@ -45,6 +49,7 @@ class ConfirmTableCommand(
     private val gameRepository: GameRepository,
     private val confirmationRepository: TableConfirmationRepository,
     private val clock: Clock,
+    private val tournamentEvents: TournamentEvents,
 ) : ConfirmTable {
 
     override fun confirm(
@@ -52,7 +57,7 @@ class ConfirmTableCommand(
         seenGames: List<SeenGame>,
         principal: AuthenticatedTeam,
     ): TableConfirmationState {
-        val table = lockSeatedTable(key, principal)
+        val (round, table) = lockSeatedTable(key, principal)
         val confirmed = confirmationRepository.findByTable(key)
         if (principal.teamId in confirmed) return state(table, confirmed)
         requireDistinctGameNumbers(seenGames)
@@ -71,11 +76,12 @@ class ConfirmTableCommand(
         }
 
         confirmationRepository.add(key, principal.teamId, clock.instant())
+        publish(TournamentEventType.TABLE_CONFIRMED, key, round, table)
         return state(table, confirmed + principal.teamId)
     }
 
     override fun retract(key: TableKey, principal: AuthenticatedTeam): TableConfirmationState {
-        val table = lockSeatedTable(key, principal)
+        val (round, table) = lockSeatedTable(key, principal)
         val confirmed = confirmationRepository.findByTable(key)
         if (TableConfirmations(table, confirmed).isCompleted) {
             throw TableCompletedException("Table ${table.id.value} is completed; confirmations are final")
@@ -83,6 +89,7 @@ class ConfirmTableCommand(
         if (principal.teamId !in confirmed) return state(table, confirmed)
 
         confirmationRepository.remove(key, principal.teamId)
+        publish(TournamentEventType.CONFIRMATION_RETRACTED, key, round, table)
         return state(table, confirmed - principal.teamId)
     }
 
@@ -90,13 +97,13 @@ class ConfirmTableCommand(
      * Resolves the table, checks the principal is seated there and the tournament is
      * ACTIVE, and takes the table lock.
      */
-    private fun lockSeatedTable(key: TableKey, principal: AuthenticatedTeam): Table {
+    private fun lockSeatedTable(key: TableKey, principal: AuthenticatedTeam): Pair<Round, Table> {
         // The session scopes the request: a foreign tournament is not found, never widened.
         if (key.tournamentId != principal.tournamentId) {
             throw NotFoundException("Tournament ${key.tournamentId.value} not found")
         }
-        val table = roundRepository.findByTournamentAndNumber(key.tournamentId, key.roundNumber)
-            ?.table(key.tableNumber)
+        val round = roundRepository.findByTournamentAndNumber(key.tournamentId, key.roundNumber)
+        val table = round?.table(key.tableNumber)
             ?: throw NotFoundException("Table ${key.tableNumber} of round ${key.roundNumber} not found")
         table.requireSeated(principal.teamId)
         val tournament = tournamentRepository.findById(key.tournamentId)
@@ -107,8 +114,11 @@ class ConfirmTableCommand(
             )
         }
         roundRepository.lockTable(key)
-        return table
+        return round to table
     }
+
+    private fun publish(type: TournamentEventType, key: TableKey, round: Round, table: Table) =
+        tournamentEvents.publish(TournamentEvent(type, key.tournamentId, round.id, table.id))
 
     private fun requireDistinctGameNumbers(seenGames: List<SeenGame>) {
         if (seenGames.map { it.gameNumber }.distinct().size != seenGames.size) {

@@ -16,4 +16,4 @@ data class TournamentEvent(
     val tableId: TableId? = null,
 )
 
-enum class TournamentEventType { GAME_RECORDED }
+enum class TournamentEventType { GAME_RECORDED, TABLE_CONFIRMED, CONFIRMATION_RETRACTED }

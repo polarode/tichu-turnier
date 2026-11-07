@@ -166,8 +166,11 @@ class UseCaseConfiguration(
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
         clock: Clock,
+        tournamentEvents: TournamentEvents,
     ): ConfirmTable =
-        ConfirmTableCommand(roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock)
+        ConfirmTableCommand(
+            roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock, tournamentEvents,
+        )
 
     @Bean
     fun random(): Random = Random.Default

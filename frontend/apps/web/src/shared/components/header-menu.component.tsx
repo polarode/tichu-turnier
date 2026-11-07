@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 
-import { useDropdownDismiss } from '@/shared/hooks/use-dropdown-dismiss.hook.ts';
+import { useHeaderPopover } from '@/shared/hooks/use-header-popover.hook.ts';
 
 export interface HeaderMenuOption<T extends string> {
     value: T;
@@ -33,17 +33,9 @@ export function HeaderMenu<T extends string>({
     onValueChange,
     trigger,
 }: HeaderMenuProps<T>) {
-    const [open, setOpen] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement>(null);
+    // Outside clicks close quietly; Escape closes and returns focus to the trigger.
+    const { open, toggle, close, rootRef, triggerRef } = useHeaderPopover();
     const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-    const close = (returnFocus: boolean) => {
-        setOpen(false);
-        if (returnFocus) triggerRef.current?.focus();
-    };
-    // Outside clicks close quietly; Escape is handled on the menu itself so focus can return.
-    useDropdownDismiss(open, rootRef, () => setOpen(false));
 
     const current = options.find((option) => option.value === value);
     const checkedIndex = options.findIndex((option) => option.value === value);
@@ -65,12 +57,6 @@ export function HeaderMenu<T extends string>({
             : event.key === 'Home' ? 0
             : event.key === 'End' ? last
             : null;
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            event.stopPropagation();
-            close(true);
-            return;
-        }
         if (event.key === 'Tab') {
             close(false);
             return;
@@ -89,7 +75,7 @@ export function HeaderMenu<T extends string>({
                 aria-haspopup="menu"
                 aria-expanded={open}
                 aria-description={current?.label}
-                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                onClick={toggle}
                 className="flex size-10 items-center justify-center rounded-md text-lg leading-none text-header-muted transition-colors outline-none hover:bg-header-active hover:text-header-foreground focus-visible:ring-2 focus-visible:ring-header-foreground"
             >
                 {trigger}

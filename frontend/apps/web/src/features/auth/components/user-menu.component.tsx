@@ -1,10 +1,9 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { LogOut, ShieldCheck } from 'lucide-react';
-import { useRef, useState } from 'react';
 
 import { useLogoutAdmin, useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
-import { useDropdownDismiss } from '@/shared/hooks/use-dropdown-dismiss.hook.ts';
+import { useHeaderPopover } from '@/shared/hooks/use-header-popover.hook.ts';
 import { AdminRole } from '@/vocabulary/admin.enum.ts';
 
 const MENU_ITEM_CLASS =
@@ -24,14 +23,12 @@ export function UserMenu() {
     const logout = useLogoutAdmin();
     const { data: admin } = useSession();
 
-    const [open, setOpen] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
-    useDropdownDismiss(open, rootRef, () => setOpen(false));
+    const { open, toggle, close, rootRef, triggerRef } = useHeaderPopover();
 
     if (!admin) return null;
 
     const onLogout = async () => {
-        setOpen(false);
+        close(false);
         await logout.mutateAsync();
         await navigate({ to: '/public' });
     };
@@ -39,11 +36,12 @@ export function UserMenu() {
     return (
         <div ref={rootRef} className="relative">
             <button
+                ref={triggerRef}
                 type="button"
                 aria-label={t('auth.menu')}
                 aria-haspopup="menu"
                 aria-expanded={open}
-                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                onClick={toggle}
                 className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-header"
             >
                 <span aria-hidden="true" className="text-sm font-semibold uppercase">
@@ -65,7 +63,7 @@ export function UserMenu() {
                         <Link
                             to="/admin/console"
                             role="menuitem"
-                            onClick={() => setOpen(false)}
+                            onClick={() => close(false)}
                             className={MENU_ITEM_CLASS}
                         >
                             <ShieldCheck aria-hidden="true" className="size-4" />

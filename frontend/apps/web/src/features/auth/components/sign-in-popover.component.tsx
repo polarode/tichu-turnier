@@ -1,10 +1,10 @@
 import { useRouterState } from '@tanstack/react-router';
 import { LogIn } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type FocusEvent, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, type FocusEvent } from 'react';
 
 import { LoginForm } from '@/features/auth/components/login-form.component.tsx';
 import { useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
-import { useDropdownDismiss } from '@/shared/hooks/use-dropdown-dismiss.hook.ts';
+import { useHeaderPopover } from '@/shared/hooks/use-header-popover.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 /** Pages that already show their own credentials form; a second one would only compete with it. */
@@ -29,30 +29,19 @@ export function SignInPopover() {
 
 function SignInPopoverEntry() {
     const { t } = useI18n();
-    const [open, setOpen] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement>(null);
+    const { open, toggle, close, rootRef, triggerRef } = useHeaderPopover();
     const dialogRef = useRef<HTMLDivElement>(null);
     const titleId = useId();
-    // Outside clicks close quietly; Escape is handled on the dialog so focus can return.
-    useDropdownDismiss(open, rootRef, () => setOpen(false));
 
     // Opening hands focus to the first field, so the visitor can type straight away.
     useEffect(() => {
         if (open) dialogRef.current?.querySelector('input')?.focus();
     }, [open]);
 
-    const onDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        setOpen(false);
-        triggerRef.current?.focus();
-    };
-
-    // Tabbing out of the form closes it; a null target (a click on bare page) is left to the dismiss hook.
+    // Tabbing out closes it; a click on bare page (null target) is left to the outside-click handling.
     const onRootBlur = (event: FocusEvent<HTMLDivElement>) => {
         const next = event.relatedTarget;
-        if (next !== null && !event.currentTarget.contains(next)) setOpen(false);
+        if (next !== null && !event.currentTarget.contains(next)) close(false);
     };
 
     return (
@@ -63,7 +52,7 @@ function SignInPopoverEntry() {
                 aria-label={t('auth.signIn')}
                 aria-haspopup="dialog"
                 aria-expanded={open}
-                onClick={() => setOpen((wasOpen) => !wasOpen)}
+                onClick={toggle}
                 className="flex size-10 items-center justify-center rounded-md text-header-muted transition-colors outline-none hover:text-header-foreground focus-visible:ring-2 focus-visible:ring-header-foreground"
             >
                 <LogIn aria-hidden="true" className="size-5" />
@@ -73,7 +62,6 @@ function SignInPopoverEntry() {
                 <div
                     ref={dialogRef}
                     role="dialog"
-                    onKeyDown={onDialogKeyDown}
                     aria-labelledby={titleId}
                     className="absolute right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-lg"
                 >

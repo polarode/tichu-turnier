@@ -372,6 +372,19 @@ describe('header avatar outside the admin area', () => {
         expect(screen.getByText('organizer@example.com')).toBeInTheDocument();
     });
 
+    it('closes its menu on Escape and hands focus back to the avatar', async () => {
+        auth.refresh.mockResolvedValue(admin);
+        renderApp('/public');
+        const avatar = await screen.findByRole('button', { name: 'Konto' });
+        await userEvent.click(avatar);
+        screen.getByRole('menuitem', { name: 'Abmelden' }).focus();
+
+        await userEvent.keyboard('{Escape}');
+
+        expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+        expect(avatar).toHaveFocus();
+    });
+
     it('stays hidden when nobody is signed in', async () => {
         auth.refresh.mockRejectedValue(noSession());
         renderApp('/public');

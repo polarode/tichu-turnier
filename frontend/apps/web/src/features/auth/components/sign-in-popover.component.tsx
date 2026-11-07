@@ -16,12 +16,14 @@ const AUTH_PAGES: ReadonlySet<string> = new Set(['/login', '/register']);
  * the page; the resulting session swaps it for the avatar.
  */
 export function SignInPopover() {
-    const { data: admin } = useSession();
+    const { data: admin, isError } = useSession();
     const pathname = useRouterState({ select: (state) => state.location.pathname });
 
-    // Only a confirmed absence: while the session loads, the corner stays empty. Hiding
-    // unmounts the popover, so it always comes back closed.
-    if (admin !== null || AUTH_PAGES.has(pathname)) return null;
+    // Shown once the session is known to be absent, or could not be checked at all (then
+    // this is the only way in). While it loads, the corner stays empty. Hiding unmounts
+    // the popover, so it always comes back closed.
+    const signedOut = !admin && (admin === null || isError);
+    if (!signedOut || AUTH_PAGES.has(pathname)) return null;
     return <SignInPopoverEntry />;
 }
 

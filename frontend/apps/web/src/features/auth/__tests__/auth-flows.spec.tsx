@@ -314,6 +314,19 @@ describe('header sign-in popover', () => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
+    it('still offers sign-in when the session check itself fails', async () => {
+        auth.refresh.mockRejectedValue(
+            new ApiError({ code: 'UNKNOWN', status: 500, field: null, message: 'boom' }),
+        );
+        renderApp('/public');
+
+        // Without a confirmed session the admin tab stays hidden, so this is the only way in.
+        expect(
+            await screen.findByRole('button', { name: 'Als Organisator anmelden' }),
+        ).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Verwaltung' })).not.toBeInTheDocument();
+    });
+
     it('starts closed again after the visitor followed a link out of it', async () => {
         const { router } = renderApp('/public');
         await userEvent.click(
@@ -363,8 +376,10 @@ describe('header avatar outside the admin area', () => {
         auth.refresh.mockRejectedValue(noSession());
         renderApp('/public');
 
-        await screen.findByRole('heading', { level: 1 });
-        await vi.waitFor(() => expect(auth.refresh).toHaveBeenCalled());
+        // The sign-in entry only shows once the session resolved as signed out.
+        expect(
+            await screen.findByRole('button', { name: 'Als Organisator anmelden' }),
+        ).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();
     });
 });

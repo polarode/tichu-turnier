@@ -212,6 +212,32 @@ are 0/0 and the other team's players have no position. The winning team earns th
 tournament's **Double Win Bonus** (200 normally, or 100) and an extra victory point.
 _Avoid_: sweep, shutout
 
+### Statistics
+
+**Team Statistics**:
+The tournament's statistics, all aggregated per team. No figure is ever shown per
+player, so teammates cannot compete against each other on individual numbers.
+_Avoid_: player statistics, leaderboard
+
+**Successful Tichu Call**:
+A Tichu Call that succeeded. A team's count is the sum of its two players' successful
+calls, kept apart for small and grand.
+_Avoid_: Tichu hit, Tichu win
+
+**Bomb Count**:
+The bombs a team's players played across its games, shown as a total and as an
+average per game.
+_Avoid_: bomb tally
+
+**Highlight**:
+The team leading one statistic, with every tied team shown.
+_Avoid_: award, top team
+
+**Team Trend**:
+A team's cumulative Victory Points after each completed round, the same running total
+the Standings use.
+_Avoid_: progress chart, form
+
 ### Serving
 
 **SPA Fallback**:

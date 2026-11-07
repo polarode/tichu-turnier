@@ -9,7 +9,11 @@ data class PlayedRound(
     val round: Round,
     val games: List<Game>,
     val confirmations: Map<TableId, Set<TeamId>>,
-)
+) {
+    /** The tables of [round] that are completed; the only ones whose games count. */
+    val completedTables: List<Table>
+        get() = round.pairing.tables.filter { round.isTableCompleted(it, confirmations) }
+}
 
 /** One team's summed results: the input [Standings.rank] orders and ranks. */
 data class TeamTotals(
@@ -43,21 +47,18 @@ data class Standings(val entries: List<StandingsEntry>) {
          */
         fun compute(teams: List<Team>, rounds: List<PlayedRound>, settings: TournamentSettings): Standings {
             val outcomes = rounds.flatMap { played ->
-                val completedTables = played.round.pairing.tables
-                    .filter { TableConfirmations(it, played.confirmations[it.id].orEmpty()).isCompleted }
-                    .map { it.id.value }
-                    .toSet()
+                val completedTables = played.completedTables.map { it.id.value }.toSet()
                 played.games.filter { it.tableNumber in completedTables }.map { it.score(settings) }
             }
             return rank(
                 teams.map { team ->
-                    val played = outcomes.filter { team.id in it.victoryPoints }
+                    val total = outcomes.totalFor(team.id)
                     TeamTotals(
                         teamId = team.id,
                         teamName = team.name,
-                        gamesPlayed = played.size,
-                        victoryPoints = played.sumOf { it.victoryPoints.getValue(team.id) },
-                        tichuPoints = played.sumOf { it.teamPoints.getValue(team.id) },
+                        gamesPlayed = outcomes.playedBy(team.id).size,
+                        victoryPoints = total.victoryPoints,
+                        tichuPoints = total.tichuPoints,
                     )
                 },
             )

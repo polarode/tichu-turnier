@@ -3,6 +3,19 @@ package tichu.domain
 /** One team's Table Totals (GLOSSARY.md): its summed [victoryPoints] and [tichuPoints] at one table of one round. */
 data class TableTotal(val victoryPoints: Int, val tichuPoints: Int)
 
+/** The [outcomes] among these that [team] played: a game it sat out has no entry in its VP map. */
+internal fun List<GameOutcome>.playedBy(team: TeamId): List<GameOutcome> =
+    filter { team in it.victoryPoints }
+
+/** [team]'s summed VP and TP over the games it played among these [GameOutcome]s; zeros when it played none. */
+internal fun List<GameOutcome>.totalFor(team: TeamId): TableTotal {
+    val played = playedBy(team)
+    return TableTotal(
+        victoryPoints = played.sumOf { it.victoryPoints.getValue(team) },
+        tichuPoints = played.sumOf { it.teamPoints.getValue(team) },
+    )
+}
+
 /**
  * The Table Totals (GLOSSARY.md): per completed table of a round, each seated
  * team's summed Victory Points and Tichu Points over the games it played there.
@@ -17,18 +30,10 @@ object TableTotals {
      * not completed are absent; a seated team with no games is listed with zeros.
      */
     fun of(played: PlayedRound, settings: TournamentSettings): Map<TableId, Map<TeamId, TableTotal>> =
-        played.round.pairing.tables
-            .filter { TableConfirmations(it, played.confirmations[it.id].orEmpty()).isCompleted }
-            .associate { table ->
-                val outcomes = played.games
-                    .filter { it.tableNumber == table.id.value }
-                    .map { it.score(settings) }
-                table.id to table.seatedTeams.associateWith { team ->
-                    val teamOutcomes = outcomes.filter { team in it.victoryPoints }
-                    TableTotal(
-                        victoryPoints = teamOutcomes.sumOf { it.victoryPoints.getValue(team) },
-                        tichuPoints = teamOutcomes.sumOf { it.teamPoints.getValue(team) },
-                    )
-                }
-            }
+        played.completedTables.associate { table ->
+            val outcomes = played.games
+                .filter { it.tableNumber == table.id.value }
+                .map { it.score(settings) }
+            table.id to table.seatedTeams.associateWith { team -> outcomes.totalFor(team) }
+        }
 }

@@ -19,12 +19,19 @@ data class Round(
     fun tableOf(teamId: TeamId): Table? = pairing.tables.firstOrNull { it.seats(teamId) }
 
     /**
+     * Whether [table] is completed (every seated team confirmed), given the
+     * confirmed teams per table (a table absent from [confirmations] has none).
+     */
+    fun isTableCompleted(table: Table, confirmations: Map<TableId, Set<TeamId>>): Boolean =
+        TableConfirmations(table, confirmations[table.id].orEmpty()).isCompleted
+
+    /**
      * Whether every table of this round is completed, given the confirmed teams
      * per table (a table absent from [confirmations] has none). Round
      * advancement (S7) consumes this.
      */
     fun isComplete(confirmations: Map<TableId, Set<TeamId>>): Boolean =
-        pairing.tables.all { TableConfirmations(it, confirmations[it.id].orEmpty()).isCompleted }
+        pairing.tables.all { isTableCompleted(it, confirmations) }
 }
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */

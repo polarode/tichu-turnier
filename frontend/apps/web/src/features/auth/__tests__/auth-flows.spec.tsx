@@ -1,9 +1,10 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { sessionQueryKey } from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
@@ -260,7 +261,7 @@ describe('admin auth flows', () => {
         expect(await screen.findByText('Dieses Konto wurde deaktiviert.')).toBeInTheDocument();
     });
 
-    it('logs out from the admin area via the avatar menu and returns to login', async () => {
+    it('logs out from the admin area via the avatar menu and returns to the public area', async () => {
         auth.refresh.mockResolvedValue(admin);
         auth.logout.mockResolvedValue(undefined);
         renderApp('/admin');
@@ -268,11 +269,81 @@ describe('admin auth flows', () => {
         await userEvent.click(await screen.findByRole('button', { name: 'Konto' }));
         await userEvent.click(screen.getByRole('menuitem', { name: 'Abmelden' }));
 
-        expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument();
-        // Signing out also removes the avatar from the shell.
+        expect(
+            await screen.findByRole('heading', { name: 'Öffentlicher Bereich' }),
+        ).toBeInTheDocument();
+        // Signing out swaps the avatar for the sign-in entry and drops the admin tab.
         expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Als Organisator anmelden' }),
+        ).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Verwaltung' })).not.toBeInTheDocument();
         expect(auth.logout).toHaveBeenCalled();
     });
+});
+
+describe('header sign-in popover', () => {
+    beforeEach(() => {
+        vi.resetAllMocks();
+        auth.refresh.mockRejectedValue(noSession());
+        tournamentRepo.list.mockResolvedValue([]);
+    });
+
+    it('signs a visitor in from the header and lands in the admin area', async () => {
+        auth.login.mockResolvedValue(admin);
+        renderApp('/public');
+
+        await userEvent.click(
+            await screen.findByRole('button', { name: 'Als Organisator anmelden' }),
+        );
+        const popover = screen.getByRole('dialog', { name: 'Anmelden' });
+        await userEvent.type(within(popover).getByLabelText('E-Mail'), 'organizer@example.com');
+        await userEvent.type(within(popover).getByLabelText('Passwort'), 'correct-password');
+        await userEvent.click(within(popover).getByRole('button', { name: 'Anmelden' }));
+
+        const nav = screen.getByRole('navigation', { name: 'Hauptnavigation' });
+        expect(await within(nav).findByRole('link', { name: 'Verwaltung' })).toHaveAttribute(
+            'aria-current',
+            'page',
+        );
+        // The session replaces the sign-in entry with the avatar.
+        expect(screen.getByRole('button', { name: 'Konto' })).toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Als Organisator anmelden' }),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('starts closed again after the visitor followed a link out of it', async () => {
+        const { router } = renderApp('/public');
+        await userEvent.click(
+            await screen.findByRole('button', { name: 'Als Organisator anmelden' }),
+        );
+
+        await userEvent.click(screen.getByRole('link', { name: 'Jetzt erstellen' }));
+        expect(await screen.findByRole('heading', { name: 'Konto erstellen' })).toBeInTheDocument();
+        await router.navigate({ to: '/public' });
+
+        const trigger = await screen.findByRole('button', { name: 'Als Organisator anmelden' });
+        expect(trigger).toHaveAttribute('aria-expanded', 'false');
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it.each(['/login', '/register'])(
+        'leaves the sign-in entry out on %s, which has its own form',
+        async (path) => {
+            const { queryClient } = renderApp(path);
+
+            expect(await screen.findByLabelText('E-Mail')).toBeInTheDocument();
+            // Wait for the signed-out session to resolve, or the entry would be absent anyway.
+            await waitFor(() =>
+                expect(queryClient.getQueryState(sessionQueryKey())?.status).toBe('success'),
+            );
+            expect(
+                screen.queryByRole('button', { name: 'Als Organisator anmelden' }),
+            ).not.toBeInTheDocument();
+        },
+    );
 });
 
 describe('header avatar outside the admin area', () => {

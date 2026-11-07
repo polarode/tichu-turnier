@@ -3,11 +3,16 @@ import { ClipboardList, type LucideIcon, Trophy, Users } from 'lucide-react';
 import { cn } from '@tichu/ui/lib/utils.ts';
 import type { ReactNode } from 'react';
 
+import { SignInPopover } from '@/features/auth/components/sign-in-popover.component.tsx';
 import { UserMenu } from '@/features/auth/components/user-menu.component.tsx';
+import { useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { LanguageSwitcher } from '@/shared/i18n/language-switcher.component.tsx';
 import { ThemeSwitcher } from '@/shared/theme/theme-switcher.component.tsx';
+
+/** The admin area is offered only to a confirmed session; visitors reach sign-in from the corner. */
+const ADMIN_AREA = '/admin';
 
 /**
  * Each area carries an icon and one of the suits from the header stripe; the
@@ -21,7 +26,7 @@ const NAV_ITEMS: ReadonlyArray<{
     activeBar: string;
 }> = [
     {
-        to: '/admin',
+        to: ADMIN_AREA,
         labelKey: 'nav.admin',
         icon: ClipboardList,
         activeBar: 'data-[status=active]:after:bg-suit-jade',
@@ -46,10 +51,13 @@ const NAV_LINK_CLASS =
 /**
  * The persistent frame every screen renders into: header with navigation, theme and language switch.
  * On phones the navigation drops to its own full-width row below the brand and controls, as three
- * equal-width tabs.
+ * equal-width tabs. The admin tab appears only once a session is confirmed, so visitors never see
+ * an area they cannot enter.
  */
 export function AppShell({ children }: { children: ReactNode }) {
     const { t } = useI18n();
+    const { data: admin } = useSession();
+    const navItems = admin ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.to !== ADMIN_AREA);
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -75,9 +83,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
                     <nav
                         aria-label={t('nav.primary')}
-                        className="order-last grid w-full grid-cols-3 sm:order-none sm:flex sm:w-auto sm:gap-2"
+                        className="order-last grid w-full auto-cols-fr grid-flow-col sm:order-none sm:flex sm:w-auto sm:gap-2"
                     >
-                        {NAV_ITEMS.map(({ to, labelKey, icon: Icon, activeBar }) => (
+                        {navItems.map(({ to, labelKey, icon: Icon, activeBar }) => (
                             <Link key={to} to={to} className={cn(NAV_LINK_CLASS, activeBar)}>
                                 <Icon aria-hidden="true" className="size-4" />
                                 {t(labelKey)}
@@ -89,6 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                         <ThemeSwitcher />
                         <LanguageSwitcher />
                         <UserMenu />
+                        <SignInPopover />
                     </div>
                 </div>
             </header>

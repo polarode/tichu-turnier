@@ -1,18 +1,40 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AuthRepository } from '@/auth-api/auth.repository.ts';
+import { ApiError } from '@/shared/api/api-error.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
+vi.mock('@/auth-api/auth.repository.ts', () => ({
+    AuthRepository: {
+        register: vi.fn(),
+        login: vi.fn(),
+        refresh: vi.fn(),
+        logout: vi.fn(),
+    },
+}));
+
+const auth = vi.mocked(AuthRepository);
+const admin = { id: 'admin-1', email: 'organizer@example.com', role: 'ADMIN' as const };
+
 describe('AppShell', () => {
-    it('shows the German shell with navigation to every area', async () => {
+    beforeEach(() => {
+        vi.resetAllMocks();
+        auth.refresh.mockRejectedValue(
+            new ApiError({ code: 'UNAUTHENTICATED', status: 401, field: null, message: 'no session' }),
+        );
+    });
+
+    it('shows a signed-in admin the German shell with navigation to every area', async () => {
+        auth.refresh.mockResolvedValue(admin);
         renderApp('/public', { initialLocale: 'de' });
 
         expect(await screen.findByText('Tichu Turnier')).toBeInTheDocument();
         expect(document.title).toBe('Tichu Turnier');
 
         const nav = screen.getByRole('navigation', { name: 'Hauptnavigation' });
-        expect(within(nav).getByRole('link', { name: 'Verwaltung' })).toHaveAttribute(
+        expect(await within(nav).findByRole('link', { name: 'Verwaltung' })).toHaveAttribute(
             'href',
             '/admin',
         );
@@ -24,9 +46,18 @@ describe('AppShell', () => {
         // The active area is announced, not only shown by its suit-coloured bar.
         expect(within(nav).getByRole('link', { name: 'Öffentlich' })).toHaveAttribute('aria-current', 'page');
         expect(within(nav).getByRole('link', { name: 'Team' })).not.toHaveAttribute('aria-current');
-        // Signed-out visitors see neither a login entry nor an avatar in the shell.
-        expect(screen.queryByRole('link', { name: 'Anmelden' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();
+    });
+
+    it('hides the admin area from signed-out visitors', async () => {
+        renderApp('/public');
+
+        const nav = await screen.findByRole('navigation', { name: 'Hauptnavigation' });
+        await vi.waitFor(() => expect(auth.refresh).toHaveBeenCalled());
+        expect(within(nav).getByRole('link', { name: 'Team' })).toBeInTheDocument();
+        expect(within(nav).getByRole('link', { name: 'Öffentlich' })).toBeInTheDocument();
+        expect(within(nav).queryByRole('link', { name: 'Verwaltung' })).not.toBeInTheDocument();
+        // Sign-in moves to the corner where a session's avatar would sit.
+        expect(await screen.findByRole('button', { name: 'Als Organisator anmelden' })).toBeInTheDocument();
     });
 
     it('switches every visible string to English and updates <html lang>', async () => {

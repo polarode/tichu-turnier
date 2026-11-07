@@ -74,6 +74,7 @@ export const en = {
 
     'auth.email': 'Email',
     'auth.password': 'Password',
+    'auth.signIn': 'Organizer sign-in',
     'auth.signedInAs': 'Signed in as',
     'auth.logout': 'Log out',
     'auth.logout.pending': 'Signing out…',

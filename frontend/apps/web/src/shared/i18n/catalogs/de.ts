@@ -72,6 +72,7 @@ export const de: Catalog = {
 
     'auth.email': 'E-Mail',
     'auth.password': 'Passwort',
+    'auth.signIn': 'Als Organisator anmelden',
     'auth.signedInAs': 'Angemeldet als',
     'auth.logout': 'Abmelden',
     'auth.logout.pending': 'Abmeldung läuft…',

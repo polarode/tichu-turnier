@@ -33,7 +33,7 @@ export function UserMenu() {
     const onLogout = async () => {
         setOpen(false);
         await logout.mutateAsync();
-        await navigate({ to: '/login' });
+        await navigate({ to: '/public' });
     };
 
     return (

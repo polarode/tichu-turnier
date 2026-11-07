@@ -5,7 +5,7 @@ import {
     type AnyRouter,
     RouterProvider,
 } from '@tanstack/react-router';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 
 import { routeTree } from '@/routeTree.gen.ts';
@@ -14,7 +14,7 @@ import { ThemeProvider } from '@/shared/theme/theme.context.tsx';
 import type { Locale } from '@/shared/i18n/locale.ts';
 import { createTestQueryClient } from '@/test-helpers/render-with-providers.tsx';
 
-export type AppRenderResult = RenderResult & { router: AnyRouter };
+export type AppRenderResult = RenderResult & { router: AnyRouter; queryClient: QueryClient };
 
 /**
  * Render the real router (real route tree, in-memory history) so routing and
@@ -46,5 +46,5 @@ export function renderApp(
 
     const result = render(app);
 
-    return { ...result, router };
+    return { ...result, router, queryClient };
 }

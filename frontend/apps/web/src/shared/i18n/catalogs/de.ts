@@ -278,6 +278,9 @@ export const de: Catalog = {
     'team.live.connected': 'Live',
     'team.live.offline': 'Offline',
     'team.live.hint': 'Spiele, Bestätigungen und neue Runden erscheinen hier sofort.',
+    'public.live.connected': 'Live',
+    'public.live.offline': 'Offline',
+    'public.live.hint': 'Neue Runden und Ergebnisse erscheinen hier ohne Neuladen der Seite.',
 
 
     'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',

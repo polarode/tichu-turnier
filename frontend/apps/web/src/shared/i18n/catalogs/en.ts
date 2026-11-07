@@ -278,6 +278,9 @@ export const en = {
     'team.live.connected': 'Live',
     'team.live.offline': 'Offline',
     'team.live.hint': 'Games, confirmations and new rounds appear here as they happen.',
+    'public.live.connected': 'Live',
+    'public.live.offline': 'Offline',
+    'public.live.hint': 'New rounds and results appear here without reloading the page.',
 
 
     'teamLogin.exchangingTitle': 'Opening your team area',

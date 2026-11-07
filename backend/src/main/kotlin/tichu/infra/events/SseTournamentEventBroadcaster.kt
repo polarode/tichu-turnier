@@ -6,6 +6,7 @@ import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import java.io.IOException
@@ -32,10 +33,15 @@ class SseTournamentEventBroadcaster(
 
     private val log = LoggerFactory.getLogger(SseTournamentEventBroadcaster::class.java)
     private val streams = ConcurrentHashMap<TournamentId, MutableSet<SseEmitter>>()
+    private val filters = ConcurrentHashMap<SseEmitter, Set<TournamentEventType>>()
     private val eventIds = AtomicLong()
 
-    fun subscribe(tournamentId: TournamentId): SseEmitter {
+    fun subscribe(
+        tournamentId: TournamentId,
+        types: Set<TournamentEventType> = TournamentEventType.entries.toSet(),
+    ): SseEmitter {
         val emitter = emitterFactory(streamTimeout.toMillis())
+        filters[emitter] = types
         streams.compute(tournamentId) { _, set -> (set ?: ConcurrentHashMap.newKeySet()).apply { add(emitter) } }
         emitter.onCompletion { release(tournamentId, emitter) }
         emitter.onTimeout {
@@ -80,7 +86,7 @@ class SseTournamentEventBroadcaster(
                 tableId = event.tableId?.value,
             )
             val emitters = streams[event.tournamentId]?.toList() ?: return
-            emitters.forEach {
+            emitters.filter { event.type in filters[it].orEmpty() }.forEach {
                 send(
                     event.tournamentId,
                     it,
@@ -116,6 +122,7 @@ class SseTournamentEventBroadcaster(
     }
 
     private fun release(tournamentId: TournamentId, emitter: SseEmitter) {
+        filters.remove(emitter)
         streams.computeIfPresent(tournamentId) { _, set ->
             set.remove(emitter)
             if (set.isEmpty()) null else set

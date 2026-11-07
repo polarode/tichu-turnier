@@ -4,6 +4,7 @@ import tichu.application.api.ApproveAdmin
 import tichu.application.api.AuthenticateSession
 import tichu.application.api.AuthenticateTeamSession
 import tichu.application.api.BootstrapOwner
+import tichu.application.api.CheckPublicTournamentVisible
 import tichu.application.api.ConfirmTable
 import tichu.application.api.CreateInvite
 import tichu.application.api.CreateTeam
@@ -256,6 +257,10 @@ class UseCaseConfiguration(
         teamRepository: TeamRepository,
         playedRoundsReader: PlayedRoundsReader,
     ): GetPublicTournament = GetPublicTournamentQuery(tournamentRepository, teamRepository, playedRoundsReader)
+
+    @Bean
+    fun checkPublicTournamentVisible(tournamentRepository: TournamentRepository): CheckPublicTournamentVisible =
+        CheckPublicTournamentVisibleQuery(tournamentRepository)
 
     @Bean
     fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =

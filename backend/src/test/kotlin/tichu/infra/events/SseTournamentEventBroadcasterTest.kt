@@ -161,6 +161,31 @@ class SseTournamentEventBroadcasterTest {
     }
 
     @Test
+    fun `a type-filtered stream receives only the allowed lifecycle events`() {
+        val lifecycle = setOf(
+            TournamentEventType.ROUND_STARTED,
+            TournamentEventType.TOURNAMENT_FINISHED,
+            TournamentEventType.RESULTS_PUBLISHED,
+        )
+        broadcaster.subscribe(t1, lifecycle)
+
+        listOf(
+            TournamentEventType.GAME_RECORDED,
+            TournamentEventType.TABLE_CONFIRMED,
+            TournamentEventType.CONFIRMATION_RETRACTED,
+            TournamentEventType.ROUND_STARTED,
+            TournamentEventType.TOURNAMENT_FINISHED,
+            TournamentEventType.RESULTS_PUBLISHED,
+        ).forEach { broadcaster.publish(TournamentEvent(it, t1)) }
+
+        val received = created[0].payloads.map { (it as TournamentEventPayload).type }
+        assertEquals(
+            listOf("ROUND_STARTED", "TOURNAMENT_FINISHED", "RESULTS_PUBLISHED"),
+            received,
+        )
+    }
+
+    @Test
     fun `heartbeats go to every open stream as a comment`() {
         broadcaster.subscribe(t1)
         broadcaster.subscribe(t2)

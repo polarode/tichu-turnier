@@ -5,7 +5,7 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 export interface LiveBadgeProps {
     connected: boolean;
     /** Catalog prefix of the three labels: `<prefix>.connected`, `<prefix>.offline`, `<prefix>.hint`. */
-    labelKeyPrefix: 'tournament.live' | 'team.live';
+    labelKeyPrefix: 'tournament.live' | 'team.live' | 'public.live';
 }
 
 /** Whether the live stream is connected: green "Live", or a muted "Offline" while it reconnects. */

@@ -3,10 +3,12 @@ import { Badge } from '@tichu/ui/badge.tsx';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type { PublicRound, PublicTable, PublicTableTotals } from '@/domain/tournament.domain.ts';
 import { usePublicTournament } from '@/features/public-tournaments/hooks/public-tournaments.hook.ts';
+import { usePublicTournamentLiveStream } from '@/features/public-tournaments/hooks/public-tournament-live-stream.hook.ts';
 import { tableHeading } from '@/features/scoring/labels.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
+import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
 import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
@@ -36,6 +38,10 @@ export function PublicTournamentPage({ tournamentId }: PublicTournamentPageProps
 function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
     const { t } = useI18n();
     const tournamentQuery = usePublicTournament(tournamentId);
+    const { live, connected } = usePublicTournamentLiveStream(
+        tournamentId,
+        tournamentQuery.data?.status,
+    );
 
     if (tournamentQuery.isPending) {
         return <p className="text-muted-foreground">{t('common.loading')}</p>;
@@ -63,6 +69,7 @@ function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
             <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold sm:text-2xl">{tournament.name}</h1>
                 <TournamentStatusBadge status={tournament.status} />
+                {live ? <LiveBadge connected={connected} labelKeyPrefix="public.live" /> : null}
             </div>
 
             {tournament.finalRanking ? (

@@ -210,6 +210,10 @@
             {
                 "type": "feature",
                 "text": "Once you publish the results, spectators see the Final Ranking and each team's summed Victory Points and Tichu Points per table on the public tournament page"
+            },
+            {
+                "type": "feature",
+                "text": "Spectators see new rounds, the finish and the published results on the public tournament page right away, with a Live badge, without reloading the page"
             }
         ]
     }

@@ -1,13 +1,15 @@
 # Tichu Turnier
 
 A web app for running Tichu tournaments. Organizers set up a tournament and its
-teams, run Swiss rounds (with a trio table when the team count is odd), and teams
-enter and confirm their game results. Everyone else can follow the tournament on
-public standings and statistics. The UI ships in German and English.
+teams, start Swiss rounds (with a trio table when the team count is odd), and teams
+sign in with a private access link to enter and confirm their own game results. The
+organizer follows the standings live and teams see each other's entries as they happen;
+the organizer then finishes and publishes the final ranking.
+The UI ships in German and English with a light, dark and system theme.
 
 This is a v2 rebuild of the earlier Supabase-based Tichu manager — same concept,
-new architecture. The authoritative roadmap lives in
-[`docs/plan/tichu-tournament.md`](./docs/plan/tichu-tournament.md).
+new architecture. Architectural decisions are recorded as ADRs in
+[`docs/adr`](./docs/adr).
 
 ## Layout
 
@@ -15,7 +17,8 @@ new architecture. The authoritative roadmap lives in
 tichu-turnier/
 ├── backend/     # Kotlin + Spring Boot (Gradle), hexagonal architecture
 ├── frontend/    # React 19 + Vite + TanStack (pnpm workspace)
-└── docs/plan/   # phased implementation plan
+├── deploy/      # single-origin production Docker image
+└── docs/        # ADRs and the operations runbook
 ```
 
 See [`AGENTS.md`](./AGENTS.md) for the architecture conventions, and the README in
@@ -24,12 +27,19 @@ each subproject for its details.
 ## Status
 
 - **Backend** — admin auth and account lifecycle (invite-gated onboarding, owner
-  admin management), plus tournament and team setup (create, list, get, edit, delete
-  with server-side validation). Rounds, scoring, confirmations and live events are next.
-- **Frontend** — admin area with register/login, the pending-approval and invite
-  states, the tournament dashboard and the owner console (approve/reject requests,
-  disable/reactivate admins, issue invites), all in de/en. Tournament create/edit,
-  team management and the team/public screens follow in later phases.
+  admin management, invite issuance), tournament and team setup (create, list, get,
+  edit, delete with server-side validation), per-team private access links, and the
+  full play loop: start a tournament, Swiss round pairing (with a trio table for odd
+  team counts), team-session game entry, per-table confirm/retract, live standings,
+  adjustable total rounds, start-next-round, and finish + publish of the final
+  ranking. Organizer and teams each get a live Server-Sent-Events stream of
+  tournament activity.
+- **Frontend** — admin area (register/login, pending-approval, the tournament
+  dashboard, create/edit, a tabbed tournament detail with rounds, standings and a
+  progress card, the owner console and a changelog) and team area (access-link login,
+  team overview, a scoring form, and per-table confirm/retract). Both areas update
+  live over SSE with a Live badge, with no interval polling. All in de/en with a light/dark/system theme. The public spectator
+  area is still a placeholder.
 
 ## Quick start
 

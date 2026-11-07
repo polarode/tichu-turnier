@@ -3,6 +3,7 @@ export const QueryKeys = {
     SESSION: 'session',
     TOURNAMENTS: 'tournaments',
     PUBLIC_TOURNAMENTS: 'public-tournaments',
+    PUBLIC_TOURNAMENT: 'public-tournament',
     TEAMS: 'teams',
     ROUNDS: 'rounds',
     STANDINGS: 'standings',
@@ -25,6 +26,9 @@ export const tournamentQueryKey = (id: string) => [QueryKeys.TOURNAMENTS, id] as
 
 /** Key for the public (anonymous) list of tournaments shown on the home page. */
 export const publicTournamentsQueryKey = () => [QueryKeys.PUBLIC_TOURNAMENTS] as const;
+
+/** Key for one public tournament's pairings page (anonymous, no session needed). */
+export const publicTournamentQueryKey = (id: string) => [QueryKeys.PUBLIC_TOURNAMENT, id] as const;
 
 /** Key for a tournament's team list. */
 export const teamsQueryKey = (tournamentId: string) => [QueryKeys.TEAMS, tournamentId] as const;

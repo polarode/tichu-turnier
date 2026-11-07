@@ -9,9 +9,16 @@ import {
     type TotalRoundsRequestDto,
 } from '@/tournament-api/dtos/tournament.dto.ts';
 import { publicTournamentDtoToDomain } from '@/tournament-api/mappers/tournament.mapper.ts';
+import { publicTournamentDetailDtoToDomain } from '@/tournament-api/mappers/public-tournament.mapper.ts';
+import { publicTournamentDetailDtoSchema } from '@/tournament-api/dtos/public-tournament.dto.ts';
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
-import type { PublicTournament, Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
+import type {
+    PublicTournament,
+    PublicTournamentDetail,
+    Tournament,
+    TournamentWriteInput,
+} from '@/domain/tournament.domain.ts';
 import type { Round } from '@/domain/round.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
@@ -92,6 +99,12 @@ async function listPublicTournaments(): Promise<PublicTournament[]> {
     return publicTournamentListDtoSchema.parse(data).map(publicTournamentDtoToDomain);
 }
 
+/** The anonymous pairings of one public tournament (public facts only, every status). */
+async function getPublicTournament(id: string): Promise<PublicTournamentDetail> {
+    const { data } = await apiClient.get<unknown>(`/api/public/tournaments/${id}`);
+    return publicTournamentDetailDtoToDomain(publicTournamentDetailDtoSchema.parse(data));
+}
+
 /** Finishes the tournament once every round is played; fixes the Final Ranking (organizer-only until published). */
 async function finish(id: string): Promise<Tournament> {
     const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/finish`);
@@ -120,6 +133,7 @@ export const TournamentRepository = {
     setTotalRounds,
     setPublicVisibility,
     listPublicTournaments,
+    getPublicTournament,
     startNextRound,
     finish,
     publish,

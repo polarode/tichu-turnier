@@ -53,7 +53,8 @@ _Avoid_: preparation, draft mode
 
 **Public Visibility**:
 The organizer's choice, off by default, to let spectators follow a tournament.
-A tournament that is not public does not exist for spectators.
+A tournament that is not public does not exist for spectators, and neither does a
+public tournament still in its Setup Phase.
 _Avoid_: published (that is a Tournament Status), listed
 
 **Spectator**:

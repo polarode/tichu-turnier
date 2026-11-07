@@ -346,6 +346,10 @@ export const de: Catalog = {
     'publicHome.empty': 'Noch keine öffentlichen Turniere.',
     'publicHome.error': 'Die Turniere konnten nicht geladen werden.',
 
+    'publicTournament.backLink': 'Zurück zu den öffentlichen Turnieren',
+    'publicTournament.noRounds': 'Noch keine Runden ausgelost.',
+    'publicTournament.notFound': 'Dieses Turnier konnte nicht gefunden werden. Vielleicht ist es nicht öffentlich.',
+
     'scoring.title': 'Ergebnisse eintragen',
     'scoring.description': 'Trage die an deinem Tisch gespielten Spiele ein.',
     'scoring.notSeated': 'Dein Tisch erscheint, sobald das Turnier gestartet ist.',

@@ -345,6 +345,10 @@ export const en = {
     'publicHome.empty': 'No public tournaments yet.',
     'publicHome.error': 'The tournaments could not be loaded.',
 
+    'publicTournament.backLink': 'Back to public tournaments',
+    'publicTournament.noRounds': 'No rounds drawn yet.',
+    'publicTournament.notFound': 'This tournament could not be found. It may not be public.',
+
     'scoring.title': 'Enter results',
     'scoring.description': 'Record the games played at your table.',
     'scoring.notSeated': 'Your table appears once the tournament starts.',

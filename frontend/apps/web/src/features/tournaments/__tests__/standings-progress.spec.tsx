@@ -37,6 +37,7 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         publish: vi.fn(),
         setPublicVisibility: vi.fn(),
         listPublicTournaments: vi.fn(),
+        getPublicTournament: vi.fn(),
     },
 }));
 vi.mock('@/team-api/team.repository.ts', () => ({

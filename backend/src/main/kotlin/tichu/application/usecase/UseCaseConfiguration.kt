@@ -15,6 +15,7 @@ import tichu.application.api.ExchangeTeamAccess
 import tichu.application.api.FinishTournament
 import tichu.application.api.GetFinalRanking
 import tichu.application.api.GetOwnTeam
+import tichu.application.api.GetPublicTournament
 import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
@@ -248,6 +249,13 @@ class UseCaseConfiguration(
     @Bean
     fun listPublicTournaments(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListPublicTournaments =
         ListPublicTournamentsQuery(tournamentRepository, teamRepository)
+
+    @Bean
+    fun getPublicTournament(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        roundRepository: RoundRepository,
+    ): GetPublicTournament = GetPublicTournamentQuery(tournamentRepository, teamRepository, roundRepository)
 
     @Bean
     fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =

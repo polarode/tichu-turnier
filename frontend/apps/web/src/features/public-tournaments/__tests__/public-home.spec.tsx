@@ -20,6 +20,7 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         remove: vi.fn(),
         setPublicVisibility: vi.fn(),
         listPublicTournaments: vi.fn(),
+        getPublicTournament: vi.fn(),
     },
 }));
 
@@ -99,6 +100,20 @@ describe('public home', () => {
         expect(within(published!).getByText('Published Cup')).toBeInTheDocument();
         expect(within(published!).getByText('Published')).toBeInTheDocument();
         expect(within(published!).getByText('Teams: 6')).toBeInTheDocument();
+    });
+
+    it('links each entry to its public tournament page', async () => {
+        tournaments.listPublicTournaments.mockResolvedValue([
+            { id: 'a-1', name: 'Live Open', status: TournamentStatus.ACTIVE, teamCount: 4 },
+        ]);
+
+        renderApp('/public', { initialLocale: 'en' });
+
+        const [live] = await screen.findAllByRole('listitem');
+        expect(within(live!).getByRole('link', { name: 'Live Open' })).toHaveAttribute(
+            'href',
+            '/public/tournaments/a-1',
+        );
     });
 
     it('shows the empty state when there are no public tournaments', async () => {

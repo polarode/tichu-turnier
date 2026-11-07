@@ -58,6 +58,44 @@ export interface PublicTournament {
     teamCount: number;
 }
 
+/** A player as the public tournament page shows them. */
+export interface PublicPlayer {
+    id: string;
+    name: string;
+}
+
+/** A team as the public tournament page shows it: its players in order. */
+export interface PublicTeam {
+    id: string;
+    name: string;
+    players: PublicPlayer[];
+}
+
+/** A table of a public round: two teams, or three at the trio table. */
+export interface PublicTable {
+    tableNumber: number;
+    trio: boolean;
+    /** The teams in seat order. */
+    teams: PublicTeam[];
+}
+
+/** A drawn round of a public tournament, with its tables. */
+export interface PublicRound {
+    number: number;
+    tables: PublicTable[];
+}
+
+/**
+ * A tournament as the public tournament page shows it: its pairings only (no results,
+ * standings or table status), in every status.
+ */
+export interface PublicTournamentDetail {
+    id: string;
+    name: string;
+    status: TournamentStatus;
+    rounds: PublicRound[];
+}
+
 /**
  * The editable fields of a tournament, as forms produce them. A domain-level input so
  * the layers above the repository never see the wire DTO.

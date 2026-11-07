@@ -18,6 +18,7 @@ vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
 vi.mock('@/tournament-api/tournament.repository.ts', () => ({
     TournamentRepository: {
         listPublicTournaments: vi.fn().mockResolvedValue([]),
+        getPublicTournament: vi.fn(),
     },
 }));
 

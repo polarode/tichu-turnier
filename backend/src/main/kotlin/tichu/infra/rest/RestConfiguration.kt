@@ -12,6 +12,7 @@ import tichu.application.api.ExchangeTeamAccess
 import tichu.application.api.FinishTournament
 import tichu.application.api.GetFinalRanking
 import tichu.application.api.GetOwnTeam
+import tichu.application.api.GetPublicTournament
 import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
@@ -147,8 +148,10 @@ class RestConfiguration(
         SessionCookieFactory(teamSessionCookieName, sessionCookieSecure, teamSessionTtl)
 
     @Bean
-    fun publicTournamentController(listPublicTournaments: ListPublicTournaments): PublicTournamentController =
-        PublicTournamentController(listPublicTournaments)
+    fun publicTournamentController(
+        listPublicTournaments: ListPublicTournaments,
+        getPublicTournament: GetPublicTournament,
+    ): PublicTournamentController = PublicTournamentController(listPublicTournaments, getPublicTournament)
 
     @Bean
     fun gameController(recordGame: RecordGame): GameController = GameController(recordGame)

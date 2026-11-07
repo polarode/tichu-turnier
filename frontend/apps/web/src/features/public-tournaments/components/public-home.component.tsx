@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+
 import type { PublicTournament } from '@/domain/tournament.domain.ts';
 import { usePublicTournaments } from '@/features/public-tournaments/hooks/public-tournaments.hook.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
@@ -13,8 +15,8 @@ const GROUPS: readonly { status: TournamentStatus; labelKey: TranslationKey }[] 
 ];
 
 /**
- * The public home: the public tournaments grouped by status, read-only. Entries are not
- * links because there is no public tournament detail page yet.
+ * The public home: the public tournaments grouped by status, read-only. Each entry links
+ * to its public tournament page.
  */
 export function PublicHome() {
     const { t } = useI18n();
@@ -69,7 +71,13 @@ function PublicGroup({ label, entries }: { label: string; entries: PublicTournam
                         className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-border bg-card p-4"
                     >
                         <div className="flex flex-col gap-1">
-                            <span className="font-medium">{tournament.name}</span>
+                            <Link
+                                to="/public/tournaments/$tournamentId"
+                                params={{ tournamentId: tournament.id }}
+                                className="font-medium hover:underline"
+                            >
+                                {tournament.name}
+                            </Link>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                 <TournamentStatusBadge status={tournament.status} />
                                 <span>{`${t('publicHome.teamCount')}: ${tournament.teamCount}`}</span>

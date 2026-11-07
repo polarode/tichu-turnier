@@ -35,6 +35,7 @@ vi.mock('@/scoring-api/scoring.repository.ts', () => ({
 vi.mock('@/tournament-api/tournament.repository.ts', () => ({
     TournamentRepository: {
         listPublicTournaments: vi.fn().mockResolvedValue([]),
+        getPublicTournament: vi.fn(),
     },
 }));
 

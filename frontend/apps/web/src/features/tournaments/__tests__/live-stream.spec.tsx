@@ -12,25 +12,11 @@ import { renderApp } from '@/test-helpers/render-app.tsx';
 vi.mock('@/auth-api/auth.repository.ts', () => ({
     AuthRepository: { register: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
 }));
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        list: vi.fn(),
-        get: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        remove: vi.fn(),
-        start: vi.fn(),
-        rounds: vi.fn(),
-        standings: vi.fn(),
-        setTotalRounds: vi.fn(),
-        startNextRound: vi.fn(),
-        finish: vi.fn(),
-        publish: vi.fn(),
-        setPublicVisibility: vi.fn(),
-        listPublicTournaments: vi.fn(),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule();
+});
 vi.mock('@/team-api/team.repository.ts', () => ({
     TeamRepository: {
         list: vi.fn(),

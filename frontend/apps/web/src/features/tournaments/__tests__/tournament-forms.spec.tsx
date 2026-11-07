@@ -8,20 +8,11 @@ import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        list: vi.fn().mockResolvedValue([]),
-        get: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        remove: vi.fn(),
-        finish: vi.fn(),
-        publish: vi.fn(),
-        setPublicVisibility: vi.fn(),
-        listPublicTournaments: vi.fn(),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule({ list: vi.fn().mockResolvedValue([]) });
+});
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
     AuthRepository: {
@@ -68,23 +59,22 @@ const setupTournament = {
     updatedAt: new Date('2025-01-01T10:00:00Z'),
 };
 
-const fillAndSubmitCreateForm = async (overrides: {
-    name?: string;
-    description?: string;
-    maxTeams?: string;
-    grandTichuBonus?: 100 | 200;
-    doubleWinBonus?: 100 | 200;
-    totalRounds?: string;
-} = {}) => {
+const fillAndSubmitCreateForm = async (
+    overrides: {
+        name?: string;
+        description?: string;
+        maxTeams?: string;
+        grandTichuBonus?: 100 | 200;
+        doubleWinBonus?: 100 | 200;
+        totalRounds?: string;
+    } = {},
+) => {
     await userEvent.type(await screen.findByLabelText('Name'), overrides.name ?? 'Jahresturnier');
     if (overrides.description !== undefined) {
         await userEvent.type(screen.getByLabelText('Beschreibung'), overrides.description);
     }
     await userEvent.clear(screen.getByLabelText('Maximale Teamanzahl'));
-    await userEvent.type(
-        screen.getByLabelText('Maximale Teamanzahl'),
-        overrides.maxTeams ?? '8',
-    );
+    await userEvent.type(screen.getByLabelText('Maximale Teamanzahl'), overrides.maxTeams ?? '8');
     if (overrides.totalRounds !== undefined) {
         await userEvent.clear(screen.getByLabelText('Runden insgesamt'));
         await userEvent.type(screen.getByLabelText('Runden insgesamt'), overrides.totalRounds);
@@ -146,7 +136,9 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm();
 
         expect(tournamentRepo.create).toHaveBeenCalledWith(
-            expect.objectContaining({ settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 } }),
+            expect.objectContaining({
+                settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
+            }),
         );
     });
 
@@ -164,7 +156,9 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm();
 
         expect(
-            await screen.findByText('Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.'),
+            await screen.findByText(
+                'Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.',
+            ),
         ).toBeInTheDocument();
     });
 
@@ -188,7 +182,9 @@ describe('tournament create/edit forms', () => {
         await fillAndSubmitCreateForm({ totalRounds: '6' });
 
         expect(tournamentRepo.create).toHaveBeenCalledWith(
-            expect.objectContaining({ settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 } }),
+            expect.objectContaining({
+                settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 },
+            }),
         );
     });
 
@@ -237,7 +233,9 @@ describe('tournament create/edit forms', () => {
 
         const nameInput = await screen.findByLabelText('Name');
         expect(nameInput).toHaveValue('Jahresturnier');
-        expect(screen.getByRole('combobox', { name: 'Grand-Tichu-Bonus' })).toHaveTextContent('100');
+        expect(screen.getByRole('combobox', { name: 'Grand-Tichu-Bonus' })).toHaveTextContent(
+            '100',
+        );
         expect(screen.getByRole('combobox', { name: 'Doppelsieg-Bonus' })).toHaveTextContent('100');
 
         await userEvent.clear(nameInput);
@@ -280,10 +278,14 @@ describe('tournament create/edit forms', () => {
         await userEvent.click(await screen.findByRole('button', { name: 'Änderungen speichern' }));
 
         expect(
-            await screen.findByText('Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.'),
+            await screen.findByText(
+                'Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.',
+            ),
         ).toBeInTheDocument();
         expect(screen.getByLabelText('Maximale Teamanzahl')).toBeInvalid();
-        expect(screen.queryByText('Dieses Turnier kann nicht mehr bearbeitet werden.')).not.toBeInTheDocument();
+        expect(
+            screen.queryByText('Dieses Turnier kann nicht mehr bearbeitet werden.'),
+        ).not.toBeInTheDocument();
     });
 
     it('replaces the edit form with the conflict message when the server rejects with TOURNAMENT_NOT_EDITABLE', async () => {
@@ -318,16 +320,19 @@ describe('tournament create/edit forms', () => {
         tournamentRepo.get.mockResolvedValue(setupTournament);
         renderApp('/admin/tournaments/t-1');
 
-        expect(
-            await screen.findByRole('link', { name: 'Bearbeiten' }),
-        ).toHaveAttribute('href', '/admin/tournaments/t-1/edit');
+        expect(await screen.findByRole('link', { name: 'Bearbeiten' })).toHaveAttribute(
+            'href',
+            '/admin/tournaments/t-1/edit',
+        );
     });
 
     describe('back links', () => {
         it('lead from the create form to my tournaments', async () => {
             renderApp('/admin/tournaments/new');
 
-            expect(await screen.findByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
+            expect(
+                await screen.findByRole('link', { name: 'Zu meinen Turnieren' }),
+            ).toHaveAttribute('href', '/admin');
         });
 
         it('lead from the detail page to my tournaments, even when it fails to load', async () => {
@@ -336,7 +341,9 @@ describe('tournament create/edit forms', () => {
             );
             renderApp('/admin/tournaments/t-1');
 
-            expect(await screen.findByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
+            expect(
+                await screen.findByRole('link', { name: 'Zu meinen Turnieren' }),
+            ).toHaveAttribute('href', '/admin');
         });
 
         it('lead from the edit form back to its tournament, also when it can no longer be edited', async () => {

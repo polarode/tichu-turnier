@@ -14,20 +14,11 @@ import { renderApp } from '@/test-helpers/render-app.tsx';
 vi.mock('@/auth-api/auth.repository.ts', () => ({
     AuthRepository: { register: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
 }));
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        list: vi.fn(),
-        get: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        remove: vi.fn(),
-        finish: vi.fn(),
-        publish: vi.fn(),
-        setPublicVisibility: vi.fn(),
-        listPublicTournaments: vi.fn(),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule();
+});
 vi.mock('@/team-api/team.repository.ts', () => ({
     TeamRepository: {
         list: vi.fn(),
@@ -103,7 +94,9 @@ describe('team access link (reveal, rotate, revoke)', () => {
 
         expect(teams.revealAccessLink).toHaveBeenCalledWith('t-1', 'tm-1');
         expect(await screen.findByText(LINK_V1)).toBeInTheDocument();
-        expect(screen.getByRole('img', { name: 'QR-Code für den Zugangs-Link' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('img', { name: 'QR-Code für den Zugangs-Link' }),
+        ).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(LINK_V1);
@@ -145,7 +138,9 @@ describe('team access link (reveal, rotate, revoke)', () => {
         await screen.findByText(LINK_V1);
 
         await userEvent.click(screen.getByRole('button', { name: 'Widerrufen' }));
-        const revokeConfirm = await screen.findByRole('dialog', { name: 'Zugangs-Link widerrufen?' });
+        const revokeConfirm = await screen.findByRole('dialog', {
+            name: 'Zugangs-Link widerrufen?',
+        });
         await userEvent.click(within(revokeConfirm).getByRole('button', { name: 'Widerrufen' }));
 
         expect(teams.revokeAccessLink).toHaveBeenCalledWith('t-1', 'tm-1');
@@ -200,7 +195,9 @@ describe('team access link (reveal, rotate, revoke)', () => {
         await screen.findByText(LINK_V1);
 
         await userEvent.click(screen.getByRole('button', { name: 'Widerrufen' }));
-        const revokeConfirm = await screen.findByRole('dialog', { name: 'Zugangs-Link widerrufen?' });
+        const revokeConfirm = await screen.findByRole('dialog', {
+            name: 'Zugangs-Link widerrufen?',
+        });
         await userEvent.click(within(revokeConfirm).getByRole('button', { name: 'Widerrufen' }));
 
         expect(teams.revokeAccessLink).toHaveBeenCalledWith('t-1', 'tm-1');

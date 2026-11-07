@@ -1,13 +1,11 @@
 import type {
     DoubleWinBonus,
     GrandTichuBonus,
-    PublicTournament,
     Tournament,
     TournamentSettings,
     TournamentWriteInput,
 } from '@/domain/tournament.domain.ts';
 import type {
-    PublicTournamentDto,
     TournamentDto,
     TournamentSettingsDto,
     TournamentWriteRequestDto,
@@ -25,15 +23,6 @@ export function tournamentDtoToDomain(dto: TournamentDto): Tournament {
         publicVisibility: dto.publicVisibility,
         createdAt: new Date(dto.createdAt),
         updatedAt: new Date(dto.updatedAt),
-    };
-}
-
-export function publicTournamentDtoToDomain(dto: PublicTournamentDto): PublicTournament {
-    return {
-        id: dto.id,
-        name: dto.name,
-        status: dto.status,
-        teamCount: dto.teamCount,
     };
 }
 

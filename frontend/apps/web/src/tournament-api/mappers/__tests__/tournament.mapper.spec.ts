@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-    publicTournamentDtoToDomain,
     tournamentDtoToDomain,
     tournamentSettingsDtoToDomain,
     tournamentSettingsToDto,
     tournamentWriteInputToDto,
 } from '@/tournament-api/mappers/tournament.mapper.ts';
-import type { PublicTournamentDto, TournamentDto } from '@/tournament-api/dtos/tournament.dto.ts';
+import type { TournamentDto } from '@/tournament-api/dtos/tournament.dto.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 const dto: TournamentDto = {
@@ -40,19 +39,6 @@ describe('tournamentDtoToDomain', () => {
 describe('tournamentDtoToDomain publicVisibility', () => {
     it('carries the public visibility flag through to the domain', () => {
         expect(tournamentDtoToDomain({ ...dto, publicVisibility: true }).publicVisibility).toBe(true);
-    });
-});
-
-describe('publicTournamentDtoToDomain', () => {
-    it('maps a public tournament DTO to the public domain shape', () => {
-        const publicDto: PublicTournamentDto = { id: 't-2', name: 'Summer Open', status: 'ACTIVE', teamCount: 3 };
-
-        expect(publicTournamentDtoToDomain(publicDto)).toEqual({
-            id: 't-2',
-            name: 'Summer Open',
-            status: TournamentStatus.ACTIVE,
-            teamCount: 3,
-        });
     });
 });
 

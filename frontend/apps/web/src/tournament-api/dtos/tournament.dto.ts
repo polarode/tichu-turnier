@@ -35,18 +35,6 @@ export const tournamentListDtoSchema = z.array(tournamentDtoSchema);
 
 export type TournamentDto = z.infer<typeof tournamentDtoSchema>;
 
-/** One entry of `GET /api/public/tournaments` (public facts only). */
-export const publicTournamentDtoSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    status: z.enum(TOURNAMENT_STATUSES),
-    teamCount: z.number().int(),
-});
-
-export const publicTournamentListDtoSchema = z.array(publicTournamentDtoSchema);
-
-export type PublicTournamentDto = z.infer<typeof publicTournamentDtoSchema>;
-
 /** The body of `PUT /api/tournaments/{id}/public-visibility`. */
 export interface PublicVisibilityRequestDto {
     publicVisibility: boolean;

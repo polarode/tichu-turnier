@@ -10,7 +10,6 @@ import tichu.domain.RoundRepository
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
-import tichu.domain.TournamentStatus
 import tichu.vocabulary.NotFoundException
 
 /**
@@ -27,7 +26,7 @@ class GetPublicTournamentQuery(
 
     override fun get(id: TournamentId): PublicTournamentDetail {
         val tournament = tournamentRepository.findById(id)
-        if (tournament == null || !tournament.publicVisibility || tournament.status !in TournamentStatus.PUBLICLY_LISTABLE) {
+        if (tournament == null || !tournament.isVisibleToSpectators()) {
             throw NotFoundException("Tournament ${id.value} not found")
         }
 

@@ -3,14 +3,15 @@ import { roundDtoToDomain } from '@/tournament-api/mappers/round.mapper.ts';
 import { tournamentDtoSchema, tournamentListDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 import { roundDtoSchema, roundListDtoSchema, startedTournamentDtoSchema } from '@/tournament-api/dtos/round.dto.ts';
 import { standingsDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
+import type { PublicVisibilityRequestDto, TotalRoundsRequestDto } from '@/tournament-api/dtos/tournament.dto.ts';
 import {
+    publicTournamentDetailDtoToDomain,
+    publicTournamentDtoToDomain,
+} from '@/tournament-api/mappers/public-tournament.mapper.ts';
+import {
+    publicTournamentDetailDtoSchema,
     publicTournamentListDtoSchema,
-    type PublicVisibilityRequestDto,
-    type TotalRoundsRequestDto,
-} from '@/tournament-api/dtos/tournament.dto.ts';
-import { publicTournamentDtoToDomain } from '@/tournament-api/mappers/tournament.mapper.ts';
-import { publicTournamentDetailDtoToDomain } from '@/tournament-api/mappers/public-tournament.mapper.ts';
-import { publicTournamentDetailDtoSchema } from '@/tournament-api/dtos/public-tournament.dto.ts';
+} from '@/tournament-api/dtos/public-tournament.dto.ts';
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type {

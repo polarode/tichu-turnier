@@ -7,10 +7,7 @@ import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
-import {
-    GameResultsTable,
-    TeamDot,
-} from '@/features/scoring/components/game-results-table.component.tsx';
+import { GameResultsTable } from '@/features/scoring/components/game-results-table.component.tsx';
 import {
     confirmedCountLabel,
     TABLE_STATUS_LABEL_KEYS,
@@ -18,6 +15,7 @@ import {
 } from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
+import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { type I18n, useI18n } from '@/shared/i18n/i18n.context.tsx';

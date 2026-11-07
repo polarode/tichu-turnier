@@ -3,6 +3,7 @@ import type {
     PublicRound,
     PublicTable,
     PublicTeam,
+    PublicTournament,
     PublicTournamentDetail,
 } from '@/domain/tournament.domain.ts';
 import type {
@@ -11,9 +12,19 @@ import type {
     PublicTableDto,
     PublicTeamDto,
     PublicTournamentDetailDto,
+    PublicTournamentDto,
 } from '@/tournament-api/dtos/public-tournament.dto.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
+export function publicTournamentDtoToDomain(dto: PublicTournamentDto): PublicTournament {
+    return {
+        id: dto.id,
+        name: dto.name,
+        status: dto.status,
+        teamCount: dto.teamCount,
+    };
+}
+
 export function publicPlayerDtoToDomain(dto: PublicPlayerDto): PublicPlayer {
     return { id: dto.id, name: dto.name };
 }

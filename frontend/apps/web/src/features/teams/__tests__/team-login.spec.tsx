@@ -15,12 +15,11 @@ vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
 }));
 
 // The public start page (landed on from the dead-end) fetches the public tournaments.
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        listPublicTournaments: vi.fn().mockResolvedValue([]),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule({ listPublicTournaments: vi.fn().mockResolvedValue([]) });
+});
 
 const mockedExchange = vi.mocked(TeamAuthRepository.exchange);
 const mockedMe = vi.mocked(TeamAuthRepository.me);
@@ -67,7 +66,9 @@ describe('/team/login', () => {
         await waitFor(() => expect(searchDuringExchange).not.toBeNull());
         expect(searchDuringExchange).not.toContain('raw-secret-token');
         await waitFor(() =>
-            expect(screen.getByRole('heading', { level: 1, name: 'Team Alpha' })).toBeInTheDocument(),
+            expect(
+                screen.getByRole('heading', { level: 1, name: 'Team Alpha' }),
+            ).toBeInTheDocument(),
         );
         expect(router.state.location.pathname).toBe('/team');
         expect(mockedExchange).toHaveBeenCalledWith('raw-secret-token');
@@ -144,9 +145,7 @@ describe('/team/login', () => {
 
         const { router } = renderApp('/team/login?token=raw-secret-token', { strictMode: true });
 
-        await waitFor(() =>
-            expect(router.state.location.pathname).toBe('/team'),
-        );
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
         await screen.findByText('Spring Classic');
         expect(mockedExchange).toHaveBeenCalledTimes(1);
     });

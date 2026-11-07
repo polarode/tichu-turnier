@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PublicTournamentDetailDto } from '@/tournament-api/dtos/public-tournament.dto.ts';
-import { publicTournamentDetailDtoToDomain } from '@/tournament-api/mappers/public-tournament.mapper.ts';
+import type {
+    PublicTournamentDetailDto,
+    PublicTournamentDto,
+} from '@/tournament-api/dtos/public-tournament.dto.ts';
+import {
+    publicTournamentDetailDtoToDomain,
+    publicTournamentDtoToDomain,
+} from '@/tournament-api/mappers/public-tournament.mapper.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /** Reads a fixed position of a fixture list, failing loudly if the fixture is shorter. */
@@ -154,6 +160,24 @@ describe('publicTournamentDetailDtoToDomain', () => {
                     ],
                 },
             ],
+        });
+    });
+});
+
+describe('publicTournamentDtoToDomain', () => {
+    it('maps a public tournament DTO to the public domain shape', () => {
+        const publicDto: PublicTournamentDto = {
+            id: 't-2',
+            name: 'Summer Open',
+            status: 'ACTIVE',
+            teamCount: 3,
+        };
+
+        expect(publicTournamentDtoToDomain(publicDto)).toEqual({
+            id: 't-2',
+            name: 'Summer Open',
+            status: TournamentStatus.ACTIVE,
+            teamCount: 3,
         });
     });
 });

@@ -32,12 +32,11 @@ vi.mock('@/scoring-api/scoring.repository.ts', () => ({
 }));
 
 // The public start page (reached by navigating to /public) fetches the public tournaments.
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        listPublicTournaments: vi.fn().mockResolvedValue([]),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule({ listPublicTournaments: vi.fn().mockResolvedValue([]) });
+});
 
 const mockedMe = vi.mocked(TeamAuthRepository.me);
 const mockedFinalRanking = vi.mocked(TeamAuthRepository.finalRanking);
@@ -74,9 +73,7 @@ describe('/team', () => {
 
         const { router } = renderApp('/team');
 
-        await waitFor(() =>
-            expect(router.state.location.pathname).toBe('/team'),
-        );
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
         expect(await screen.findByText('Spring Classic')).toBeInTheDocument();
         expect(screen.getByText('Team Alpha')).toBeInTheDocument();
         expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -85,10 +82,20 @@ describe('/team', () => {
         expect(screen.getByRole('heading', { level: 1, name: 'Team Alpha' })).toBeInTheDocument();
         expect(screen.queryByText('Teambereich')).not.toBeInTheDocument();
         // A compact card: the labels are there for screen readers only, the intro line is gone.
-        expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual(['Turnier', 'Team', 'Spieler']);
-        expect(screen.queryByText('Verfolge deinen Tisch und trage deine Spielergebnisse ein.')).not.toBeInTheDocument();
-        expect(screen.getByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: 'Ergebnisse eintragen' })).not.toBeInTheDocument();
+        expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual([
+            'Turnier',
+            'Team',
+            'Spieler',
+        ]);
+        expect(
+            screen.queryByText('Verfolge deinen Tisch und trage deine Spielergebnisse ein.'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.'),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).not.toBeInTheDocument();
         expect(mockedMe).toHaveBeenCalledTimes(1);
     });
 
@@ -98,8 +105,12 @@ describe('/team', () => {
         const { router } = renderApp('/team');
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
-        expect(await screen.findByRole('link', { name: 'Ergebnisse eintragen' })).toBeInTheDocument();
-        expect(screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).not.toBeInTheDocument();
+        expect(
+            await screen.findByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.'),
+        ).not.toBeInTheDocument();
     });
 
     it('keeps the scoring link (and no schedule note) after the tournament has completed', async () => {
@@ -109,7 +120,9 @@ describe('/team', () => {
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
         expect(await screen.findByRole('link', { name: 'Tisch ansehen' })).toBeInTheDocument();
-        expect(screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).not.toBeInTheDocument();
+        expect(
+            screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.'),
+        ).not.toBeInTheDocument();
     });
 
     it('shows the finished note and a read-only panel once the tournament has completed', async () => {
@@ -137,9 +150,30 @@ describe('/team', () => {
     it('replaces the panel with the Final Ranking once published, marking the own team', async () => {
         mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.PUBLISHED });
         mockedFinalRanking.mockResolvedValue([
-            { rank: 1, teamId: 'team-2', teamName: 'Team Beta', gamesPlayed: 12, victoryPoints: 9, tichuPoints: 450 },
-            { rank: 2, teamId: 'team-1', teamName: 'Team Alpha', gamesPlayed: 12, victoryPoints: 7, tichuPoints: 300 },
-            { rank: 2, teamId: 'team-3', teamName: 'Team Gamma', gamesPlayed: 12, victoryPoints: 7, tichuPoints: 300 },
+            {
+                rank: 1,
+                teamId: 'team-2',
+                teamName: 'Team Beta',
+                gamesPlayed: 12,
+                victoryPoints: 9,
+                tichuPoints: 450,
+            },
+            {
+                rank: 2,
+                teamId: 'team-1',
+                teamName: 'Team Alpha',
+                gamesPlayed: 12,
+                victoryPoints: 7,
+                tichuPoints: 300,
+            },
+            {
+                rank: 2,
+                teamId: 'team-3',
+                teamName: 'Team Gamma',
+                gamesPlayed: 12,
+                victoryPoints: 7,
+                tichuPoints: 300,
+            },
         ]);
 
         renderApp('/team');
@@ -151,12 +185,22 @@ describe('/team', () => {
             ['Team Alpha', '2', '12', '7', '300'],
             ['Team Gamma', '2', '12', '7', '300'],
         ]);
-        expect(within(ranking).getByRole('row', { name: /Team Alpha/ })).toHaveAttribute('aria-current', 'true');
-        expect(within(ranking).getByRole('row', { name: /Team Beta/ })).not.toHaveAttribute('aria-current');
+        expect(within(ranking).getByRole('row', { name: /Team Alpha/ })).toHaveAttribute(
+            'aria-current',
+            'true',
+        );
+        expect(within(ranking).getByRole('row', { name: /Team Beta/ })).not.toHaveAttribute(
+            'aria-current',
+        );
         expect(screen.queryByRole('region', { name: /Runde/ })).not.toBeInTheDocument();
         // The table stays reachable through the read-only scoring link.
-        expect(screen.getByRole('link', { name: 'Tisch ansehen' })).toHaveAttribute('href', '/team/score');
-        expect(screen.queryByRole('link', { name: 'Ergebnisse eintragen' })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Tisch ansehen' })).toHaveAttribute(
+            'href',
+            '/team/score',
+        );
+        expect(
+            screen.queryByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).not.toBeInTheDocument();
         expect(mockedFinalRanking).toHaveBeenCalledTimes(1);
     });
 
@@ -190,7 +234,10 @@ describe('/team', () => {
                 },
             ],
             trio: false,
-            schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-1', 'team-2'] })),
+            schedule: [1, 2, 3, 4].map((gameNumber) => ({
+                gameNumber,
+                teamIds: ['team-1', 'team-2'],
+            })),
         });
 
         const { router } = renderApp('/team');
@@ -214,9 +261,7 @@ describe('/team', () => {
 
         const { router } = renderApp('/team');
 
-        await waitFor(() =>
-            expect(router.state.location.pathname).toBe('/team/login'),
-        );
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team/login'));
         expect(
             await screen.findByText(
                 'Öffne den persönlichen Zugriffslink aus der Nachricht deines Turnier-Organisators.',
@@ -236,9 +281,7 @@ describe('/team', () => {
 
         const { router } = renderApp('/team');
 
-        await waitFor(() =>
-            expect(router.state.location.pathname).toBe('/team/login'),
-        );
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team/login'));
         expect(
             await screen.findByText(
                 'Öffne den persönlichen Zugriffslink aus der Nachricht deines Turnier-Organisators.',
@@ -304,7 +347,10 @@ function seatedTable(overrides: Partial<TeamTable> = {}): TeamTable {
 
 const trioTable = (confirmedTeamIds: string[] = []): TeamTable =>
     seatedTable({
-        confirmation: { status: confirmedTeamIds.length ? 'CONFIRMING' : 'PLAYING', confirmedTeamIds },
+        confirmation: {
+            status: confirmedTeamIds.length ? 'CONFIRMING' : 'PLAYING',
+            confirmedTeamIds,
+        },
         teams: [
             seatedTable().teams[0],
             seatedTable().teams[1],
@@ -329,7 +375,11 @@ const trioTable = (confirmedTeamIds: string[] = []): TeamTable =>
     });
 
 /** Team Alpha (first team) wins 60 : 40 base, no bonuses. */
-function game(gameNumber: number, version = 1, teamIds: [string, string] = ['team-1', 'team-2']): RecordedGame {
+function game(
+    gameNumber: number,
+    version = 1,
+    teamIds: [string, string] = ['team-1', 'team-2'],
+): RecordedGame {
     return {
         gameNumber,
         version,
@@ -396,10 +446,15 @@ describe('/team confirmation panel', () => {
             ['Siegpunkte', '4', '0', ''],
         ]);
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
-        expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeDisabled();
+        expect(
+            within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' }),
+        ).toBeDisabled();
         expect(within(panel).getByText('2 von 4 Spielen eingetragen')).toBeInTheDocument();
         // The scoring link sits inside the round's box, the only one on the page.
-        expect(within(panel).getByRole('link', { name: 'Ergebnisse eintragen' })).toHaveAttribute('href', '/team/score');
+        expect(within(panel).getByRole('link', { name: 'Ergebnisse eintragen' })).toHaveAttribute(
+            'href',
+            '/team/score',
+        );
         expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
     });
 
@@ -417,7 +472,11 @@ describe('/team confirmation panel', () => {
         await user.click(within(dialog).getByRole('button', { name: 'Bestätigen' }));
 
         await waitFor(() => expect(mockedConfirm).toHaveBeenCalledTimes(1));
-        expect(mockedConfirm.mock.calls[0]![0]).toMatchObject({ tournamentId: 't-1', roundNumber: 1, tableNumber: 2 });
+        expect(mockedConfirm.mock.calls[0]![0]).toMatchObject({
+            tournamentId: 't-1',
+            roundNumber: 1,
+            tableNumber: 2,
+        });
         expect(mockedConfirm.mock.calls[0]![1]).toEqual(games);
         expect(await within(panel).findByText('Warten auf das andere Team.')).toBeInTheDocument();
     });
@@ -430,10 +489,14 @@ describe('/team confirmation panel', () => {
         );
         mockedRetract.mockResolvedValue({ status: 'PLAYING', confirmedTeamIds: [] });
 
-        expect(within(panel).getByText('Status: Bestätigung läuft · 1 von 2 bestätigt')).toBeInTheDocument();
+        expect(
+            within(panel).getByText('Status: Bestätigung läuft · 1 von 2 bestätigt'),
+        ).toBeInTheDocument();
         expect(within(panel).getByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
         expect(within(panel).getByText('Warten auf das andere Team.')).toBeInTheDocument();
-        expect(within(panel).queryByRole('button', { name: 'Alle Spiele bestätigen' })).not.toBeInTheDocument();
+        expect(
+            within(panel).queryByRole('button', { name: 'Alle Spiele bestätigen' }),
+        ).not.toBeInTheDocument();
 
         // Retract needs no dialog.
         await user.click(within(panel).getByRole('button', { name: 'Bestätigung zurückziehen' }));
@@ -449,19 +512,27 @@ describe('/team confirmation panel', () => {
 
         expect(within(panel).getByText('Bestätigt von: Team Beta')).toBeInTheDocument();
         expect(
-            within(panel).getByText('Die Spiele sind eingefroren. Prüfe sie und bestätige ebenfalls.'),
+            within(panel).getByText(
+                'Die Spiele sind eingefroren. Prüfe sie und bestätige ebenfalls.',
+            ),
         ).toBeInTheDocument();
         expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeEnabled();
-        expect(within(panel).queryByRole('button', { name: 'Bestätigung zurückziehen' })).not.toBeInTheDocument();
+        expect(
+            within(panel).queryByRole('button', { name: 'Bestätigung zurückziehen' }),
+        ).not.toBeInTheDocument();
     });
 
     it('is final once completed: no controls', async () => {
         const { panel } = await renderPanel(
-            seatedTable({ confirmation: { status: 'COMPLETED', confirmedTeamIds: ['team-1', 'team-2'] } }),
+            seatedTable({
+                confirmation: { status: 'COMPLETED', confirmedTeamIds: ['team-1', 'team-2'] },
+            }),
             allGames(),
         );
 
-        expect(within(panel).getByText('Status: Abgeschlossen · 2 von 2 bestätigt')).toBeInTheDocument();
+        expect(
+            within(panel).getByText('Status: Abgeschlossen · 2 von 2 bestätigt'),
+        ).toBeInTheDocument();
         expect(within(panel).getByText('Die Spiele sind endgültig.')).toBeInTheDocument();
         expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
     });
@@ -470,10 +541,18 @@ describe('/team confirmation panel', () => {
         const trioGames = trioTable().schedule.map((s) => game(s.gameNumber, 1, s.teamIds));
         const { panel } = await renderPanel(trioTable(['team-2']), trioGames);
 
-        expect(within(panel).getByText('Status: Bestätigung läuft · 1 von 3 bestätigt')).toBeInTheDocument();
+        expect(
+            within(panel).getByText('Status: Bestätigung läuft · 1 von 3 bestätigt'),
+        ).toBeInTheDocument();
         // Every team sits out two games; the viewer (Team Alpha) games 3 and 6.
         const games = within(panel).getByRole('table', { name: 'Spiele' });
-        expect(columnHeaders(games)).toEqual(['Spiel', 'Team Alpha', 'Team Beta', 'Team Gamma', 'Hinweise']);
+        expect(columnHeaders(games)).toEqual([
+            'Spiel',
+            'Team Alpha',
+            'Team Beta',
+            'Team Gamma',
+            'Hinweise',
+        ]);
         expect(bodyRows(games).map((row) => row.slice(0, 4))).toEqual([
             ['1', '60', '40', 'Pause'],
             ['2', '60', 'Pause', '40'],
@@ -490,12 +569,19 @@ describe('/team confirmation panel', () => {
         const user = userEvent.setup();
         const { panel } = await renderPanel(seatedTable(), allGames());
         mockedConfirm.mockRejectedValue(
-            new ApiError({ code: 'GAME_CONCURRENT_MODIFICATION', status: 409, field: null, message: 'stale' }),
+            new ApiError({
+                code: 'GAME_CONCURRENT_MODIFICATION',
+                status: 409,
+                field: null,
+                message: 'stale',
+            }),
         );
         const fetchesBefore = mockedGames.mock.calls.length;
 
         await user.click(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' }));
-        await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Bestätigen' }));
+        await user.click(
+            within(await screen.findByRole('dialog')).getByRole('button', { name: 'Bestätigen' }),
+        );
 
         expect(
             await within(panel).findByText(
@@ -514,7 +600,9 @@ describe('/team confirmation panel', () => {
 
         renderApp('/team');
 
-        expect(await screen.findByRole('link', { name: 'Ergebnisse eintragen' })).toBeInTheDocument();
+        expect(
+            await screen.findByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: /Runde/ })).not.toBeInTheDocument();
     });
 
@@ -537,7 +625,9 @@ describe('/team confirmation panel', () => {
 
             await streamEvent(TournamentEventType.TABLE_CONFIRMED);
 
-            await waitFor(() => expect(mockedCurrentTable.mock.calls.length).toBeGreaterThan(tableFetches));
+            await waitFor(() =>
+                expect(mockedCurrentTable.mock.calls.length).toBeGreaterThan(tableFetches),
+            );
             await waitFor(() => expect(mockedGames.mock.calls.length).toBeGreaterThan(gameFetches));
         });
 
@@ -548,7 +638,9 @@ describe('/team confirmation panel', () => {
 
             await streamEvent(TournamentEventType.CONFIRMATION_RETRACTED);
 
-            await waitFor(() => expect(mockedCurrentTable.mock.calls.length).toBeGreaterThan(tableFetches));
+            await waitFor(() =>
+                expect(mockedCurrentTable.mock.calls.length).toBeGreaterThan(tableFetches),
+            );
             await waitFor(() => expect(mockedGames.mock.calls.length).toBeGreaterThan(gameFetches));
         });
     });

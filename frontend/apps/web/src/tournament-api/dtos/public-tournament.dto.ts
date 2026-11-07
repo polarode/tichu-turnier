@@ -3,9 +3,21 @@ import { z } from 'zod';
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
- * zod schemas describing the public tournament detail wire format
- * (`GET /api/public/tournaments/{id}`). Parsed at the repository boundary.
+ * zod schemas describing the public wire formats (`GET /api/public/tournaments` and
+ * `GET /api/public/tournaments/{id}`). Public facts only; parsed at the repository boundary.
  */
+/** One entry of `GET /api/public/tournaments` (public facts only). */
+export const publicTournamentDtoSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    status: z.enum(TOURNAMENT_STATUSES),
+    teamCount: z.number().int(),
+});
+
+export const publicTournamentListDtoSchema = z.array(publicTournamentDtoSchema);
+
+export type PublicTournamentDto = z.infer<typeof publicTournamentDtoSchema>;
+
 export const publicPlayerDtoSchema = z.object({
     id: z.string(),
     name: z.string(),

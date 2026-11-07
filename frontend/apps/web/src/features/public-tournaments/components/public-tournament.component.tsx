@@ -2,11 +2,11 @@ import { Badge } from '@tichu/ui/badge.tsx';
 
 import type { PublicRound, PublicTable } from '@/domain/tournament.domain.ts';
 import { usePublicTournament } from '@/features/public-tournaments/hooks/public-tournaments.hook.ts';
-import { TeamDot } from '@/features/scoring/components/game-results-table.component.tsx';
 import { tableHeading } from '@/features/scoring/labels.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
+import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';

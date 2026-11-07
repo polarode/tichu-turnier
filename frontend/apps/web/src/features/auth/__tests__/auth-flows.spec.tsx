@@ -17,20 +17,11 @@ vi.mock('@/auth-api/auth.repository.ts', () => ({
     },
 }));
 
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        list: vi.fn().mockResolvedValue([]),
-        get: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        remove: vi.fn(),
-        finish: vi.fn(),
-        publish: vi.fn(),
-        setPublicVisibility: vi.fn(),
-        listPublicTournaments: vi.fn(),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule({ list: vi.fn().mockResolvedValue([]) });
+});
 
 const auth = vi.mocked(AuthRepository);
 const tournamentRepo = vi.mocked(TournamentRepository);

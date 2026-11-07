@@ -11,18 +11,11 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 vi.mock('@/auth-api/auth.repository.ts', () => ({
     AuthRepository: { register: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
 }));
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        list: vi.fn(),
-        get: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        remove: vi.fn(),
-        setPublicVisibility: vi.fn(),
-        listPublicTournaments: vi.fn(),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule();
+});
 
 const auth = vi.mocked(AuthRepository);
 const tournaments = vi.mocked(TournamentRepository);

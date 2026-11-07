@@ -23,6 +23,12 @@ data class Tournament(
     val publicVisibility: Boolean = false,
 ) {
     fun isOwnedBy(owner: AdminUserId): Boolean = ownerId == owner
+
+    /**
+     * Whether spectators can see this tournament: public and past its Setup Phase. The one
+     * place this rule lives; the JPA adapter's `findAllPublic` query mirrors it in SQL.
+     */
+    fun isVisibleToSpectators(): Boolean = publicVisibility && status in TournamentStatus.PUBLICLY_LISTABLE
 }
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */

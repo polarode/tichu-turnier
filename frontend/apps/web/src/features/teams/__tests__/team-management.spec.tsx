@@ -14,20 +14,11 @@ import { renderApp } from '@/test-helpers/render-app.tsx';
 vi.mock('@/auth-api/auth.repository.ts', () => ({
     AuthRepository: { register: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn() },
 }));
-vi.mock('@/tournament-api/tournament.repository.ts', () => ({
-    TournamentRepository: {
-        list: vi.fn(),
-        get: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        remove: vi.fn(),
-        finish: vi.fn(),
-        publish: vi.fn(),
-        setPublicVisibility: vi.fn(),
-        listPublicTournaments: vi.fn(),
-        getPublicTournament: vi.fn(),
-    },
-}));
+vi.mock('@/tournament-api/tournament.repository.ts', async () => {
+    const { mockTournamentRepositoryModule } =
+        await import('@/test-helpers/tournament-repository.mock.ts');
+    return mockTournamentRepositoryModule();
+});
 vi.mock('@/team-api/team.repository.ts', () => ({
     TeamRepository: {
         list: vi.fn(),
@@ -184,9 +175,7 @@ describe('setup-phase team management', () => {
         await fillTeamForm({ name: 'Team Ass', playerOne: 'Alice', playerTwo: 'Bob' });
 
         expect(
-            await screen.findByText(
-                'Dieses Turnier hat bereits die maximale Teamanzahl erreicht.',
-            ),
+            await screen.findByText('Dieses Turnier hat bereits die maximale Teamanzahl erreicht.'),
         ).toBeInTheDocument();
     });
 

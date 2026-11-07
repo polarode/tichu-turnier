@@ -1,5 +1,4 @@
 import { Badge } from '@tichu/ui/badge.tsx';
-import { cn } from '@tichu/ui/lib/utils.ts';
 
 import {
     type RecordedGame,
@@ -7,18 +6,9 @@ import {
     teamPoints,
     totalVictoryPoints,
 } from '@/domain/game.domain.ts';
+import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
-
-/** Small colour marker tying a team to its seat colour. */
-export function TeamDot({ tone }: { tone: string }) {
-    return (
-        <span
-            aria-hidden="true"
-            className={cn('mr-1 inline-block size-2 rounded-full align-middle', tone)}
-        />
-    );
-}
 
 interface GameResultsTableProps {
     /** Already-localized accessible name of the table. */

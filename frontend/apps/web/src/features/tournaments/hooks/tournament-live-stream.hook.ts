@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { type QueryKey, useQueryClient } from '@tanstack/react-query';
+import { type QueryKey } from '@tanstack/react-query';
 
 import {
     roundsQueryKey,
@@ -7,7 +6,8 @@ import {
     teamsQueryKey,
     tournamentQueryKey,
 } from '@/shared/constants/query-keys.ts';
-import { SseClient, type SseSubscription } from '@/shared/sse/sse-client.ts';
+import { useLiveStream } from '@/shared/hooks/use-live-stream.hook.ts';
+import { type SseSubscription } from '@/shared/sse/sse-client.ts';
 import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
 
 /** The query keys each event on the organizer's stream makes stale. */
@@ -38,34 +38,15 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
  * whether the stream is connected.
  */
 export function useTournamentLiveStream(tournamentId: string, enabled: boolean): boolean {
-    const queryClient = useQueryClient();
-    const [connected, setConnected] = useState(false);
-
-    useEffect(() => {
-        if (!enabled) return;
-        const client = new SseClient({
-            url: `/api/tournaments/${tournamentId}/events`,
-            queryClient,
-            subscriptions: subscriptionsFor(tournamentId),
-            onStateChange: (isConnected) => {
-                setConnected(isConnected);
-                if (!isConnected) return;
-                for (const queryKey of [
-                    tournamentQueryKey(tournamentId),
-                    teamsQueryKey(tournamentId),
-                    roundsQueryKey(tournamentId),
-                    standingsQueryKey(tournamentId),
-                ]) {
-                    void queryClient.invalidateQueries({ queryKey });
-                }
-            },
-        });
-        client.connect();
-        return () => {
-            client.disconnect();
-            setConnected(false);
-        };
-    }, [tournamentId, enabled, queryClient]);
-
-    return connected;
+    return useLiveStream({
+        url: `/api/tournaments/${tournamentId}/events`,
+        enabled,
+        subscriptions: subscriptionsFor(tournamentId),
+        keysOnConnect: [
+            tournamentQueryKey(tournamentId),
+            teamsQueryKey(tournamentId),
+            roundsQueryKey(tournamentId),
+            standingsQueryKey(tournamentId),
+        ],
+    });
 }

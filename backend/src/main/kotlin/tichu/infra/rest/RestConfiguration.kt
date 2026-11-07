@@ -47,6 +47,7 @@ import tichu.infra.rest.web.InviteController
 import tichu.infra.rest.web.SessionCookieFactory
 import tichu.infra.rest.web.TeamAuthController
 import tichu.infra.rest.web.TeamController
+import tichu.infra.rest.web.TeamEventsController
 import tichu.infra.rest.web.TableConfirmationController
 import tichu.infra.rest.web.TeamScoringController
 import tichu.infra.rest.web.TournamentController
@@ -105,6 +106,10 @@ class RestConfiguration(
         getTournament: GetTournament,
         tournamentEventBroadcaster: SseTournamentEventBroadcaster,
     ): TournamentEventsController = TournamentEventsController(getTournament, tournamentEventBroadcaster)
+
+    @Bean
+    fun teamEventsController(tournamentEventBroadcaster: SseTournamentEventBroadcaster): TeamEventsController =
+        TeamEventsController(tournamentEventBroadcaster)
 
     @Bean
     fun teamController(

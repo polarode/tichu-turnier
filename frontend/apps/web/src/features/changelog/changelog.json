@@ -190,6 +190,10 @@
             {
                 "type": "improvement",
                 "text": "The tournament page updates right away when a round starts, the total rounds change or the tournament finishes, also in other open tabs, instead of every 30 seconds"
+            },
+            {
+                "type": "improvement",
+                "text": "Teams see the other team's games, confirmations, new rounds and the published results right away, with a Live badge on their pages, instead of every 15 to 30 seconds"
             }
         ]
     }

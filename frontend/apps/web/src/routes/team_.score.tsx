@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ScoringPage } from '@/features/scoring/components/scoring-page.component.tsx';
 import { teamCurrentTableQueryOptions } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { isMissingTeamSession, teamOverviewQueryOptions } from '@/features/teams/hooks/team-auth-queries.hook.ts';
+import { useTeamLiveStream } from '@/features/teams/hooks/team-live-stream.hook.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
@@ -52,6 +53,8 @@ function ScoringRoute() {
         }
     }, [navigate, query.error, overview.error]);
 
+    const { live, connected } = useTeamLiveStream(overview.data);
+
     if (query.isLoading) return <LoadingIndicator />;
 
     if (query.error instanceof ApiError && query.error.status === 404) {
@@ -71,6 +74,8 @@ function ScoringRoute() {
             table={query.data}
             viewerTeamId={overview.data?.teamId}
             tournamentStatus={overview.data?.tournamentStatus}
+            live={live}
+            connected={connected}
         />
     );
 }

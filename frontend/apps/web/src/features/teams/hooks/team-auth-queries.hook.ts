@@ -5,9 +5,7 @@ import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { teamFinalRankingQueryKey, teamOverviewQueryKey } from '@/shared/constants/query-keys.ts';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
-import type { TeamOverview } from '@/domain/team-overview.domain.ts';
 import type { TeamSession } from '@/domain/team-session.domain.ts';
-import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
  * Exchanges a raw access-link token for the httpOnly team session. Every rejection —
@@ -31,15 +29,6 @@ export function useExchangeAccessLink() {
     });
 }
 
-/** Poll interval while COMPLETED: the organizer's publish brings the Final Ranking. */
-const COMPLETED_OVERVIEW_REFETCH_MS = 15_000;
-
-/** Polls only while COMPLETED; once PUBLISHED the overview no longer changes. */
-const pollUntilPublished = (overview: TeamOverview | undefined) =>
-    overview?.tournamentStatus === TournamentStatus.COMPLETED
-        ? COMPLETED_OVERVIEW_REFETCH_MS
-        : false;
-
 /**
  * Query options for the session-guarded team overview (`GET /api/team/me`). The
  * httpOnly cookie is the only session store — the cache entry mirrors it for the
@@ -54,8 +43,9 @@ export const teamOverviewQueryOptions = {
     // The guard and the screen share one cache entry; a short window avoids a
     // duplicate `/me` fetch while staying close to the cookie's state.
     staleTime: 30_000,
-    refetchInterval: (query: { state: { data: TeamOverview | undefined } }) =>
-        pollUntilPublished(query.state.data),
+    // Changes to the overview arrive on the team's live stream; a focus refetch
+    // covers the case where the stream was down while the window was away.
+    refetchOnWindowFocus: true,
 };
 
 /**

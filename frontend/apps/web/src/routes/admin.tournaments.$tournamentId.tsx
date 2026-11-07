@@ -8,13 +8,13 @@ import { TournamentStatusBadge } from '@/features/tournaments/components/tournam
 import { ProgressCard } from '@/features/tournaments/components/progress-card.component.tsx';
 import { RoundsSection } from '@/features/tournaments/components/rounds-section.component.tsx';
 import { StandingsSection } from '@/features/tournaments/components/standings-section.component.tsx';
-import { LiveBadge } from '@/features/tournaments/components/live-badge.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournamentLiveStream } from '@/features/tournaments/hooks/tournament-live-stream.hook.ts';
 import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
+import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -120,7 +120,9 @@ function TournamentDetailBody() {
                 <div className="flex items-center gap-3">
                     <span className="text-lg font-medium">{tournament.name}</span>
                     <TournamentStatusBadge status={tournament.status} />
-                    {live ? <LiveBadge connected={connected} /> : null}
+                    {live ? (
+                        <LiveBadge connected={connected} labelKeyPrefix="tournament.live" />
+                    ) : null}
                 </div>
                 {tournament.description ? (
                     <p className="text-muted-foreground">{tournament.description}</p>

@@ -17,6 +17,7 @@ import {
 import { GameEntryForm } from '@/features/scoring/components/game-entry-form.component.tsx';
 import { useReloadCurrentTable, useTableGames } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
+import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -35,7 +36,8 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
  * Once the tournament is no longer ACTIVE (`tournamentStatus`, S7c, #116) the
  * whole screen is read-only and the confirm prompt gives way to a notice; an
  * absent status (overview unavailable) leaves the screen editable, as before.
- * The table state and games poll until the table is completed (#106). A
+ * The table state and games follow the team's live stream while `live` (the
+ * tournament is not yet published), with `connected` shown as a Live badge. A
  * successful save is confirmed in a status line below the form until the next
  * save or game switch.
  */
@@ -43,10 +45,16 @@ export function ScoringPage({
     table,
     viewerTeamId,
     tournamentStatus,
+    live = false,
+    connected = false,
 }: {
     table: TeamTable;
     viewerTeamId?: string;
     tournamentStatus?: TournamentStatus;
+    /** Whether the live stream applies; only then is the connection state shown. */
+    live?: boolean;
+    /** Whether the live stream is connected; only read while `live`. */
+    connected?: boolean;
 }) {
     const { t } = useI18n();
     const reloadCurrentTable = useReloadCurrentTable();
@@ -83,7 +91,12 @@ export function ScoringPage({
     return (
         <section className="flex w-full max-w-xl flex-col gap-4">
             <BackLink to="/team" labelKey="scoring.overviewLink" />
-            <PageHeader titleKey="scoring.title" descriptionKey="scoring.description" />
+            <div className="flex flex-wrap items-start justify-between gap-2">
+                <PageHeader titleKey="scoring.title" descriptionKey="scoring.description" />
+                {live ? (
+                    <LiveBadge connected={connected} labelKeyPrefix="team.live" />
+                ) : null}
+            </div>
             <p className="text-sm text-muted-foreground">{header}</p>
             {isFrozen(table.confirmation) ? (
                 <FrozenNotice table={table} viewerTeamId={viewerTeamId} />

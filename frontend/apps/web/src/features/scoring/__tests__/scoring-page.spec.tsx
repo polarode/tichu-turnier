@@ -1,12 +1,14 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
+import { FakeEventSource } from '@/test-helpers/fake-event-source.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/scoring-api/scoring.repository.ts', () => ({
@@ -72,6 +74,10 @@ function table(overrides: Partial<TeamTable> = {}): TeamTable {
         schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
         ...overrides,
     };
+}
+
+function eventPayload(type: string): string {
+    return JSON.stringify({ type, tournamentId: 't-1', roundId: null, tableId: null });
 }
 
 function recordedGame(overrides: Partial<RecordedGame> = {}): RecordedGame {
@@ -560,10 +566,7 @@ describe('/team/score', () => {
         expect(screen.getByRole('button', { name: 'Spiel neu laden' })).toBeInTheDocument();
     });
 
-    describe('while polling', () => {
-        beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
-        afterEach(() => vi.useRealTimers());
-
+    describe('when the other team records a game', () => {
         const theirEdit = () =>
             recordedGame({
                 version: 3,
@@ -573,8 +576,19 @@ describe('/team/score', () => {
                 ],
             });
 
+        /** The other team's recorded game reaches the screen through the team's live stream. */
+        async function otherTeamRecords() {
+            await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+            act(() =>
+                FakeEventSource.instances[0]!.emit(
+                    TournamentEventType.GAME_RECORDED,
+                    eventPayload(TournamentEventType.GAME_RECORDED),
+                ),
+            );
+        }
+
         async function openGameOne() {
-            const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+            const user = userEvent.setup();
             scoring.currentTable.mockResolvedValue(table());
             scoring.games.mockResolvedValue([recordedGame()]);
             renderApp('/team/score');
@@ -588,7 +602,7 @@ describe('/team/score', () => {
             expect(screen.getByRole('slider')).toHaveValue('60');
 
             scoring.games.mockResolvedValue([theirEdit()]);
-            await act(() => vi.advanceTimersByTimeAsync(31_000));
+            await otherTeamRecords();
 
             await waitFor(() => expect(screen.getByRole('slider')).toHaveValue('80'));
             expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
@@ -599,7 +613,7 @@ describe('/team/score', () => {
             await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
 
             scoring.games.mockResolvedValue([theirEdit()]);
-            await act(() => vi.advanceTimersByTimeAsync(31_000));
+            await otherTeamRecords();
 
             expect(await screen.findByText('Das andere Team hat dieses Spiel geändert.')).toBeInTheDocument();
             expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
@@ -615,7 +629,7 @@ describe('/team/score', () => {
             const user = await openGameOne();
             await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
             scoring.games.mockResolvedValue([theirEdit()]);
-            await act(() => vi.advanceTimersByTimeAsync(31_000));
+            await otherTeamRecords();
             await screen.findByText('Das andere Team hat dieses Spiel geändert.');
             scoring.update.mockRejectedValue(
                 new ApiError({ code: 'GAME_CONCURRENT_MODIFICATION', status: 409, field: null, message: 'stale' }),
@@ -628,7 +642,7 @@ describe('/team/score', () => {
         });
 
         it('keeps a new entry when the other team creates the same game meanwhile', async () => {
-            const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+            const user = userEvent.setup();
             scoring.currentTable.mockResolvedValue(table());
             scoring.games.mockResolvedValue([]);
             renderApp('/team/score');
@@ -636,7 +650,7 @@ describe('/team/score', () => {
             await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
 
             scoring.games.mockResolvedValue([recordedGame()]);
-            await act(() => vi.advanceTimersByTimeAsync(31_000));
+            await otherTeamRecords();
 
             expect(await screen.findByText('Das andere Team hat dieses Spiel geändert.')).toBeInTheDocument();
             expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();

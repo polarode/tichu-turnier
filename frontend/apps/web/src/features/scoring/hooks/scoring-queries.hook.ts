@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
     type GameWriteInput,
-    isCompleted,
     type RecordedGame,
     type TableConfirmation,
     type TableRef,
@@ -14,24 +13,18 @@ import {
     teamGamesQueryKey,
 } from '@/shared/constants/query-keys.ts';
 
-/** Poll interval while the table is open; S8's live updates (#36) replace the polling. */
-const OPEN_TABLE_REFETCH_MS = 30_000;
-
-/** Polls until the table is completed: after that nothing at it can change. */
-const pollUntilCompleted = (table: TeamTable | undefined) =>
-    table && isCompleted(table.confirmation) ? false : OPEN_TABLE_REFETCH_MS;
-
 /**
  * Query options for the team's current table (`GET /api/team/me/current-table`).
- * Polls while the table is not completed, so a confirmation by the other team
- * shows up. A missing team session (401, or 403 with an admin cookie in the
- * browser) is handled by the route guard, so no retry.
+ * Changes to it arrive on the team's live stream; a focus refetch covers the case
+ * where the stream was down while the window was away. A missing team session
+ * (401, or 403 with an admin cookie in the browser) is handled by the route guard,
+ * so no retry.
  */
 export const teamCurrentTableQueryOptions = {
     queryKey: teamCurrentTableQueryKey(),
     queryFn: (): Promise<TeamTable> => ScoringRepository.currentTable(),
     retry: false,
-    refetchInterval: (query: { state: { data: TeamTable | undefined } }) => pollUntilCompleted(query.state.data),
+    refetchOnWindowFocus: true,
 };
 
 export function useCurrentTable() {
@@ -52,9 +45,12 @@ export const teamGamesQueryOptions = (table: TableRef) => ({
     queryFn: (): Promise<RecordedGame[]> => ScoringRepository.games(table),
 });
 
-/** The games at [table]; polls alongside the current table until it is completed. */
+/**
+ * The games at [table]. Changes arrive on the team's live stream; a focus refetch
+ * covers the case where the stream was down while the window was away.
+ */
 export function useTableGames(table: TeamTable) {
-    return useQuery({ ...teamGamesQueryOptions(table), refetchInterval: pollUntilCompleted(table) });
+    return useQuery({ ...teamGamesQueryOptions(table), refetchOnWindowFocus: true });
 }
 
 /** After a confirm or retract, both the table state and its games reload from the server. */

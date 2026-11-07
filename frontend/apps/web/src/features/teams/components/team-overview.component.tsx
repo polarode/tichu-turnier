@@ -5,6 +5,7 @@ import {
     ScoringLink,
     TableConfirmationPanel,
 } from '@/features/scoring/components/table-confirmation-panel.component.tsx';
+import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
@@ -23,7 +24,17 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
  *   marked, and below it the read-only scoring link, so the last table stays
  *   reachable. The ranking is only fetched once published.
  */
-export function TeamOverview({ overview }: { overview: TeamOverview }) {
+export function TeamOverview({
+    overview,
+    live,
+    connected,
+}: {
+    overview: TeamOverview;
+    /** Whether the live stream applies (the tournament is not yet published). */
+    live: boolean;
+    /** Whether the live stream is connected; only read while `live`. */
+    connected: boolean;
+}) {
     const { t } = useI18n();
     const [playerOne, playerTwo] = overview.players;
     const published = overview.tournamentStatus === TournamentStatus.PUBLISHED;
@@ -56,8 +67,11 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
                 <dt className="sr-only">{t('teamOverview.tournament')}</dt>
                 <dd className="text-xs text-muted-foreground">{overview.tournamentName}</dd>
                 <dt className="sr-only">{t('teamOverview.teamName')}</dt>
-                <dd>
+                <dd className="flex flex-wrap items-center gap-2">
                     <h1 className="text-lg font-semibold">{overview.teamName}</h1>
+                    {live ? (
+                        <LiveBadge connected={connected} labelKeyPrefix="team.live" />
+                    ) : null}
                 </dd>
                 <dt className="sr-only">{t('teamOverview.players')}</dt>
                 <dd className="text-sm text-muted-foreground">

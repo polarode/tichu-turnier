@@ -1,12 +1,14 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
+import { FakeEventSource } from '@/test-helpers/fake-event-source.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 import { bodyRows, columnHeaders, footerRows } from '@/test-helpers/table-rows.ts';
 
@@ -252,40 +254,6 @@ describe('/team', () => {
         await screen.findByText('Spring Classic');
         expect(screen.queryByText('Wird geladen…')).not.toBeInTheDocument();
         expect(router.state.location.pathname).toBe('/team');
-    });
-});
-
-// ---- overview polling (S7c, #116) --------------------------------------------
-
-describe('/team overview polling', () => {
-    beforeEach(() => {
-        vi.useFakeTimers({ shouldAdvanceTime: true });
-        mockedMe.mockReset();
-        mockedFinalRanking.mockReset();
-        mockedCurrentTable.mockReset();
-    });
-    afterEach(() => vi.useRealTimers());
-
-    it('refetches the overview every 15 s while completed and shows the Final Ranking once published', async () => {
-        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.COMPLETED });
-        mockedCurrentTable.mockRejectedValue(
-            new ApiError({ code: 'NOT_FOUND', status: 404, field: null, message: 'not seated' }),
-        );
-        mockedFinalRanking.mockResolvedValue([
-            { rank: 1, teamId: 'team-1', teamName: 'Team Alpha', gamesPlayed: 12, victoryPoints: 9, tichuPoints: 450 },
-        ]);
-
-        renderApp('/team');
-        await screen.findByText('Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.');
-        const fetchesBefore = mockedMe.mock.calls.length;
-
-        await act(() => vi.advanceTimersByTimeAsync(15_000));
-        expect(mockedMe.mock.calls.length).toBe(fetchesBefore + 1);
-
-        // The organizer publishes: the next poll brings the Final Ranking.
-        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.PUBLISHED });
-        await act(() => vi.advanceTimersByTimeAsync(15_000));
-        expect(await screen.findByRole('table', { name: 'Endrangliste' })).toBeInTheDocument();
     });
 });
 
@@ -539,32 +507,38 @@ describe('/team confirmation panel', () => {
         expect(screen.queryByRole('region', { name: /Runde/ })).not.toBeInTheDocument();
     });
 
-    describe('polling', () => {
-        beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
-        afterEach(() => vi.useRealTimers());
+    describe('when the other team confirms or retracts', () => {
+        /** The confirmation change reaches the panel through the team's live stream. */
+        async function streamEvent(type: TournamentEventType) {
+            await waitFor(() => expect(FakeEventSource.instances).toHaveLength(1));
+            act(() =>
+                FakeEventSource.instances[0]!.emit(
+                    type,
+                    JSON.stringify({ type, tournamentId: 't-1', roundId: null, tableId: null }),
+                ),
+            );
+        }
 
-        it('refetches every 30 s while the table is open and stops once it is completed', async () => {
+        it('refetches the current table and the games on TABLE_CONFIRMED', async () => {
             await renderPanel(seatedTable(), allGames());
             const tableFetches = mockedCurrentTable.mock.calls.length;
             const gameFetches = mockedGames.mock.calls.length;
 
-            // Open: both the table state and the games poll.
-            await act(() => vi.advanceTimersByTimeAsync(31_000));
-            expect(mockedCurrentTable.mock.calls.length).toBe(tableFetches + 1);
-            expect(mockedGames.mock.calls.length).toBe(gameFetches + 1);
+            await streamEvent(TournamentEventType.TABLE_CONFIRMED);
 
-            // Completed: the next poll brings the final state, then polling stops.
-            mockedCurrentTable.mockResolvedValue(
-                seatedTable({ confirmation: { status: 'COMPLETED', confirmedTeamIds: ['team-1', 'team-2'] } }),
-            );
-            await act(() => vi.advanceTimersByTimeAsync(30_000));
-            await screen.findByText('Die Spiele sind endgültig.');
-            const finalTableFetches = mockedCurrentTable.mock.calls.length;
-            const finalGameFetches = mockedGames.mock.calls.length;
+            await waitFor(() => expect(mockedCurrentTable.mock.calls.length).toBeGreaterThan(tableFetches));
+            await waitFor(() => expect(mockedGames.mock.calls.length).toBeGreaterThan(gameFetches));
+        });
 
-            await act(() => vi.advanceTimersByTimeAsync(120_000));
-            expect(mockedCurrentTable.mock.calls.length).toBe(finalTableFetches);
-            expect(mockedGames.mock.calls.length).toBe(finalGameFetches);
+        it('refetches the current table and the games on CONFIRMATION_RETRACTED', async () => {
+            await renderPanel(seatedTable(), allGames());
+            const tableFetches = mockedCurrentTable.mock.calls.length;
+            const gameFetches = mockedGames.mock.calls.length;
+
+            await streamEvent(TournamentEventType.CONFIRMATION_RETRACTED);
+
+            await waitFor(() => expect(mockedCurrentTable.mock.calls.length).toBeGreaterThan(tableFetches));
+            await waitFor(() => expect(mockedGames.mock.calls.length).toBeGreaterThan(gameFetches));
         });
     });
 });

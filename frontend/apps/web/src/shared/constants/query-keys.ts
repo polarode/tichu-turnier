@@ -47,6 +47,9 @@ export const teamOverviewQueryKey = () => [QueryKeys.TEAM_ME] as const;
 /** Key for the team's current (in-progress) round table. */
 export const teamCurrentTableQueryKey = () => [QueryKeys.TEAM_CURRENT_TABLE] as const;
 
+/** Every games query of the team, matched by prefix. */
+export const teamGamesPrefixQueryKey = () => [QueryKeys.TEAM_GAMES] as const;
+
 /** Key for the games entered at one round table (team-scoped read). */
 export const teamGamesQueryKey = (tournamentId: string, roundNumber: number, tableNumber: number) =>
     [QueryKeys.TEAM_GAMES, tournamentId, roundNumber, tableNumber] as const;

@@ -2,7 +2,12 @@ import { useEffect } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 
-import { ensureTeamOverview, isMissingTeamSession, teamOverviewQueryOptions } from '@/features/teams/hooks/team-auth-queries.hook.ts';
+import {
+    ensureTeamOverview,
+    isMissingTeamSession,
+    teamOverviewQueryOptions,
+} from '@/features/teams/hooks/team-auth-queries.hook.ts';
+import { useTeamLiveStream } from '@/features/teams/hooks/team-live-stream.hook.ts';
 import { TeamOverview } from '@/features/teams/components/team-overview.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { teamOverviewQueryKey } from '@/shared/constants/query-keys.ts';
@@ -42,6 +47,8 @@ function TeamOverviewPage() {
         }
     }, [navigate, query.error]);
 
+    const { live, connected } = useTeamLiveStream(query.data);
+
     if (!query.data) return <LoadingIndicator />;
-    return <TeamOverview overview={query.data} />;
+    return <TeamOverview overview={query.data} live={live} connected={connected} />;
 }

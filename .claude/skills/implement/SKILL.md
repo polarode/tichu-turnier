@@ -14,4 +14,4 @@ If the user passes a ticket reference, fetch it from the issue tracker and state
 5. **Check** each slice as it reports: read its `git diff` and judge it against the brief and `AGENTS.md`. Send corrections to the same implementer with SendMessage; when a second round still misses, finish the slice yourself.
 6. **Verify**: dispatch a `checker` subagent for every app touched. Fix what it reports and re-run it until it reports green.
 7. Call the Skill tool with "code-review" to review the work.
-8. Commit your work to the current branch.
+8. Commit your work to the current branch, with a changelog entry when the change is organizer-facing (`AGENTS.md` → *Changelog*).

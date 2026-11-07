@@ -38,6 +38,7 @@ import tichu.application.api.ListRounds
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
+import tichu.infra.events.SseTournamentEventBroadcaster
 import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
 import tichu.infra.rest.web.FinalRankingController
@@ -49,6 +50,7 @@ import tichu.infra.rest.web.TeamController
 import tichu.infra.rest.web.TableConfirmationController
 import tichu.infra.rest.web.TeamScoringController
 import tichu.infra.rest.web.TournamentController
+import tichu.infra.rest.web.TournamentEventsController
 import tichu.infra.rest.web.WebControllerAdvice
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -97,6 +99,12 @@ class RestConfiguration(
         finishTournament,
         publishTournament,
     )
+
+    @Bean
+    fun tournamentEventsController(
+        getTournament: GetTournament,
+        tournamentEventBroadcaster: SseTournamentEventBroadcaster,
+    ): TournamentEventsController = TournamentEventsController(getTournament, tournamentEventBroadcaster)
 
     @Bean
     fun teamController(

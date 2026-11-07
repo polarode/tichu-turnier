@@ -182,6 +182,10 @@
             {
                 "type": "improvement",
                 "text": "Each change in this changelog is marked as a feature, improvement or fix"
+            },
+            {
+                "type": "feature",
+                "text": "While a tournament is running, games entered by teams appear on your tournament page right away, and a Live badge shows the page is up to date"
             }
         ]
     }

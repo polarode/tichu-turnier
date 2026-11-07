@@ -43,7 +43,7 @@ export function useStartNextRound(tournamentId: string) {
     });
 }
 
-/** Poll interval while results come in; S8's live updates replace the polling. */
+/** Poll interval while results come in; kept until the live stream carries every organizer event (S8). */
 const LIVE_ROUNDS_REFETCH_MS = 30_000;
 
 /**

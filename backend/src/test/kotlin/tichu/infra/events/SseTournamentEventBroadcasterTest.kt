@@ -1,0 +1,155 @@
+package tichu.infra.events
+
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionSynchronizationUtils
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import tichu.domain.RoundId
+import tichu.domain.TableId
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentId
+import java.io.IOException
+import java.time.Duration
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+class SseTournamentEventBroadcasterTest {
+
+    private class RecordingEmitter(timeout: Long, var failure: Exception? = null) : SseEmitter(timeout) {
+        val sent = mutableListOf<String>()
+        var completion: Runnable? = null
+        var timeoutCallback: Runnable? = null
+        var errorCallback: java.util.function.Consumer<Throwable>? = null
+
+        override fun send(builder: SseEventBuilder) {
+            failure?.let { throw it }
+            sent += builder.build().joinToString("") { it.data.toString() }
+        }
+
+        override fun onCompletion(callback: Runnable) {
+            completion = callback
+            super.onCompletion(callback)
+        }
+
+        override fun onTimeout(callback: Runnable) {
+            timeoutCallback = callback
+            super.onTimeout(callback)
+        }
+
+        override fun onError(callback: java.util.function.Consumer<Throwable>) {
+            errorCallback = callback
+            super.onError(callback)
+        }
+    }
+
+    private val created = mutableListOf<RecordingEmitter>()
+    private val broadcaster = SseTournamentEventBroadcaster(Duration.ofMinutes(5)) { timeout ->
+        RecordingEmitter(timeout).also { created += it }
+    }
+    private val t1 = TournamentId("t1")
+    private val t2 = TournamentId("t2")
+    private val event = TournamentEvent(TournamentEventType.GAME_RECORDED, t1, RoundId("r1"), TableId(3))
+
+    @Test
+    fun `publish reaches every stream of that tournament only`() {
+        broadcaster.subscribe(t1)
+        broadcaster.subscribe(t1)
+        broadcaster.subscribe(t2)
+
+        broadcaster.publish(event)
+
+        assertEquals(1, created[0].sent.size)
+        assertEquals(1, created[1].sent.size)
+        assertEquals(0, created[2].sent.size)
+        assertTrue(created[0].sent[0].contains("tournamentId=t1"))
+        assertTrue(created[0].sent[0].contains("tableId=3"))
+    }
+
+    @Test
+    fun `publish inside a transaction waits for commit`() {
+        broadcaster.subscribe(t1)
+        TransactionSynchronizationManager.initSynchronization()
+        try {
+            broadcaster.publish(event)
+            assertEquals(0, created[0].sent.size)
+            TransactionSynchronizationUtils.triggerAfterCommit()
+            assertEquals(1, created[0].sent.size)
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+    }
+
+    @Test
+    fun `publish inside a rolled back transaction sends nothing`() {
+        broadcaster.subscribe(t1)
+        TransactionSynchronizationManager.initSynchronization()
+        try {
+            broadcaster.publish(event)
+            val syncs = TransactionSynchronizationManager.getSynchronizations()
+            TransactionSynchronizationUtils.invokeAfterCompletion(syncs, TransactionSynchronization.STATUS_ROLLED_BACK)
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+        assertEquals(0, created[0].sent.size)
+    }
+
+    @Test
+    fun `streams are released on completion, timeout and error`() {
+        broadcaster.subscribe(t1)
+        broadcaster.subscribe(t1)
+        broadcaster.subscribe(t1)
+        assertEquals(3, broadcaster.openStreamCount(t1))
+
+        created[0].completion!!.run()
+        created[1].timeoutCallback!!.run()
+        created[2].errorCallback!!.accept(RuntimeException("boom"))
+
+        assertEquals(0, broadcaster.openStreamCount(t1))
+        assertEquals(0, broadcaster.openStreamCount())
+        broadcaster.publish(event)
+        created.forEach { assertEquals(0, it.sent.size) }
+    }
+
+    @Test
+    fun `a stream whose send throws is released and publish does not propagate`() {
+        broadcaster.subscribe(t1)
+        broadcaster.subscribe(t1)
+        created[0].failure = IOException("broken pipe")
+
+        broadcaster.publish(event)
+
+        assertEquals(1, broadcaster.openStreamCount(t1))
+        assertEquals(1, created[1].sent.size)
+        broadcaster.publish(event)
+        assertEquals(2, created[1].sent.size)
+    }
+
+    @Test
+    fun `a failing send inside afterCommit does not propagate`() {
+        broadcaster.subscribe(t1)
+        created[0].failure = IllegalStateException("closed")
+        TransactionSynchronizationManager.initSynchronization()
+        try {
+            broadcaster.publish(event)
+            TransactionSynchronizationUtils.triggerAfterCommit()
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+        assertEquals(0, broadcaster.openStreamCount())
+    }
+
+    @Test
+    fun `heartbeats go to every open stream as a comment`() {
+        broadcaster.subscribe(t1)
+        broadcaster.subscribe(t2)
+
+        broadcaster.sendHeartbeats()
+
+        created.forEach {
+            assertEquals(1, it.sent.size)
+            assertTrue(it.sent[0].contains("heartbeat"))
+        }
+    }
+}

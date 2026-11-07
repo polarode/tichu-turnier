@@ -270,6 +270,9 @@ export const de: Catalog = {
     'tournament.status.active': 'Läuft',
     'tournament.status.completed': 'Beendet',
     'tournament.status.published': 'Veröffentlicht',
+    'tournament.live.connected': 'Live',
+    'tournament.live.offline': 'Offline',
+    'tournament.live.hint': 'Solange live, erscheinen neue Ergebnisse ohne Neuladen der Seite.',
 
 
     'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',

@@ -1,6 +1,7 @@
 package tichu.main
 
 import tichu.application.usecase.UseCaseConfiguration
+import tichu.infra.events.EventsConfiguration
 import tichu.infra.persistence.PersistenceConfiguration
 import tichu.infra.rest.RestConfiguration
 import tichu.infra.rest.SpaWebConfiguration
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Import
     PersistenceConfiguration::class,
     SecurityConfiguration::class,
     RestConfiguration::class,
+    EventsConfiguration::class,
     SpaWebConfiguration::class,
     BootstrapConfiguration::class,
 )

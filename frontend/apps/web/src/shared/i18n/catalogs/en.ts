@@ -270,6 +270,9 @@ export const en = {
     'tournament.status.active': 'Active',
     'tournament.status.completed': 'Completed',
     'tournament.status.published': 'Published',
+    'tournament.live.connected': 'Live',
+    'tournament.live.offline': 'Offline',
+    'tournament.live.hint': 'While live, new results appear without reloading the page.',
 
 
     'teamLogin.exchangingTitle': 'Opening your team area',

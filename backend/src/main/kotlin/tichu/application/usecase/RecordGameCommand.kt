@@ -16,6 +16,9 @@ import tichu.domain.TableKey
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TeamResult
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
@@ -52,6 +55,7 @@ class RecordGameCommand(
     private val teamRepository: TeamRepository,
     private val gameRepository: GameRepository,
     private val confirmationRepository: TableConfirmationRepository,
+    private val tournamentEvents: TournamentEvents,
 ) : RecordGame {
 
     override fun create(
@@ -120,6 +124,8 @@ class RecordGameCommand(
                     "Game ${request.gameNumber} was modified concurrently; reload and retry",
                 )
         }
+
+        tournamentEvents.publish(TournamentEvent(TournamentEventType.GAME_RECORDED, tournamentId, round.id, table.id))
 
         return RecordedGame.of(recorded, tournament.settings)
     }

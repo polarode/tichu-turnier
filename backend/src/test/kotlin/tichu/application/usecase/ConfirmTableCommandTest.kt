@@ -29,6 +29,7 @@ import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.testsupport.MutableClock
 import tichu.vocabulary.ForbiddenException
 import tichu.vocabulary.GameConcurrentModificationException
@@ -64,7 +65,10 @@ class ConfirmTableCommandTest {
     private val clock = MutableClock(Instant.parse("2026-01-01T12:00:00Z"))
 
     private val recordGame: RecordGame =
-        RecordGameCommand(tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository)
+        RecordGameCommand(
+            tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
+            RecordingTournamentEvents(),
+        )
     private val confirmTable: ConfirmTable =
         ConfirmTableCommand(roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock)
 

@@ -16,6 +16,8 @@ import tichu.domain.RoundRepository
 import tichu.domain.Table
 import tichu.domain.TableId
 import tichu.domain.TableKey
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
@@ -30,6 +32,7 @@ import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.ForbiddenException
 import tichu.vocabulary.GameNotFoundException
@@ -71,12 +74,15 @@ class RecordGameCommandTest {
     private val gameRepository = InMemoryGameRepository()
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
+    private val tournamentEvents = RecordingTournamentEvents()
+
     private val recordGame: RecordGame = RecordGameCommand(
         tournamentRepository,
         roundRepository,
         teamRepository,
         gameRepository,
         confirmationRepository,
+        tournamentEvents,
     )
 
     @BeforeEach
@@ -279,6 +285,39 @@ class RecordGameCommandTest {
         assertFailsWith<GameConcurrentModificationException> { update(validRequest(version = 1)) }
 
         assertEquals(2, gameRepository.find(gameKey())!!.version, "stale writer changed nothing")
+    }
+
+    // ---- live events ------------------------------------------------------------
+
+    private val gameRecorded = TournamentEvent(
+        TournamentEventType.GAME_RECORDED,
+        tournamentId,
+        RoundId("r-1"),
+        TableId(1),
+    )
+
+    @Test
+    fun `creating a game publishes one game recorded event for its round and table`() {
+        create()
+
+        assertEquals(listOf(gameRecorded), tournamentEvents.published)
+    }
+
+    @Test
+    fun `editing a game publishes a game recorded event`() {
+        create()
+        tournamentEvents.published.clear()
+
+        update(validRequest(version = 1, beschiss = true))
+
+        assertEquals(listOf(gameRecorded), tournamentEvents.published)
+    }
+
+    @Test
+    fun `a rejected game publishes nothing`() {
+        assertFailsWith<InvalidFieldException> { create(validRequest(gameNumber = 5)) }
+
+        assertEquals(emptyList(), tournamentEvents.published)
     }
 
     // ---- freeze (ADR 0006) --------------------------------------------------------

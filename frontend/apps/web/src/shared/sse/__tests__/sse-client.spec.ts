@@ -2,55 +2,15 @@ import type { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryKeys } from '@/shared/constants/query-keys.ts';
-import { SseClient, type ServerEventSource } from '@/shared/sse/sse-client.ts';
+import { SseClient } from '@/shared/sse/sse-client.ts';
+import { FakeEventSource } from '@/test-helpers/fake-event-source.ts';
 import { createTestQueryClient } from '@/test-helpers/render-with-providers.tsx';
-
-/** Minimal `EventSource` double: records listeners and lets tests drive open/error/events. */
-class FakeEventSource implements ServerEventSource {
-    static instances: FakeEventSource[] = [];
-
-    onopen: ((event: Event) => void) | null = null;
-    onerror: ((event: Event) => void) | null = null;
-    closed = false;
-    readonly listeners = new Map<string, Set<(event: MessageEvent) => void>>();
-
-    constructor(readonly url: string) {
-        FakeEventSource.instances.push(this);
-    }
-
-    addEventListener(type: string, listener: (event: MessageEvent) => void): void {
-        const set = this.listeners.get(type) ?? new Set();
-        set.add(listener);
-        this.listeners.set(type, set);
-    }
-
-    removeEventListener(type: string, listener: (event: MessageEvent) => void): void {
-        this.listeners.get(type)?.delete(listener);
-    }
-
-    close(): void {
-        this.closed = true;
-    }
-
-    emitOpen(): void {
-        this.onopen?.(new Event('open'));
-    }
-
-    emitError(): void {
-        this.onerror?.(new Event('error'));
-    }
-
-    emit(type: string, data: string): void {
-        this.listeners.get(type)?.forEach((listener) => listener(new MessageEvent(type, { data })));
-    }
-}
 
 describe('SseClient', () => {
     let queryClient: QueryClient;
 
     beforeEach(() => {
         vi.useFakeTimers();
-        FakeEventSource.instances = [];
         queryClient = createTestQueryClient();
     });
 
@@ -61,7 +21,7 @@ describe('SseClient', () => {
 
     const spyInvalidate = () => vi.spyOn(queryClient, 'invalidateQueries');
 
-    function createClient() {
+    function createClient(onStateChange?: (connected: boolean) => void) {
         return new SseClient({
             url: '/api/tournaments/t-1/events',
             queryClient,
@@ -75,6 +35,7 @@ describe('SseClient', () => {
             eventSourceFactory: (url) => new FakeEventSource(url),
             initialRetryDelayMs: 1000,
             maxRetryDelayMs: 4000,
+            onStateChange,
         });
     }
 
@@ -149,5 +110,36 @@ describe('SseClient', () => {
 
         expect(FakeEventSource.instances).toHaveLength(1);
         expect(invalidate).not.toHaveBeenCalled();
+    });
+
+    it('reports connected on every open and disconnected on error', () => {
+        const states: boolean[] = [];
+        const client = createClient((connected) => states.push(connected));
+        client.connect();
+        expect(states).toEqual([]);
+
+        FakeEventSource.instances[0]!.emitOpen();
+        FakeEventSource.instances[0]!.emitError();
+        vi.advanceTimersByTime(1000);
+        FakeEventSource.instances[1]!.emitOpen();
+
+        expect(states).toEqual([true, false, true]);
+    });
+
+    it('reports disconnected on disconnect only after having been connected', () => {
+        const states: boolean[] = [];
+        const client = createClient((connected) => states.push(connected));
+        client.connect();
+        client.disconnect();
+        expect(states).toEqual([]);
+
+        client.connect();
+        FakeEventSource.instances[1]!.emitOpen();
+        client.disconnect();
+        expect(states).toEqual([true, false]);
+
+        vi.advanceTimersByTime(30_000);
+        FakeEventSource.instances[1]!.emitError();
+        expect(states).toEqual([true, false]);
     });
 });

@@ -50,6 +50,7 @@ import tichu.domain.SessionTokens
 import tichu.domain.TeamRepository
 import tichu.domain.TeamSessionRepository
 import tichu.domain.TeamTokenRepository
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -151,8 +152,12 @@ class UseCaseConfiguration(
         teamRepository: TeamRepository,
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
+        tournamentEvents: TournamentEvents,
     ): RecordGame =
-        RecordGameCommand(tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository)
+        RecordGameCommand(
+            tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
+            tournamentEvents,
+        )
 
     @Bean
     fun confirmTable(

@@ -25,6 +25,7 @@ import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.ForbiddenException
 import tichu.vocabulary.NotFoundException
 import org.junit.jupiter.api.BeforeEach
@@ -60,6 +61,7 @@ class GetTeamScoringQueryTest {
 
     private val recordGame = RecordGameCommand(
         tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
+        RecordingTournamentEvents(),
     )
     private val query = GetTeamScoringQuery(
         tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,

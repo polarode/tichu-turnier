@@ -33,6 +33,8 @@ export interface SseClientOptions {
     initialRetryDelayMs?: number;
     /** Upper bound for the exponential backoff. */
     maxRetryDelayMs?: number;
+    /** Called with `true` when the stream opens and `false` when it drops or is disconnected. */
+    onStateChange?: (connected: boolean) => void;
 }
 
 const DEFAULT_INITIAL_RETRY_DELAY_MS = 1_000;
@@ -48,14 +50,15 @@ function defaultEventSourceFactory(url: string): ServerEventSource {
  * (network blip, deploy, server restart) — closes the dead source and reopens it with
  * exponential backoff. `disconnect()` stops reconnecting and releases every listener.
  *
- * The stream endpoint does not exist yet (backend Phase 11); callers provide the URL and
- * subscriptions, so live wiring is a one-line change once it does.
+ * The organizer stream is `/api/tournaments/{id}/events`; callers provide the URL and
+ * subscriptions.
  */
 export class SseClient {
     private source: ServerEventSource | null = null;
     private retryHandle: ReturnType<typeof setTimeout> | null = null;
     private retryDelayMs: number;
     private stopped = true;
+    private reportedConnected = false;
     private listeners: Array<{ event: string; listener: (event: MessageEvent) => void }> = [];
 
     constructor(private readonly options: SseClientOptions) {
@@ -73,6 +76,7 @@ export class SseClient {
     /** Stop the stream and cancel any pending reconnect. Idempotent. */
     disconnect(): void {
         this.stopped = true;
+        this.setConnected(false);
         if (this.retryHandle !== null) {
             clearTimeout(this.retryHandle);
             this.retryHandle = null;
@@ -90,15 +94,25 @@ export class SseClient {
         this.source = source;
 
         source.onopen = () => {
+            this.setConnected(true);
             this.retryDelayMs = this.options.initialRetryDelayMs ?? DEFAULT_INITIAL_RETRY_DELAY_MS;
         };
-        source.onerror = () => this.scheduleReconnect();
+        source.onerror = () => {
+            this.setConnected(false);
+            this.scheduleReconnect();
+        };
 
         for (const subscription of this.options.subscriptions) {
             const listener = () => this.invalidate(subscription.queryKeys);
             this.listeners.push({ event: subscription.event, listener });
             source.addEventListener(subscription.event, listener);
         }
+    }
+
+    private setConnected(connected: boolean): void {
+        if (this.reportedConnected === connected) return;
+        this.reportedConnected = connected;
+        this.options.onStateChange?.(connected);
     }
 
     private invalidate(queryKeys: readonly QueryKey[]): void {

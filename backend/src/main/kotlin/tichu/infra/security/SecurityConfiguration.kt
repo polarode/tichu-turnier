@@ -81,6 +81,8 @@ class SecurityConfiguration(
             .authorizeHttpRequests { authorize ->
                 // Otherwise a failed request re-enters the chain and turns into a 401.
                 authorize.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                // Session filters skip async re-dispatches; authorization already ran on the initial request.
+                authorize.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                 // Credential entry points only; refresh/logout validate their own cookie.
                 authorize.requestMatchers(
                     HttpMethod.POST,

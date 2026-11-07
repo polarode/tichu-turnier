@@ -5,6 +5,7 @@ import tichu.domain.AdminUserId
 import tichu.domain.IdGenerator
 import tichu.domain.TeamId
 import tichu.domain.TournamentId
+import tichu.domain.TournamentStatus
 import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.InMemoryTeamTokenRepository
 import tichu.testsupport.RecordingSessionTokens
@@ -16,6 +17,7 @@ import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TeamLimitReachedException
+import tichu.vocabulary.TournamentNotEditableException
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -532,5 +534,90 @@ class TeamUseCasesTest {
 
         assertFailsWith<NotFoundException> { deleteTeam.delete(second, team.id, owner) }
         assertEquals("Team Alpha", getTeam.get(first, team.id, owner).name)
+    }
+
+    // ------------------------------------------------------- setup phase lock
+
+    private fun setStatus(tournamentId: TournamentId, status: TournamentStatus) {
+        val tournament = tournamentRepository.findById(tournamentId)!!
+        tournamentRepository.save(tournament.copy(status = status))
+    }
+
+    private val startedStatuses = listOf(TournamentStatus.ACTIVE, TournamentStatus.COMPLETED, TournamentStatus.PUBLISHED)
+
+    @Test
+    fun `create update and delete are rejected once the tournament has left setup`() {
+        val tournamentId = createTournament("Spring Classic")
+        val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+
+        for (status in startedStatuses) {
+            setStatus(tournamentId, status)
+
+            val createEx = assertFailsWith<TournamentNotEditableException> {
+                createTeam.create(tournamentId, createTeamRequest("Team Beta", "Carol", "Dave"), owner)
+            }
+            assertEquals(ErrorCode.TOURNAMENT_NOT_EDITABLE, createEx.code)
+
+            val updateEx = assertFailsWith<TournamentNotEditableException> {
+                updateTeam.update(tournamentId, alpha.id, createTeamRequest("Renamed", "Eve", "Mallory"), owner)
+            }
+            assertEquals(ErrorCode.TOURNAMENT_NOT_EDITABLE, updateEx.code)
+
+            val deleteEx = assertFailsWith<TournamentNotEditableException> {
+                deleteTeam.delete(tournamentId, alpha.id, owner)
+            }
+            assertEquals(ErrorCode.TOURNAMENT_NOT_EDITABLE, deleteEx.code)
+
+            assertEquals(listOf(alpha.id), listTeams.list(tournamentId, owner).map { it.id }, "$status: no team was added or removed")
+            assertEquals("Team Alpha", getTeam.get(tournamentId, alpha.id, owner).name, "$status: the team was not renamed")
+        }
+    }
+
+    @Test
+    fun `ownership and existence still answer not-found once the tournament has left setup`() {
+        val tournamentId = createTournament("Spring Classic")
+        val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+        val foreignId = createTournament("Alice's tournament")
+        val foreignTeam = createTeamSafe(foreignId, "Team Alpha", "Carol", "Dave")
+
+        for (status in startedStatuses) {
+            setStatus(tournamentId, status)
+            setStatus(foreignId, status)
+
+            assertFailsWith<NotFoundException>("$status: foreign create") {
+                createTeam.create(foreignId, createTeamRequest("Team Beta", "Erin", "Frank"), intruder)
+            }
+            assertFailsWith<NotFoundException>("$status: foreign update") {
+                updateTeam.update(foreignId, foreignTeam.id, createTeamRequest("Hijacked", "Eve", "Mallory"), intruder)
+            }
+            assertFailsWith<NotFoundException>("$status: foreign delete") {
+                deleteTeam.delete(foreignId, foreignTeam.id, intruder)
+            }
+            assertFailsWith<NotFoundException>("$status: unknown tournament create") {
+                createTeam.create(TournamentId("does-not-exist"), createTeamRequest(), owner)
+            }
+            assertFailsWith<NotFoundException>("$status: unknown team update") {
+                updateTeam.update(tournamentId, TeamId("does-not-exist"), createTeamRequest(), owner)
+            }
+            assertFailsWith<NotFoundException>("$status: unknown team delete") {
+                deleteTeam.delete(tournamentId, TeamId("does-not-exist"), owner)
+            }
+        }
+    }
+
+    @Test
+    fun `an invalid body on a started tournament answers not-editable instead of the validation error`() {
+        val tournamentId = createTournament("Spring Classic")
+        val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
+        setStatus(tournamentId, TournamentStatus.ACTIVE)
+
+        val updateEx = assertFailsWith<TournamentNotEditableException> {
+            updateTeam.update(tournamentId, alpha.id, createTeamRequest("   ", "Alice", "Bob"), owner)
+        }
+        assertEquals(ErrorCode.TOURNAMENT_NOT_EDITABLE, updateEx.code)
+
+        assertFailsWith<TournamentNotEditableException> {
+            createTeam.create(tournamentId, createTeamRequest("   "), owner)
+        }
     }
 }

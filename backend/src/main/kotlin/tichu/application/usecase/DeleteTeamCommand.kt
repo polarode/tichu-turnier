@@ -7,7 +7,9 @@ import tichu.domain.TeamRepository
 import tichu.domain.TeamTokenRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import tichu.vocabulary.NotFoundException
+import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -16,8 +18,9 @@ import org.springframework.transaction.annotation.Transactional
  * then the team must belong to that tournament — a foreign or unknown team id answers
  * 404 for every verb, never 403. The read and the deletes share one transaction, so a
  * failure cannot leave a team half-removed (the players and the token also cascade in
- * the schema, but the scoped deletes are the application-level guarantee). A plain
- * class wired as a bean in [UseCaseConfiguration].
+ * the schema, but the scoped deletes are the application-level guarantee). Outside
+ * `setup` the found team answers `409 TOURNAMENT_NOT_EDITABLE` before anything is deleted.
+ * A plain class wired as a bean in [UseCaseConfiguration].
  */
 @Transactional
 class DeleteTeamCommand(
@@ -27,9 +30,15 @@ class DeleteTeamCommand(
 ) : DeleteTeam {
 
     override fun delete(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId) {
-        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
         teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
+        if (tournament.status != TournamentStatus.SETUP) {
+            throw TournamentNotEditableException(
+                "Tournament ${tournamentId.value} can only be edited while in setup " +
+                    "(current status: ${tournament.status})",
+            )
+        }
         teamRepository.delete(teamId, tournamentId)
         teamTokenRepository.deleteByTeamId(teamId)
     }

@@ -57,7 +57,9 @@ players of a team must be different people. Field and uniqueness violations answ
 `DUPLICATE_TEAM_PLAYERS`) and a `field` member. Creating a team when the tournament
 already holds its `maxTeams` answers `409 TEAM_LIMIT_REACHED`; lowering `maxTeams`
 below the registered team count answers `409 MAX_TEAMS_BELOW_TEAM_COUNT` anchored to
-`maxTeams`. Team and player names may repeat across different tournaments.
+`maxTeams`. Team and player names may repeat across different tournaments. Creating,
+editing and deleting a team answers `409 TOURNAMENT_NOT_EDITABLE` once the tournament
+has left `setup`.
 
 Example:
 

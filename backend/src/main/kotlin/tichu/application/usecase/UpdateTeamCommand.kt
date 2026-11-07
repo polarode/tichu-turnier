@@ -8,14 +8,17 @@ import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import tichu.vocabulary.NotFoundException
+import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 
 /**
  * Renames a team and/or swaps its two players. Ownership is checked on the tournament
  * first (a foreign tournament is a 404), then the team must belong to that tournament
  * (a foreign or unknown team id is a 404 as well, so the caller never learns that an
- * id exists elsewhere).
+ * id exists elsewhere). Only then does the setup lock apply: outside `setup` the team
+ * answers `409 TOURNAMENT_NOT_EDITABLE` before any field validation runs.
  *
  * The full field and uniqueness matrix from creation is re-applied through
  * [TeamInputValidator], with this team excluded from the uniqueness checks so keeping
@@ -37,9 +40,15 @@ class UpdateTeamCommand(
         command: TeamWriteRequest,
         owner: AdminUserId,
     ): Team {
-        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
         val team = teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
+        if (tournament.status != TournamentStatus.SETUP) {
+            throw TournamentNotEditableException(
+                "Tournament ${tournamentId.value} can only be edited while in setup " +
+                    "(current status: ${tournament.status})",
+            )
+        }
 
         val name = command.name.trim()
         val playerOneName = command.playerOneName.trim()

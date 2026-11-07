@@ -82,22 +82,22 @@ class PublicTournamentsIntegrationTest(
     fun `lists only public tournaments that are active or published, with their team counts`() {
         val publicActive = createTournament("Spring Open")
         setPublicVisibility(publicActive, true)
-        setStatus(publicActive, "ACTIVE")
         createTeam(publicActive, "Alpha")
         createTeam(publicActive, "Bravo")
+        setStatus(publicActive, "ACTIVE")
 
         val publicPublished = createTournament("Winter Cup")
         setPublicVisibility(publicPublished, true)
-        setStatus(publicPublished, "PUBLISHED")
         createTeam(publicPublished, "Charlie")
+        setStatus(publicPublished, "PUBLISHED")
 
         val publicSetup = createTournament("Draft Cup")
         setPublicVisibility(publicSetup, true)
         createTeam(publicSetup, "Delta")
 
         val privateActive = createTournament("Secret Cup")
-        setStatus(privateActive, "ACTIVE")
         createTeam(privateActive, "Echo")
+        setStatus(privateActive, "ACTIVE")
 
         val response = mockMvc.perform(get("/api/public/tournaments"))
             .andExpect(status().isOk)
@@ -119,8 +119,8 @@ class PublicTournamentsIntegrationTest(
     fun `public list exposes only public facts and no owner or credential fields`() {
         val id = createTournament("Facts Only")
         setPublicVisibility(id, true)
-        setStatus(id, "ACTIVE")
         createTeam(id, "Foxtrot")
+        setStatus(id, "ACTIVE")
 
         val response = mockMvc.perform(get("/api/public/tournaments"))
             .andExpect(status().isOk)

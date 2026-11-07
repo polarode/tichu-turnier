@@ -14,7 +14,9 @@ import tichu.domain.TeamToken
 import tichu.domain.TeamTokenRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import tichu.vocabulary.TeamLimitReachedException
+import tichu.vocabulary.TournamentNotEditableException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
@@ -25,11 +27,13 @@ import java.time.Clock
  * use-case seam without Spring:
  *
  * 1. ownership: a foreign or missing tournament id fails as not-found (`findOwnedOrThrow`);
- * 2. field rules: blank / overlong names (see [TeamInputValidator]);
- * 3. capacity: the tournament must be below its configured `max_teams`;
- * 4. the two players of one team must be different people (typed, field-anchored);
- * 5. the team name must be free within the tournament (typed, field-anchored);
- * 6. each player name must be free within the tournament — a player may not sit on
+ * 2. setup lock: the tournament must still be in `setup`, otherwise it answers
+ *    `409 TOURNAMENT_NOT_EDITABLE` (typed, [TournamentNotEditableException]);
+ * 3. field rules: blank / overlong names (see [TeamInputValidator]);
+ * 4. capacity: the tournament must be below its configured `max_teams`;
+ * 5. the two players of one team must be different people (typed, field-anchored);
+ * 6. the team name must be free within the tournament (typed, field-anchored);
+ * 7. each player name must be free within the tournament — a player may not sit on
  *    two teams of one tournament (typed, field-anchored).
  *
  * The field and uniqueness matrix is delegated to [TeamInputValidator] so it stays
@@ -54,6 +58,12 @@ class CreateTeamCommand(
 
     override fun create(tournamentId: TournamentId, command: TeamWriteRequest, owner: AdminUserId): Team {
         val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        if (tournament.status != TournamentStatus.SETUP) {
+            throw TournamentNotEditableException(
+                "Tournament ${tournamentId.value} can only be edited while in setup " +
+                    "(current status: ${tournament.status})",
+            )
+        }
 
         val name = command.name.trim()
         val playerOneName = command.playerOneName.trim()

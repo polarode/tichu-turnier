@@ -9,7 +9,8 @@ interface DeleteTeam {
     /**
      * Removes the team and its players from the tournament owned by [owner]. Fails as
      * not-found when the tournament or the team does not exist, or when either belongs
-     * to another admin.
+     * to another admin. Fails as [tichu.vocabulary.TournamentNotEditableException]
+     * (`409 TOURNAMENT_NOT_EDITABLE`) once the tournament has left the setup state.
      */
     fun delete(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId)
 }

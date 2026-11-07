@@ -392,6 +392,24 @@ class TeamControllerIntegrationTest(
             .andExpect(status().isOk)
     }
 
+    @Test
+    fun `delete is rejected with a 409 once the tournament has started and the team stays listed`() {
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
+        createTeam(tournamentId, "Team Beta", "Carol", "Dave")
+        mockMvc.perform(post("/api/tournaments/$tournamentId/start").cookie(sessionCookie))
+            .andExpect(status().isOk)
+
+        mockMvc.perform(delete("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie))
+            .andExpect(status().isConflict)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.code").value("TOURNAMENT_NOT_EDITABLE"))
+
+        mockMvc.perform(get("/api/tournaments/$tournamentId/teams").cookie(sessionCookie))
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[?(@.id == '$teamId')]").exists())
+    }
+
     // ---------------------------------------------------------------- capacity
 
     @Test

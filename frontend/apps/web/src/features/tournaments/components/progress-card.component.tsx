@@ -6,7 +6,11 @@ import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round } from '@/domain/round.domain.ts';
 import { TOTAL_ROUNDS_MAX, type Tournament } from '@/domain/tournament.domain.ts';
 import { useStartNextRound } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
-import { useSetTotalRounds } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
+import {
+    useFinishTournament,
+    usePublishTournament,
+    useSetTotalRounds,
+} from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -20,22 +24,29 @@ interface ProgressCardProps {
     onRoundStarted: (roundNumber: number) => void;
 }
 
+/** The confirmation dialog currently open, if any. */
+type Confirmation = 'nextRound' | 'finish' | 'publish';
+
 /**
  * Where a started tournament stands: "Round x of n" and how many of the current
  * round's tables are completed. While ACTIVE the Total Rounds sit in a stepper whose
  * every step saves at once (optimistically, rolled back with the error shown); it
  * cannot go below the rounds already drawn nor above the maximum. Once finished the
- * card is read-only.
+ * card is read-only apart from the lifecycle action.
  *
  * The next round starts from here, after a confirmation: disabled with the count of
- * open tables while the current round is incomplete, and replaced by a hint in the
- * last round (the finish action, S7c, takes that place).
+ * open tables while the current round is incomplete. In the last round the same slot
+ * finishes the tournament (fixing the Final Ranking, S7c), under the same open-tables
+ * rule. Once COMPLETED the organizer publishes the results to the teams; PUBLISHED
+ * only notes that they are out.
  */
 export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCardProps) {
     const { t } = useI18n();
     const setTotalRounds = useSetTotalRounds(tournament.id);
     const startNextRound = useStartNextRound(tournament.id);
-    const [confirming, setConfirming] = useState(false);
+    const finishTournament = useFinishTournament(tournament.id);
+    const publishTournament = usePublishTournament(tournament.id);
+    const [confirming, setConfirming] = useState<Confirmation | null>(null);
     const { totalRounds } = tournament.settings;
     const editable = tournament.status === TournamentStatus.ACTIVE;
     const current = rounds[rounds.length - 1];
@@ -50,8 +61,19 @@ export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCar
     const start = () =>
         startNextRound.mutate(undefined, {
             onSuccess: (round) => onRoundStarted(round.number),
-            onSettled: () => setConfirming(false),
+            onSettled: () => setConfirming(null),
         });
+    const finish = () =>
+        finishTournament.mutate(undefined, { onSettled: () => setConfirming(null) });
+    const publish = () =>
+        publishTournament.mutate(undefined, { onSettled: () => setConfirming(null) });
+
+    const openTablesHint =
+        openTables > 0 ? (
+            <span className="text-sm text-muted-foreground tabular-nums">
+                {`${t('progress.nextRound.openTables')} ${openTables}`}
+            </span>
+        ) : null;
 
     return (
         <section
@@ -116,30 +138,55 @@ export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCar
             </div>
             {editable ? (
                 isLastRound ? (
-                    <p className="text-sm text-muted-foreground">{t('progress.lastRound')}</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                            size="sm"
+                            disabled={openTables > 0}
+                            onClick={() => setConfirming('finish')}
+                        >
+                            {t('progress.finish.action')}
+                        </Button>
+                        {openTablesHint}
+                    </div>
                 ) : (
                     <div className="flex flex-wrap items-center gap-3">
                         <Button
                             size="sm"
                             disabled={openTables > 0}
-                            onClick={() => setConfirming(true)}
+                            onClick={() => setConfirming('nextRound')}
                         >
                             {t('progress.nextRound.action')}
                         </Button>
-                        {openTables > 0 ? (
-                            <span className="text-sm text-muted-foreground tabular-nums">
-                                {`${t('progress.nextRound.openTables')} ${openTables}`}
-                            </span>
-                        ) : null}
+                        {openTablesHint}
                     </div>
                 )
+            ) : null}
+            {tournament.status === TournamentStatus.COMPLETED ? (
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button size="sm" onClick={() => setConfirming('publish')}>
+                        {t('progress.publish.action')}
+                    </Button>
+                </div>
+            ) : null}
+            {tournament.status === TournamentStatus.PUBLISHED ? (
+                <p className="text-sm text-muted-foreground">{t('progress.published')}</p>
             ) : null}
             {startNextRound.isError ? (
                 <p role="alert" className="text-sm text-destructive">
                     {localizedErrorMessage(startNextRound.error, t)}
                 </p>
             ) : null}
-            {confirming ? (
+            {finishTournament.isError ? (
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(finishTournament.error, t)}
+                </p>
+            ) : null}
+            {publishTournament.isError ? (
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(publishTournament.error, t)}
+                </p>
+            ) : null}
+            {confirming === 'nextRound' ? (
                 <ConfirmDialog
                     titleKey="progress.nextRound.action"
                     descriptionKey="progress.nextRound.confirmDescription"
@@ -147,7 +194,29 @@ export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCar
                     destructive={false}
                     disabled={startNextRound.isPending}
                     onConfirm={start}
-                    onCancel={() => setConfirming(false)}
+                    onCancel={() => setConfirming(null)}
+                />
+            ) : null}
+            {confirming === 'finish' ? (
+                <ConfirmDialog
+                    titleKey="progress.finish.action"
+                    descriptionKey="progress.finish.confirmDescription"
+                    confirmLabelKey="common.confirm"
+                    destructive={false}
+                    disabled={finishTournament.isPending}
+                    onConfirm={finish}
+                    onCancel={() => setConfirming(null)}
+                />
+            ) : null}
+            {confirming === 'publish' ? (
+                <ConfirmDialog
+                    titleKey="progress.publish.action"
+                    descriptionKey="progress.publish.confirmDescription"
+                    confirmLabelKey="common.confirm"
+                    destructive={false}
+                    disabled={publishTournament.isPending}
+                    onConfirm={publish}
+                    onCancel={() => setConfirming(null)}
                 />
             ) : null}
         </section>

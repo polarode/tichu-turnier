@@ -3,10 +3,12 @@ package tichu.infra.rest.web
 import tichu.application.api.AuthenticatedAdmin
 import tichu.application.api.CreateTournament
 import tichu.application.api.DeleteTournament
+import tichu.application.api.FinishTournament
 import tichu.application.api.GetTournament
 import tichu.application.api.ListTournaments
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
+import tichu.application.api.PublishTournament
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
@@ -49,6 +51,8 @@ class TournamentController(
     private val getStandings: GetStandings,
     private val setTotalRounds: SetTotalRounds,
     private val startNextRound: StartNextRound,
+    private val finishTournament: FinishTournament,
+    private val publishTournament: PublishTournament,
 ) {
 
     @PostMapping
@@ -100,6 +104,24 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): List<StandingsEntryResponse> =
         getStandings.get(TournamentId(id), principal.adminUserId).entries.map(StandingsEntryResponse::from)
+
+    /** Finishes the tournament once every Total Round is played and the last round is complete. */
+    @PostMapping("/{id}/finish")
+    fun finish(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentResponse = TournamentResponse.from(
+        finishTournament.finish(TournamentId(id), principal.adminUserId),
+    )
+
+    /** Publishes the completed tournament's results, opening the Final Ranking to the teams. */
+    @PostMapping("/{id}/publish")
+    fun publish(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentResponse = TournamentResponse.from(
+        publishTournament.publish(TournamentId(id), principal.adminUserId),
+    )
 
     /** Changes only the Total Rounds — the one setting still adjustable while active. */
     @PutMapping("/{id}/total-rounds")

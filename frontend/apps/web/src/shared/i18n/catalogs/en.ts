@@ -190,6 +190,7 @@ export const en = {
     'rounds.victoryPoints': 'Victory Points',
     'rounds.trio': 'Trio',
     'standings.title': 'Standings',
+    'standings.finalTitle': 'Final Ranking',
     'standings.empty': 'The standings appear once the first table is completed.',
     'standings.rank': 'Rank',
     'standings.team': 'Team',
@@ -208,7 +209,12 @@ export const en = {
     'progress.nextRound.confirmDescription':
         'Pairs are drawn from the current standings. Teams see their new table right away.',
     'progress.nextRound.openTables': 'Tables still open:',
-    'progress.lastRound': 'Last round – the tournament is finished next.',
+    'progress.finish.action': 'Finish tournament',
+    'progress.finish.confirmDescription':
+        'Finishing fixes the Final Ranking. Only the organizer sees it until the results are published.',
+    'progress.publish.action': 'Publish results',
+    'progress.publish.confirmDescription': 'Afterwards the teams see the Final Ranking.',
+    'progress.published': 'Results published',
     'tournament.detail.edit': 'Edit',
     'tournament.form.name': 'Name',
     'tournament.form.description': 'Description',
@@ -258,6 +264,7 @@ export const en = {
     'tournament.status.setup': 'Setup',
     'tournament.status.active': 'Active',
     'tournament.status.completed': 'Completed',
+    'tournament.status.published': 'Published',
 
 
     'teamLogin.exchangingTitle': 'Opening your team area',
@@ -277,6 +284,9 @@ export const en = {
     'error.tournamentNotActive': 'This is only possible while the tournament is running.',
     'error.roundIncomplete': 'The next round can only start once every table is completed.',
     'error.totalRoundsReached': 'All rounds are played; the tournament can only be finished.',
+    'error.roundsRemaining': 'The tournament can only be finished after its last round.',
+    'error.tournamentNotCompleted': 'The results can only be published once the tournament is completed.',
+    'error.resultsNotPublished': 'The Final Ranking is not published yet.',
     'error.insufficientTeams':
         'This tournament needs at least two teams before it can be started.',
     'error.gameValidationInvalid': 'The game could not be saved — check the entries and try again.',
@@ -293,6 +303,7 @@ export const en = {
     'teamOverview.players': 'Players',
     'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
     'teamOverview.scoringLink': 'Enter results',
+    'teamOverview.completedNote': 'Tournament finished — the results are announced at the ceremony.',
     'confirmation.games.label': 'Games',
     'confirmation.status.label': 'Status',
     'confirmation.status.playing': 'Playing',
@@ -353,9 +364,11 @@ export const en = {
     'scoring.frozen.byOwn': 'Your team confirmed these games. To change one, retract the confirmation on the team overview.',
     'scoring.frozen.byOthers': 'To change a game, the confirming team must retract on its team overview.',
     'scoring.overviewLink': 'Back to team overview',
+    'scoring.viewTable': 'View table',
     'scoring.allEntered': 'All games are entered.',
     'scoring.allEntered.link': 'Go to confirmation',
     'scoring.completed': 'This table is completed; its games are final.',
+    'scoring.tournamentLocked': 'The tournament is over — the games can no longer be changed.',
     'scoring.changedElsewhere': 'The other team changed this game.',
     'scoring.changedElsewhere.load': 'Load their version',
 } as const satisfies Record<string, string>;

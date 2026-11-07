@@ -18,11 +18,13 @@ import tichu.domain.TeamRepository
 import tichu.domain.TeamResult
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import tichu.vocabulary.GameConfirmedException
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.GameNotFoundException
 import tichu.vocabulary.GameValidationException
 import tichu.vocabulary.InvalidFieldException
+import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -37,9 +39,11 @@ import org.springframework.transaction.annotation.Transactional
  *
  * The whole submit is one transaction (@Transactional): either the game row and
  * its four participants commit together or nothing is written. It takes the
- * round table's lock first and is rejected once the table is frozen (ADR 0006). Versioning is
- * optimistic: create assigns version 1, update carries the version and the first
- * commit wins.
+ * round table's lock first and is rejected once the table is frozen (ADR 0006).
+ * Games are only written while the tournament is ACTIVE; the status check runs
+ * before the freeze check, so a finished tournament answers TOURNAMENT_NOT_ACTIVE.
+ * Versioning is optimistic: create assigns version 1, update carries the version
+ * and the first commit wins.
  */
 @Transactional
 class RecordGameCommand(
@@ -84,10 +88,15 @@ class RecordGameCommand(
             ?: throw GameNotFoundException("Table $tableNumber of round ${round.number} not found")
         table.requireSeated(principal.teamId)
         requireGameNumber(request.gameNumber, table)
-        requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
 
         val tournament = tournamentRepository.findById(tournamentId)
             ?: throw GameNotFoundException("Tournament ${tournamentId.value} not found")
+        if (tournament.status != TournamentStatus.ACTIVE) {
+            throw TournamentNotActiveException(
+                "Tournament ${tournamentId.value} is ${tournament.status}; games are only recorded while it is active",
+            )
+        }
+        requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
 
         val teamResults = toTeamResults(request)
         requirePlayingTeams(tournamentId, teamResults, table.playingTeams(request.gameNumber))

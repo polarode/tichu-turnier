@@ -30,16 +30,30 @@ import { TableStatus } from '@/vocabulary/table-status.enum.ts';
  * while the table loads (so the link does not jump into the panel); when the
  * team is not seated (current table 404s) only the entry point shows, and the
  * scoring screen explains the rest.
+ *
+ * [readOnly] (S7c, #116) is set once the tournament is no longer ACTIVE: the
+ * panel keeps its summary and the scoring link (the screen is read-only there),
+ * but offers no Confirm and no Retract.
  */
-export function TableConfirmationPanel({ viewerTeamId }: { viewerTeamId: string }) {
+export function TableConfirmationPanel({
+    viewerTeamId,
+    readOnly = false,
+}: {
+    viewerTeamId: string;
+    readOnly?: boolean;
+}) {
     const tableQuery = useCurrentTable();
     if (tableQuery.isPending) return null;
-    if (!tableQuery.data) return <ScoringLink primary />;
-    return <ConfirmationPanel table={tableQuery.data} viewerTeamId={viewerTeamId} />;
+    if (!tableQuery.data) return <ScoringLink primary={!readOnly} readOnly={readOnly} />;
+    return <ConfirmationPanel table={tableQuery.data} viewerTeamId={viewerTeamId} readOnly={readOnly} />;
 }
 
-/** "Enter results": the primary action until every game is in, then it yields to Confirm. */
-function ScoringLink({ primary }: { primary: boolean }) {
+/**
+ * The entry point to the scoring screen. "Enter results": the primary action until
+ * every game is in, then it yields to Confirm. Read-only (S7c, #116) it reads
+ * "View table" instead and is never primary.
+ */
+export function ScoringLink({ primary, readOnly = false }: { primary: boolean; readOnly?: boolean }) {
     const { t } = useI18n();
     return (
         <Link
@@ -50,7 +64,7 @@ function ScoringLink({ primary }: { primary: boolean }) {
                 className: 'w-full sm:w-auto sm:self-start',
             })}
         >
-            {t('teamOverview.scoringLink')}
+            {t(readOnly ? 'scoring.viewTable' : 'teamOverview.scoringLink')}
         </Link>
     );
 }
@@ -63,12 +77,22 @@ function ScoringLink({ primary }: { primary: boolean }) {
  *   another team also shows that the games are frozen.
  * - Confirming by this team: the waiting note and Retract (no dialog).
  * - Completed: final, no controls.
+ * - Read-only (the tournament is no longer ACTIVE, S7c): the summary only; the
+ *   Confirm and Retract controls are not rendered at all.
  *
  * A confirm carries the games exactly as the summary shows them; a rejection
  * (stale games, table changed meanwhile) is explained here, and the table and
  * games reload either way.
  */
-function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTeamId: string }) {
+function ConfirmationPanel({
+    table,
+    viewerTeamId,
+    readOnly,
+}: {
+    table: TeamTable;
+    viewerTeamId: string;
+    readOnly: boolean;
+}) {
     const { t } = useI18n();
     const gamesQuery = useTableGames(table);
     const confirm = useConfirmTable(table);
@@ -118,7 +142,10 @@ function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTe
                     games={games}
                 />
             ) : null}
-            <ScoringLink primary={!allEntered && !isFrozen(table.confirmation)} />
+            <ScoringLink
+                primary={!readOnly && !allEntered && !isFrozen(table.confirmation)}
+                readOnly={readOnly}
+            />
 
             <p>
                 {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}
@@ -133,7 +160,7 @@ function ConfirmationPanel({ table, viewerTeamId }: { table: TeamTable; viewerTe
 
             {isCompleted(table.confirmation) ? (
                 <p className="text-muted-foreground">{t('confirmation.final')}</p>
-            ) : viewerConfirmed ? (
+            ) : readOnly ? null : viewerConfirmed ? (
                 <>
                     <p className="text-muted-foreground">
                         {t(table.teams.length > 2 ? 'confirmation.waiting.many' : 'confirmation.waiting.one')}

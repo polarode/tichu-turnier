@@ -56,8 +56,9 @@ enum class ErrorCode {
     INVITE_STATUS_CONFLICT,
 
     /**
-     * A team access token is unknown, revoked, its team is gone, or its tournament
-     * has completed. All four are deliberately indistinguishable.
+     * A team access token is unknown, revoked, or its team (or tournament) is gone.
+     * These are deliberately indistinguishable. A completed or published tournament
+     * does not invalidate the link: it stays valid for read access.
      */
     TEAM_ACCESS_INVALID,
 
@@ -81,6 +82,15 @@ enum class ErrorCode {
 
     /** The Total Rounds are reached: the tournament can only be finished, not advanced. */
     TOTAL_ROUNDS_REACHED,
+
+    /** Finishing while rounds remain below the Total Rounds. */
+    ROUNDS_REMAINING,
+
+    /** Publishing the results of a tournament that is not `completed` (still running, or already published). */
+    TOURNAMENT_NOT_COMPLETED,
+
+    /** A team asked for the Final Ranking before the organizer published the results. */
+    RESULTS_NOT_PUBLISHED,
 
     /** A submitted game result violates the scoring rules (#99); field-anchored where sensible. */
     GAME_VALIDATION_INVALID,
@@ -269,6 +279,27 @@ class RoundIncompleteException(message: String) :
  */
 class TotalRoundsReachedException(message: String) :
     ApiException(ErrorCode.TOTAL_ROUNDS_REACHED, message)
+
+/**
+ * Thrown when the tournament is finished while fewer rounds than the Total Rounds
+ * have been played. Mapped to HTTP 409.
+ */
+class RoundsRemainingException(message: String) :
+    ApiException(ErrorCode.ROUNDS_REMAINING, message)
+
+/**
+ * Thrown when the results of a tournament are published while it is not `completed`
+ * (still running, or already published). Publishing is one-way. Mapped to HTTP 409.
+ */
+class TournamentNotCompletedException(message: String) :
+    ApiException(ErrorCode.TOURNAMENT_NOT_COMPLETED, message)
+
+/**
+ * Thrown when a team reads the Final Ranking before the organizer has published the
+ * results (the tournament is still in setup, active or completed). Mapped to HTTP 409.
+ */
+class ResultsNotPublishedException(message: String) :
+    ApiException(ErrorCode.RESULTS_NOT_PUBLISHED, message)
 
 /**
  * Thrown when a team name clashes with an existing team of the same tournament.

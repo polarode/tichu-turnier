@@ -11,11 +11,14 @@ import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableConfirmations
 import tichu.domain.TableKey
 import tichu.domain.TeamId
+import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
+import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 
@@ -28,13 +31,17 @@ import java.time.Clock
  * run one at a time: the games a confirm compares against are the committed
  * ones, and no edit can slip in between that check and the confirmation.
  *
- * Confirm checks, in order: seat (403), already confirmed (no change), every game
- * entered ([TableIncompleteException]), then the seen versions
+ * Confirm and retract are only accepted while the tournament is ACTIVE
+ * ([TournamentNotActiveException]).
+ *
+ * Confirm checks, in order: seat (403), tournament status, already confirmed (no
+ * change), every game entered ([TableIncompleteException]), then the seen versions
  * ([GameConcurrentModificationException] on any difference).
  */
 @Transactional
 class ConfirmTableCommand(
     private val roundRepository: RoundRepository,
+    private val tournamentRepository: TournamentRepository,
     private val gameRepository: GameRepository,
     private val confirmationRepository: TableConfirmationRepository,
     private val clock: Clock,
@@ -79,7 +86,10 @@ class ConfirmTableCommand(
         return state(table, confirmed - principal.teamId)
     }
 
-    /** Resolves the table, checks the principal is seated there, and takes the table lock. */
+    /**
+     * Resolves the table, checks the principal is seated there and the tournament is
+     * ACTIVE, and takes the table lock.
+     */
     private fun lockSeatedTable(key: TableKey, principal: AuthenticatedTeam): Table {
         // The session scopes the request: a foreign tournament is not found, never widened.
         if (key.tournamentId != principal.tournamentId) {
@@ -89,6 +99,13 @@ class ConfirmTableCommand(
             ?.table(key.tableNumber)
             ?: throw NotFoundException("Table ${key.tableNumber} of round ${key.roundNumber} not found")
         table.requireSeated(principal.teamId)
+        val tournament = tournamentRepository.findById(key.tournamentId)
+            ?: throw NotFoundException("Tournament ${key.tournamentId.value} not found")
+        if (tournament.status != TournamentStatus.ACTIVE) {
+            throw TournamentNotActiveException(
+                "Tournament ${key.tournamentId.value} is ${tournament.status}; tables are only confirmed while it is active",
+            )
+        }
         roundRepository.lockTable(key)
         return table
     }

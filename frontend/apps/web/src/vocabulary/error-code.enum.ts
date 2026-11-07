@@ -46,6 +46,14 @@ export const ERROR_CODES = [
     /** The Total Rounds are reached: the tournament can only be finished. */
     'TOTAL_ROUNDS_REACHED',
 
+    // --- Finish & publish (S7c) ---
+    /** Finishing while rounds are still to be played. */
+    'ROUNDS_REMAINING',
+    /** Publishing a tournament that is not completed yet. */
+    'TOURNAMENT_NOT_COMPLETED',
+    /** The Final Ranking requested before the organizer published it. */
+    'RESULTS_NOT_PUBLISHED',
+
     // --- Scoring (S5) ---
     /** A submitted game failed the scoring engine's validation; field-anchored where sensible. */
     'GAME_VALIDATION_INVALID',

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
-import { QueryKeys, tournamentQueryKey } from '@/shared/constants/query-keys.ts';
+import { QueryKeys, standingsQueryKey, tournamentQueryKey } from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 
 /**
@@ -73,5 +73,30 @@ export function useSetTotalRounds(id: string) {
             if (context?.previous) queryClient.setQueryData(key, context.previous);
         },
         onSuccess: (tournament) => queryClient.setQueryData(key, tournament),
+    });
+}
+
+/**
+ * Finishes the tournament after its last round. The returned tournament replaces the
+ * cached one at once; the list (which covers the detail) and the standings refetch.
+ */
+export function useFinishTournament(id: string) {
+    return useTournamentLifecycleMutation(id, () => TournamentRepository.finish(id));
+}
+
+/** Publishes the Final Ranking to the teams; same cache handling as {@link useFinishTournament}. */
+export function usePublishTournament(id: string) {
+    return useTournamentLifecycleMutation(id, () => TournamentRepository.publish(id));
+}
+
+function useTournamentLifecycleMutation(id: string, mutationFn: () => Promise<Tournament>) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn,
+        onSuccess: (updated) => {
+            queryClient.setQueryData(tournamentQueryKey(id), updated);
+            void queryClient.invalidateQueries({ queryKey: [QueryKeys.TOURNAMENTS] });
+            void queryClient.invalidateQueries({ queryKey: standingsQueryKey(id) });
+        },
     });
 }

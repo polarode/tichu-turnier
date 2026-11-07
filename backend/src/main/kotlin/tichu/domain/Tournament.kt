@@ -28,14 +28,15 @@ data class Tournament(
 value class TournamentId(val value: String)
 
 /**
- * Status machine: `setup → active → completed`, final — no reopen. The transitions
- * themselves are enforced by later slices (start tournament / finish tournament);
- * a newly created tournament always starts in [SETUP].
+ * Status machine: `setup → active → completed → published`, each step one-way, no
+ * reopen. Each transition is enforced by its use case (start, finish, publish); a
+ * newly created tournament always starts in [SETUP].
  */
 enum class TournamentStatus {
     SETUP,
     ACTIVE,
     COMPLETED,
+    PUBLISHED,
 }
 
 /**

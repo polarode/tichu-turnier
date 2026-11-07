@@ -9,6 +9,8 @@ import tichu.application.api.DeleteTeam
 import tichu.application.api.DeleteTournament
 import tichu.application.api.DisableAdmin
 import tichu.application.api.ExchangeTeamAccess
+import tichu.application.api.FinishTournament
+import tichu.application.api.GetFinalRanking
 import tichu.application.api.GetOwnTeam
 import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
@@ -17,6 +19,7 @@ import tichu.application.api.ListAdmins
 import tichu.application.api.ListInvites
 import tichu.application.api.ListTeams
 import tichu.application.api.ListTournaments
+import tichu.application.api.PublishTournament
 import tichu.application.api.RecordGame
 import tichu.application.api.ReactivateAdmin
 import tichu.application.api.RejectAdmin
@@ -37,6 +40,7 @@ import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
 import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
+import tichu.infra.rest.web.FinalRankingController
 import tichu.infra.rest.web.GameController
 import tichu.infra.rest.web.InviteController
 import tichu.infra.rest.web.SessionCookieFactory
@@ -77,6 +81,8 @@ class RestConfiguration(
         getStandings: GetStandings,
         setTotalRounds: SetTotalRounds,
         startNextRound: StartNextRound,
+        finishTournament: FinishTournament,
+        publishTournament: PublishTournament,
     ): TournamentController = TournamentController(
         createTournament,
         listTournaments,
@@ -88,6 +94,8 @@ class RestConfiguration(
         getStandings,
         setTotalRounds,
         startNextRound,
+        finishTournament,
+        publishTournament,
     )
 
     @Bean
@@ -126,6 +134,10 @@ class RestConfiguration(
     @Bean
     fun teamScoringController(getTeamScoring: GetTeamScoring): TeamScoringController =
         TeamScoringController(getTeamScoring)
+
+    @Bean
+    fun finalRankingController(getFinalRanking: GetFinalRanking): FinalRankingController =
+        FinalRankingController(getFinalRanking)
 
     @Bean
     fun tableConfirmationController(confirmTable: ConfirmTable): TableConfirmationController =

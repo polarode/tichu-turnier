@@ -86,6 +86,9 @@ function TournamentDetailBody() {
 
         const tournament = tournamentQuery.data;
         const editable = tournament.status === TournamentStatus.SETUP;
+        const isFinal =
+            tournament.status === TournamentStatus.COMPLETED ||
+            tournament.status === TournamentStatus.PUBLISHED;
         const teams = teamsQuery.data ?? [];
 
         return (
@@ -171,7 +174,10 @@ function TournamentDetailBody() {
                                         ? t('rounds.section.title')
                                         : `${t('rounds.section.title')} (${roundCount})`,
                                 },
-                                { value: 'standings', label: t('standings.title') },
+                                {
+                                    value: 'standings',
+                                    label: t(isFinal ? 'standings.finalTitle' : 'standings.title'),
+                                },
                                 {
                                     value: 'teams',
                                     label: `${t('teams.section.title')} (${teams.length})`,
@@ -187,7 +193,11 @@ function TournamentDetailBody() {
                                     live={live}
                                 />
                             ) : tab === 'standings' ? (
-                                <StandingsSection tournamentId={tournament.id} live={live} />
+                                <StandingsSection
+                                    tournamentId={tournament.id}
+                                    live={live}
+                                    final={isFinal}
+                                />
                             ) : (
                                 <TeamsSection
                                     tournamentId={tournament.id}

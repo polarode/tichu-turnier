@@ -7,7 +7,6 @@ import tichu.domain.Team
 import tichu.domain.TeamRepository
 import tichu.domain.TeamTokenRepository
 import tichu.domain.TournamentRepository
-import tichu.domain.TournamentStatus
 import tichu.vocabulary.TeamAccessException
 import java.time.Clock
 
@@ -15,12 +14,13 @@ import java.time.Clock
  * Exchanges a raw team access token for a team session (Phase 5).
  *
  * The token is validated by digest only; every rejection path — unknown token,
- * revoked token, team gone, tournament completed — throws the same generic
+ * revoked token, team gone (or its tournament gone) — throws the same generic
  * [TeamAccessException], so a caller cannot learn whether a guessed token ever
- * existed. There is deliberately no distinct "expired tournament" code: the link
- * is dead the moment the tournament completes and must be indistinguishable from
- * an unknown one. A valid link is multi-use — both team members may exchange it,
- * each receiving their own team session.
+ * existed. There is deliberately no distinct code for any of these cases. The link
+ * outlives the tournament's finish: after completion or publication it still
+ * grants read access, while the write use cases refuse with TOURNAMENT_NOT_ACTIVE.
+ * A valid link is multi-use — both team members may exchange it, each receiving
+ * their own team session.
  *
  * Failed attempts are counted per source IP by [ExchangeRateLimiter] (#26); a
  * blocked source is rejected before the token is even looked at, with exactly the
@@ -58,8 +58,7 @@ class ExchangeTeamAccessCommand(
         // The secret has been validated, so the unscoped team lookup is safe here:
         // it resolves the token's own team only.
         val team = teamRepository.findById(token.teamId) ?: throw rejected()
-        val tournament = tournamentRepository.findById(team.tournamentId) ?: throw rejected()
-        if (tournament.status == TournamentStatus.COMPLETED) throw rejected()
+        tournamentRepository.findById(team.tournamentId) ?: throw rejected()
         return team
     }
 

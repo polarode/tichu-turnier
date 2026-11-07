@@ -27,6 +27,8 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         remove: vi.fn(),
         start: vi.fn(),
         rounds: vi.fn(),
+        finish: vi.fn(),
+        publish: vi.fn(),
     },
 }));
 vi.mock('@/team-api/team.repository.ts', () => ({

@@ -34,6 +34,7 @@ import tichu.vocabulary.ForbiddenException
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.NotFoundException
+import tichu.vocabulary.TournamentNotActiveException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
 import org.junit.jupiter.api.BeforeEach
@@ -65,7 +66,7 @@ class ConfirmTableCommandTest {
     private val recordGame: RecordGame =
         RecordGameCommand(tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository)
     private val confirmTable: ConfirmTable =
-        ConfirmTableCommand(roundRepository, gameRepository, confirmationRepository, clock)
+        ConfirmTableCommand(roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock)
 
     @BeforeEach
     fun setUp() {
@@ -256,6 +257,34 @@ class ConfirmTableCommandTest {
         assertFailsWith<TableCompletedException> { retract(teamA) }
 
         assertEquals(setOf(teamA, teamB), confirmationRepository.findByTable(tableKey))
+    }
+
+    // ---- tournament status ------------------------------------------------------
+
+    private fun setStatus(status: TournamentStatus) {
+        tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = status))
+    }
+
+    @Test
+    fun `confirm and retract are rejected once the tournament is no longer active`() {
+        enterAll(4)
+        confirm(teamA)
+        confirm(teamB) // the table is now completed
+
+        for (status in listOf(TournamentStatus.COMPLETED, TournamentStatus.PUBLISHED)) {
+            setStatus(status)
+
+            // Status beats TABLE_COMPLETED and the already-confirmed no-op.
+            assertFailsWith<TournamentNotActiveException> { confirm(teamA) }
+            assertFailsWith<TournamentNotActiveException> { retract(teamA) }
+            assertFailsWith<TournamentNotActiveException> { retract(teamB) }
+            assertEquals(setOf(teamA, teamB), confirmationRepository.findByTable(tableKey), "confirmations unchanged")
+        }
+
+        // A still-confirming table: the new confirmation is rejected too.
+        confirmationRepository.remove(tableKey, teamB)
+        assertFailsWith<TournamentNotActiveException> { confirm(teamB) }
+        assertEquals(setOf(teamA), confirmationRepository.findByTable(tableKey), "confirmations unchanged")
     }
 
     // ---- trio -------------------------------------------------------------------

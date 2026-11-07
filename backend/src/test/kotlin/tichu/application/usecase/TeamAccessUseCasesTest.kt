@@ -158,7 +158,7 @@ class TeamAccessUseCasesTest {
     }
 
     @Test
-    fun `unknown, revoked and completed-tournament tokens all get the same generic rejection`() {
+    fun `unknown and revoked tokens get the same generic rejection`() {
         val tournamentId = createTournament("Spring Classic")
         val team = createTeam(tournamentId)
         val raw = sessionTokens.generated.last()
@@ -175,11 +175,19 @@ class TeamAccessUseCasesTest {
             teamTokenRepository.findByTeamId(team.id)!!.copy(revokedAt = now, updatedAt = now),
         )
         assertGenericRejection(raw)
+    }
 
-        // Completed tournament: token intact, tournament finished.
-        teamTokenRepository.save(teamTokenRepository.findByTeamId(team.id)!!.copy(revokedAt = null, updatedAt = now))
+    @Test
+    fun `a token still exchanges after the tournament is finished or published`() {
+        val tournamentId = createTournament("Spring Classic")
+        val team = createTeam(tournamentId)
+        val raw = sessionTokens.generated.last()
+
         tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = TournamentStatus.COMPLETED))
-        assertGenericRejection(raw)
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw).teamId, "a completed tournament keeps read access")
+
+        tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = TournamentStatus.PUBLISHED))
+        assertEquals(team.id, exchangeTeamAccess.exchange(raw).teamId, "a published tournament keeps read access")
     }
 
     // ---------------------------------------------------------- link lifecycle
@@ -366,14 +374,17 @@ class TeamAccessUseCasesTest {
     }
 
     @Test
-    fun `tokens survive tournament transitions until completion`() {
+    fun `tokens survive every tournament transition, including completion and publication`() {
         val tournamentId = createTournament("Spring Classic")
         val team = createTeam(tournamentId)
 
         tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = TournamentStatus.ACTIVE))
+        assertTrue(teamTokenRepository.findByTeamId(team.id) != null, "the token survives the setup → active transition")
 
+        tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = TournamentStatus.COMPLETED))
+        tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = TournamentStatus.PUBLISHED))
         val token = teamTokenRepository.findByTeamId(team.id)
-        assertTrue(token != null, "the token survives the setup → active transition")
+        assertTrue(token != null, "the token survives completion and publication")
         assertNull(token!!.revokedAt)
     }
 }

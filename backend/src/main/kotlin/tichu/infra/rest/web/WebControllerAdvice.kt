@@ -35,6 +35,9 @@ import tichu.vocabulary.TournamentNotStartableException
 import tichu.vocabulary.TournamentNotStartedException
 import tichu.vocabulary.TournamentNotActiveException
 import tichu.vocabulary.RoundIncompleteException
+import tichu.vocabulary.RoundsRemainingException
+import tichu.vocabulary.ResultsNotPublishedException
+import tichu.vocabulary.TournamentNotCompletedException
 import tichu.vocabulary.TotalRoundsReachedException
 import tichu.vocabulary.UnauthenticatedException
 import org.springframework.http.HttpStatus
@@ -168,6 +171,21 @@ class WebControllerAdvice {
     /** The next round once the Total Rounds are reached: HTTP 409. */
     @ExceptionHandler(TotalRoundsReachedException::class)
     fun handleTotalRoundsReached(ex: TotalRoundsReachedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Finishing while fewer rounds than the Total Rounds are played: HTTP 409. */
+    @ExceptionHandler(RoundsRemainingException::class)
+    fun handleRoundsRemaining(ex: RoundsRemainingException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Publishing a tournament that is not completed (still running, or already published): HTTP 409. */
+    @ExceptionHandler(TournamentNotCompletedException::class)
+    fun handleTournamentNotCompleted(ex: TournamentNotCompletedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** A team asking for the Final Ranking before the organizer published it: HTTP 409. */
+    @ExceptionHandler(ResultsNotPublishedException::class)
+    fun handleResultsNotPublished(ex: ResultsNotPublishedException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
     @ExceptionHandler(InsufficientTeamsException::class)

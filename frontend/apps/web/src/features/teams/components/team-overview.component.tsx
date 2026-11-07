@@ -1,19 +1,51 @@
 import type { TeamOverview } from '@/domain/team-overview.domain.ts';
-import { TableConfirmationPanel } from '@/features/scoring/components/table-confirmation-panel.component.tsx';
+import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
+import { useFinalRanking } from '@/features/teams/hooks/team-auth-queries.hook.ts';
+import {
+    ScoringLink,
+    TableConfirmationPanel,
+} from '@/features/scoring/components/table-confirmation-panel.component.tsx';
+import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
+import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 /**
  * The team's identity view (S2b): a compact card with tournament name, team
- * name and both players, plus one state-dependent slot below it: while the
- * tournament is still in setup it shows the neutral note that the match
- * schedule appears once the tournament starts; once it has started the slot
- * becomes the current table's confirmation panel (S6b, #106), which also holds
- * the entry point to the scoring screen (S5c, #101), and the note goes.
+ * name and both players, plus one state-dependent slot below it:
+ * - SETUP: the neutral note that the match schedule appears once the tournament
+ *   starts.
+ * - ACTIVE: the current table's confirmation panel (S6b, #106), which also holds
+ *   the entry point to the scoring screen (S5c, #101), with its write controls.
+ * - COMPLETED (S7c, #116): a neutral note that the results are announced at the
+ *   ceremony, above the same panel, now read-only (no Confirm, no Retract).
+ * - PUBLISHED (S7c, #116): the Final Ranking table, with the own team's row
+ *   marked, and below it the read-only scoring link, so the last table stays
+ *   reachable. The ranking is only fetched once published.
  */
 export function TeamOverview({ overview }: { overview: TeamOverview }) {
     const { t } = useI18n();
     const [playerOne, playerTwo] = overview.players;
+    const published = overview.tournamentStatus === TournamentStatus.PUBLISHED;
+    const finalRanking = useFinalRanking(published);
+
+    function renderRanking() {
+        if (finalRanking.isPending) return <LoadingIndicator />;
+        if (finalRanking.isError) {
+            return (
+                <p role="alert" className="text-sm text-destructive">
+                    {localizedErrorMessage(finalRanking.error, t)}
+                </p>
+            );
+        }
+        return (
+            <StandingsTable
+                entries={finalRanking.data}
+                caption={t('standings.finalTitle')}
+                highlightTeamId={overview.teamId}
+            />
+        );
+    }
 
     return (
         <section className="flex w-full max-w-md flex-col gap-4">
@@ -34,15 +66,32 @@ export function TeamOverview({ overview }: { overview: TeamOverview }) {
                     <span>{playerTwo?.name}</span>
                 </dd>
             </dl>
-            {/* Either the schedule note (tournament still in setup) or the
-                confirmation panel with its scoring link (tournament started) —
-                never both. While the team is not seated the panel shrinks to
-                the scoring link; the scoring screen still guards itself
-                (401 → login, not seated → placeholder). */}
+            {/* Exactly one of: the schedule note (setup), the confirmation panel
+                with its scoring link (started; read-only once no longer active),
+                or the Final Ranking (published). The team's own table stays
+                reachable through the scoring link in every started state. While
+                the team is not seated the panel shrinks to the scoring link; the
+                scoring screen still guards itself (401 → login, not seated →
+                placeholder). */}
             {overview.tournamentStatus === TournamentStatus.SETUP ? (
                 <p className="text-sm text-muted-foreground">{t('teamOverview.scheduleNote')}</p>
+            ) : published ? (
+                <>
+                    {renderRanking()}
+                    <ScoringLink primary={false} readOnly />
+                </>
             ) : (
-                <TableConfirmationPanel viewerTeamId={overview.teamId} />
+                <>
+                    {overview.tournamentStatus === TournamentStatus.COMPLETED ? (
+                        <p className="text-sm text-muted-foreground">
+                            {t('teamOverview.completedNote')}
+                        </p>
+                    ) : null}
+                    <TableConfirmationPanel
+                        viewerTeamId={overview.teamId}
+                        readOnly={overview.tournamentStatus !== TournamentStatus.ACTIVE}
+                    />
+                </>
             )}
         </section>
     );

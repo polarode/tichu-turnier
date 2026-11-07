@@ -422,6 +422,22 @@ describe('/team/score', () => {
             ).toBeInTheDocument();
             expect(screen.getByRole('slider')).toBeDisabled();
         });
+
+        it('is read-only once the tournament has completed, even on an open table', async () => {
+            teamAuth.me.mockResolvedValue({ ...teamOverview, tournamentStatus: TournamentStatus.COMPLETED });
+            scoring.currentTable.mockResolvedValue(table());
+            scoring.games.mockResolvedValue([recordedGame()]);
+
+            renderApp('/team/score');
+            await screen.findByText('Team Alpha gegen Team Beta');
+            await userEvent.click(screen.getAllByRole('tab')[0]!);
+
+            expect(
+                await screen.findByText('Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.'),
+            ).toBeInTheDocument();
+            expect(screen.getByRole('slider')).toBeDisabled();
+            expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
+        });
     });
 
     it('marks an entered game in the selector and preloads it for editing', async () => {

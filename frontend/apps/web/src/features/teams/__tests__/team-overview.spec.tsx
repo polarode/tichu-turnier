@@ -14,6 +14,7 @@ vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     TeamAuthRepository: {
         exchange: vi.fn(),
         me: vi.fn(),
+        finalRanking: vi.fn(),
     },
 }));
 
@@ -29,6 +30,7 @@ vi.mock('@/scoring-api/scoring.repository.ts', () => ({
 }));
 
 const mockedMe = vi.mocked(TeamAuthRepository.me);
+const mockedFinalRanking = vi.mocked(TeamAuthRepository.finalRanking);
 const mockedCurrentTable = vi.mocked(ScoringRepository.currentTable);
 const mockedGames = vi.mocked(ScoringRepository.games);
 const mockedConfirm = vi.mocked(ScoringRepository.confirm);
@@ -49,6 +51,7 @@ const overview = {
 describe('/team', () => {
     beforeEach(() => {
         mockedMe.mockReset();
+        mockedFinalRanking.mockReset();
         mockedCurrentTable.mockReset();
         mockedGames.mockReset();
         mockedGames.mockResolvedValue([]);
@@ -95,8 +98,56 @@ describe('/team', () => {
         const { router } = renderApp('/team');
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
-        expect(await screen.findByRole('link', { name: 'Ergebnisse eintragen' })).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'Tisch ansehen' })).toBeInTheDocument();
         expect(screen.queryByText('Der Spielplan erscheint, sobald das Turnier gestartet ist.')).not.toBeInTheDocument();
+    });
+
+    it('shows the finished note and a read-only panel once the tournament has completed', async () => {
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.COMPLETED });
+        // Confirmed by this team: while ACTIVE this would show Retract.
+        mockedCurrentTable.mockResolvedValue(
+            seatedTable({ confirmation: { status: 'CONFIRMING', confirmedTeamIds: ['team-1'] } }),
+        );
+
+        renderApp('/team');
+
+        expect(
+            await screen.findByText(
+                'Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.',
+            ),
+        ).toBeInTheDocument();
+        const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
+        expect(within(panel).getByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
+        // Read-only: no Confirm and no Retract, only the scoring link.
+        expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
+        expect(within(panel).getByRole('link', { name: 'Tisch ansehen' })).toBeInTheDocument();
+        expect(mockedFinalRanking).not.toHaveBeenCalled();
+    });
+
+    it('replaces the panel with the Final Ranking once published, marking the own team', async () => {
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.PUBLISHED });
+        mockedFinalRanking.mockResolvedValue([
+            { rank: 1, teamId: 'team-2', teamName: 'Team Beta', gamesPlayed: 12, victoryPoints: 9, tichuPoints: 450 },
+            { rank: 2, teamId: 'team-1', teamName: 'Team Alpha', gamesPlayed: 12, victoryPoints: 7, tichuPoints: 300 },
+            { rank: 2, teamId: 'team-3', teamName: 'Team Gamma', gamesPlayed: 12, victoryPoints: 7, tichuPoints: 300 },
+        ]);
+
+        renderApp('/team');
+
+        const ranking = await screen.findByRole('table', { name: 'Endrangliste' });
+        expect(columnHeaders(ranking)).toEqual(['Platz', 'Team', 'Spiele', 'SP', 'TP']);
+        expect(bodyRows(ranking)).toEqual([
+            ['Team Beta', '1', '12', '9', '450'],
+            ['Team Alpha', '2', '12', '7', '300'],
+            ['Team Gamma', '2', '12', '7', '300'],
+        ]);
+        expect(within(ranking).getByRole('row', { name: /Team Alpha/ })).toHaveAttribute('aria-current', 'true');
+        expect(within(ranking).getByRole('row', { name: /Team Beta/ })).not.toHaveAttribute('aria-current');
+        expect(screen.queryByRole('region', { name: /Runde/ })).not.toBeInTheDocument();
+        // The table stays reachable through the read-only scoring link.
+        expect(screen.getByRole('link', { name: 'Tisch ansehen' })).toHaveAttribute('href', '/team/score');
+        expect(screen.queryByRole('link', { name: 'Ergebnisse eintragen' })).not.toBeInTheDocument();
+        expect(mockedFinalRanking).toHaveBeenCalledTimes(1);
     });
 
     it('links to the scoring screen, which loads the team’s current table', async () => {
@@ -201,6 +252,40 @@ describe('/team', () => {
         await screen.findByText('Spring Classic');
         expect(screen.queryByText('Wird geladen…')).not.toBeInTheDocument();
         expect(router.state.location.pathname).toBe('/team');
+    });
+});
+
+// ---- overview polling (S7c, #116) --------------------------------------------
+
+describe('/team overview polling', () => {
+    beforeEach(() => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        mockedMe.mockReset();
+        mockedFinalRanking.mockReset();
+        mockedCurrentTable.mockReset();
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('refetches the overview every 15 s while completed and shows the Final Ranking once published', async () => {
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.COMPLETED });
+        mockedCurrentTable.mockRejectedValue(
+            new ApiError({ code: 'NOT_FOUND', status: 404, field: null, message: 'not seated' }),
+        );
+        mockedFinalRanking.mockResolvedValue([
+            { rank: 1, teamId: 'team-1', teamName: 'Team Alpha', gamesPlayed: 12, victoryPoints: 9, tichuPoints: 450 },
+        ]);
+
+        renderApp('/team');
+        await screen.findByText('Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.');
+        const fetchesBefore = mockedMe.mock.calls.length;
+
+        await act(() => vi.advanceTimersByTimeAsync(15_000));
+        expect(mockedMe.mock.calls.length).toBe(fetchesBefore + 1);
+
+        // The organizer publishes: the next poll brings the Final Ranking.
+        mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.PUBLISHED });
+        await act(() => vi.advanceTimersByTimeAsync(15_000));
+        expect(await screen.findByRole('table', { name: 'Endrangliste' })).toBeInTheDocument();
     });
 });
 

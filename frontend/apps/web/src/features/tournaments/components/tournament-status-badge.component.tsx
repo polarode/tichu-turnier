@@ -8,13 +8,15 @@ const STATUS_LABEL_KEYS: Record<TournamentStatus, TranslationKey> = {
     [TournamentStatus.SETUP]: 'tournament.status.setup',
     [TournamentStatus.ACTIVE]: 'tournament.status.active',
     [TournamentStatus.COMPLETED]: 'tournament.status.completed',
+    [TournamentStatus.PUBLISHED]: 'tournament.status.published',
 };
 
-/** Setup is neutral, a running tournament is green, a finished one takes the "done" tint. */
+/** Setup is neutral, a running tournament is green, a finished one takes the "done" tint; published results are green again. */
 const STATUS_BADGE_VARIANTS: Record<TournamentStatus, 'muted' | 'success' | 'secondary'> = {
     [TournamentStatus.SETUP]: 'muted',
     [TournamentStatus.ACTIVE]: 'success',
     [TournamentStatus.COMPLETED]: 'secondary',
+    [TournamentStatus.PUBLISHED]: 'success',
 };
 
 /** The tournament's lifecycle status as a labelled, coloured badge. */

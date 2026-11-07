@@ -12,6 +12,8 @@ import tichu.application.api.DeleteTeam
 import tichu.application.api.DeleteTournament
 import tichu.application.api.DisableAdmin
 import tichu.application.api.ExchangeTeamAccess
+import tichu.application.api.FinishTournament
+import tichu.application.api.GetFinalRanking
 import tichu.application.api.GetOwnTeam
 import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
@@ -20,6 +22,7 @@ import tichu.application.api.ListAdmins
 import tichu.application.api.ListInvites
 import tichu.application.api.ListTeams
 import tichu.application.api.ListTournaments
+import tichu.application.api.PublishTournament
 import tichu.application.api.RecordGame
 import tichu.application.api.ReactivateAdmin
 import tichu.application.api.RejectAdmin
@@ -100,6 +103,19 @@ class UseCaseConfiguration(
         StartNextRoundCommand(tournamentRepository, teamRepository, roundRepository, playedRoundsReader, idGenerator, random)
 
     @Bean
+    fun finishTournament(
+        tournamentRepository: TournamentRepository,
+        playedRoundsReader: PlayedRoundsReader,
+        clock: Clock,
+    ): FinishTournament = FinishTournamentCommand(tournamentRepository, playedRoundsReader, clock)
+
+    @Bean
+    fun publishTournament(
+        tournamentRepository: TournamentRepository,
+        clock: Clock,
+    ): PublishTournament = PublishTournamentCommand(tournamentRepository, clock)
+
+    @Bean
     fun listRounds(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
@@ -113,6 +129,13 @@ class UseCaseConfiguration(
         teamRepository: TeamRepository,
         playedRoundsReader: PlayedRoundsReader,
     ): GetStandings = GetStandingsQuery(tournamentRepository, teamRepository, playedRoundsReader)
+
+    @Bean
+    fun getFinalRanking(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        playedRoundsReader: PlayedRoundsReader,
+    ): GetFinalRanking = GetFinalRankingQuery(tournamentRepository, teamRepository, playedRoundsReader)
 
     @Bean
     fun setTotalRounds(
@@ -133,11 +156,13 @@ class UseCaseConfiguration(
 
     @Bean
     fun confirmTable(
+        tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
         clock: Clock,
-    ): ConfirmTable = ConfirmTableCommand(roundRepository, gameRepository, confirmationRepository, clock)
+    ): ConfirmTable =
+        ConfirmTableCommand(roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock)
 
     @Bean
     fun random(): Random = Random.Default

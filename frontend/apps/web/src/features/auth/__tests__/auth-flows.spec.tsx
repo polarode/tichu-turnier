@@ -24,6 +24,8 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         create: vi.fn(),
         update: vi.fn(),
         remove: vi.fn(),
+        finish: vi.fn(),
+        publish: vi.fn(),
     },
 }));
 

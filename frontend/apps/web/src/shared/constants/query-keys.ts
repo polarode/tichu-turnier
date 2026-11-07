@@ -10,7 +10,11 @@ export const QueryKeys = {
     TEAM_ME: 'team-me',
     TEAM_CURRENT_TABLE: 'team-current-table',
     TEAM_GAMES: 'team-games',
+    TEAM_FINAL_RANKING: 'team-final-ranking',
 } as const;
+
+/** Key for the team's Final Ranking (`GET /api/team/me/final-ranking`, published tournaments only). */
+export const teamFinalRankingQueryKey = () => [QueryKeys.TEAM_FINAL_RANKING] as const;
 
 /** Key for the current admin session. */
 export const sessionQueryKey = () => [QueryKeys.SESSION] as const;

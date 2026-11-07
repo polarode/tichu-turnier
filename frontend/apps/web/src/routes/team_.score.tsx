@@ -18,7 +18,9 @@ import { PagePlaceholder } from '@/shared/components/page-placeholder.component.
  * session (see [[isMissingTeamSession]]) bounces to `/team/login`; a 404 means
  * the team is not seated at any round yet (the schedule appears once the
  * tournament starts), shown as a neutral placeholder. The team overview supplies
- * the viewing team's id, so a trio table can mark the games it sits out.
+ * the viewing team's id, so a trio table can mark the games it sits out, and
+ * its tournament status, so the screen turns read-only once the tournament is
+ * no longer ACTIVE (S7c).
  */
 export const Route = createFileRoute('/team_/score')({
     loader: async ({ context }) => {
@@ -63,5 +65,12 @@ function ScoringRoute() {
 
     if (!query.data || overview.isPending) return <LoadingIndicator />;
     // A failed overview only costs the sit-out markers; scoring itself still works.
-    return <ScoringPage table={query.data} viewerTeamId={overview.data?.teamId} />;
+    // The tournament status gates every write (S7c): once it is no longer ACTIVE the screen is read-only.
+    return (
+        <ScoringPage
+            table={query.data}
+            viewerTeamId={overview.data?.teamId}
+            tournamentStatus={overview.data?.tournamentStatus}
+        />
+    );
 }

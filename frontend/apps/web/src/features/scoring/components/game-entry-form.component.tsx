@@ -70,6 +70,11 @@ interface GameEntryFormProps {
     onSaved?: (kind: 'created' | 'updated') => void;
     /** Invoked when a write is rejected because the table froze, so the table state can reload. */
     onFrozen?: () => void;
+    /**
+     * The tournament is no longer ACTIVE (S7c, #116): every write is rejected
+     * server-side, so the form renders read-only from the start.
+     */
+    tournamentLocked?: boolean;
 }
 
 /**
@@ -80,9 +85,10 @@ interface GameEntryFormProps {
  * math is display-only and the form submits raw facts, with the server returning
  * the authoritative outcome (ADR 0004).
  *
- * Read-only has two sources: the table being frozen (someone confirmed, ADR
- * 0006; the page explains who), or the server rejecting a write with
- * `GAME_CONFIRMED` because the table froze mid-edit. Error UX is per code (#101):
+ * Read-only has three sources: the table being frozen (someone confirmed, ADR
+ * 0006; the page explains who), the server rejecting a write with
+ * `GAME_CONFIRMED` because the table froze mid-edit, or the tournament no longer
+ * being ACTIVE (`tournamentLocked`, S7c). Error UX is per code (#101):
  * `GAME_VALIDATION_INVALID` → localized form message, `GAME_CONCURRENT_MODIFICATION`
  * → reload prompt, `GAME_CONFIRMED` → the form flips to read-only.
  *
@@ -99,6 +105,7 @@ export function GameEntryForm({
     onSubmitStart,
     onSaved,
     onFrozen,
+    tournamentLocked = false,
 }: GameEntryFormProps) {
     const { t } = useI18n();
     const recordGame = useRecordGame(table);
@@ -144,7 +151,7 @@ export function GameEntryForm({
     // the same read-only mode when the table freezes mid-edit.
     const frozen = isFrozen(table.confirmation);
     const confirmed = form.formState.errors.root?.type === 'confirmed';
-    const readOnly = frozen || confirmed;
+    const readOnly = frozen || confirmed || tournamentLocked;
 
     const players = PLAYER_SLOTS.map((slot) => {
         const team = matchup[teamOfSlot(slot)];

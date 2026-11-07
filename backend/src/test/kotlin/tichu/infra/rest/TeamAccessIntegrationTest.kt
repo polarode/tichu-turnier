@@ -212,7 +212,7 @@ class TeamAccessIntegrationTest(
     }
 
     @Test
-    fun `unknown, revoked and completed-tournament tokens all get the same generic rejection`() {
+    fun `unknown and revoked tokens get the same generic rejection`() {
         authenticate()
         val tournamentId = createTournament("Spring Classic")
         val teamId = createTeam(tournamentId, "Team Alpha")
@@ -228,13 +228,25 @@ class TeamAccessIntegrationTest(
         val stored = teamTokens.findByTeamId(TeamId(teamId))!!
         teamTokens.save(stored.copy(revokedAt = Instant.now(), updatedAt = Instant.now()))
         assertRejected(exchange(raw))
+    }
 
-        teamTokens.save(stored.copy(revokedAt = null, updatedAt = Instant.now()))
+    @Test
+    fun `a completed tournament keeps its link valid - exchange succeeds and the team overview loads`() {
+        authenticate()
+        val tournamentId = createTournament("Spring Classic")
+        val teamId = createTeam(tournamentId, "Team Alpha")
+        val raw = seedKnownToken(teamId)
+
         tournamentRepository.save(
-            tournamentRepository.findById(tichu.domain.TournamentId(tournamentId))!!
+            tournamentRepository.findById(TournamentId(tournamentId))!!
                 .copy(status = TournamentStatus.COMPLETED),
         )
-        assertRejected(exchange(raw))
+        val cookie = teamCookie(exchange(raw).also { org.junit.jupiter.api.Assertions.assertEquals(200, it.response.status) })
+
+        mockMvc.perform(get("/api/team/me").cookie(cookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.teamId").value(teamId))
+            .andExpect(jsonPath("$.tournamentStatus").value("COMPLETED"))
     }
 
     @Test

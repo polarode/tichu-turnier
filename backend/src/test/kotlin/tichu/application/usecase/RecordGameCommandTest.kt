@@ -30,12 +30,14 @@ import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
 import tichu.testsupport.InMemoryTeamRepository
+import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.ForbiddenException
 import tichu.vocabulary.GameNotFoundException
 import tichu.vocabulary.GameConfirmedException
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.GameValidationException
 import tichu.vocabulary.InvalidFieldException
+import tichu.vocabulary.TournamentNotActiveException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -304,6 +306,33 @@ class RecordGameCommandTest {
         confirmBy(teamB)
         assertFailsWith<GameConfirmedException> { update(validRequest(version = 1)) }
         assertEquals(1, gameRepository.find(gameKey())!!.version, "nothing changed")
+    }
+
+    // ---- tournament status ------------------------------------------------------
+
+    private fun setStatus(status: TournamentStatus) {
+        tournamentRepository.save(tournamentRepository.findById(tournamentId)!!.copy(status = status))
+    }
+
+    @Test
+    fun `games are rejected once the tournament is no longer active`() {
+        create()
+        // Fully confirmed table: the status check must win over GAME_CONFIRMED.
+        confirmBy(teamA)
+        confirmBy(teamB)
+
+        for (status in listOf(TournamentStatus.COMPLETED, TournamentStatus.PUBLISHED)) {
+            setStatus(status)
+
+            val createError = assertFailsWith<TournamentNotActiveException> { create(validRequest(gameNumber = 2)) }
+            assertEquals(ErrorCode.TOURNAMENT_NOT_ACTIVE, createError.code)
+            assertNull(gameRepository.find(GameKey(tournamentId, 1, 1, 2)), "nothing was created")
+
+            val updateError = assertFailsWith<TournamentNotActiveException> { update(validRequest(version = 1, beschiss = true)) }
+            assertEquals(ErrorCode.TOURNAMENT_NOT_ACTIVE, updateError.code)
+            assertEquals(1, gameRepository.find(gameKey())!!.version, "stored game is unchanged")
+            assertEquals(false, gameRepository.find(gameKey())!!.beschiss, "stored game is unchanged")
+        }
     }
 
     // ---- trio table -------------------------------------------------------------

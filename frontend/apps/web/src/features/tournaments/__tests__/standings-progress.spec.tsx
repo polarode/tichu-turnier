@@ -33,6 +33,8 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         standings: vi.fn(),
         setTotalRounds: vi.fn(),
         startNextRound: vi.fn(),
+        finish: vi.fn(),
+        publish: vi.fn(),
     },
 }));
 vi.mock('@/team-api/team.repository.ts', () => ({
@@ -256,14 +258,16 @@ describe('progress card', () => {
         expect(card).toHaveTextContent('Runde 2 von 4');
     });
 
-    it('is read-only once the tournament is finished', async () => {
+    it('is read-only once the tournament is completed, leaving only the publish action', async () => {
         tournaments.get.mockResolvedValue(tournament('COMPLETED'));
         tournaments.rounds.mockResolvedValue(rounds(4, 2, 2));
         renderApp('/admin/tournaments/t-1');
 
         const card = await progressCard();
         await waitFor(() => expect(card).toHaveTextContent('Runde 4 von 4'));
-        expect(within(card).queryByRole('button')).not.toBeInTheDocument();
+        expect(within(card).queryByRole('button', { name: 'Runde hinzufügen' })).not.toBeInTheDocument();
+        expect(within(card).queryByRole('button', { name: 'Runde entfernen' })).not.toBeInTheDocument();
+        expect(within(card).getAllByRole('button')).toHaveLength(1);
     });
 
     it('does not exist in setup, where the info card lists the total rounds', async () => {
@@ -352,17 +356,15 @@ describe('next round action', () => {
         expect(within(card).queryByText(/Letzte Runde/)).not.toBeInTheDocument();
     });
 
-    it('gives way to a hint in the last round', async () => {
+    it('gives way to the finish action in the last round', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE', 2));
         tournaments.rounds.mockResolvedValue(rounds(2, 2, 2));
         renderApp('/admin/tournaments/t-1');
 
         const card = await progressCard();
         expect(
-            await within(card).findByText(
-                'Letzte Runde – als Nächstes wird das Turnier abgeschlossen.',
-            ),
-        ).toBeInTheDocument();
+            await within(card).findByRole('button', { name: 'Turnier abschließen' }),
+        ).toBeEnabled();
         expect(
             within(card).queryByRole('button', { name: 'Nächste Runde starten' }),
         ).not.toBeInTheDocument();

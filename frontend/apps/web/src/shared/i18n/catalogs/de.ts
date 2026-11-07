@@ -197,6 +197,7 @@ export const de: Catalog = {
     'rounds.victoryPoints': 'Siegpunkte',
     'rounds.trio': 'Trio',
     'standings.title': 'Rangliste',
+    'standings.finalTitle': 'Endrangliste',
     'standings.empty': 'Die Rangliste erscheint, sobald der erste Tisch abgeschlossen ist.',
     'standings.rank': 'Platz',
     'standings.team': 'Team',
@@ -215,7 +216,12 @@ export const de: Catalog = {
     'progress.nextRound.confirmDescription':
         'Die Paarungen werden aus der aktuellen Rangliste ausgelost. Die Teams sehen ihren neuen Tisch sofort.',
     'progress.nextRound.openTables': 'Noch offene Tische:',
-    'progress.lastRound': 'Letzte Runde – als Nächstes wird das Turnier abgeschlossen.',
+    'progress.finish.action': 'Turnier abschließen',
+    'progress.finish.confirmDescription':
+        'Mit dem Abschluss wird die Endrangliste festgelegt. Bis zur Veröffentlichung sieht sie nur der Organisator.',
+    'progress.publish.action': 'Ergebnisse veröffentlichen',
+    'progress.publish.confirmDescription': 'Danach sehen die Teams die Endrangliste.',
+    'progress.published': 'Ergebnisse veröffentlicht',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',
@@ -258,6 +264,7 @@ export const de: Catalog = {
     'tournament.status.setup': 'Vorbereitung',
     'tournament.status.active': 'Läuft',
     'tournament.status.completed': 'Beendet',
+    'tournament.status.published': 'Veröffentlicht',
 
 
     'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',
@@ -277,6 +284,9 @@ export const de: Catalog = {
     'error.tournamentNotActive': 'Das ist nur möglich, solange das Turnier läuft.',
     'error.roundIncomplete': 'Die nächste Runde kann erst starten, wenn alle Tische abgeschlossen sind.',
     'error.totalRoundsReached': 'Alle Runden sind gespielt; das Turnier kann nur noch abgeschlossen werden.',
+    'error.roundsRemaining': 'Das Turnier kann erst nach der letzten Runde abgeschlossen werden.',
+    'error.tournamentNotCompleted': 'Die Ergebnisse können erst veröffentlicht werden, wenn das Turnier abgeschlossen ist.',
+    'error.resultsNotPublished': 'Die Endrangliste ist noch nicht veröffentlicht.',
     'error.insufficientTeams':
         'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
     'error.gameValidationInvalid':
@@ -294,6 +304,7 @@ export const de: Catalog = {
     'teamOverview.players': 'Spieler',
     'teamOverview.scheduleNote': 'Der Spielplan erscheint, sobald das Turnier gestartet ist.',
     'teamOverview.scoringLink': 'Ergebnisse eintragen',
+    'teamOverview.completedNote': 'Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.',
     'confirmation.games.label': 'Spiele',
     'confirmation.status.label': 'Status',
     'confirmation.status.playing': 'Spielen',
@@ -354,9 +365,11 @@ export const de: Catalog = {
     'scoring.frozen.byOwn': 'Dein Team hat diese Spiele bestätigt. Um eines zu ändern, ziehe die Bestätigung in der Teamübersicht zurück.',
     'scoring.frozen.byOthers': 'Um ein Spiel zu ändern, muss das bestätigende Team in seiner Teamübersicht zurückziehen.',
     'scoring.overviewLink': 'Zur Teamübersicht',
+    'scoring.viewTable': 'Tisch ansehen',
     'scoring.allEntered': 'Alle Spiele sind eingetragen.',
     'scoring.allEntered.link': 'Zur Bestätigung',
     'scoring.completed': 'Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.',
+    'scoring.tournamentLocked': 'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',
     'scoring.changedElsewhere': 'Das andere Team hat dieses Spiel geändert.',
     'scoring.changedElsewhere.load': 'Deren Version laden',
 };

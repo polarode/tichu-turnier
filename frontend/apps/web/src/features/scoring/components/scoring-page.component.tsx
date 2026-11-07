@@ -20,6 +20,7 @@ import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
  * The team scoring screen (S5c, #101; trio tables #110): a selector of the table's
@@ -30,11 +31,23 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
  * Editing an entered game loads it (with its version). A frozen table (someone
  * confirmed, ADR 0006) renders every game read-only with an explanation of who
  * confirmed and how to edit again. A back link leads to the team overview, and
- * once every game is entered on an open table a prompt points there to confirm. The table state and games poll until the
- * table is completed (#106). A successful save is confirmed in a status line
- * below the form until the next save or game switch.
+ * once every game is entered on an open table a prompt points there to confirm.
+ * Once the tournament is no longer ACTIVE (`tournamentStatus`, S7c, #116) the
+ * whole screen is read-only and the confirm prompt gives way to a notice; an
+ * absent status (overview unavailable) leaves the screen editable, as before.
+ * The table state and games poll until the table is completed (#106). A
+ * successful save is confirmed in a status line below the form until the next
+ * save or game switch.
  */
-export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerTeamId?: string }) {
+export function ScoringPage({
+    table,
+    viewerTeamId,
+    tournamentStatus,
+}: {
+    table: TeamTable;
+    viewerTeamId?: string;
+    tournamentStatus?: TournamentStatus;
+}) {
     const { t } = useI18n();
     const reloadCurrentTable = useReloadCurrentTable();
     const gamesQuery = useTableGames(table);
@@ -57,6 +70,8 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
     const matchup = matchupOf(table, selected);
     // Confirming happens on the overview, so point there once nothing is left to enter.
     const allEntered = gamesQuery.isSuccess && gameNumbers.every((n) => byNumber.has(n));
+    // The tournament left ACTIVE (S7c): nothing here may be written any more.
+    const tournamentLocked = tournamentStatus !== undefined && tournamentStatus !== TournamentStatus.ACTIVE;
     // Without the viewer's identity (overview unavailable) no game is marked as sat out.
     const sittingOut = viewerTeamId !== undefined && sitsOut(table, viewerTeamId, selected);
 
@@ -72,6 +87,8 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
             <p className="text-sm text-muted-foreground">{header}</p>
             {isFrozen(table.confirmation) ? (
                 <FrozenNotice table={table} viewerTeamId={viewerTeamId} />
+            ) : tournamentLocked ? (
+                <p className="rounded-md bg-muted px-3 py-2 text-sm">{t('scoring.tournamentLocked')}</p>
             ) : allEntered ? (
                 <div className="flex flex-col gap-3 rounded-md bg-success-soft px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                     <p className="flex items-center gap-2 font-medium text-success">
@@ -145,6 +162,7 @@ export function ScoringPage({ table, viewerTeamId }: { table: TeamTable; viewerT
                     onSubmitStart={() => setSaved(null)}
                     onSaved={(kind) => setSaved({ gameNumber: selected, kind })}
                     onFrozen={() => void reloadCurrentTable()}
+                    tournamentLocked={tournamentLocked}
                 />
             </TabPanel>
 

@@ -1,3 +1,8 @@
+import { z } from 'zod';
+
+import { standingsEntryDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
+import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
+import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import { teamOverviewDtoSchema, teamSessionDtoSchema } from '@/team-auth-api/dtos/team-auth.dto.ts';
 import { teamOverviewDtoToDomain, teamSessionDtoToDomain } from '@/team-auth-api/mappers/team-auth.mapper.ts';
 import type { TeamOverview } from '@/domain/team-overview.domain.ts';
@@ -28,7 +33,18 @@ async function me(): Promise<TeamOverview> {
     return teamOverviewDtoToDomain(teamOverviewDtoSchema.parse(data));
 }
 
+/**
+ * The team's Final Ranking (`GET /api/team/me/final-ranking`), in the admin standings
+ * shape. Answers 409 `RESULTS_NOT_PUBLISHED` until the tournament is published, so the
+ * UI only asks once the overview reports PUBLISHED.
+ */
+async function finalRanking(): Promise<StandingsEntry[]> {
+    const { data } = await apiClient.get<unknown>('/api/team/me/final-ranking');
+    return z.array(standingsEntryDtoSchema).parse(data).map(standingsEntryDtoToDomain);
+}
+
 export const TeamAuthRepository = {
     exchange,
     me,
+    finalRanking,
 };

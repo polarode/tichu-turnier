@@ -74,6 +74,18 @@ async function setTotalRounds(id: string, totalRounds: number): Promise<Tourname
     return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
 }
 
+/** Finishes the tournament once every round is played; fixes the Final Ranking (organizer-only until published). */
+async function finish(id: string): Promise<Tournament> {
+    const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/finish`);
+    return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
+}
+
+/** Publishes the Final Ranking so the teams can see it. */
+async function publish(id: string): Promise<Tournament> {
+    const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/publish`);
+    return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
+}
+
 async function remove(id: string): Promise<void> {
     await apiClient.delete(`/api/tournaments/${id}`);
 }
@@ -89,4 +101,6 @@ export const TournamentRepository = {
     standings,
     setTotalRounds,
     startNextRound,
+    finish,
+    publish,
 };

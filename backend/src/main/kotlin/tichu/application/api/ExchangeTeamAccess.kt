@@ -5,9 +5,10 @@ import tichu.domain.TournamentId
 
 /**
  * Inbound port (driving side). Exchanges a raw team access token (from the magic
- * link) for a team session. Unknown, revoked and completed-tournament tokens all
- * fail with the same generic rejection so nothing about a token's existence is
- * disclosed; a link is multi-use — both team members share it.
+ * link) for a team session. Unknown and revoked tokens fail with the same generic
+ * rejection so nothing about a token's existence is disclosed; a link is
+ * multi-use — both team members share it. A finished or published tournament does
+ * not invalidate the link: it keeps granting read access.
  */
 interface ExchangeTeamAccess {
 

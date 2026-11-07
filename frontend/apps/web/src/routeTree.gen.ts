@@ -17,6 +17,7 @@ import { Route as PublicRouteImport } from './routes/public'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminChangelogRouteImport } from './routes/admin.changelog'
 import { Route as AdminConsoleRouteImport } from './routes/admin.console'
 import { Route as TeamLoginRouteImport } from './routes/team_.login'
 import { Route as TeamScoreRouteImport } from './routes/team_.score'
@@ -64,6 +65,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminChangelogRoute = AdminChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminConsoleRoute = AdminConsoleRouteImport.update({
   id: '/console',
   path: '/console',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
+  '/admin/changelog': typeof AdminChangelogRoute
   '/admin/console': typeof AdminConsoleRoute
   '/team/login': typeof TeamLoginRoute
   '/team/score': typeof TeamScoreRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
+  '/admin/changelog': typeof AdminChangelogRoute
   '/admin/console': typeof AdminConsoleRoute
   '/team/login': typeof TeamLoginRoute
   '/team/score': typeof TeamScoreRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
+  '/admin/changelog': typeof AdminChangelogRoute
   '/admin/console': typeof AdminConsoleRoute
   '/team_/login': typeof TeamLoginRoute
   '/team_/score': typeof TeamScoreRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/public'
     | '/register'
     | '/team'
+    | '/admin/changelog'
     | '/admin/console'
     | '/team/login'
     | '/team/score'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/public'
     | '/register'
     | '/team'
+    | '/admin/changelog'
     | '/admin/console'
     | '/team/login'
     | '/team/score'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/public'
     | '/register'
     | '/team'
+    | '/admin/changelog'
     | '/admin/console'
     | '/team_/login'
     | '/team_/score'
@@ -265,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/changelog': {
+      id: '/admin/changelog'
+      path: '/changelog'
+      fullPath: '/admin/changelog'
+      preLoaderRoute: typeof AdminChangelogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/console': {
       id: '/admin/console'
       path: '/console'
@@ -311,6 +330,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminChangelogRoute: typeof AdminChangelogRoute
   AdminConsoleRoute: typeof AdminConsoleRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminTournamentsTournamentIdRoute: typeof AdminTournamentsTournamentIdRoute
@@ -319,6 +339,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminChangelogRoute: AdminChangelogRoute,
   AdminConsoleRoute: AdminConsoleRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminTournamentsTournamentIdRoute: AdminTournamentsTournamentIdRoute,

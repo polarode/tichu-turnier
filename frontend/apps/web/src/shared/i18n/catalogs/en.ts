@@ -146,6 +146,11 @@ export const en = {
     'ownerConsole.inviteStatus.spent': 'Spent',
     'ownerConsole.inviteStatus.revoked': 'Revoked',
 
+    'changelog.link': 'Changelog',
+    'changelog.title': 'Changelog',
+    'changelog.description': 'What changed recently.',
+    'changelog.empty': 'No entries yet.',
+
     'dashboard.title': 'My tournaments',
     'dashboard.backLink': 'Back to my tournaments',
     'dashboard.description': 'The tournaments you organize.',

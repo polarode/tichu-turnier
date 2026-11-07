@@ -129,6 +129,8 @@ Conventions:
   spec under `src/__tests__`.
 - **i18n:** all user-facing strings live in `shared/i18n/catalogs` (de + en);
   hardcoded JSX text is rejected by lint and catalog parity is enforced by a test.
+  Exception: the admin changelog (`features/changelog/changelog.json`) is content, not UI,
+  and is written in English only.
 - File naming: `*.component.tsx`, `*.hook.ts`, `*.repository.ts`, `*.mapper.ts`,
   `*.dto.ts`, `*.domain.ts`, `*.store.ts`, tests `*.spec.ts(x)` under `__tests__`.
 

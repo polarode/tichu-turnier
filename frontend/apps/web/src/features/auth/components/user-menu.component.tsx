@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { LogOut, ShieldCheck } from 'lucide-react';
+import { LogOut, ScrollText, ShieldCheck } from 'lucide-react';
 
 import { useLogoutAdmin, useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -12,7 +12,7 @@ const MENU_ITEM_CLASS =
 /**
  * Avatar in the top-right corner, shown only while a session exists. Clicking it
  * opens a menu with the signed-in email, the owner console entry (platform owners
- * only) and the logout action. It resolves the
+ * only), the changelog entry (every admin) and the logout action. It resolves the
  * session itself (sharing the admin guard's cache entry), so it also appears when
  * a signed-in admin opens a public or team page first; logout clears the entry
  * and the avatar disappears with it.
@@ -70,6 +70,15 @@ export function UserMenu() {
                             {t('ownerConsole.link')}
                         </Link>
                     ) : null}
+                    <Link
+                        to="/admin/changelog"
+                        role="menuitem"
+                        onClick={() => close(false)}
+                        className={MENU_ITEM_CLASS}
+                    >
+                        <ScrollText aria-hidden="true" className="size-4" />
+                        {t('changelog.link')}
+                    </Link>
                     <button
                         type="button"
                         role="menuitem"

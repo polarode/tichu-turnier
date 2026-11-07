@@ -146,6 +146,11 @@ export const de: Catalog = {
     'ownerConsole.inviteStatus.spent': 'Eingelöst',
     'ownerConsole.inviteStatus.revoked': 'Zurückgezogen',
 
+    'changelog.link': 'Änderungen',
+    'changelog.title': 'Änderungen',
+    'changelog.description': 'Was sich zuletzt geändert hat.',
+    'changelog.empty': 'Noch keine Einträge.',
+
     'dashboard.title': 'Meine Turniere',
     'dashboard.backLink': 'Zu meinen Turnieren',
     'dashboard.description': 'Die Turniere, die du organisierst.',

@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    publicTournamentDtoToDomain,
     tournamentDtoToDomain,
     tournamentSettingsDtoToDomain,
     tournamentSettingsToDto,
     tournamentWriteInputToDto,
 } from '@/tournament-api/mappers/tournament.mapper.ts';
-import type { TournamentDto } from '@/tournament-api/dtos/tournament.dto.ts';
+import type { PublicTournamentDto, TournamentDto } from '@/tournament-api/dtos/tournament.dto.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 const dto: TournamentDto = {
@@ -16,6 +17,7 @@ const dto: TournamentDto = {
     maxTeams: 16,
     settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 },
     status: TournamentStatus.SETUP,
+    publicVisibility: false,
     createdAt: '2026-01-01T12:00:00.000Z',
     updatedAt: '2026-01-02T08:30:00.000Z',
 };
@@ -32,6 +34,25 @@ describe('tournamentDtoToDomain', () => {
         expect(tournament.createdAt).toBeInstanceOf(Date);
         expect(tournament.createdAt.toISOString()).toBe('2026-01-01T12:00:00.000Z');
         expect(tournament.updatedAt.toISOString()).toBe('2026-01-02T08:30:00.000Z');
+    });
+});
+
+describe('tournamentDtoToDomain publicVisibility', () => {
+    it('carries the public visibility flag through to the domain', () => {
+        expect(tournamentDtoToDomain({ ...dto, publicVisibility: true }).publicVisibility).toBe(true);
+    });
+});
+
+describe('publicTournamentDtoToDomain', () => {
+    it('maps a public tournament DTO to the public domain shape', () => {
+        const publicDto: PublicTournamentDto = { id: 't-2', name: 'Summer Open', status: 'ACTIVE', teamCount: 3 };
+
+        expect(publicTournamentDtoToDomain(publicDto)).toEqual({
+            id: 't-2',
+            name: 'Summer Open',
+            status: TournamentStatus.ACTIVE,
+            teamCount: 3,
+        });
     });
 });
 

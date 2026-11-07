@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { buttonVariants } from '@tichu/ui/button.tsx';
+import { Switch } from '@tichu/ui/switch.tsx';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import { TeamsSection } from '@/features/teams/components/teams-section.component.tsx';
@@ -11,7 +12,10 @@ import { StandingsSection } from '@/features/tournaments/components/standings-se
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournamentLiveStream } from '@/features/tournaments/hooks/tournament-live-stream.hook.ts';
-import { useTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
+import {
+    useSetPublicVisibility,
+    useTournament,
+} from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
@@ -56,6 +60,7 @@ function TournamentDetailBody() {
     const { t } = useI18n();
     const { tournamentId } = Route.useParams();
     const tournamentQuery = useTournament(tournamentId);
+    const setPublicVisibility = useSetPublicVisibility(tournamentId);
     const teamsQuery = useTeams(tournamentId);
     const { tab = 'rounds' } = Route.useSearch();
     const navigate = Route.useNavigate();
@@ -142,6 +147,21 @@ function TournamentDetailBody() {
                         {`${t('tournament.form.totalRounds')}: ${tournament.settings.totalRounds}`}
                     </p>
                 ) : null}
+                <div className="mt-2 flex items-center justify-between gap-3">
+                    <div className="flex flex-col">
+                        <label htmlFor="public-visibility" className="text-sm font-medium">
+                            {t('tournament.detail.publicVisibility.label')}
+                        </label>
+                        <span className="text-sm text-muted-foreground">
+                            {t('tournament.detail.publicVisibility.hint')}
+                        </span>
+                    </div>
+                    <Switch
+                        id="public-visibility"
+                        checked={tournament.publicVisibility}
+                        onCheckedChange={(next) => setPublicVisibility.mutate(next)}
+                    />
+                </div>
             </div>
 
             {!editable && roundsQuery.data ? (

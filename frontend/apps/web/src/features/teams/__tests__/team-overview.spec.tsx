@@ -31,6 +31,13 @@ vi.mock('@/scoring-api/scoring.repository.ts', () => ({
     },
 }));
 
+// The public start page (reached by navigating to /public) fetches the public tournaments.
+vi.mock('@/tournament-api/tournament.repository.ts', () => ({
+    TournamentRepository: {
+        listPublicTournaments: vi.fn().mockResolvedValue([]),
+    },
+}));
+
 const mockedMe = vi.mocked(TeamAuthRepository.me);
 const mockedFinalRanking = vi.mocked(TeamAuthRepository.finalRanking);
 const mockedCurrentTable = vi.mocked(ScoringRepository.currentTable);
@@ -243,7 +250,10 @@ describe('/team', () => {
         mockedMe.mockImplementation(() => new Promise((resolve) => (resolveMe = resolve)));
 
         const { router } = renderApp('/public');
-        await screen.findByText('Öffentlicher Bereich');
+        await screen.findByText('Öffentliche Turniere');
+        // Let the public home settle (empty list) so the starting route is idle before
+        // we navigate, mirroring a visitor who is already looking at the public home.
+        await screen.findByText('Noch keine öffentlichen Turniere.');
         expect(router.state.location.pathname).toBe('/public');
 
         // Direct navigation (no hover, so the intent-preload cannot pre-warm the

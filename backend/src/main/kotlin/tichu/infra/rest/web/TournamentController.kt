@@ -9,6 +9,7 @@ import tichu.application.api.ListTournaments
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
 import tichu.application.api.PublishTournament
+import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
@@ -53,6 +54,7 @@ class TournamentController(
     private val startNextRound: StartNextRound,
     private val finishTournament: FinishTournament,
     private val publishTournament: PublishTournament,
+    private val setPublicVisibility: SetPublicVisibility,
 ) {
 
     @PostMapping
@@ -131,6 +133,16 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): TournamentResponse = TournamentResponse.from(
         setTotalRounds.set(TournamentId(id), body.totalRounds, principal.adminUserId),
+    )
+
+    /** Switches public visibility on or off; allowed in every Tournament Status. */
+    @PutMapping("/{id}/public-visibility")
+    fun publicVisibility(
+        @PathVariable id: String,
+        @RequestBody body: PublicVisibilityRequestBody,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentResponse = TournamentResponse.from(
+        setPublicVisibility.set(TournamentId(id), body.publicVisibility, principal.adminUserId),
     )
 
     @PutMapping("/{id}")

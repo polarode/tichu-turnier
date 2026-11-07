@@ -138,6 +138,20 @@ class TournamentRepositoryPersistenceTest(
     }
 
     @Test
+    fun `public visibility round-trips through its own column and defaults to false`() {
+        tournamentRepository.save(tournament(id = "t-public", publicVisibility = true))
+        tournamentRepository.save(tournament(id = "t-private"))
+
+        assertEquals(true, tournamentRepository.findById(TournamentId("t-public"))?.publicVisibility)
+        assertEquals(false, tournamentRepository.findById(TournamentId("t-private"))?.publicVisibility)
+
+        // Stored in the dedicated boolean column, not inside the JSONB settings document.
+        val rawFlag = jdbcTemplate.queryForObject("SELECT public_visibility FROM tournaments WHERE id = 't-public'", Boolean::class.java)
+        assertEquals(true, rawFlag)
+        assertFalse(jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = 't-public'", String::class.java)!!.contains("publicVisibility"))
+    }
+
+    @Test
     fun `data lives in the database, not in a repository cache`() {
         tournamentRepository.save(tournament(id = "t-1", name = "Survives"))
 
@@ -184,6 +198,7 @@ class TournamentRepositoryPersistenceTest(
         name: String = "Spring Classic",
         ownerId: AdminUserId = owner,
         settings: TournamentSettings = TournamentSettings(),
+        publicVisibility: Boolean = false,
     ): Tournament = Tournament(
         id = TournamentId(id),
         ownerId = ownerId,
@@ -194,5 +209,6 @@ class TournamentRepositoryPersistenceTest(
         status = TournamentStatus.SETUP,
         createdAt = Instant.parse("2026-01-01T00:00:00Z"),
         updatedAt = Instant.parse("2026-01-01T00:00:00Z"),
+        publicVisibility = publicVisibility,
     )
 }

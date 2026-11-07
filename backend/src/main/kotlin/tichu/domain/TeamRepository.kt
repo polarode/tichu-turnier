@@ -24,6 +24,12 @@ interface TeamRepository {
     /** Number of teams already registered in one tournament — used by the capacity rule. */
     fun countByTournament(tournamentId: TournamentId): Int
 
+    /**
+     * Team counts for many tournaments in one query. Tournaments without teams are absent
+     * from the map, so callers default them to 0.
+     */
+    fun countByTournaments(ids: List<TournamentId>): Map<TournamentId, Int>
+
     /** Exact id lookup inside one tournament — returns null for foreign/missing ids. */
     fun findById(teamId: TeamId, tournamentId: TournamentId): Team?
 

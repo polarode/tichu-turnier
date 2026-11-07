@@ -17,6 +17,8 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         remove: vi.fn(),
         finish: vi.fn(),
         publish: vi.fn(),
+        setPublicVisibility: vi.fn(),
+        listPublicTournaments: vi.fn(),
     },
 }));
 
@@ -61,6 +63,7 @@ const setupTournament = {
     settings: { grandTichuBonus: 100 as const, doubleWinBonus: 100 as const, totalRounds: 4 },
     status: 'SETUP' as const,
     createdAt: new Date('2025-01-01T10:00:00Z'),
+    publicVisibility: false,
     updatedAt: new Date('2025-01-01T10:00:00Z'),
 };
 

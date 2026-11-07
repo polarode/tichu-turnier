@@ -47,7 +47,7 @@ describe('app routing', () => {
     });
 
     it.each([
-        ['/public', 'Öffentlicher Bereich'],
+        ['/public', 'Öffentliche Turniere'],
         ['/login', 'Anmelden'],
         ['/pending-approval', 'Warte auf Freigabe'],
     ])('renders %s with its German heading', async (path, heading) => {
@@ -68,7 +68,7 @@ describe('app routing', () => {
         renderApp('/');
 
         expect(
-            await screen.findByRole('heading', { name: 'Öffentlicher Bereich' }),
+            await screen.findByRole('heading', { name: 'Öffentliche Turniere' }),
         ).toBeInTheDocument();
     });
 

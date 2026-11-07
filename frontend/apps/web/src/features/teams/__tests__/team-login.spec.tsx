@@ -14,6 +14,13 @@ vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     },
 }));
 
+// The public start page (landed on from the dead-end) fetches the public tournaments.
+vi.mock('@/tournament-api/tournament.repository.ts', () => ({
+    TournamentRepository: {
+        listPublicTournaments: vi.fn().mockResolvedValue([]),
+    },
+}));
+
 const mockedExchange = vi.mocked(TeamAuthRepository.exchange);
 const mockedMe = vi.mocked(TeamAuthRepository.me);
 
@@ -108,7 +115,7 @@ describe('/team/login', () => {
         expect(mockedExchange).toHaveBeenCalledWith('dead-token');
 
         await userEvent.click(screen.getByText('Zur Startseite'));
-        await waitFor(() => expect(screen.getByText('Öffentlicher Bereich')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Öffentliche Turniere')).toBeInTheDocument());
     });
 
     it('shows the neutral prompt when no token is present, not an error', async () => {

@@ -194,6 +194,14 @@
             {
                 "type": "improvement",
                 "text": "Teams see the other team's games, confirmations, new rounds and the published results right away, with a Live badge on their pages, instead of every 15 to 30 seconds"
+            },
+            {
+                "type": "feature",
+                "text": "Make a tournament public and switch its public visibility on or off at any time with the Public Visibility toggle on the tournament page"
+            },
+            {
+                "type": "feature",
+                "text": "A public home page lists the public tournaments, grouped by status, so spectators can find them without signing in"
             }
         ]
     }

@@ -4,6 +4,7 @@ import tichu.domain.AdminUserId
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,6 +33,11 @@ open class JpaTournamentRepository(
 
     override fun findAllByOwner(owner: AdminUserId): List<Tournament> =
         springDataTournamentRepository.findAllByOwnerId(owner.value).map { it.toDomain() }
+
+    override fun findAllPublic(): List<Tournament> =
+        springDataTournamentRepository
+            .findByPublicVisibilityTrueAndStatusIn(TournamentStatus.PUBLICLY_LISTABLE)
+            .map { it.toDomain() }
 
     override fun delete(id: TournamentId) {
         springDataTournamentRepository.deleteById(id.value)

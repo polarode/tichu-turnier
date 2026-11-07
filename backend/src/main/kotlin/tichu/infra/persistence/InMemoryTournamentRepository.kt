@@ -4,6 +4,7 @@ import tichu.domain.AdminUserId
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -27,6 +28,9 @@ class InMemoryTournamentRepository : TournamentRepository {
 
     override fun findAllByOwner(owner: AdminUserId): List<Tournament> =
         store.values.filter { it.isOwnedBy(owner) }
+
+    override fun findAllPublic(): List<Tournament> =
+        store.values.filter { it.publicVisibility && it.status in TournamentStatus.PUBLICLY_LISTABLE }
 
     override fun delete(id: TournamentId) {
         store.remove(id.value)

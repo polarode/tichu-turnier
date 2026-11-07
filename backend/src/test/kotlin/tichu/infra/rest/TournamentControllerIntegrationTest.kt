@@ -598,6 +598,57 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
     }
 
+    @Test
+    fun `public visibility toggles on and off and shows in the tournament read`() {
+        val id = createTournament("Open House")
+
+        setPublicVisibility(id, true)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.publicVisibility").value(true))
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.publicVisibility").value(true))
+
+        setPublicVisibility(id, false)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.publicVisibility").value(false))
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.publicVisibility").value(false))
+    }
+
+    @Test
+    fun `public visibility can be toggled while the tournament is active`() {
+        val id = createTournament("Running")
+        setStatus(id, "ACTIVE")
+
+        setPublicVisibility(id, true)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.publicVisibility").value(true))
+    }
+
+    @Test
+    fun `a foreign admin cannot toggle another admin's public visibility`() {
+        val id = createTournament("Alice's tournament")
+
+        setPublicVisibility(id, true, otherAdminCookie)
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.publicVisibility").value(false))
+    }
+
+    private fun setPublicVisibility(
+        id: String,
+        publicVisibility: Boolean,
+        cookie: Cookie = sessionCookie,
+    ) = mockMvc.perform(
+        put("/api/tournaments/$id/public-visibility")
+            .cookie(cookie)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"publicVisibility":$publicVisibility}"""),
+    )
+
     private fun createTeam(tournamentId: String, name: String) {
         mockMvc.perform(
             post("/api/tournaments/$tournamentId/teams")

@@ -18,6 +18,7 @@ import tichu.application.api.GetTournament
 import tichu.application.api.ListAdmins
 import tichu.application.api.ListInvites
 import tichu.application.api.ListTeams
+import tichu.application.api.ListPublicTournaments
 import tichu.application.api.ListTournaments
 import tichu.application.api.PublishTournament
 import tichu.application.api.RecordGame
@@ -35,6 +36,7 @@ import tichu.application.api.RefreshSession
 import tichu.application.api.RegisterAdmin
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
+import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
@@ -43,6 +45,7 @@ import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
 import tichu.infra.rest.web.FinalRankingController
 import tichu.infra.rest.web.GameController
+import tichu.infra.rest.web.PublicTournamentController
 import tichu.infra.rest.web.InviteController
 import tichu.infra.rest.web.SessionCookieFactory
 import tichu.infra.rest.web.TeamAuthController
@@ -86,6 +89,7 @@ class RestConfiguration(
         startNextRound: StartNextRound,
         finishTournament: FinishTournament,
         publishTournament: PublishTournament,
+        setPublicVisibility: SetPublicVisibility,
     ): TournamentController = TournamentController(
         createTournament,
         listTournaments,
@@ -99,6 +103,7 @@ class RestConfiguration(
         startNextRound,
         finishTournament,
         publishTournament,
+        setPublicVisibility,
     )
 
     @Bean
@@ -140,6 +145,10 @@ class RestConfiguration(
     @Bean
     fun teamSessionCookieFactory(): SessionCookieFactory =
         SessionCookieFactory(teamSessionCookieName, sessionCookieSecure, teamSessionTtl)
+
+    @Bean
+    fun publicTournamentController(listPublicTournaments: ListPublicTournaments): PublicTournamentController =
+        PublicTournamentController(listPublicTournaments)
 
     @Bean
     fun gameController(recordGame: RecordGame): GameController = GameController(recordGame)

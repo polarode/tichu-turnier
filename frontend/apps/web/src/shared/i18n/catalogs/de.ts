@@ -180,6 +180,8 @@ export const de: Catalog = {
     'tournament.detail.backLink': 'Zum Turnier',
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',
     'tournament.detail.sections': 'Turnierbereiche',
+    'tournament.detail.publicVisibility.label': 'Öffentliche Sichtbarkeit',
+    'tournament.detail.publicVisibility.hint': 'Zuschauer können dieses Turnier ohne Anmeldung verfolgen.',
 
     'tournament.start.action': 'Turnier starten',
     'tournament.start.confirmDescription': 'Turnier starten und Runde 1 auslosen?',
@@ -337,8 +339,12 @@ export const de: Catalog = {
     'confirmation.final': 'Die Spiele sind endgültig.',
     'confirmation.stale': 'Die Spiele haben sich geändert, seit du sie angesehen hast. Prüfe sie und bestätige erneut.',
 
-    'public.title': 'Öffentlicher Bereich',
-    'public.description': 'Turniere, Ranglisten und Live-Statistiken ansehen.',
+    'publicHome.title': 'Öffentliche Turniere',
+    'publicHome.description':
+        'Laufende und beendete Turniere sowie veröffentlichte Ergebnisse verfolgen.',
+    'publicHome.teamCount': 'Teams',
+    'publicHome.empty': 'Noch keine öffentlichen Turniere.',
+    'publicHome.error': 'Die Turniere konnten nicht geladen werden.',
 
     'scoring.title': 'Ergebnisse eintragen',
     'scoring.description': 'Trage die an deinem Tisch gespielten Spiele ein.',

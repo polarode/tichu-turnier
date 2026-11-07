@@ -15,6 +15,7 @@ const dto = {
     settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T00:00:00.000Z',
+    publicVisibility: false,
     updatedAt: '2026-01-01T00:00:00.000Z',
 };
 

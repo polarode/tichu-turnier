@@ -39,6 +39,7 @@ class TournamentEntity(
     status: TournamentStatus,
     createdAt: Instant,
     updatedAt: Instant,
+    publicVisibility: Boolean = false,
 ) {
     var name: String = name
         protected set
@@ -64,6 +65,10 @@ class TournamentEntity(
     var updatedAt: Instant = updatedAt
         protected set
 
+    @Column(name = "public_visibility", nullable = false)
+    var publicVisibility: Boolean = publicVisibility
+        protected set
+
     fun toDomain(): Tournament = Tournament(
         id = TournamentId(id),
         ownerId = AdminUserId(ownerId),
@@ -74,6 +79,7 @@ class TournamentEntity(
         status = status,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        publicVisibility = publicVisibility,
     )
 
     companion object {
@@ -87,6 +93,7 @@ class TournamentEntity(
             status = tournament.status,
             createdAt = tournament.createdAt,
             updatedAt = tournament.updatedAt,
+            publicVisibility = tournament.publicVisibility,
         )
     }
 }

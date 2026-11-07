@@ -41,8 +41,21 @@ export interface Tournament {
     maxTeams: number;
     settings: TournamentSettings;
     status: TournamentStatus;
+    /** Whether the tournament is listed on the public home page (set by the organizer). */
+    publicVisibility: boolean;
     createdAt: Date;
     updatedAt: Date;
+}
+
+/**
+ * A tournament as the public (anonymous) home page shows it: public facts only, no
+ * organizer or team details.
+ */
+export interface PublicTournament {
+    id: string;
+    name: string;
+    status: TournamentStatus;
+    teamCount: number;
 }
 
 /**

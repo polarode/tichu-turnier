@@ -21,6 +21,13 @@ interface TournamentRepository {
     fun findAllByOwner(owner: AdminUserId): List<Tournament>
 
     /**
+     * Tournaments shown on the public home: `publicVisibility = true` and status ACTIVE,
+     * COMPLETED or PUBLISHED. SETUP tournaments are never returned. The order is not
+     * defined here; the caller sorts.
+     */
+    fun findAllPublic(): List<Tournament>
+
+    /**
      * Removes the tournament. Every tournament-scoped child table added later must
      * reference `tournaments` with `ON DELETE CASCADE`, so deleting a tournament also
      * removes its teams, players, rounds and games.

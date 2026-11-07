@@ -3,10 +3,15 @@ import { roundDtoToDomain } from '@/tournament-api/mappers/round.mapper.ts';
 import { tournamentDtoSchema, tournamentListDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 import { roundDtoSchema, roundListDtoSchema, startedTournamentDtoSchema } from '@/tournament-api/dtos/round.dto.ts';
 import { standingsDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
-import type { TotalRoundsRequestDto } from '@/tournament-api/dtos/tournament.dto.ts';
+import {
+    publicTournamentListDtoSchema,
+    type PublicVisibilityRequestDto,
+    type TotalRoundsRequestDto,
+} from '@/tournament-api/dtos/tournament.dto.ts';
+import { publicTournamentDtoToDomain } from '@/tournament-api/mappers/tournament.mapper.ts';
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
-import type { Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
+import type { PublicTournament, Tournament, TournamentWriteInput } from '@/domain/tournament.domain.ts';
 import type { Round } from '@/domain/round.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
@@ -74,6 +79,19 @@ async function setTotalRounds(id: string, totalRounds: number): Promise<Tourname
     return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
 }
 
+/** Shows or hides the tournament on the public home page; returns the updated tournament. */
+async function setPublicVisibility(id: string, publicVisibility: boolean): Promise<Tournament> {
+    const body: PublicVisibilityRequestDto = { publicVisibility };
+    const { data } = await apiClient.put<unknown>(`/api/tournaments/${id}/public-visibility`, body);
+    return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
+}
+
+/** The anonymous home-page list of publicly visible tournaments (public facts only). */
+async function listPublicTournaments(): Promise<PublicTournament[]> {
+    const { data } = await apiClient.get<unknown>('/api/public/tournaments');
+    return publicTournamentListDtoSchema.parse(data).map(publicTournamentDtoToDomain);
+}
+
 /** Finishes the tournament once every round is played; fixes the Final Ranking (organizer-only until published). */
 async function finish(id: string): Promise<Tournament> {
     const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/finish`);
@@ -100,6 +118,8 @@ export const TournamentRepository = {
     rounds,
     standings,
     setTotalRounds,
+    setPublicVisibility,
+    listPublicTournaments,
     startNextRound,
     finish,
     publish,

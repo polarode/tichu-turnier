@@ -20,6 +20,7 @@ import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
 import tichu.application.api.ListAdmins
 import tichu.application.api.ListInvites
+import tichu.application.api.ListPublicTournaments
 import tichu.application.api.ListTeams
 import tichu.application.api.ListTournaments
 import tichu.application.api.PublishTournament
@@ -35,6 +36,7 @@ import tichu.application.api.RefreshSession
 import tichu.application.api.RegisterAdmin
 import tichu.application.api.GetStandings
 import tichu.application.api.ListRounds
+import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
@@ -156,6 +158,13 @@ class UseCaseConfiguration(
     ): SetTotalRounds = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock, tournamentEvents)
 
     @Bean
+    fun setPublicVisibility(
+        tournamentRepository: TournamentRepository,
+        clock: Clock,
+        tournamentEvents: TournamentEvents,
+    ): SetPublicVisibility = SetPublicVisibilityCommand(tournamentRepository, clock, tournamentEvents)
+
+    @Bean
     fun recordGame(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
@@ -235,6 +244,10 @@ class UseCaseConfiguration(
     @Bean
     fun listTeams(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListTeams =
         ListTeamsQuery(tournamentRepository, teamRepository)
+
+    @Bean
+    fun listPublicTournaments(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListPublicTournaments =
+        ListPublicTournamentsQuery(tournamentRepository, teamRepository)
 
     @Bean
     fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =

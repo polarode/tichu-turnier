@@ -26,6 +26,8 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         remove: vi.fn(),
         finish: vi.fn(),
         publish: vi.fn(),
+        setPublicVisibility: vi.fn(),
+        listPublicTournaments: vi.fn(),
     },
 }));
 
@@ -42,6 +44,8 @@ describe('admin auth flows', () => {
         auth.refresh.mockRejectedValue(noSession());
         // The admin dashboard fetches tournaments as soon as it mounts.
         tournamentRepo.list.mockResolvedValue([]);
+        // The public area (landed on after sign-out) fetches the public tournaments.
+        tournamentRepo.listPublicTournaments.mockResolvedValue([]);
     });
 
     it('validates the login form before submitting', async () => {
@@ -272,7 +276,7 @@ describe('admin auth flows', () => {
         await userEvent.click(screen.getByRole('menuitem', { name: 'Abmelden' }));
 
         expect(
-            await screen.findByRole('heading', { name: 'Öffentlicher Bereich' }),
+            await screen.findByRole('heading', { name: 'Öffentliche Turniere' }),
         ).toBeInTheDocument();
         // Signing out swaps the avatar for the sign-in entry and drops the admin tab.
         expect(screen.queryByRole('button', { name: 'Konto' })).not.toBeInTheDocument();

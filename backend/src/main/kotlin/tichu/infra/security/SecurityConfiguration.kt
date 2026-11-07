@@ -90,6 +90,9 @@ class SecurityConfiguration(
                     "/api/auth/login",
                     "/api/team/auth/exchange",
                 ).permitAll()
+                // Anonymous public reads (ADR 0008): GET only, under /api/public, ahead of
+                // the admin catch-all below. Anything else under that prefix stays closed.
+                authorize.requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
                 // Team endpoints accept only a team session — an admin session is
                 // rejected here, before any controller runs.
                 authorize.requestMatchers("/api/team/**")

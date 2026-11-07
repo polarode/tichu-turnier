@@ -26,6 +26,7 @@ export const tournamentDtoSchema = z.object({
     maxTeams: z.number(),
     settings: tournamentSettingsDtoSchema,
     status: z.enum(TOURNAMENT_STATUSES),
+    publicVisibility: z.boolean(),
     createdAt: z.string(),
     updatedAt: z.string(),
 });
@@ -33,6 +34,23 @@ export const tournamentDtoSchema = z.object({
 export const tournamentListDtoSchema = z.array(tournamentDtoSchema);
 
 export type TournamentDto = z.infer<typeof tournamentDtoSchema>;
+
+/** One entry of `GET /api/public/tournaments` (public facts only). */
+export const publicTournamentDtoSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    status: z.enum(TOURNAMENT_STATUSES),
+    teamCount: z.number().int(),
+});
+
+export const publicTournamentListDtoSchema = z.array(publicTournamentDtoSchema);
+
+export type PublicTournamentDto = z.infer<typeof publicTournamentDtoSchema>;
+
+/** The body of `PUT /api/tournaments/{id}/public-visibility`. */
+export interface PublicVisibilityRequestDto {
+    publicVisibility: boolean;
+}
 
 /**
  * The editable tournament payload shared by create and update (PUT replaces every

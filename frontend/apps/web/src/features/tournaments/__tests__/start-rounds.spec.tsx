@@ -29,6 +29,8 @@ vi.mock('@/tournament-api/tournament.repository.ts', () => ({
         rounds: vi.fn(),
         finish: vi.fn(),
         publish: vi.fn(),
+        setPublicVisibility: vi.fn(),
+        listPublicTournaments: vi.fn(),
     },
 }));
 vi.mock('@/team-api/team.repository.ts', () => ({
@@ -56,6 +58,7 @@ function tournament(status: Tournament['status']): Tournament {
         settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 },
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
+        publicVisibility: false,
         updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
 }

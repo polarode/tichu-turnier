@@ -173,6 +173,8 @@ export const en = {
     'tournament.detail.backLink': 'Back to tournament',
     'tournament.detail.description': 'Manage teams and settings.',
     'tournament.detail.sections': 'Tournament sections',
+    'tournament.detail.publicVisibility.label': 'Public visibility',
+    'tournament.detail.publicVisibility.hint': 'Spectators can follow this tournament without signing in.',
 
     'tournament.start.action': 'Start tournament',
     'tournament.start.confirmDescription': 'Start the tournament and draw round 1?',
@@ -336,8 +338,12 @@ export const en = {
     'confirmation.final': 'The games are final.',
     'confirmation.stale': 'The games changed since you looked at them. Review them and confirm again.',
 
-    'public.title': 'Public area',
-    'public.description': 'Browse tournaments, standings and live statistics.',
+    'publicHome.title': 'Public tournaments',
+    'publicHome.description':
+        'Follow running and finished tournaments and their published results.',
+    'publicHome.teamCount': 'Teams',
+    'publicHome.empty': 'No public tournaments yet.',
+    'publicHome.error': 'The tournaments could not be loaded.',
 
     'scoring.title': 'Enter results',
     'scoring.description': 'Record the games played at your table.',

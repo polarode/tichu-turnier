@@ -19,6 +19,8 @@ data class Tournament(
     val status: TournamentStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
+    /** Whether the tournament is shown publicly. Off by default; a plain flag, not a setting. */
+    val publicVisibility: Boolean = false,
 ) {
     fun isOwnedBy(owner: AdminUserId): Boolean = ownerId == owner
 }
@@ -37,6 +39,15 @@ enum class TournamentStatus {
     ACTIVE,
     COMPLETED,
     PUBLISHED,
+    ;
+
+    companion object {
+        /**
+         * The statuses a public tournament is shown under, in public-home display order.
+         * SETUP is excluded: a tournament that has not started is never listed publicly.
+         */
+        val PUBLICLY_LISTABLE: List<TournamentStatus> = listOf(ACTIVE, COMPLETED, PUBLISHED)
+    }
 }
 
 /**

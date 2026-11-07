@@ -28,6 +28,7 @@ data class TournamentResponse(
     val maxTeams: Int,
     val settings: TournamentSettingsResponse,
     val status: TournamentStatus,
+    val publicVisibility: Boolean,
     val createdAt: Instant,
     val updatedAt: Instant,
 ) {
@@ -39,6 +40,7 @@ data class TournamentResponse(
             maxTeams = tournament.maxTeams,
             settings = TournamentSettingsResponse.from(tournament.settings),
             status = tournament.status,
+            publicVisibility = tournament.publicVisibility,
             createdAt = tournament.createdAt,
             updatedAt = tournament.updatedAt,
         )
@@ -83,6 +85,11 @@ data class TournamentSettingsRequestBody(
 /** The body of `PUT /api/tournaments/{id}/total-rounds`; the range is validated by the use case. */
 data class TotalRoundsRequestBody(
     @field:NotNull val totalRounds: Int,
+)
+
+/** The body of `PUT /api/tournaments/{id}/public-visibility`; allowed in every status. */
+data class PublicVisibilityRequestBody(
+    val publicVisibility: Boolean,
 )
 
 /** One line of the admin standings read, in standings order. */

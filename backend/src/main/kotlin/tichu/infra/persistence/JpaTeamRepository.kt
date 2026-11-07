@@ -90,6 +90,13 @@ class JpaTeamRepository(
     override fun countByTournament(tournamentId: TournamentId): Int =
         springDataTeamRepository.countByTournamentId(tournamentId.value)
 
+    override fun countByTournaments(ids: List<TournamentId>): Map<TournamentId, Int> {
+        if (ids.isEmpty()) return emptyMap()
+        return springDataTeamRepository
+            .countTeamsByTournamentIds(ids.map { it.value })
+            .associate { TournamentId(it.tournamentId) to it.teamCount.toInt() }
+    }
+
     override fun findById(teamId: TeamId, tournamentId: TournamentId): Team? =
         springDataTeamRepository.findByIdAndTournamentId(teamId.value, tournamentId.value)
             ?.let { withPlayers(listOf(it)) }

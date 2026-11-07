@@ -52,11 +52,17 @@ Commit messages should be **descriptive**, especially for the first commit of a 
 
 The admin changelog (`frontend/apps/web/src/features/changelog/changelog.json`) tells
 tournament organizers what changed. When a commit changes something an organizer or a team
-can see or use (screens, settings, scoring rules, a fix they would notice), add a bullet in
+can see or use (screens, settings, scoring rules, a fix they would notice), add a change in
 that same commit under today's `YYYY-MM-DD` entry, creating the entry when it is missing.
 
+- Each change is `{ "type": ..., "text": ... }`. The `type` is `feature` (something they
+  could not do before), `improvement` (something that existed now works or looks better)
+  or `fix` (something that was broken now works). The page shows the type as a badge and
+  orders the changes feature > improvement > fix, so the file order within a day does not
+  matter.
 - Write in English, in plain organizer language: what they can now do or what behaves
-  differently, with no ticket numbers or technical terms.
+  differently, with no ticket numbers or technical terms. Leave out a "Fixed:" prefix,
+  because the badge already says it.
 - CI, deployment, dependencies, refactors, backend-only hardening and owner-only tooling
   stay out.
 - The entries are content, not UI, so they are exempt from the de/en catalog rule.

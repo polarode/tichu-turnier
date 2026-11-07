@@ -2,80 +2,187 @@
     {
         "date": "2026-10-18",
         "changes": [
-            "Register and sign in as an organizer; new accounts are activated after approval or through an invite",
-            "Dashboard listing your tournaments with their status and team count",
-            "Interface available in German and English"
+            {
+                "type": "feature",
+                "text": "Register and sign in as an organizer; new accounts are activated after approval or through an invite"
+            },
+            {
+                "type": "feature",
+                "text": "Dashboard listing your tournaments with their status and team count"
+            },
+            {
+                "type": "feature",
+                "text": "Interface available in German and English"
+            }
         ]
     },
     {
         "date": "2026-10-21",
         "changes": [
-            "Create and edit tournaments",
-            "Add, edit and remove teams and players while the tournament is in setup",
-            "Give each team a private access link that you can reveal, rotate or revoke"
+            {
+                "type": "feature",
+                "text": "Create and edit tournaments"
+            },
+            {
+                "type": "feature",
+                "text": "Add, edit and remove teams and players while the tournament is in setup"
+            },
+            {
+                "type": "feature",
+                "text": "Give each team a private access link that you can reveal, rotate or revoke"
+            }
         ]
     },
     {
         "date": "2026-10-22",
-        "changes": ["Teams sign in with their access link and see their team overview"]
+        "changes": [
+            {
+                "type": "feature",
+                "text": "Teams sign in with their access link and see their team overview"
+            }
+        ]
     },
     {
         "date": "2026-10-26",
         "changes": [
-            "Start a tournament; the first round's tables are drawn automatically",
-            "Rounds view showing which teams play at which table"
+            {
+                "type": "feature",
+                "text": "Start a tournament; the first round's tables are drawn automatically"
+            },
+            {
+                "type": "feature",
+                "text": "Rounds view showing which teams play at which table"
+            }
         ]
     },
     {
         "date": "2026-10-31",
-        "changes": ["Teams enter their own game scores"]
+        "changes": [
+            {
+                "type": "feature",
+                "text": "Teams enter their own game scores"
+            }
+        ]
     },
     {
         "date": "2026-11-01",
         "changes": [
-            "Rounds view shows each game's status and the entered scores",
-            "Tournament page split into tabs; team screens optimized for phones",
-            "Teams get a confirmation after saving a game",
-            "The scoring link on the team overview only appears while the tournament is running",
-            "Account menu behind your avatar; language picker as a flag dropdown",
-            "New light theme"
+            {
+                "type": "improvement",
+                "text": "Rounds view shows each game's status and the entered scores"
+            },
+            {
+                "type": "improvement",
+                "text": "Tournament page split into tabs; team screens optimized for phones"
+            },
+            {
+                "type": "improvement",
+                "text": "Teams get a confirmation after saving a game"
+            },
+            {
+                "type": "improvement",
+                "text": "The scoring link on the team overview only appears while the tournament is running"
+            },
+            {
+                "type": "improvement",
+                "text": "Account menu behind your avatar; language picker as a flag dropdown"
+            },
+            {
+                "type": "feature",
+                "text": "New light theme"
+            }
         ]
     },
     {
         "date": "2026-11-02",
         "changes": [
-            "Odd team counts are seated with a table of three teams",
-            "Teams confirm or retract their table's results from the team overview",
-            "Choose between light, dark and system theme"
+            {
+                "type": "feature",
+                "text": "Odd team counts are seated with a table of three teams"
+            },
+            {
+                "type": "feature",
+                "text": "Teams confirm or retract their table's results from the team overview"
+            },
+            {
+                "type": "improvement",
+                "text": "Choose between light, dark and system theme"
+            }
         ]
     },
     {
         "date": "2026-11-03",
         "changes": [
-            "Set the total number of rounds, adjustable while the tournament is running",
-            "Standings tab and a progress card showing the current round and completed tables",
-            "Rounds view shows whether each table has confirmed its results",
-            "Tables are labelled by letter instead of number",
-            "A table's games are shown as a results table with Victory Points totals",
-            "Grand Tichu bonus is a tournament setting of 100 or 200",
-            "Fixed: a double win was rejected when the team's second player was entered as finishing first",
-            "Back links across the admin screens and a more compact team overview"
+            {
+                "type": "feature",
+                "text": "Set the total number of rounds, adjustable while the tournament is running"
+            },
+            {
+                "type": "feature",
+                "text": "Standings tab and a progress card showing the current round and completed tables"
+            },
+            {
+                "type": "improvement",
+                "text": "Rounds view shows whether each table has confirmed its results"
+            },
+            {
+                "type": "improvement",
+                "text": "Tables are labelled by letter instead of number"
+            },
+            {
+                "type": "improvement",
+                "text": "A table's games are shown as a results table with Victory Points totals"
+            },
+            {
+                "type": "feature",
+                "text": "Grand Tichu bonus is a tournament setting of 100 or 200"
+            },
+            {
+                "type": "fix",
+                "text": "A double win is no longer rejected when the team's second player is entered as finishing first"
+            },
+            {
+                "type": "improvement",
+                "text": "Back links across the admin screens and a more compact team overview"
+            }
         ]
     },
     {
         "date": "2026-11-04",
         "changes": [
-            "Start the next round from the progress card once every table is complete; teams are paired by standings, avoiding rematches"
+            {
+                "type": "feature",
+                "text": "Start the next round from the progress card once every table is complete; teams are paired by standings, avoiding rematches"
+            }
         ]
     },
     {
         "date": "2026-11-07",
         "changes": [
-            "Double win bonus is a tournament setting of 100 or 200",
-            "Sign in directly from the header; the admin tab is hidden from visitors",
-            "This changelog",
-            "Finish the tournament after its last round, then publish the results; the Standings tab becomes the Final Ranking",
-            "Teams keep access to their games after the tournament ends, read-only, and see the Final Ranking once you publish it"
+            {
+                "type": "feature",
+                "text": "Double win bonus is a tournament setting of 100 or 200"
+            },
+            {
+                "type": "improvement",
+                "text": "Sign in directly from the header; the admin tab is hidden from visitors"
+            },
+            {
+                "type": "feature",
+                "text": "This changelog"
+            },
+            {
+                "type": "feature",
+                "text": "Finish the tournament after its last round, then publish the results; the Standings tab becomes the Final Ranking"
+            },
+            {
+                "type": "feature",
+                "text": "Teams keep access to their games after the tournament ends, read-only, and see the Final Ranking once you publish it"
+            },
+            {
+                "type": "improvement",
+                "text": "Each change in this changelog is marked as a feature, improvement or fix"
+            }
         ]
     }
 ]

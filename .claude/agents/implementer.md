@@ -2,7 +2,7 @@
 name: implementer
 description: Implements one fully briefed slice test-first (one seam, one red → green cycle). Use from the implement skill after the seams are agreed and the slice's files and test are named.
 tools: Read, Edit, Write, Grep, Glob, Bash
-model: haiku
+model: sonnet
 ---
 
 You implement exactly one slice from the orchestrator's brief. The brief is your spec: its seam is already agreed with the user, so go straight to the loop.

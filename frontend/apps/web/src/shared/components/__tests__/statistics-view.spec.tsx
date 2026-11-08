@@ -131,6 +131,28 @@ describe('StatisticsView', () => {
         ]);
     });
 
+    it('orders the highlights by its own fixed order, whatever order the server sends', () => {
+        renderWithProviders(
+            <StatisticsView
+                statistics={{ ...statistics, highlights: [...statistics.highlights].reverse() }}
+            />,
+        );
+
+        const section = screen.getByRole('region', { name: 'Bestwerte' });
+        const labels = within(section)
+            .getAllByRole('listitem')
+            .map((tile) => tile.querySelector('span')?.textContent);
+        expect(labels).toEqual([
+            'Tichu-Ansagen',
+            'Erfolgreiche Tichus',
+            'Meiste Bomben',
+            'Doppelsiege',
+            'Zerstörte Tichus',
+            'Beschiss-Spiele',
+            'Gutes Pferd',
+        ]);
+    });
+
     it('formats highlight counts as integers and the Good Horse with one decimal', () => {
         renderWithProviders(<StatisticsView statistics={statistics} />);
 

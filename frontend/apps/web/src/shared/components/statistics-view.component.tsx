@@ -51,6 +51,17 @@ const METRIC_KEYS = {
     GOOD_HORSE: 'statistics.metric.GOOD_HORSE',
 } as const satisfies Record<Highlight['metric'], TranslationKey>;
 
+/** The order the Highlight tiles appear in; the order the server sends them in is ignored. */
+const HIGHLIGHT_ORDER: readonly Highlight['metric'][] = [
+    'TICHU_CALLS',
+    'SUCCESSFUL_TICHU',
+    'DESTROYED_TICHUS',
+    'DOUBLE_WINS',
+    'BOMBS',
+    'GOOD_HORSE',
+    'BESCHISS_GAMES',
+];
+
 /** The formatters a team table cell may use, in the current locale. */
 interface CellFormat {
     t: (key: TranslationKey) => string;
@@ -121,7 +132,10 @@ export function StatisticsView({ statistics }: StatisticsViewProps) {
     const { t, locale } = useI18n();
     const highlightsId = useId();
     const trendId = useId();
-    const { teams, highlights, trends } = statistics;
+    const { teams, trends } = statistics;
+    const highlights = [...statistics.highlights].sort(
+        (a, b) => HIGHLIGHT_ORDER.indexOf(a.metric) - HIGHLIGHT_ORDER.indexOf(b.metric),
+    );
     const storedColumns = useStatisticsColumnsStore((state) => state.visible);
     const toggleColumn = useStatisticsColumnsStore((state) => state.toggle);
     // Resolved once per mount, so resizing or rotating the device never changes the table.

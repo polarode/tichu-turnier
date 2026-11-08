@@ -194,6 +194,10 @@
             },
             {
                 "type": "improvement",
+                "text": "Scoring screen shows a team's bonus points separately, with a tap-to-open breakdown of Tichu calls and double win"
+            },
+            {
+                "type": "improvement",
                 "text": "Public page shows one round at a time, with ranking and trend in their own tab"
             },
             {

@@ -357,9 +357,9 @@ describe('/team/score', () => {
         await user.click(finishButtons[3]!); // Ben → 4
 
         // Alice's grand Tichu succeeded: base 50 + 100.
-        expect(screen.getByText('→ 150')).toBeInTheDocument();
-        // Alpha is ahead, so its points carry the winner mark.
         const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('+100')).toBeInTheDocument();
+        // Alpha is ahead, so its points carry the winner mark.
         expect(within(alpha).getByText('Gewinner:')).toBeInTheDocument();
         const beta = screen.getByRole('group', { name: 'Team Beta' });
         expect(within(beta).queryByText('Gewinner:')).not.toBeInTheDocument();
@@ -382,7 +382,59 @@ describe('/team/score', () => {
         await user.click(finishButtons[1]!); // Anna → 2
 
         // Team Alpha's double win: base 0 + 100.
-        expect(screen.getByText('→ 100')).toBeInTheDocument();
+        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('+100')).toBeInTheDocument();
+    });
+
+    it("shows a team's bonus points in its pill and lists them on demand", async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        // No call yet: Beta shows its base score only, without a bonus breakdown.
+        const beta = screen.getByRole('group', { name: 'Team Beta' });
+        expect(within(beta).getByText('50')).toBeInTheDocument();
+        expect(
+            within(beta).queryByRole('button', { name: 'Bonuspunkte – Team Beta' }),
+        ).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+
+        // Alice's small Tichu succeeded: the pill shows the bonus next to the base score.
+        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('+100')).toBeInTheDocument();
+
+        await user.click(within(alpha).getByRole('button', { name: 'Bonuspunkte – Team Alpha' }));
+        const dialog = await screen.findByRole('dialog');
+        expect(within(dialog).getByText('Tichu Alice: geschafft')).toBeInTheDocument();
+        expect(within(dialog).getByText('+100')).toBeInTheDocument();
+    });
+
+    it('shows +0 when a failed grand Tichu cancels the double win bonus', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        // Anna calls grand Tichu, then Alice and Anna take 1st and 2nd: Anna's call fails.
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Anna: keine' }));
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Anna: Tichu' }));
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+        await user.click(finishButtons[1]!); // Anna → 2
+
+        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('+0')).toBeInTheDocument();
+        await user.click(within(alpha).getByRole('button', { name: 'Bonuspunkte – Team Alpha' }));
+        const dialog = await screen.findByRole('dialog');
+        expect(within(dialog).getByText('−200')).toBeInTheDocument();
     });
 
     it("announces each player's current call and bomb count, not just the control name", async () => {

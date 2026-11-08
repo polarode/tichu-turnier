@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Minus, Plus, X } from 'lucide-react';
+import { CircleHelp, Minus, Plus, X } from 'lucide-react';
 import { Button } from '@tichu/ui/button.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from '@tichu/ui/popover.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
 import {
@@ -14,8 +15,7 @@ import {
     type TichuCall,
 } from '@/domain/game.domain.ts';
 import {
-    complementBaseScore,
-    displayTotals,
+    type BonusSource,
     doubleWinTeam,
     gameWinner,
     emptyFormState,
@@ -23,6 +23,7 @@ import {
     nextFinishPosition,
     PLAYER_SLOTS,
     teamOfSlot,
+    teamPoints,
     toWriteInput,
     withSlot,
     type PlayerSlot,
@@ -34,11 +35,17 @@ import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { fillPlaceholders } from '@/shared/i18n/fill-placeholders.ts';
 
 /** Card points per team range from −25 to 125 in steps of 5. */
 const BASE_SCORE_MIN = -25;
 const BASE_SCORE_MAX = 125;
 const BASE_SCORE_STEP = 5;
+
+/** A signed points figure for the pill and the breakdown: `+100`, `−200`, and `+0` for zero. */
+function formatSigned(points: number): string {
+    return points < 0 ? `\u2212${Math.abs(points)}` : `+${points}`;
+}
 
 /**
  * `GAME_VALIDATION_INVALID` is field-anchored server-side
@@ -147,11 +154,8 @@ export function GameEntryForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [existingGame?.version]);
     const dw = doubleWinTeam(state.positions);
-    const totals = displayTotals(state, table);
-    const baseScores = [
-        dw === null ? state.baseScoreTeam0 : 0,
-        complementBaseScore(state.baseScoreTeam0, dw !== null),
-    ] as const;
+    const points = teamPoints(state, table);
+    const totals: [number, number] = [points[0].total, points[1].total];
     const winner = gameWinner(state, totals);
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
@@ -165,6 +169,28 @@ export function GameEntryForm({
         const player = team.players[slot % 2 === 0 ? 0 : 1];
         return { slot, player, teamName: team.teamName };
     });
+
+    function nameOf(slot: PlayerSlot): string {
+        return players.find((entry) => entry.slot === slot)?.player.name ?? '';
+    }
+
+    /** One line of the bonus breakdown, e.g. "Tichu Alice: succeeded" or "Double win". */
+    function describeBonus(source: BonusSource): string {
+        if (source.kind === 'DOUBLE_WIN') return t('scoring.bonus.doubleWin');
+        const label = fillPlaceholders(
+            t(
+                source.kind === 'SMALL_TICHU'
+                    ? 'scoring.bonus.smallTichu'
+                    : 'scoring.bonus.grandTichu',
+            ),
+            { name: nameOf(source.slot) },
+        );
+        return `${label}: ${t(source.success ? 'scoring.bonus.succeeded' : 'scoring.bonus.failed')}`;
+    }
+
+    function bonusLabel(team: 0 | 1): string {
+        return fillPlaceholders(t('scoring.bonus.explain'), { team: matchup[team].teamName });
+    }
 
     function assignFinish(slot: PlayerSlot) {
         const pos = nextFinishPosition(state.positions);
@@ -263,7 +289,9 @@ export function GameEntryForm({
 
             {/* One group per team. Phones stack each player's name above three equal
                 44px controls; from `sm` up name and controls share one row. The team's
-                card points and total sit in a pill on the box's top border, opposite its name. */}
+                card points sit in a pill on the box's top border, opposite its name. When
+                the team has bonus sources, the pill adds their signed sum in muted type and
+                a (?) button that opens the breakdown of each source. */}
             {([0, 1] as const).map((team) => (
                 <fieldset
                     key={team}
@@ -272,7 +300,7 @@ export function GameEntryForm({
                     <legend
                         className={cn(
                             // Leaves room for the points opposite on the border.
-                            'max-w-[calc(100%-8rem)] truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                            'max-w-[calc(100%-10rem)] truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
                             tones[team].chip,
                         )}
                     >
@@ -287,8 +315,41 @@ export function GameEntryForm({
                                 <span className="sr-only">{`${t('scoring.winner')}: `}</span>
                             </>
                         ) : null}
-                        {baseScores[team]}
-                        <span className="text-muted-foreground"> → {totals[team]}</span>
+                        {points[team].base}
+                        {points[team].bonuses.length > 0 ? (
+                            <>
+                                <span className="text-muted-foreground">
+                                    {` ${formatSigned(points[team].bonus)}`}
+                                </span>
+                                <Popover>
+                                    <PopoverTrigger
+                                        aria-label={bonusLabel(team)}
+                                        className="relative -my-1 ml-0.5 inline-flex size-6 items-center justify-center rounded-full align-middle text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none after:absolute after:-inset-2.5 after:content-['']"
+                                    >
+                                        <CircleHelp aria-hidden="true" className="size-3.5" />
+                                    </PopoverTrigger>
+                                    <PopoverContent
+                                        aria-label={bonusLabel(team)}
+                                        align="end"
+                                        className="w-auto max-w-64 p-3 text-sm"
+                                    >
+                                        <ul className="flex flex-col gap-1">
+                                            {points[team].bonuses.map((source, index) => (
+                                                <li
+                                                    key={index}
+                                                    className="flex justify-between gap-4"
+                                                >
+                                                    <span>{describeBonus(source)}</span>
+                                                    <span className="font-semibold tabular-nums">
+                                                        {formatSigned(source.points)}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </PopoverContent>
+                                </Popover>
+                            </>
+                        ) : null}
                     </p>
                     {players
                         .filter(({ slot }) => teamOfSlot(slot) === team)

@@ -83,28 +83,64 @@ export function complementBaseScore(baseScoreTeam0: number, isDoubleWin: boolean
     return isDoubleWin ? 0 : 100 - baseScoreTeam0;
 }
 
+/** One bonus a team earned or lost in this game; [points] is signed. */
+export type BonusSource =
+    | { kind: 'SMALL_TICHU' | 'GRAND_TICHU'; slot: PlayerSlot; success: boolean; points: number }
+    | { kind: 'DOUBLE_WIN'; points: number };
+
+/** A team's display points: the card [base], its bonus sources, their signed sum [bonus], and [total]. */
+export interface TeamPoints {
+    base: number;
+    bonuses: BonusSource[];
+    bonus: number;
+    total: number;
+}
+
 /**
- * The per-team display totals (base + bonuses), with a grand Tichu and a double
- * win worth the tournament's [bonuses]. Display-only — never submitted; the server
- * recomputes (ADR 0004). Returns totals for [team0, team1].
+ * The per-team display points with their bonus sources, for [team0, team1]. Tichu
+ * calls come first in slot order, then the double-win bonus. Display-only — never
+ * submitted; the server recomputes (ADR 0004).
  */
-export function displayTotals(state: GameFormState, bonuses: ScoringBonuses): [number, number] {
+export function teamPoints(
+    state: GameFormState,
+    bonuses: ScoringBonuses,
+): [TeamPoints, TeamPoints] {
     const dw = doubleWinTeam(state.positions);
-    const base: [number, number] = [
-        dw === null ? state.baseScoreTeam0 : 0,
-        dw === null ? complementBaseScore(state.baseScoreTeam0, false) : 0,
+    const teams: [TeamPoints, TeamPoints] = [
+        { base: dw === null ? state.baseScoreTeam0 : 0, bonuses: [], bonus: 0, total: 0 },
+        {
+            base: dw === null ? complementBaseScore(state.baseScoreTeam0, false) : 0,
+            bonuses: [],
+            bonus: 0,
+            total: 0,
+        },
     ];
-    const bonus: [number, number] = [0, 0];
     for (const slot of PLAYER_SLOTS) {
         const team = teamOfSlot(slot);
         const call = state.calls[slot];
         const success = state.positions[slot] === 1;
-        if (call === 'SMALL') bonus[team] += success ? SMALL_TICHU_BONUS : -SMALL_TICHU_BONUS;
-        else if (call === 'GRAND')
-            bonus[team] += success ? bonuses.grandTichuBonus : -bonuses.grandTichuBonus;
+        if (call === 'SMALL') {
+            teams[team].bonuses.push({
+                kind: 'SMALL_TICHU',
+                slot,
+                success,
+                points: success ? SMALL_TICHU_BONUS : -SMALL_TICHU_BONUS,
+            });
+        } else if (call === 'GRAND') {
+            teams[team].bonuses.push({
+                kind: 'GRAND_TICHU',
+                slot,
+                success,
+                points: success ? bonuses.grandTichuBonus : -bonuses.grandTichuBonus,
+            });
+        }
     }
-    if (dw !== null) bonus[dw] += bonuses.doubleWinBonus;
-    return [base[0] + bonus[0], base[1] + bonus[1]];
+    if (dw !== null) teams[dw].bonuses.push({ kind: 'DOUBLE_WIN', points: bonuses.doubleWinBonus });
+    for (const team of teams) {
+        team.bonus = team.bonuses.reduce((sum, source) => sum + source.points, 0);
+        team.total = team.base + team.bonus;
+    }
+    return teams;
 }
 
 /**

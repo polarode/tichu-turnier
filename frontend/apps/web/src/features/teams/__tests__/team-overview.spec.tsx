@@ -10,7 +10,8 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
 import { FakeEventSource } from '@/test-helpers/fake-event-source.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
-import { bodyRows, columnHeaders, footerRows } from '@/test-helpers/table-rows.ts';
+import { gameTiles, listItems } from '@/test-helpers/game-tiles.ts';
+import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
 
 vi.mock('@/team-auth-api/team-auth.repository.ts', () => ({
     TeamAuthRepository: {
@@ -420,7 +421,7 @@ async function renderPanel(table: TeamTable, games: RecordedGame[]) {
     const result = renderApp('/team');
     const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
     // The summary renders once the games are in.
-    await within(panel).findByRole('table', { name: 'Spiele' });
+    await within(panel).findByRole('list', { name: 'Spiele' });
     return { ...result, panel };
 }
 
@@ -436,14 +437,15 @@ describe('/team confirmation panel', () => {
     it('summarizes entered and missing games and keeps Confirm disabled with a hint until all are in', async () => {
         const { panel } = await renderPanel(seatedTable(), [game(1), game(3)]);
 
-        expect(bodyRows(within(panel).getByRole('table', { name: 'Spiele' }))).toEqual([
-            ['1', '60', '40', ''],
-            ['2', '–', '–', 'fehlt'],
-            ['3', '60', '40', ''],
-            ['4', '–', '–', 'fehlt'],
+        expect(gameTiles(within(panel).getByRole('list', { name: 'Spiele' }))).toEqual([
+            ['Spiel 1', 'Team Alpha, Gewinner 60 +2 Siegpunkte', 'Team Beta 40'],
+            ['Spiel 2 fehlt', 'Team Alpha', 'Team Beta'],
+            ['Spiel 3', 'Team Alpha, Gewinner 60 +2 Siegpunkte', 'Team Beta 40'],
+            ['Spiel 4 fehlt', 'Team Alpha', 'Team Beta'],
         ]);
-        expect(footerRows(within(panel).getByRole('table', { name: 'Spiele' }))).toEqual([
-            ['Siegpunkte', '4', '0', ''],
+        expect(listItems(within(panel).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
+            'Team Alpha 4',
+            'Team Beta 0',
         ]);
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
         expect(
@@ -544,25 +546,25 @@ describe('/team confirmation panel', () => {
         expect(
             within(panel).getByText('Status: Bestätigung läuft · 1 von 3 bestätigt'),
         ).toBeInTheDocument();
-        // Every team sits out two games; the viewer (Team Alpha) games 3 and 6.
-        const games = within(panel).getByRole('table', { name: 'Spiele' });
-        expect(columnHeaders(games)).toEqual([
-            'Spiel',
-            'Team Alpha',
-            'Team Beta',
-            'Team Gamma',
-            'Hinweise',
-        ]);
-        expect(bodyRows(games).map((row) => row.slice(0, 4))).toEqual([
-            ['1', '60', '40', 'Pause'],
-            ['2', '60', 'Pause', '40'],
-            ['3', 'Pause', '60', '40'],
-            ['4', '60', '40', 'Pause'],
-            ['5', '60', 'Pause', '40'],
-            ['6', 'Pause', '60', '40'],
+        // Each tile lists only the two teams playing it; the viewer (Team Alpha)
+        // sits out games 3 and 6.
+        const games = within(panel).getByRole('list', { name: 'Spiele' });
+        const alphaWins = 'Team Alpha, Gewinner 60 +2 Siegpunkte';
+        const betaWins = 'Team Beta, Gewinner 60 +2 Siegpunkte';
+        expect(gameTiles(games)).toEqual([
+            ['Spiel 1', alphaWins, 'Team Beta 40'],
+            ['Spiel 2', alphaWins, 'Team Gamma 40'],
+            ['Spiel 3', betaWins, 'Team Gamma 40'],
+            ['Spiel 4', alphaWins, 'Team Beta 40'],
+            ['Spiel 5', alphaWins, 'Team Gamma 40'],
+            ['Spiel 6', betaWins, 'Team Gamma 40'],
         ]);
         // Each team's Victory Points over the four games it played.
-        expect(footerRows(games)).toEqual([['Siegpunkte', '8', '4', '0', '']]);
+        expect(listItems(within(panel).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
+            'Team Alpha 8',
+            'Team Beta 4',
+            'Team Gamma 0',
+        ]);
     });
 
     it('explains a stale confirm and refetches the games', async () => {

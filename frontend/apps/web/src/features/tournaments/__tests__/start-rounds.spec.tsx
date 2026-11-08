@@ -12,7 +12,7 @@ import { ApiError } from '@/shared/api/api-error.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
-import { bodyRows, columnHeaders, footerRows } from '@/test-helpers/table-rows.ts';
+import { gameTiles, listItems } from '@/test-helpers/game-tiles.ts';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
@@ -247,23 +247,27 @@ describe('rounds section', () => {
         expect(await within(section).findByText('2/4 eingetragen')).toBeInTheDocument();
 
         // Games stay collapsed behind the table's summary line until it is opened.
-        expect(within(section).queryByRole('table')).not.toBeInTheDocument();
+        expect(
+            within(section).queryByRole('list', { name: 'Spiele – Tisch A' }),
+        ).not.toBeInTheDocument();
         const toggle = within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta/ });
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
         await userEvent.click(toggle);
         expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
-        // One row per game, one column per team in seat order (not stored order).
-        const games = within(section).getByRole('table', { name: 'Spiele – Tisch A' });
-        expect(columnHeaders(games)).toEqual(['Spiel', 'Alpha', 'Beta', 'Hinweise']);
-        expect(bodyRows(games)).toEqual([
-            ['1', '155', '45', 'Beschiss'],
-            ['2', '0', '300', 'Doppelsieg'],
-            ['3', '–', '–', 'fehlt'],
-            ['4', '–', '–', 'fehlt'],
+        // One tile per game, its teams in the game's schedule order, the winner marked.
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(gameTiles(games)).toEqual([
+            ['Spiel 1', 'Alpha, Gewinner 155 +2 Siegpunkte', 'Beta 45', 'Beschiss'],
+            ['Spiel 2', 'Alpha 0', 'Beta, Gewinner 300 +3 Siegpunkte', 'Doppelsieg'],
+            ['Spiel 3 fehlt', 'Alpha', 'Beta'],
+            ['Spiel 4 fehlt', 'Alpha', 'Beta'],
         ]);
         // Victory Points over the entered games: Alpha won game 1 (2), Beta game 2 with a double win (3).
-        expect(footerRows(games)).toEqual([['Siegpunkte', '2', '3', '']]);
+        expect(listItems(within(section).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
+            'Alpha 2',
+            'Beta 3',
+        ]);
         expect(within(section).queryByText('Trio')).not.toBeInTheDocument();
     });
 
@@ -369,19 +373,22 @@ describe('rounds section', () => {
             within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta vs Gamma/ }),
         );
 
-        // Six games, three team columns; the team sitting a game out reads "Pause".
-        // Only game 2 (Alpha vs Gamma, stored Gamma first) is entered.
-        const games = within(section).getByRole('table', { name: 'Spiele – Tisch A' });
-        expect(columnHeaders(games)).toEqual(['Spiel', 'Alpha', 'Beta', 'Gamma', 'Hinweise']);
-        expect(bodyRows(games)).toEqual([
-            ['1', '–', '–', 'Pause', 'fehlt'],
-            ['2', '120', 'Pause', '80', ''],
-            ['3', 'Pause', '–', '–', 'fehlt'],
-            ['4', '–', '–', 'Pause', 'fehlt'],
-            ['5', '–', 'Pause', '–', 'fehlt'],
-            ['6', 'Pause', '–', '–', 'fehlt'],
+        // Six tiles, each with only the two teams playing it. Only game 2 (Alpha vs
+        // Gamma, stored Gamma first) is entered.
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(gameTiles(games)).toEqual([
+            ['Spiel 1 fehlt', 'Alpha', 'Beta'],
+            ['Spiel 2', 'Alpha, Gewinner 120', 'Gamma 80'],
+            ['Spiel 3 fehlt', 'Beta', 'Gamma'],
+            ['Spiel 4 fehlt', 'Alpha', 'Beta'],
+            ['Spiel 5 fehlt', 'Alpha', 'Gamma'],
+            ['Spiel 6 fehlt', 'Beta', 'Gamma'],
         ]);
-        expect(footerRows(games)).toEqual([['Siegpunkte', '0', '0', '0', '']]);
+        expect(listItems(within(section).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
+            'Alpha 0',
+            'Beta 0',
+            'Gamma 0',
+        ]);
     });
 
     it('opens on the latest round and switches rounds through the selector', async () => {

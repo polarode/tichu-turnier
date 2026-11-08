@@ -187,6 +187,10 @@
             {
                 "type": "improvement",
                 "text": "The team scoring screen is more compact on phones and shows the table number and who plays there at the top"
+            },
+            {
+                "type": "improvement",
+                "text": "A table's games now show as compact tiles with each game's winner and victory points, under the teams' victory point totals, on the team overview and in the rounds view"
             }
         ]
     }

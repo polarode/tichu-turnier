@@ -7,7 +7,7 @@ import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
-import { GameResultsTable } from '@/features/scoring/components/game-results-table.component.tsx';
+import { GameResults } from '@/features/scoring/components/game-results.component.tsx';
 import {
     confirmedCountLabel,
     TABLE_STATUS_LABEL_KEYS,
@@ -31,8 +31,8 @@ interface RoundsSectionProps {
  * The rounds view. One round shows at a time, picked from a selector that opens on
  * the latest round and follows new rounds until the admin picks one. Each table
  * collapses to a summary line, "Table C: Falcons ✓ vs Owls · status"; all its
- * games (S5d, #102; trio tables #110) unfold behind that line as a results table
- * (one column per team), read-only — scoring and confirming happen in the
+ * games (S5d, #102; trio tables #110) unfold behind that line as game tiles
+ * with the teams' Victory Points, read-only — scoring and confirming happen in the
  * team area; a round is complete once every table is (glossary: Table Status). Team
  * names resolve from the teams query; a team that has since disappeared falls
  * back to its raw id so the pairing stays legible.
@@ -202,7 +202,7 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
             </button>
             {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}
             <div id={gamesId} hidden={!open} className="pb-1 pl-6">
-                <GameResultsTable
+                <GameResults
                     caption={`${t('rounds.games.caption')} – ${tableHeading(table.tableNumber, t)}`}
                     teams={table.teamIds.map((id) => ({ id, name: teamName(id) }))}
                     schedule={table.schedule}

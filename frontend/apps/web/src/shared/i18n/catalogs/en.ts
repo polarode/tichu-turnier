@@ -193,8 +193,6 @@ export const en = {
     'rounds.game.beschiss': 'Beschiss',
     'rounds.game.doubleWin': 'Double win',
     'rounds.game.missing': 'missing',
-    'rounds.game.sitsOut': 'Bye',
-    'rounds.game.notes': 'Notes',
     'rounds.games.caption': 'Games',
     'rounds.victoryPoints': 'Victory Points',
     'rounds.trio': 'Trio',

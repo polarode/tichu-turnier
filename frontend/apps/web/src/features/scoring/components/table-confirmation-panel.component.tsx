@@ -9,7 +9,7 @@ import {
     teamNameOf,
     type TeamTable,
 } from '@/domain/game.domain.ts';
-import { GameResultsTable } from '@/features/scoring/components/game-results-table.component.tsx';
+import { GameResults } from '@/features/scoring/components/game-results.component.tsx';
 import {
     useConfirmTable,
     useCurrentTable,
@@ -157,7 +157,7 @@ function ConfirmationPanel({
         >
             <h2 className="font-semibold">{heading}</h2>
             {games ? (
-                <GameResultsTable
+                <GameResults
                     caption={t('confirmation.games.label')}
                     teams={table.teams.map((team) => ({ id: team.teamId, name: team.teamName }))}
                     schedule={table.schedule}

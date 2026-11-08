@@ -98,8 +98,9 @@ or unknown key is a compile error. Two checks keep catalogs honest:
 
 - `shared/i18n/__tests__/catalog.spec.ts` fails if the catalogs diverge or a key
   is empty.
-- The `no-restricted-syntax` rule in `eslint.config.mjs` fails on hardcoded JSX
-  text in production sources; strings must come from the catalogs.
+- The `i18n/no-hardcoded-text` oxlint rule (`lint/i18n-plugin.mjs`, enabled in
+  `.oxlintrc.json`) fails on hardcoded JSX text and user-facing attributes in
+  production sources; strings must come from the catalogs.
 
 ## Data flow
 

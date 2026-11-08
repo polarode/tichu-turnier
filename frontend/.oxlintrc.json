@@ -1,0 +1,24 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["eslint", "typescript", "react", "oxc"],
+    "jsPlugins": ["./lint/i18n-plugin.mjs"],
+    "categories": { "correctness": "error" },
+    "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/routeTree.gen.ts", "**/coverage/**"],
+    "rules": {
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "warn",
+        "react/react-in-jsx-scope": "off",
+        "typescript/no-explicit-any": "error"
+    },
+    "overrides": [
+        {
+            "files": ["**/src/**/*.{ts,tsx}"],
+            "rules": { "i18n/no-hardcoded-text": "error" }
+        },
+        {
+            "files": ["**/__tests__/**", "**/*.spec.{ts,tsx}"],
+            "rules": { "i18n/no-hardcoded-text": "off" }
+        }
+    ]
+}

@@ -4,6 +4,9 @@ import tichu.domain.AdminRole
 import tichu.domain.AdminStatus
 import tichu.domain.AdminUserRepository
 import tichu.domain.PasswordHasher
+import tichu.domain.TournamentId
+import tichu.domain.TournamentRepository
+import tichu.domain.TournamentStatus
 import tichu.testsupport.PostgresBackedIntegrationTest
 import tichu.testsupport.loginAndCaptureSession
 import tichu.testsupport.seedAdmin
@@ -12,6 +15,8 @@ import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpHeaders
@@ -42,6 +47,7 @@ class OrganizersIntegrationTest(
     @Autowired private val objectMapper: ObjectMapper,
     @Autowired private val adminUsers: AdminUserRepository,
     @Autowired private val passwordHasher: PasswordHasher,
+    @Autowired private val tournamentRepository: TournamentRepository,
 ) : PostgresBackedIntegrationTest() {
 
     private val mockMvc: MockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -331,6 +337,20 @@ class OrganizersIntegrationTest(
 
         mockMvc.perform(get("/api/tournaments/$id").cookie(coCookie))
             .andExpect(status().isNotFound)
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TournamentStatus::class, names = ["COMPLETED", "PUBLISHED"])
+    fun `the lead removes a co-organizer once the tournament is finished or published`(status: TournamentStatus) {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+        tournamentRepository.save(tournamentRepository.findById(TournamentId(id))!!.copy(status = status))
+
+        removeOrganizer(leadCookie, id, coAdminId()).andExpect(status().isNoContent)
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(coCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
     }
 
     @Test

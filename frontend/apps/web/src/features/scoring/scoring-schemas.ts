@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { I18n } from '@/shared/i18n/i18n.context.tsx';
-import { doubleWinTeam } from '@/features/scoring/game-form.model.ts';
+import { isCompleteResult } from '@/features/scoring/game-form.model.ts';
 
 /**
  * Form schema for the game entry grid, built per locale so its messages are
@@ -25,25 +25,7 @@ export function gameFormSchema(t: I18n['t']) {
             beschiss: z.boolean(),
         })
         .superRefine((value, ctx) => {
-            const positions = value.positions;
-            const assigned = positions.filter((p): p is number => p !== null);
-            const dw = doubleWinTeam(positions);
-
-            if (dw !== null) {
-                // A double win: exactly positions 1 and 2 assigned (to the winners),
-                // the two losers unset. The winners-same-team check is doubleWinTeam's.
-                if (assigned.length !== 2 || [...assigned].sort().join() !== '1,2') {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        path: ['positions'],
-                        message: t('validation.scoring.positions'),
-                    });
-                }
-                return;
-            }
-
-            // A normal game: all four players finished, positions a permutation of 1..4.
-            if (assigned.length !== 4 || [...assigned].sort().join() !== '1,2,3,4') {
+            if (!isCompleteResult(value.positions)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     path: ['positions'],

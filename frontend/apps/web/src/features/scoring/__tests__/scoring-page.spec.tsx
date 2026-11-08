@@ -389,6 +389,55 @@ describe('/team/score', () => {
         expect(within(alpha).getByText('+100')).toBeInTheDocument();
     });
 
+    it("shows each team's victory points once the result is complete", async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        // An incomplete result shows no victory points.
+        expect(
+            within(screen.getByRole('group', { name: 'Team Alpha' })).queryByText(/Siegpunkte/),
+        ).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }));
+
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+        await user.click(finishButtons[2]!); // Bob → 2
+        await user.click(finishButtons[1]!); // Anna → 3
+        await user.click(finishButtons[3]!); // Ben → 4
+
+        // Alice's small Tichu succeeded: Alpha 150 beats Beta 50, so Alpha takes 2 VP.
+        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('2 Siegpunkte')).toBeInTheDocument();
+        const beta = screen.getByRole('group', { name: 'Team Beta' });
+        expect(within(beta).getByText('0 Siegpunkte')).toBeInTheDocument();
+    });
+
+    it('shows 3 and 0 victory points for a double win', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+        await user.click(finishButtons[1]!); // Anna → 2
+
+        expect(
+            within(screen.getByRole('group', { name: 'Team Alpha' })).getByText('3 Siegpunkte'),
+        ).toBeInTheDocument();
+        expect(
+            within(screen.getByRole('group', { name: 'Team Beta' })).getByText('0 Siegpunkte'),
+        ).toBeInTheDocument();
+    });
+
     it("shows a team's bonus points in its pill and lists them on demand", async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);

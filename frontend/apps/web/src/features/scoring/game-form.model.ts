@@ -78,6 +78,18 @@ export function doubleWinTeam(positions: (number | null)[]): 0 | 1 | null {
     return firstTeam === teamOfSlot(second as PlayerSlot) ? firstTeam : null;
 }
 
+/**
+ * Whether the finish positions form a complete result: a double win with exactly
+ * positions 1 and 2 assigned to its winners, or all four players finished with
+ * positions a permutation of 1..4. The form schema's positions rule (ADR 0004).
+ */
+export function isCompleteResult(positions: (number | null)[]): boolean {
+    const assigned = positions.filter((p): p is number => p !== null);
+    const sorted = [...assigned].sort().join();
+    if (doubleWinTeam(positions) !== null) return sorted === '1,2';
+    return sorted === '1,2,3,4';
+}
+
 /** Team 1's base score, derived from team 0's (or 0 on a double win). */
 export function complementBaseScore(baseScoreTeam0: number, isDoubleWin: boolean): number {
     return isDoubleWin ? 0 : 100 - baseScoreTeam0;
@@ -152,6 +164,23 @@ export function gameWinner(state: GameFormState, totals: [number, number]): 0 | 
     const dw = doubleWinTeam(state.positions);
     if (dw !== null) return dw;
     return totals[0] === totals[1] ? null : totals[0] > totals[1] ? 0 : 1;
+}
+
+/**
+ * The Victory Points each team gets for this game, for [team0, team1], or null
+ * while the result is incomplete. A double win is 3 to the winners and 0 to the
+ * other team even on levelled [totals]; otherwise the team ahead on points gets 2
+ * and the other 0, and a tie gives 1 each. Mirrors the server (ADR 0004).
+ */
+export function victoryPoints(
+    state: GameFormState,
+    totals: [number, number],
+): [number, number] | null {
+    if (!isCompleteResult(state.positions)) return null;
+    const dw = doubleWinTeam(state.positions);
+    if (dw !== null) return dw === 0 ? [3, 0] : [0, 3];
+    if (totals[0] === totals[1]) return [1, 1];
+    return totals[0] > totals[1] ? [2, 0] : [0, 2];
 }
 
 /**

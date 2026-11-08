@@ -8,8 +8,10 @@ import {
     emptyFormState,
     fromRecordedGame,
     gameWinner,
+    isCompleteResult,
     nextFinishPosition,
     teamPoints,
+    victoryPoints,
     toWriteInput,
     withSlot,
     type GameFormState,
@@ -247,6 +249,56 @@ describe('gameWinner', () => {
 
     it('is the double-win team even when a failed call levels the points', () => {
         expect(gameWinner(state([null, null, 2, 1]), [0, 0])).toBe(1);
+    });
+});
+
+describe('isCompleteResult', () => {
+    it('accepts all four positions as a permutation of 1..4', () => {
+        expect(isCompleteResult([2, 4, 1, 3])).toBe(true);
+    });
+
+    it('accepts a double win with exactly positions 1 and 2 assigned to one team', () => {
+        expect(isCompleteResult([null, null, 2, 1])).toBe(true);
+    });
+
+    it('rejects an incomplete normal game', () => {
+        expect(isCompleteResult([1, 3, 2, null])).toBe(false);
+    });
+
+    it('rejects a double win with a third position also assigned', () => {
+        expect(isCompleteResult([1, 2, 3, null])).toBe(false);
+        expect(isCompleteResult([1, 2, null, 3])).toBe(false);
+    });
+});
+
+describe('victoryPoints', () => {
+    const state = (positions: GameFormState['positions']): GameFormState => ({
+        positions,
+        calls: ['NONE', 'NONE', 'NONE', 'NONE'],
+        bombs: [0, 0, 0, 0],
+        baseScoreTeam0: 50,
+        beschiss: false,
+    });
+
+    it('is null while the result is incomplete', () => {
+        expect(victoryPoints(state([1, 3, 2, null]), [50, 50])).toBeNull();
+    });
+
+    it('gives the team ahead on points 2 and the other 0 on a normal win', () => {
+        expect(victoryPoints(state([1, 3, 2, 4]), [60, 40])).toEqual([2, 0]);
+    });
+
+    it('gives each team 1 on a tie', () => {
+        expect(victoryPoints(state([1, 3, 2, 4]), [50, 50])).toEqual([1, 1]);
+    });
+
+    it('gives the double-win team 3 even when a failed call levels the points', () => {
+        expect(victoryPoints(state([null, null, 2, 1]), [0, 0])).toEqual([0, 3]);
+        expect(victoryPoints(state([1, 2, null, null]), [0, 0])).toEqual([3, 0]);
+    });
+
+    it('is null on a double win with a third position also assigned', () => {
+        expect(victoryPoints(state([1, 2, 3, null]), [0, 0])).toBeNull();
     });
 });
 

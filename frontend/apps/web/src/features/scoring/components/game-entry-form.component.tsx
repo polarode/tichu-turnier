@@ -25,6 +25,7 @@ import {
     teamOfSlot,
     teamPoints,
     toWriteInput,
+    victoryPoints,
     withSlot,
     type PlayerSlot,
 } from '@/features/scoring/game-form.model.ts';
@@ -162,6 +163,7 @@ export function GameEntryForm({
     const points = teamPoints(state, table);
     const totals: [number, number] = [points[0].total, points[1].total];
     const winner = gameWinner(state, totals);
+    const vp = victoryPoints(state, totals);
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
     // the same read-only mode when the table freezes mid-edit.
@@ -296,7 +298,9 @@ export function GameEntryForm({
                 44px controls; from `sm` up name and controls share one row. The team's
                 card points sit in a pill on the box's top border, opposite its name. When
                 the team has bonus sources, the pill adds their signed sum in muted type and
-                a (?) button that opens the breakdown of each source. */}
+                a (?) button that opens the breakdown of each source. Once the result is
+                complete, the pill ends with the team's victory points (`· 2 SP`, with an
+                sr-only "Siegpunkte"). */}
             {([0, 1] as const).map((team) => (
                 <fieldset
                     key={team}
@@ -304,8 +308,9 @@ export function GameEntryForm({
                 >
                     <legend
                         className={cn(
-                            // Leaves room for the points opposite on the border.
-                            'max-w-[calc(100%-10rem)] truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                            // Leaves room for the pill opposite on the border; wider with the VP suffix.
+                            vp === null ? 'max-w-[calc(100%-10rem)]' : 'max-w-[calc(100%-13rem)]',
+                            'truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
                             tones[team].chip,
                         )}
                     >
@@ -353,6 +358,22 @@ export function GameEntryForm({
                                         </ul>
                                     </PopoverContent>
                                 </Popover>
+                            </>
+                        ) : null}
+                        {vp !== null ? (
+                            <>
+                                <span aria-hidden="true" className="text-muted-foreground">
+                                    {' · '}
+                                </span>
+                                <span aria-hidden="true">
+                                    <span className="font-semibold">{vp[team]}</span>{' '}
+                                    <span className="text-muted-foreground">
+                                        {t('standings.victoryPoints')}
+                                    </span>
+                                </span>
+                                <span className="sr-only">
+                                    {`${vp[team]} ${t('standings.victoryPoints.long')}`}
+                                </span>
                             </>
                         ) : null}
                     </p>

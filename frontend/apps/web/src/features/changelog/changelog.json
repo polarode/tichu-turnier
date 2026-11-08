@@ -209,6 +209,10 @@
                 "text": "Smaller live indicator that shows when the page is reconnecting"
             },
             {
+                "type": "improvement",
+                "text": "Scoring screen shows the victory points each team gets as soon as a game's result is complete"
+            },
+            {
                 "type": "fix",
                 "text": "A double win always counts as a win, even when a failed Tichu leaves both teams level"
             },

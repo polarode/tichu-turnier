@@ -183,6 +183,10 @@
             {
                 "type": "feature",
                 "text": "Statistics tab for organizers and spectators"
+            },
+            {
+                "type": "improvement",
+                "text": "The team scoring screen is more compact on phones and shows the table number and who plays there at the top"
             }
         ]
     }

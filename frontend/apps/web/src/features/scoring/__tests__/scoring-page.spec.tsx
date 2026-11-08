@@ -177,13 +177,16 @@ describe('/team/score', () => {
         );
     });
 
-    it('renders the matchup, roster and a game selector', async () => {
+    it('renders the table, matchup, roster and a game selector', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);
 
         renderApp('/team/score');
 
         expect(await screen.findByText('Team Alpha gegen Team Beta')).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { level: 1, name: 'Tisch 1 · Runde 1' }),
+        ).toBeInTheDocument();
         expect(screen.getByText('Alice')).toBeInTheDocument();
         expect(screen.getByText('Ben')).toBeInTheDocument();
         expect(screen.getAllByRole('tab')).toHaveLength(4);
@@ -355,6 +358,11 @@ describe('/team/score', () => {
 
         // Alice's grand Tichu succeeded: base 50 + 100.
         expect(screen.getByText('→ 150')).toBeInTheDocument();
+        // Alpha is ahead, so its points carry the winner mark.
+        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('Gewinner:')).toBeInTheDocument();
+        const beta = screen.getByRole('group', { name: 'Team Beta' });
+        expect(within(beta).queryByText('Gewinner:')).not.toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
         await waitFor(() => expect(scoring.create).toHaveBeenCalledTimes(1));

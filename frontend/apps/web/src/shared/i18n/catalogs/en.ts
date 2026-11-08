@@ -388,7 +388,6 @@ export const en = {
     'publicTournament.tabs.statistics': 'Statistics',
 
     'scoring.title': 'Enter results',
-    'scoring.description': 'Record the games played at your table.',
     'scoring.notSeated': 'Your table appears once the tournament starts.',
     'scoring.matchup.versus': 'vs',
     'scoring.selector.label': 'Select a game',
@@ -410,6 +409,7 @@ export const en = {
     'scoring.baseScore.label': 'Base score',
     'scoring.baseScore.decrease': '5 points less',
     'scoring.baseScore.increase': '5 points more',
+    'scoring.winner': 'Winner',
     'scoring.beschiss.label': 'Beschiss',
     'scoring.save.create': 'Save game',
     'scoring.save.update': 'Update game',

@@ -147,7 +147,12 @@ export function GameEntryForm({
     }, [existingGame?.version]);
     const dw = doubleWinTeam(state.positions);
     const totals = displayTotals(state, table);
-    const team1Base = complementBaseScore(state.baseScoreTeam0, dw !== null);
+    const baseScores = [
+        dw === null ? state.baseScoreTeam0 : 0,
+        complementBaseScore(state.baseScoreTeam0, dw !== null),
+    ] as const;
+    // The team ahead on this game's points; none on a tie.
+    const winner = totals[0] === totals[1] ? null : totals[0] > totals[1] ? 0 : 1;
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
     // the same read-only mode when the table freezes mid-edit.
@@ -257,20 +262,34 @@ export function GameEntryForm({
             ) : null}
 
             {/* One group per team. Phones stack each player's name above three equal
-                44px controls; from `sm` up name and controls share one row. */}
+                44px controls; from `sm` up name and controls share one row. The team's
+                card points and total sit in a pill on the box's top border, opposite its name. */}
             {([0, 1] as const).map((team) => (
                 <fieldset
                     key={team}
-                    className="flex flex-col gap-3 rounded-md border border-border bg-card p-3"
+                    className="relative flex flex-col gap-3 rounded-md border border-border bg-card p-3"
                 >
                     <legend
                         className={cn(
-                            'rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                            // Leaves room for the points opposite on the border.
+                            'max-w-[calc(100%-8rem)] truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
                             tones[team].chip,
                         )}
                     >
                         {matchup[team].teamName}
                     </legend>
+                    {/* The padding box starts below the 24px legend: -top-6 lines the
+                        pill up with it, and py-px plus the border keeps the same height. */}
+                    <p className="absolute -top-6 right-3 rounded-full border border-border bg-card px-2.5 py-px text-sm font-semibold">
+                        {winner === team ? (
+                            <>
+                                <span aria-hidden="true">🏆 </span>
+                                <span className="sr-only">{`${t('scoring.winner')}: `}</span>
+                            </>
+                        ) : null}
+                        {baseScores[team]}
+                        <span className="text-muted-foreground"> → {totals[team]}</span>
+                    </p>
                     {players
                         .filter(({ slot }) => teamOfSlot(slot) === team)
                         .map(({ slot, player }) => {
@@ -365,23 +384,6 @@ export function GameEntryForm({
                 </p>
             ) : null}
 
-            <div className="grid grid-cols-2 gap-4 text-center text-sm">
-                <div>
-                    <p className={cn('font-medium', tones[0].text)}>{matchup[0].teamName}</p>
-                    <p className="text-lg font-semibold">
-                        {dw === null ? state.baseScoreTeam0 : 0}
-                        <span className="text-muted-foreground"> → {totals[0]}</span>
-                    </p>
-                </div>
-                <div>
-                    <p className={cn('font-medium', tones[1].text)}>{matchup[1].teamName}</p>
-                    <p className="text-lg font-semibold">
-                        {team1Base}
-                        <span className="text-muted-foreground"> → {totals[1]}</span>
-                    </p>
-                </div>
-            </div>
-
             <div className="flex flex-col gap-1">
                 <label htmlFor="base-score" className="text-sm font-medium">
                     {t('scoring.baseScore.label')} – {matchup[0].teamName}
@@ -422,9 +424,6 @@ export function GameEntryForm({
                         <Plus aria-hidden="true" className="size-4" />
                     </Button>
                 </div>
-                <output htmlFor="base-score" className="text-center text-sm">
-                    {state.baseScoreTeam0}
-                </output>
             </div>
 
             {/* Once the page explains the freeze, the latched rejection needs no message of its own. */}
@@ -442,8 +441,8 @@ export function GameEntryForm({
                 </Button>
             ) : null}
 
-            {/* Phones: full-width buttons, primary save on top within thumb reach of the grid. */}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {/* Phones: one row, the primary save taking the wider right-hand cell under the thumb. */}
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 sm:flex sm:items-center sm:justify-between">
                 <Button
                     type="button"
                     size="touch"

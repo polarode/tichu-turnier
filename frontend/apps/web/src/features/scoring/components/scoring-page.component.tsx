@@ -22,7 +22,6 @@ import {
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
-import { PageHeader } from '@/shared/components/page-header.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
@@ -97,11 +96,19 @@ export function ScoringPage({
     return (
         <section className="flex w-full max-w-xl flex-col gap-4">
             <BackLink to="/team" labelKey="scoring.overviewLink" />
+            {/* Which table and who plays there is all the heading needs to say. */}
             <div className="flex flex-wrap items-start justify-between gap-2">
-                <PageHeader titleKey="scoring.title" descriptionKey="scoring.description" />
+                <div className="flex min-w-0 flex-col gap-1">
+                    <h1 className="text-xl font-semibold sm:text-2xl">
+                        {`${t('rounds.table')} ${table.tableNumber}`}
+                        <span className="text-base font-normal text-muted-foreground">
+                            {` · ${t('rounds.round')} ${table.roundNumber}`}
+                        </span>
+                    </h1>
+                    <p className="font-medium">{header}</p>
+                </div>
                 {live ? <LiveBadge connected={connected} labelKeyPrefix="team.live" /> : null}
             </div>
-            <p className="text-sm text-muted-foreground">{header}</p>
             {isFrozen(table.confirmation) ? (
                 <FrozenNotice table={table} viewerTeamId={viewerTeamId} />
             ) : tournamentLocked ? (

@@ -397,7 +397,6 @@ export const de: Catalog = {
     'publicTournament.tabs.statistics': 'Statistiken',
 
     'scoring.title': 'Ergebnisse eintragen',
-    'scoring.description': 'Trage die an deinem Tisch gespielten Spiele ein.',
     'scoring.notSeated': 'Dein Tisch erscheint, sobald das Turnier gestartet ist.',
     'scoring.matchup.versus': 'gegen',
     'scoring.selector.label': 'Spiel auswählen',
@@ -419,6 +418,7 @@ export const de: Catalog = {
     'scoring.baseScore.label': 'Punkte',
     'scoring.baseScore.decrease': '5 Punkte weniger',
     'scoring.baseScore.increase': '5 Punkte mehr',
+    'scoring.winner': 'Gewinner',
     'scoring.beschiss.label': 'Beschiss',
     'scoring.save.create': 'Spiel speichern',
     'scoring.save.update': 'Spiel aktualisieren',

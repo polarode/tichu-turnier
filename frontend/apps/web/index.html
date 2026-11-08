@@ -15,11 +15,13 @@
                 var preference = 'system';
                 try {
                     var stored = localStorage.getItem('tichu.theme');
-                    if (stored === 'light' || stored === 'dark' || stored === 'system') preference = stored;
+                    if (stored === 'light' || stored === 'dark' || stored === 'system')
+                        preference = stored;
                 } catch (e) {}
                 var dark =
                     preference === 'dark' ||
-                    (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    (preference === 'system' &&
+                        window.matchMedia('(prefers-color-scheme: dark)').matches);
                 document.documentElement.dataset.theme = dark ? 'dark' : 'light';
             })();
         </script>

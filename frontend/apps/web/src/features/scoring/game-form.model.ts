@@ -100,7 +100,8 @@ export function displayTotals(state: GameFormState, bonuses: ScoringBonuses): [n
         const call = state.calls[slot];
         const success = state.positions[slot] === 1;
         if (call === 'SMALL') bonus[team] += success ? SMALL_TICHU_BONUS : -SMALL_TICHU_BONUS;
-        else if (call === 'GRAND') bonus[team] += success ? bonuses.grandTichuBonus : -bonuses.grandTichuBonus;
+        else if (call === 'GRAND')
+            bonus[team] += success ? bonuses.grandTichuBonus : -bonuses.grandTichuBonus;
     }
     if (dw !== null) bonus[dw] += bonuses.doubleWinBonus;
     return [base[0] + bonus[0], base[1] + bonus[1]];

@@ -69,8 +69,14 @@ describe('AdminRepository', () => {
     });
 
     it('disables and reactivates an account', async () => {
-        mock.onPost('/api/admins/admin-1/disable').reply(200, { ...accountDto, status: 'DISABLED' });
-        mock.onPost('/api/admins/admin-1/reactivate').reply(200, { ...accountDto, status: 'ACTIVE' });
+        mock.onPost('/api/admins/admin-1/disable').reply(200, {
+            ...accountDto,
+            status: 'DISABLED',
+        });
+        mock.onPost('/api/admins/admin-1/reactivate').reply(200, {
+            ...accountDto,
+            status: 'ACTIVE',
+        });
 
         await expect(AdminRepository.disable('admin-1')).resolves.toMatchObject({
             status: 'DISABLED',

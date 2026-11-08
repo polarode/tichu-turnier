@@ -3,7 +3,11 @@ import { Button } from '@tichu/ui/button.tsx';
 
 import type { Team, TeamWriteInput } from '@/domain/team.domain.ts';
 import type { TeamFormValues } from '@/features/teams/team-schemas.ts';
-import { useCreateTeam, useDeleteTeam, useUpdateTeam } from '@/features/teams/hooks/team-queries.hook.ts';
+import {
+    useCreateTeam,
+    useDeleteTeam,
+    useUpdateTeam,
+} from '@/features/teams/hooks/team-queries.hook.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TeamFormDialog } from '@/features/teams/components/team-form-dialog.component.tsx';

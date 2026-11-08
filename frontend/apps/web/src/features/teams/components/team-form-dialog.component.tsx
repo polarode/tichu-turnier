@@ -3,10 +3,7 @@ import { Button } from '@tichu/ui/button.tsx';
 import { useForm } from 'react-hook-form';
 
 import type { Team } from '@/domain/team.domain.ts';
-import {
-    teamFormSchema,
-    type TeamFormValues,
-} from '@/features/teams/team-schemas.ts';
+import { teamFormSchema, type TeamFormValues } from '@/features/teams/team-schemas.ts';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
 import { FormField } from '@/shared/components/form-field.component.tsx';
 import { applyServerError } from '@/shared/forms/server-error.ts';

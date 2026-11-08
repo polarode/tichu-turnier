@@ -27,7 +27,10 @@ export function installMatchMedia({ dark }: { dark: boolean }): FakeMatchMedia {
             addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
                 listeners.add(listener);
             },
-            removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+            removeEventListener: (
+                _type: string,
+                listener: (event: MediaQueryListEvent) => void,
+            ) => {
                 listeners.delete(listener);
             },
             addListener: () => undefined,

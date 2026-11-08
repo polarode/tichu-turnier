@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { readStoredTheme, resolveTheme, storeTheme, THEME_STORAGE_KEY } from '@/shared/theme/theme.ts';
+import {
+    readStoredTheme,
+    resolveTheme,
+    storeTheme,
+    THEME_STORAGE_KEY,
+} from '@/shared/theme/theme.ts';
 
 afterEach(() => {
     vi.restoreAllMocks();

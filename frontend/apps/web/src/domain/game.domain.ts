@@ -88,7 +88,8 @@ export function matchupOf(table: TeamTable, gameNumber: number): Matchup {
     const team = (teamId: string) => table.teams.find((seated) => seated.teamId === teamId);
     const first = scheduled && team(scheduled.teamIds[0]);
     const second = scheduled && team(scheduled.teamIds[1]);
-    if (!first || !second) throw new Error(`Game ${gameNumber} is not on table ${table.tableNumber}'s schedule`);
+    if (!first || !second)
+        throw new Error(`Game ${gameNumber} is not on table ${table.tableNumber}'s schedule`);
     return [first, second];
 }
 

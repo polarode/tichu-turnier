@@ -29,9 +29,9 @@ function mapPair<T, R>(pair: readonly [T, T], f: (item: T) => R): [R, R] {
 
 /** Maps a table's seated teams element-wise, preserving the two-or-three seat shape. */
 export function mapSeated<T, R>(seated: SeatedTeams<T>, f: (item: T) => R): SeatedTeams<R> {
-    return seated.length === 3 ?
-            [f(seated[0]), f(seated[1]), f(seated[2])]
-        :   [f(seated[0]), f(seated[1])];
+    return seated.length === 3
+        ? [f(seated[0]), f(seated[1]), f(seated[2])]
+        : [f(seated[0]), f(seated[1])];
 }
 
 export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
@@ -87,7 +87,9 @@ function recordedTeamDtoToDomain(dto: RecordedGameDto['teams'][number]): Recorde
     };
 }
 
-function recordedPlayerDtoToDomain(dto: RecordedGameDto['teams'][number]['players'][number]): RecordedPlayer {
+function recordedPlayerDtoToDomain(
+    dto: RecordedGameDto['teams'][number]['players'][number],
+): RecordedPlayer {
     return {
         playerId: dto.playerId,
         position: dto.position,

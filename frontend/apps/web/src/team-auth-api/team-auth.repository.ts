@@ -4,7 +4,10 @@ import { standingsEntryDtoSchema } from '@/tournament-api/dtos/standings.dto.ts'
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import { teamOverviewDtoSchema, teamSessionDtoSchema } from '@/team-auth-api/dtos/team-auth.dto.ts';
-import { teamOverviewDtoToDomain, teamSessionDtoToDomain } from '@/team-auth-api/mappers/team-auth.mapper.ts';
+import {
+    teamOverviewDtoToDomain,
+    teamSessionDtoToDomain,
+} from '@/team-auth-api/mappers/team-auth.mapper.ts';
 import type { TeamOverview } from '@/domain/team-overview.domain.ts';
 import type { TeamSession } from '@/domain/team-session.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';

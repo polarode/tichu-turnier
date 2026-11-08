@@ -6,8 +6,13 @@
     "trailingComma": "all",
     "printWidth": 100,
     "sortPackageJson": false,
-    "ignorePatterns": [
-        "pnpm-lock.yaml",
-        "**/routeTree.gen.ts"
+    "ignorePatterns": ["pnpm-lock.yaml", "**/routeTree.gen.ts"],
+    "overrides": [
+        {
+            "files": ["*.yaml", "*.yml"],
+            "options": {
+                "tabWidth": 2
+            }
+        }
     ]
 }

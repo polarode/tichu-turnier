@@ -1,11 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
-import type {
-    AdminCredentials,
-    AdminRegistration,
-    AdminUser,
-} from '@/domain/admin-user.domain.ts';
+import type { AdminCredentials, AdminRegistration, AdminUser } from '@/domain/admin-user.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { sessionQueryKey } from '@/shared/constants/query-keys.ts';
 

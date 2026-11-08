@@ -32,7 +32,11 @@ export function ThemeSwitcher() {
             trigger={<TriggerIcon aria-hidden="true" className="size-5" />}
             options={THEME_PREFERENCES.map((option) => {
                 const Icon = THEME_ICON[option];
-                return { value: option, label: t(THEME_LABEL_KEY[option]), icon: <Icon className="size-4" /> };
+                return {
+                    value: option,
+                    label: t(THEME_LABEL_KEY[option]),
+                    icon: <Icon className="size-4" />,
+                };
             })}
         />
     );

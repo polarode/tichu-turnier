@@ -22,7 +22,10 @@ export type AppRenderResult = RenderResult & { router: AnyRouter; queryClient: Q
  */
 export function renderApp(
     initialPath = '/',
-    { initialLocale = 'de', strictMode = false }: { initialLocale?: Locale; strictMode?: boolean } = {},
+    {
+        initialLocale = 'de',
+        strictMode = false,
+    }: { initialLocale?: Locale; strictMode?: boolean } = {},
 ): AppRenderResult {
     const queryClient = createTestQueryClient();
     const router: AnyRouter = createRouter({

@@ -69,9 +69,7 @@ export function TeamOverview({
                 <dt className="sr-only">{t('teamOverview.teamName')}</dt>
                 <dd className="flex flex-wrap items-center gap-2">
                     <h1 className="text-lg font-semibold">{overview.teamName}</h1>
-                    {live ? (
-                        <LiveBadge connected={connected} labelKeyPrefix="team.live" />
-                    ) : null}
+                    {live ? <LiveBadge connected={connected} labelKeyPrefix="team.live" /> : null}
                 </dd>
                 <dt className="sr-only">{t('teamOverview.players')}</dt>
                 <dd className="text-sm text-muted-foreground">

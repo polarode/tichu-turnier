@@ -18,7 +18,11 @@ export function SelectValue(props: ComponentProps<typeof SelectPrimitive.Value>)
 }
 
 /** The closed control, styled like Input. */
-export function SelectTrigger({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Trigger>) {
+export function SelectTrigger({
+    className,
+    children,
+    ...props
+}: ComponentProps<typeof SelectPrimitive.Trigger>) {
     return (
         <SelectPrimitive.Trigger
             data-slot="select-trigger"
@@ -49,7 +53,8 @@ export function SelectContent({
                 data-slot="select-content"
                 className={cn(
                     'relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-md border border-border bg-popover text-popover-foreground shadow-md',
-                    position === 'popper' && 'data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1',
+                    position === 'popper' &&
+                        'data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1',
                     className,
                 )}
                 position={position}
@@ -69,7 +74,11 @@ export function SelectContent({
     );
 }
 
-export function SelectItem({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Item>) {
+export function SelectItem({
+    className,
+    children,
+    ...props
+}: ComponentProps<typeof SelectPrimitive.Item>) {
     return (
         <SelectPrimitive.Item
             data-slot="select-item"

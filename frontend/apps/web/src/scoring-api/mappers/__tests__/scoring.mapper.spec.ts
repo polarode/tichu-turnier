@@ -112,16 +112,27 @@ describe('teamTableDtoToDomain', () => {
     });
 
     it('maps the confirmation status and the confirmed teams', () => {
-        const table = teamTableDtoToDomain({ ...tableDto, status: 'CONFIRMING', confirmedTeamIds: ['team-b'] });
+        const table = teamTableDtoToDomain({
+            ...tableDto,
+            status: 'CONFIRMING',
+            confirmedTeamIds: ['team-b'],
+        });
 
-        expect(table.confirmation).toEqual({ status: TableStatus.CONFIRMING, confirmedTeamIds: ['team-b'] });
+        expect(table.confirmation).toEqual({
+            status: TableStatus.CONFIRMING,
+            confirmedTeamIds: ['team-b'],
+        });
     });
 
     it('maps a trio table with all three seated teams and its six-game schedule', () => {
         const table = teamTableDtoToDomain(trioTableDto);
 
         expect(table.trio).toBe(true);
-        expect(table.teams.map((team) => team.teamName)).toEqual(['Team Alpha', 'Team Beta', 'Team Gamma']);
+        expect(table.teams.map((team) => team.teamName)).toEqual([
+            'Team Alpha',
+            'Team Beta',
+            'Team Gamma',
+        ]);
         expect(table.schedule[1]).toEqual({ gameNumber: 2, teamIds: ['team-a', 'team-c'] });
         expect(table.schedule[5]).toEqual({ gameNumber: 6, teamIds: ['team-b', 'team-c'] });
     });
@@ -200,7 +211,12 @@ describe('gameWriteInputToDto', () => {
 
 describe('tableConfirmationDtoToDomain', () => {
     it('maps the confirm/retract response', () => {
-        expect(tableConfirmationDtoToDomain({ status: 'COMPLETED', confirmedTeamIds: ['team-a', 'team-b'] })).toEqual({
+        expect(
+            tableConfirmationDtoToDomain({
+                status: 'COMPLETED',
+                confirmedTeamIds: ['team-a', 'team-b'],
+            }),
+        ).toEqual({
             status: TableStatus.COMPLETED,
             confirmedTeamIds: ['team-a', 'team-b'],
         });

@@ -15,7 +15,14 @@ function Harness({ variant }: { variant?: 'segmented' | 'underline' }) {
     const [value, setValue] = useState<'a' | 'b' | 'c'>('a');
     return (
         <>
-            <TabList id="t" label="Sections" variant={variant} items={ITEMS} value={value} onValueChange={setValue} />
+            <TabList
+                id="t"
+                label="Sections"
+                variant={variant}
+                items={ITEMS}
+                value={value}
+                onValueChange={setValue}
+            />
             <TabPanel id="t" value={value}>{`content ${value}`}</TabPanel>
         </>
     );

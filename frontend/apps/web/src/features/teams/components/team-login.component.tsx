@@ -100,10 +100,7 @@ export function TeamLogin({ token }: { token?: string }) {
     }
 
     return (
-        <Screen
-            titleKey="teamLogin.neutralTitle"
-            descriptionKey="teamLogin.neutralDescription"
-        >
+        <Screen titleKey="teamLogin.neutralTitle" descriptionKey="teamLogin.neutralDescription">
             <BackLink />
         </Screen>
     );

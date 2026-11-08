@@ -15,8 +15,6 @@ function TeamLoginPage() {
 export const Route = createFileRoute('/team_/login')({
     // Access links land here with `?token=<raw>`; ignore anything empty or non-text.
     validateSearch: (search: Record<string, unknown>): TeamLoginSearch =>
-        typeof search.token === 'string' && search.token.length > 0
-            ? { token: search.token }
-            : {},
+        typeof search.token === 'string' && search.token.length > 0 ? { token: search.token } : {},
     component: TeamLoginPage,
 });

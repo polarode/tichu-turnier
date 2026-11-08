@@ -52,11 +52,19 @@ export function HeaderMenu<T extends string>({
         const index = items.indexOf(document.activeElement as HTMLButtonElement);
         const last = items.length - 1;
         const target =
-            event.key === 'ArrowDown' ? (index >= last ? 0 : index + 1)
-            : event.key === 'ArrowUp' ? (index <= 0 ? last : index - 1)
-            : event.key === 'Home' ? 0
-            : event.key === 'End' ? last
-            : null;
+            event.key === 'ArrowDown'
+                ? index >= last
+                    ? 0
+                    : index + 1
+                : event.key === 'ArrowUp'
+                  ? index <= 0
+                      ? last
+                      : index - 1
+                  : event.key === 'Home'
+                    ? 0
+                    : event.key === 'End'
+                      ? last
+                      : null;
         if (event.key === 'Tab') {
             close(false);
             return;
@@ -106,7 +114,10 @@ export function HeaderMenu<T extends string>({
                                 }}
                                 className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                             >
-                                <span aria-hidden="true" className="flex size-4 items-center justify-center">
+                                <span
+                                    aria-hidden="true"
+                                    className="flex size-4 items-center justify-center"
+                                >
                                     {option.icon}
                                 </span>
                                 <span>{option.label}</span>

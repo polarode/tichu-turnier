@@ -1,10 +1,6 @@
 import { z } from 'zod';
 
-import {
-    ADMIN_ROLES,
-    ADMIN_STATUSES,
-    INVITE_STATUSES,
-} from '@/vocabulary/admin.enum.ts';
+import { ADMIN_ROLES, ADMIN_STATUSES, INVITE_STATUSES } from '@/vocabulary/admin.enum.ts';
 
 /**
  * zod schemas describing the owner-console wire format. Every response is parsed at the

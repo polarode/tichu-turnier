@@ -132,7 +132,9 @@ describe('displayTotals', () => {
             beschiss: false,
         };
         // team 0's grand succeeded: 50 + 100; team 1's failed: 50 - 100.
-        expect(displayTotals(state, { ...normalBonuses, grandTichuBonus: 100 })).toEqual([150, -50]);
+        expect(displayTotals(state, { ...normalBonuses, grandTichuBonus: 100 })).toEqual([
+            150, -50,
+        ]);
     });
 
     it('awards the +200 double-win bonus and forces base 0/0', () => {
@@ -217,7 +219,7 @@ describe('toWriteInput', () => {
         expect(input.teams[1].players.map((p) => p.position)).toEqual([null, null]);
     });
 
-    it('builds the payload for the selected game\'s matchup, e.g. Alpha vs Gamma at a trio table', () => {
+    it("builds the payload for the selected game's matchup, e.g. Alpha vs Gamma at a trio table", () => {
         const input = toWriteInput(emptyFormState(), [table.teams[0], gamma], 2, null);
 
         expect(input.teams.map((team) => team.teamId)).toEqual(['team-a', 'team-c']);
@@ -236,16 +238,40 @@ describe('fromRecordedGame', () => {
                     teamId: 'team-a',
                     baseScore: 60,
                     players: [
-                        { playerId: 'a1', position: 1, call: 'GRAND', bombs: 2, tichuSuccess: true },
-                        { playerId: 'a2', position: 4, call: 'NONE', bombs: 0, tichuSuccess: false },
+                        {
+                            playerId: 'a1',
+                            position: 1,
+                            call: 'GRAND',
+                            bombs: 2,
+                            tichuSuccess: true,
+                        },
+                        {
+                            playerId: 'a2',
+                            position: 4,
+                            call: 'NONE',
+                            bombs: 0,
+                            tichuSuccess: false,
+                        },
                     ],
                 },
                 {
                     teamId: 'team-b',
                     baseScore: 40,
                     players: [
-                        { playerId: 'b1', position: 2, call: 'NONE', bombs: 0, tichuSuccess: false },
-                        { playerId: 'b2', position: 3, call: 'NONE', bombs: 0, tichuSuccess: false },
+                        {
+                            playerId: 'b1',
+                            position: 2,
+                            call: 'NONE',
+                            bombs: 0,
+                            tichuSuccess: false,
+                        },
+                        {
+                            playerId: 'b2',
+                            position: 3,
+                            call: 'NONE',
+                            bombs: 0,
+                            tichuSuccess: false,
+                        },
                     ],
                 },
             ],
@@ -279,16 +305,40 @@ describe('fromRecordedGame', () => {
                     teamId: 'team-b',
                     baseScore: 40,
                     players: [
-                        { playerId: 'b2', position: 3, call: 'NONE', bombs: 0, tichuSuccess: false },
-                        { playerId: 'b1', position: 2, call: 'NONE', bombs: 1, tichuSuccess: false },
+                        {
+                            playerId: 'b2',
+                            position: 3,
+                            call: 'NONE',
+                            bombs: 0,
+                            tichuSuccess: false,
+                        },
+                        {
+                            playerId: 'b1',
+                            position: 2,
+                            call: 'NONE',
+                            bombs: 1,
+                            tichuSuccess: false,
+                        },
                     ],
                 },
                 {
                     teamId: 'team-a',
                     baseScore: 60,
                     players: [
-                        { playerId: 'a2', position: 4, call: 'NONE', bombs: 0, tichuSuccess: false },
-                        { playerId: 'a1', position: 1, call: 'SMALL', bombs: 0, tichuSuccess: true },
+                        {
+                            playerId: 'a2',
+                            position: 4,
+                            call: 'NONE',
+                            bombs: 0,
+                            tichuSuccess: false,
+                        },
+                        {
+                            playerId: 'a1',
+                            position: 1,
+                            call: 'SMALL',
+                            bombs: 0,
+                            tichuSuccess: true,
+                        },
                     ],
                 },
             ],

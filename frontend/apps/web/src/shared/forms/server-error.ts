@@ -36,7 +36,8 @@ export function applyServerError<TValues extends FieldValues>(
     const message = localizedErrorMessage(error, t);
     const field =
         error instanceof ApiError
-            ? ((error.field ? anchors.fields?.[error.field] : undefined) ?? anchors.codes?.[error.code])
+            ? ((error.field ? anchors.fields?.[error.field] : undefined) ??
+              anchors.codes?.[error.code])
             : undefined;
 
     if (field) {

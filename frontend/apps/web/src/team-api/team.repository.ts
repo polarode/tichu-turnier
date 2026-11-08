@@ -31,11 +31,7 @@ async function create(tournamentId: string, input: TeamWriteInput): Promise<Team
     return teamDtoToDomain(teamDtoSchema.parse(data));
 }
 
-async function update(
-    tournamentId: string,
-    teamId: string,
-    input: TeamWriteInput,
-): Promise<Team> {
+async function update(tournamentId: string, teamId: string, input: TeamWriteInput): Promise<Team> {
     const { data } = await apiClient.put<unknown>(
         `${teamsPath(tournamentId)}/${teamId}`,
         teamWriteInputToDto(input),

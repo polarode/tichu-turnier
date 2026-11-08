@@ -112,7 +112,8 @@ export function GameEntryForm({
 
     // The stored version the form shows and saves against (null-version create when absent).
     const [loaded, setLoaded] = useState<RecordedGame | undefined>(existingGame);
-    const valuesOf = (game: RecordedGame | undefined) => (game ? fromRecordedGame(game, matchup) : emptyFormState());
+    const valuesOf = (game: RecordedGame | undefined) =>
+        game ? fromRecordedGame(game, matchup) : emptyFormState();
 
     const form = useForm<GameFormValues>({
         resolver: zodResolver(gameFormSchema(t)),
@@ -125,7 +126,8 @@ export function GameEntryForm({
     const dirty = JSON.stringify(state) !== JSON.stringify(valuesOf(loaded));
     // A stored version newer than the loaded one. Strictly newer: right after a save
     // the cached games still hold the older version until their refetch lands.
-    const newer = existingGame && existingGame.version > (loaded?.version ?? 0) ? existingGame : undefined;
+    const newer =
+        existingGame && existingGame.version > (loaded?.version ?? 0) ? existingGame : undefined;
 
     function load(game: RecordedGame) {
         form.reset(fromRecordedGame(game, matchup));
@@ -180,7 +182,10 @@ export function GameEntryForm({
     const baseScoreLocked = readOnly || dw !== null;
 
     function stepBaseScore(delta: number) {
-        const next = Math.min(BASE_SCORE_MAX, Math.max(BASE_SCORE_MIN, state.baseScoreTeam0 + delta));
+        const next = Math.min(
+            BASE_SCORE_MAX,
+            Math.max(BASE_SCORE_MIN, state.baseScoreTeam0 + delta),
+        );
         form.setValue('baseScoreTeam0', next);
     }
 
@@ -226,14 +231,22 @@ export function GameEntryForm({
     };
 
     // Each team keeps its seat colour across games (A Jade, B Star, C Pagoda).
-    const tones = [seatTone(seatOf(table, matchup[0].teamId)), seatTone(seatOf(table, matchup[1].teamId))] as const;
+    const tones = [
+        seatTone(seatOf(table, matchup[0].teamId)),
+        seatTone(seatOf(table, matchup[1].teamId)),
+    ] as const;
 
     const rootError = form.formState.errors.root;
     const positionsError = form.formState.errors.positions?.message;
     const pending = form.formState.isSubmitting || recordGame.isPending;
 
     return (
-        <form onSubmit={submit} noValidate className="flex flex-col gap-4" aria-label={t('scoring.form.title')}>
+        <form
+            onSubmit={submit}
+            noValidate
+            className="flex flex-col gap-4"
+            aria-label={t('scoring.form.title')}
+        >
             {newer && !readOnly ? (
                 <div className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                     <p>{t('scoring.changedElsewhere')}</p>
@@ -246,8 +259,16 @@ export function GameEntryForm({
             {/* One group per team. Phones stack each player's name above three equal
                 44px controls; from `sm` up name and controls share one row. */}
             {([0, 1] as const).map((team) => (
-                <fieldset key={team} className="flex flex-col gap-3 rounded-md border border-border bg-card p-3">
-                    <legend className={cn('rounded-full px-2.5 py-0.5 text-sm font-semibold', tones[team].chip)}>
+                <fieldset
+                    key={team}
+                    className="flex flex-col gap-3 rounded-md border border-border bg-card p-3"
+                >
+                    <legend
+                        className={cn(
+                            'rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                            tones[team].chip,
+                        )}
+                    >
                         {matchup[team].teamName}
                     </legend>
                     {players
@@ -260,7 +281,9 @@ export function GameEntryForm({
                                     key={slot}
                                     className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_repeat(3,6.5rem)] sm:items-center"
                                 >
-                                    <span className="truncate text-sm font-medium">{player.name}</span>
+                                    <span className="truncate text-sm font-medium">
+                                        {player.name}
+                                    </span>
                                     <div className="grid grid-cols-3 gap-2 sm:contents">
                                         {position === null ? (
                                             <Button
@@ -285,14 +308,25 @@ export function GameEntryForm({
                                                 onClick={() => resetFinish(slot)}
                                             >
                                                 <span className="font-semibold">{position}.</span>
-                                                <X aria-hidden="true" className="size-4 text-muted-foreground" />
+                                                <X
+                                                    aria-hidden="true"
+                                                    className="size-4 text-muted-foreground"
+                                                />
                                             </Button>
                                         )}
                                         <Button
                                             type="button"
                                             size="touch"
-                                            variant={state.calls[slot] === 'NONE' ? 'outline' : 'secondary'}
-                                            className={cn('px-2', state.calls[slot] === 'NONE' && 'text-muted-foreground')}
+                                            variant={
+                                                state.calls[slot] === 'NONE'
+                                                    ? 'outline'
+                                                    : 'secondary'
+                                            }
+                                            className={cn(
+                                                'px-2',
+                                                state.calls[slot] === 'NONE' &&
+                                                    'text-muted-foreground',
+                                            )}
                                             disabled={readOnly}
                                             aria-label={`${t('scoring.call.label')} – ${player.name}: ${callLabel[state.calls[slot]]}`}
                                             onClick={() => cycleCall(slot)}
@@ -310,7 +344,10 @@ export function GameEntryForm({
                                             aria-label={`${t('scoring.bombs.label')} – ${player.name}: ${bombs}`}
                                             onClick={() => cycleBombs(slot)}
                                         >
-                                            <span aria-hidden="true" className={bombs === 0 ? 'opacity-50' : undefined}>
+                                            <span
+                                                aria-hidden="true"
+                                                className={bombs === 0 ? 'opacity-50' : undefined}
+                                            >
                                                 💣
                                             </span>
                                             <span>{bombs}</span>
@@ -371,9 +408,7 @@ export function GameEntryForm({
                         value={state.baseScoreTeam0}
                         disabled={baseScoreLocked}
                         className="h-11 min-w-0 flex-1 accent-primary"
-                        onChange={(e) =>
-                            form.setValue('baseScoreTeam0', Number(e.target.value))
-                        }
+                        onChange={(e) => form.setValue('baseScoreTeam0', Number(e.target.value))}
                     />
                     <Button
                         type="button"
@@ -393,7 +428,9 @@ export function GameEntryForm({
             </div>
 
             {/* Once the page explains the freeze, the latched rejection needs no message of its own. */}
-            <FormAlert message={rootError?.type === 'confirmed' && frozen ? undefined : rootError?.message} />
+            <FormAlert
+                message={rootError?.type === 'confirmed' && frozen ? undefined : rootError?.message}
+            />
             {rootError?.type === 'exists' && onReload ? (
                 <Button type="button" variant="outline" onClick={() => void reload()}>
                     {t('scoring.alreadyExists.load')}
@@ -415,9 +452,16 @@ export function GameEntryForm({
                     aria-pressed={state.beschiss}
                     onClick={() => form.setValue('beschiss', !state.beschiss)}
                 >
-                    {state.beschiss ? `${t('scoring.beschiss.label')} ✓` : t('scoring.beschiss.label')}
+                    {state.beschiss
+                        ? `${t('scoring.beschiss.label')} ✓`
+                        : t('scoring.beschiss.label')}
                 </Button>
-                <Button type="submit" size="touch" disabled={readOnly || pending} aria-busy={pending}>
+                <Button
+                    type="submit"
+                    size="touch"
+                    disabled={readOnly || pending}
+                    aria-busy={pending}
+                >
                     {pending
                         ? t('scoring.save.saving')
                         : loaded

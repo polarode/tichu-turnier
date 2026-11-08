@@ -68,11 +68,19 @@ export function TabList<T extends string>({
     const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
         const last = items.length - 1;
         const target =
-            event.key === 'ArrowRight' ? (index === last ? 0 : index + 1)
-            : event.key === 'ArrowLeft' ? (index === 0 ? last : index - 1)
-            : event.key === 'Home' ? 0
-            : event.key === 'End' ? last
-            : null;
+            event.key === 'ArrowRight'
+                ? index === last
+                    ? 0
+                    : index + 1
+                : event.key === 'ArrowLeft'
+                  ? index === 0
+                      ? last
+                      : index - 1
+                  : event.key === 'Home'
+                    ? 0
+                    : event.key === 'End'
+                      ? last
+                      : null;
         if (target === null) return;
         event.preventDefault();
         select(target);
@@ -108,7 +116,11 @@ export function TabList<T extends string>({
                                           : 'border-transparent text-muted-foreground hover:text-foreground',
                                   )
                                 : buttonVariants({
-                                      variant: selected ? 'default' : item.done ? 'secondary' : 'outline',
+                                      variant: selected
+                                          ? 'default'
+                                          : item.done
+                                            ? 'secondary'
+                                            : 'outline',
                                       size,
                                       className: 'px-2',
                                   })

@@ -50,7 +50,11 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
             description={t('ownerConsole.invites.description')}
             error={form.formState.errors.root?.message ?? error}
         >
-            <form onSubmit={onSubmit} noValidate className="flex max-w-md flex-wrap items-end gap-2">
+            <form
+                onSubmit={onSubmit}
+                noValidate
+                className="flex max-w-md flex-wrap items-end gap-2"
+            >
                 <div className="flex-1">
                     <FormField
                         id="invite-label"
@@ -116,7 +120,9 @@ export function Invites({ invites }: { invites: AdminInvite[] }) {
                                     size="sm"
                                     variant="outline"
                                     disabled={revokeInvite.isPending}
-                                    onClick={() => void run(() => revokeInvite.mutateAsync(invite.id))}
+                                    onClick={() =>
+                                        void run(() => revokeInvite.mutateAsync(invite.id))
+                                    }
                                 >
                                     {t('ownerConsole.invites.revoke')}
                                 </Button>

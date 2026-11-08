@@ -33,9 +33,9 @@ describe('TeamRepository access link (reveal, rotate, revoke)', () => {
     });
 
     it('rejects a malformed reveal payload at the boundary', async () => {
-        mock
-            .onPost('/api/tournaments/t-1/teams/team-1/access-link/reveal')
-            .reply(200, { teamId: 'team-1' });
+        mock.onPost('/api/tournaments/t-1/teams/team-1/access-link/reveal').reply(200, {
+            teamId: 'team-1',
+        });
 
         await expect(TeamRepository.revealAccessLink('t-1', 'team-1')).rejects.toThrow();
     });

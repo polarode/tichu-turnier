@@ -9,10 +9,7 @@ import {
     useReactivateAdmin,
 } from '@/features/owner-console/hooks/owner-console-queries.hook.ts';
 import { useConsoleAction } from '@/features/owner-console/hooks/use-console-action.hook.ts';
-import {
-    ADMIN_ROLE_LABEL_KEYS,
-    ADMIN_STATUS_LABEL_KEYS,
-} from '@/features/owner-console/labels.ts';
+import { ADMIN_ROLE_LABEL_KEYS, ADMIN_STATUS_LABEL_KEYS } from '@/features/owner-console/labels.ts';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { AdminRole, AdminStatus } from '@/vocabulary/admin.enum.ts';

@@ -4,11 +4,7 @@ import {
     adminRegistrationToDto,
 } from '@/auth-api/mappers/auth.mapper.ts';
 import { adminDtoSchema } from '@/auth-api/dtos/auth.dto.ts';
-import type {
-    AdminCredentials,
-    AdminRegistration,
-    AdminUser,
-} from '@/domain/admin-user.domain.ts';
+import type { AdminCredentials, AdminRegistration, AdminUser } from '@/domain/admin-user.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
 /**

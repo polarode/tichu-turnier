@@ -1,4 +1,10 @@
-import type { GameWriteInput, RecordedGame, TableConfirmation, TableRef, TeamTable } from '@/domain/game.domain.ts';
+import type {
+    GameWriteInput,
+    RecordedGame,
+    TableConfirmation,
+    TableRef,
+    TeamTable,
+} from '@/domain/game.domain.ts';
 import {
     recordedGameDtoSchema,
     recordedGameListDtoSchema,
@@ -56,8 +62,14 @@ async function update(table: TableRef, input: GameWriteInput): Promise<RecordedG
  * `PUT …/confirmation` — confirms the table for the session's team. Carries the
  * [games] as the team saw them; `GAME_CONCURRENT_MODIFICATION` when any changed.
  */
-async function confirm(table: TableRef, games: readonly RecordedGame[]): Promise<TableConfirmation> {
-    const { data } = await apiClient.put<unknown>(`${tablePath(table)}/confirmation`, confirmRequestOf(games));
+async function confirm(
+    table: TableRef,
+    games: readonly RecordedGame[],
+): Promise<TableConfirmation> {
+    const { data } = await apiClient.put<unknown>(
+        `${tablePath(table)}/confirmation`,
+        confirmRequestOf(games),
+    );
     return tableConfirmationDtoToDomain(tableConfirmationDtoSchema.parse(data));
 }
 

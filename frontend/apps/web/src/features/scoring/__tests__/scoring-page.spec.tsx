@@ -135,9 +135,7 @@ describe('/team/score', () => {
 
         const { router } = renderApp('/team/score');
 
-        await waitFor(() =>
-            expect(router.state.location.pathname).toBe('/team/login'),
-        );
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team/login'));
     });
 
     it('links back to the team overview', async () => {
@@ -146,12 +144,17 @@ describe('/team/score', () => {
 
         renderApp('/team/score');
 
-        expect(await screen.findByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute('href', '/team');
+        expect(await screen.findByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute(
+            'href',
+            '/team',
+        );
     });
 
     it('does not prompt to confirm while a game is still missing', async () => {
         scoring.currentTable.mockResolvedValue(table());
-        scoring.games.mockResolvedValue([1, 2, 3].map((gameNumber) => recordedGame({ gameNumber })));
+        scoring.games.mockResolvedValue(
+            [1, 2, 3].map((gameNumber) => recordedGame({ gameNumber })),
+        );
 
         renderApp('/team/score');
         await screen.findByText('Team Alpha gegen Team Beta');
@@ -161,12 +164,17 @@ describe('/team/score', () => {
 
     it('points to the overview to confirm once every game is entered', async () => {
         scoring.currentTable.mockResolvedValue(table());
-        scoring.games.mockResolvedValue([1, 2, 3, 4].map((gameNumber) => recordedGame({ gameNumber })));
+        scoring.games.mockResolvedValue(
+            [1, 2, 3, 4].map((gameNumber) => recordedGame({ gameNumber })),
+        );
 
         renderApp('/team/score');
 
         const prompt = (await screen.findByText('Alle Spiele sind eingetragen.')).parentElement!;
-        expect(within(prompt).getByRole('link', { name: 'Zur Bestätigung' })).toHaveAttribute('href', '/team');
+        expect(within(prompt).getByRole('link', { name: 'Zur Bestätigung' })).toHaveAttribute(
+            'href',
+            '/team',
+        );
     });
 
     it('renders the matchup, roster and a game selector', async () => {
@@ -310,11 +318,17 @@ describe('/team/score', () => {
 
         tabs[0]!.focus();
         await user.keyboard('{ArrowRight}');
-        expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
         expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveFocus();
 
         await user.keyboard('{ArrowLeft}{ArrowLeft}');
-        expect(screen.getByRole('tab', { name: 'Spiel 4' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('tab', { name: 'Spiel 4' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
         expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Spiel 4');
     });
 
@@ -329,7 +343,9 @@ describe('/team/score', () => {
 
         await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
         await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }));
-        expect(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Großes' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Großes' }),
+        ).toBeInTheDocument();
 
         const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
         await user.click(finishButtons[0]!); // Alice → 1
@@ -361,7 +377,7 @@ describe('/team/score', () => {
         expect(screen.getByText('→ 100')).toBeInTheDocument();
     });
 
-    it('announces each player\'s current call and bomb count, not just the control name', async () => {
+    it("announces each player's current call and bomb count, not just the control name", async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);
         const user = userEvent.setup();
@@ -370,7 +386,9 @@ describe('/team/score', () => {
         await screen.findByText('Team Alpha gegen Team Beta');
 
         await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
-        expect(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }),
+        ).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Bomben – Alice: 0' }));
         expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
@@ -417,20 +435,27 @@ describe('/team/score', () => {
 
         it('says the games are final once the table is completed', async () => {
             scoring.currentTable.mockResolvedValue(
-                table({ confirmation: { status: 'COMPLETED', confirmedTeamIds: ['team-a', 'team-b'] } }),
+                table({
+                    confirmation: { status: 'COMPLETED', confirmedTeamIds: ['team-a', 'team-b'] },
+                }),
             );
             scoring.games.mockResolvedValue([recordedGame()]);
 
             renderApp('/team/score');
 
             expect(
-                await screen.findByText('Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.'),
+                await screen.findByText(
+                    'Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.',
+                ),
             ).toBeInTheDocument();
             expect(screen.getByRole('slider')).toBeDisabled();
         });
 
         it('is read-only once the tournament has completed, even on an open table', async () => {
-            teamAuth.me.mockResolvedValue({ ...teamOverview, tournamentStatus: TournamentStatus.COMPLETED });
+            teamAuth.me.mockResolvedValue({
+                ...teamOverview,
+                tournamentStatus: TournamentStatus.COMPLETED,
+            });
             scoring.currentTable.mockResolvedValue(table());
             scoring.games.mockResolvedValue([recordedGame()]);
 
@@ -439,7 +464,9 @@ describe('/team/score', () => {
             await userEvent.click(screen.getAllByRole('tab')[0]!);
 
             expect(
-                await screen.findByText('Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.'),
+                await screen.findByText(
+                    'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',
+                ),
             ).toBeInTheDocument();
             expect(screen.getByRole('slider')).toBeDisabled();
             expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
@@ -487,7 +514,9 @@ describe('/team/score', () => {
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
 
         expect(
-            await screen.findByText('Das Spiel konnte nicht gespeichert werden – bitte die Eingaben prüfen und erneut versuchen.'),
+            await screen.findByText(
+                'Das Spiel konnte nicht gespeichert werden – bitte die Eingaben prüfen und erneut versuchen.',
+            ),
         ).toBeInTheDocument();
     });
 
@@ -531,7 +560,9 @@ describe('/team/score', () => {
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
 
         expect(
-            await screen.findByText('Dieser Tisch ist bestätigt; seine Spiele können nicht mehr geändert werden.'),
+            await screen.findByText(
+                'Dieser Tisch ist bestätigt; seine Spiele können nicht mehr geändert werden.',
+            ),
         ).toBeInTheDocument();
         // The table state reloads, so the frozen explanation can name who confirmed.
         await waitFor(() => expect(scoring.currentTable.mock.calls.length).toBeGreaterThan(1));
@@ -597,7 +628,7 @@ describe('/team/score', () => {
             return user;
         }
 
-        it('quietly loads the other team\'s newer version into an untouched form', async () => {
+        it("quietly loads the other team's newer version into an untouched form", async () => {
             await openGameOne();
             expect(screen.getByRole('slider')).toHaveValue('60');
 
@@ -605,7 +636,9 @@ describe('/team/score', () => {
             await otherTeamRecords();
 
             await waitFor(() => expect(screen.getByRole('slider')).toHaveValue('80'));
-            expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
+            expect(
+                screen.queryByText('Das andere Team hat dieses Spiel geändert.'),
+            ).not.toBeInTheDocument();
         });
 
         it('keeps unsaved input and offers their version when the game changed elsewhere', async () => {
@@ -615,14 +648,18 @@ describe('/team/score', () => {
             scoring.games.mockResolvedValue([theirEdit()]);
             await otherTeamRecords();
 
-            expect(await screen.findByText('Das andere Team hat dieses Spiel geändert.')).toBeInTheDocument();
+            expect(
+                await screen.findByText('Das andere Team hat dieses Spiel geändert.'),
+            ).toBeInTheDocument();
             expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
             expect(screen.getByRole('slider')).toHaveValue('60');
 
             await user.click(screen.getByRole('button', { name: 'Deren Version laden' }));
             expect(screen.getByRole('slider')).toHaveValue('80');
             expect(screen.getByRole('button', { name: 'Bomben – Alice: 0' })).toBeInTheDocument();
-            expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
+            expect(
+                screen.queryByText('Das andere Team hat dieses Spiel geändert.'),
+            ).not.toBeInTheDocument();
         });
 
         it('saving over a change from elsewhere still sends the version the form was loaded with', async () => {
@@ -632,7 +669,12 @@ describe('/team/score', () => {
             await otherTeamRecords();
             await screen.findByText('Das andere Team hat dieses Spiel geändert.');
             scoring.update.mockRejectedValue(
-                new ApiError({ code: 'GAME_CONCURRENT_MODIFICATION', status: 409, field: null, message: 'stale' }),
+                new ApiError({
+                    code: 'GAME_CONCURRENT_MODIFICATION',
+                    status: 409,
+                    field: null,
+                    message: 'stale',
+                }),
             );
 
             await user.click(screen.getByRole('button', { name: 'Spiel aktualisieren' }));
@@ -652,7 +694,9 @@ describe('/team/score', () => {
             scoring.games.mockResolvedValue([recordedGame()]);
             await otherTeamRecords();
 
-            expect(await screen.findByText('Das andere Team hat dieses Spiel geändert.')).toBeInTheDocument();
+            expect(
+                await screen.findByText('Das andere Team hat dieses Spiel geändert.'),
+            ).toBeInTheDocument();
             expect(screen.getByRole('button', { name: 'Bomben – Alice: 1' })).toBeInTheDocument();
         });
     });
@@ -671,12 +715,16 @@ describe('/team/score', () => {
 
         expect(await screen.findByText('Spiel 1 aktualisiert.')).toBeInTheDocument();
         await waitFor(() => expect(scoring.games.mock.calls.length).toBeGreaterThan(1));
-        expect(screen.queryByText('Das andere Team hat dieses Spiel geändert.')).not.toBeInTheDocument();
+        expect(
+            screen.queryByText('Das andere Team hat dieses Spiel geändert.'),
+        ).not.toBeInTheDocument();
     });
 
     it('opens on game 1 when every game is entered', async () => {
         scoring.currentTable.mockResolvedValue(table());
-        scoring.games.mockResolvedValue([1, 2, 3, 4].map((gameNumber) => recordedGame({ gameNumber })));
+        scoring.games.mockResolvedValue(
+            [1, 2, 3, 4].map((gameNumber) => recordedGame({ gameNumber })),
+        );
 
         renderApp('/team/score');
         await screen.findByText('Team Alpha gegen Team Beta');
@@ -732,7 +780,9 @@ describe('/team/score', () => {
 
             renderApp('/team/score');
 
-            expect(await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma')).toBeInTheDocument();
+            expect(
+                await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma'),
+            ).toBeInTheDocument();
             const tabs = screen.getAllByRole('tab');
             expect(tabs).toHaveLength(6);
             expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
@@ -761,7 +811,7 @@ describe('/team/score', () => {
             expect(screen.getByRole('button', { name: 'Spiel speichern' })).toBeEnabled();
         });
 
-        it('submits the selected game\'s playing teams', async () => {
+        it("submits the selected game's playing teams", async () => {
             scoring.currentTable.mockResolvedValue(trioTable());
             scoring.games.mockResolvedValue([]);
             scoring.create.mockResolvedValue(recordedGame({ gameNumber: 3 }));
@@ -772,7 +822,9 @@ describe('/team/score', () => {
             await user.click(screen.getAllByRole('tab')[2]!);
 
             // Slot order: Bob(0), Ben(1), Cleo(2), Carl(3).
-            const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+            const finishButtons = screen.getAllByRole('button', {
+                name: /Nächste Platzierung setzen/,
+            });
             await user.click(finishButtons[0]!);
             await user.click(finishButtons[2]!);
             await user.click(finishButtons[1]!);
@@ -797,6 +849,9 @@ describe('/team/score', () => {
         expect(
             await screen.findByText('Dein Tisch erscheint, sobald das Turnier gestartet ist.'),
         ).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute('href', '/team');
+        expect(screen.getByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute(
+            'href',
+            '/team',
+        );
     });
 });

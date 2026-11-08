@@ -49,7 +49,9 @@ export function StartTournamentButton({ tournament, teams }: StartTournamentButt
         <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-3">
                 {blocked ? (
-                    <span className="text-sm text-muted-foreground">{t('tournament.start.hintInsufficientTeams')}</span>
+                    <span className="text-sm text-muted-foreground">
+                        {t('tournament.start.hintInsufficientTeams')}
+                    </span>
                 ) : null}
                 <Button size="sm" disabled={blocked} onClick={() => setConfirming(true)}>
                     {t('tournament.start.action')}

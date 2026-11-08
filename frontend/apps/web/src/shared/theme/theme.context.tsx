@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+    useSyncExternalStore,
+} from 'react';
 import type { ReactNode } from 'react';
 
 import {
@@ -51,7 +59,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         storeTheme(next);
     }, []);
 
-    const value = useMemo<Theme>(() => ({ preference, setPreference }), [preference, setPreference]);
+    const value = useMemo<Theme>(
+        () => ({ preference, setPreference }),
+        [preference, setPreference],
+    );
 
     return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

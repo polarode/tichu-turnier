@@ -39,7 +39,10 @@ describe('Select', () => {
 
         await user.click(screen.getByRole('combobox', { name: 'Bonus' }));
         expect(screen.getByRole('listbox')).toBeInTheDocument();
-        expect(screen.getByRole('option', { name: '200' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('option', { name: '200' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
 
         await user.click(screen.getByRole('option', { name: '100' }));
         expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
@@ -81,6 +84,9 @@ describe('Select', () => {
 
     it('forwards aria-invalid to the trigger', () => {
         render(<Harness invalid />);
-        expect(screen.getByRole('combobox', { name: 'Bonus' })).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByRole('combobox', { name: 'Bonus' })).toHaveAttribute(
+            'aria-invalid',
+            'true',
+        );
     });
 });

@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 import { TournamentForm } from '@/features/tournaments/components/tournament-form.component.tsx';
-import { useTournament, useUpdateTournament } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
+import {
+    useTournament,
+    useUpdateTournament,
+} from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { tournamentFormToWriteInput } from '@/tournament-api/mappers/tournament.mapper.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
@@ -22,7 +25,11 @@ function TournamentEditComponent() {
     // too; leaving here is also how an edit is cancelled.
     return (
         <div className="flex flex-col gap-4">
-            <BackLink to="/admin/tournaments/$tournamentId" params={{ tournamentId }} labelKey="tournament.detail.backLink" />
+            <BackLink
+                to="/admin/tournaments/$tournamentId"
+                params={{ tournamentId }}
+                labelKey="tournament.detail.backLink"
+            />
             <TournamentEditBody />
         </div>
     );
@@ -40,9 +47,7 @@ function TournamentEditBody() {
     const [blocked, setBlocked] = useState(false);
 
     if (tournamentQuery.isPending) {
-        return (
-            <p className="text-muted-foreground">{t('common.loading')}</p>
-        );
+        return <p className="text-muted-foreground">{t('common.loading')}</p>;
     }
     if (tournamentQuery.isError) {
         return (
@@ -84,7 +89,10 @@ function TournamentEditBody() {
                                 input: tournamentFormToWriteInput(values),
                             });
                         } catch (error) {
-                            if (error instanceof ApiError && error.code === 'TOURNAMENT_NOT_EDITABLE') {
+                            if (
+                                error instanceof ApiError &&
+                                error.code === 'TOURNAMENT_NOT_EDITABLE'
+                            ) {
                                 setBlocked(true);
                                 return;
                             }

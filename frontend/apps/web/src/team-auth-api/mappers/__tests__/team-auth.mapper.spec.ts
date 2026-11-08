@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
-import { teamOverviewDtoToDomain, teamSessionDtoToDomain } from '@/team-auth-api/mappers/team-auth.mapper.ts';
+import {
+    teamOverviewDtoToDomain,
+    teamSessionDtoToDomain,
+} from '@/team-auth-api/mappers/team-auth.mapper.ts';
 
 describe('teamSessionDtoToDomain', () => {
     it('maps the wire DTO to the domain session with a Date expiry', () => {

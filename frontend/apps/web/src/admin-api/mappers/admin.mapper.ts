@@ -1,9 +1,5 @@
 import type { AdminAccount, AdminInvite, IssuedInvite } from '@/domain/admin-account.domain.ts';
-import type {
-    AdminAccountDto,
-    InviteDto,
-    IssuedInviteDto,
-} from '@/admin-api/dtos/admin.dto.ts';
+import type { AdminAccountDto, InviteDto, IssuedInviteDto } from '@/admin-api/dtos/admin.dto.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
 export function adminAccountDtoToDomain(dto: AdminAccountDto): AdminAccount {

@@ -12,4 +12,8 @@ export const TableStatus = {
 
 export type TableStatus = (typeof TableStatus)[keyof typeof TableStatus];
 
-export const TABLE_STATUSES = [TableStatus.PLAYING, TableStatus.CONFIRMING, TableStatus.COMPLETED] as const;
+export const TABLE_STATUSES = [
+    TableStatus.PLAYING,
+    TableStatus.CONFIRMING,
+    TableStatus.COMPLETED,
+] as const;

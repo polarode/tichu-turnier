@@ -12,7 +12,11 @@ export const TABLE_STATUS_LABEL_KEYS: Record<TableStatus, TranslationKey> = {
 };
 
 /** "k of n confirmed" for a table seating [seatedTeams] teams, worded alike in both views. */
-export function confirmedCountLabel(confirmation: TableConfirmation, seatedTeams: number, t: I18n['t']): string {
+export function confirmedCountLabel(
+    confirmation: TableConfirmation,
+    seatedTeams: number,
+    t: I18n['t'],
+): string {
     return `${confirmation.confirmedTeamIds.length} ${t('confirmation.count.of')} ${seatedTeams} ${t('confirmation.count.confirmed')}`;
 }
 

@@ -15,7 +15,10 @@ import {
     type TeamTable,
 } from '@/domain/game.domain.ts';
 import { GameEntryForm } from '@/features/scoring/components/game-entry-form.component.tsx';
-import { useReloadCurrentTable, useTableGames } from '@/features/scoring/hooks/scoring-queries.hook.ts';
+import {
+    useReloadCurrentTable,
+    useTableGames,
+} from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
@@ -63,7 +66,9 @@ export function ScoringPage({
     const [picked, setPicked] = useState<number | null>(null);
     // Lives here, not in the form: a successful save bumps the game's version,
     // which remounts the form and would drop any state it held.
-    const [saved, setSaved] = useState<{ gameNumber: number; kind: 'created' | 'updated' } | null>(null);
+    const [saved, setSaved] = useState<{ gameNumber: number; kind: 'created' | 'updated' } | null>(
+        null,
+    );
 
     if (gamesQuery.isLoading) return <LoadingIndicator />;
 
@@ -79,7 +84,8 @@ export function ScoringPage({
     // Confirming happens on the overview, so point there once nothing is left to enter.
     const allEntered = gamesQuery.isSuccess && gameNumbers.every((n) => byNumber.has(n));
     // The tournament left ACTIVE (S7c): nothing here may be written any more.
-    const tournamentLocked = tournamentStatus !== undefined && tournamentStatus !== TournamentStatus.ACTIVE;
+    const tournamentLocked =
+        tournamentStatus !== undefined && tournamentStatus !== TournamentStatus.ACTIVE;
     // Without the viewer's identity (overview unavailable) no game is marked as sat out.
     const sittingOut = viewerTeamId !== undefined && sitsOut(table, viewerTeamId, selected);
 
@@ -93,22 +99,25 @@ export function ScoringPage({
             <BackLink to="/team" labelKey="scoring.overviewLink" />
             <div className="flex flex-wrap items-start justify-between gap-2">
                 <PageHeader titleKey="scoring.title" descriptionKey="scoring.description" />
-                {live ? (
-                    <LiveBadge connected={connected} labelKeyPrefix="team.live" />
-                ) : null}
+                {live ? <LiveBadge connected={connected} labelKeyPrefix="team.live" /> : null}
             </div>
             <p className="text-sm text-muted-foreground">{header}</p>
             {isFrozen(table.confirmation) ? (
                 <FrozenNotice table={table} viewerTeamId={viewerTeamId} />
             ) : tournamentLocked ? (
-                <p className="rounded-md bg-muted px-3 py-2 text-sm">{t('scoring.tournamentLocked')}</p>
+                <p className="rounded-md bg-muted px-3 py-2 text-sm">
+                    {t('scoring.tournamentLocked')}
+                </p>
             ) : allEntered ? (
                 <div className="flex flex-col gap-3 rounded-md bg-success-soft px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                     <p className="flex items-center gap-2 font-medium text-success">
                         <CircleCheck aria-hidden="true" className="size-4 shrink-0" />
                         {t('scoring.allEntered')}
                     </p>
-                    <Link to="/team" className={buttonVariants({ variant: 'outline', size: 'touch' })}>
+                    <Link
+                        to="/team"
+                        className={buttonVariants({ variant: 'outline', size: 'touch' })}
+                    >
                         {t('scoring.allEntered.link')}
                     </Link>
                 </div>
@@ -129,12 +138,17 @@ export function ScoringPage({
                     label: (
                         <>
                             {/* Phones show just the number; the word stays for screen readers. */}
-                            <span className="sr-only sm:not-sr-only">{t('scoring.game.label')}</span>{' '}
+                            <span className="sr-only sm:not-sr-only">
+                                {t('scoring.game.label')}
+                            </span>{' '}
                             {n}
                             {viewerTeamId !== undefined && sitsOut(table, viewerTeamId, n) ? (
                                 <>
                                     {' '}
-                                    <Pause aria-hidden="true" className="inline size-3 text-muted-foreground" />
+                                    <Pause
+                                        aria-hidden="true"
+                                        className="inline size-3 text-muted-foreground"
+                                    />
                                     <span className="sr-only">{`– ${t('scoring.game.sitsOut')}`}</span>
                                 </>
                             ) : null}
@@ -170,7 +184,9 @@ export function ScoringPage({
                     gameNumber={selected}
                     existingGame={existingGame}
                     onReload={async () =>
-                        (await gamesQuery.refetch()).data?.find((game) => game.gameNumber === selected)
+                        (await gamesQuery.refetch()).data?.find(
+                            (game) => game.gameNumber === selected,
+                        )
                     }
                     onSubmitStart={() => setSaved(null)}
                     onSaved={(kind) => setSaved({ gameNumber: selected, kind })}
@@ -191,7 +207,9 @@ export function ScoringPage({
                     <>
                         <CircleCheck aria-hidden="true" className="size-4" />
                         {`${t('scoring.game.label')} ${saved.gameNumber} ${t(
-                            saved.kind === 'created' ? 'scoring.saved.created' : 'scoring.saved.updated',
+                            saved.kind === 'created'
+                                ? 'scoring.saved.created'
+                                : 'scoring.saved.updated',
                         )}`}
                     </>
                 ) : null}

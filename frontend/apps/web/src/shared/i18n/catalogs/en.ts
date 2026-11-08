@@ -40,14 +40,14 @@ export const en = {
     'validation.playerName.required': 'The player name is required.',
     'validation.tournamentName.required': 'The name is required.',
     'validation.tournamentName.max': 'The name may be at most 100 characters long.',
-    'validation.tournamentDescription.max':
-        'The description may be at most 500 characters long.',
+    'validation.tournamentDescription.max': 'The description may be at most 500 characters long.',
     'validation.tournamentMaxTeams.required': 'The max team count is required.',
     'validation.tournamentMaxTeams.integer': 'The max team count must be a whole number.',
     'validation.tournamentMaxTeams.min': 'The tournament needs at least 2 teams.',
     'validation.tournamentMaxTeams.max': 'The max team count may be at most 64.',
     'validation.tournamentTotalRounds.range': 'Total rounds must be between 1 and 20.',
-    'validation.scoring.positions': 'Set each player\u2019s finishing position (1\u20134, or 1 and 2 for a double win).',
+    'validation.scoring.positions':
+        'Set each player\u2019s finishing position (1\u20134, or 1 and 2 for a double win).',
 
     'error.unknown': 'Something went wrong. Please try again.',
     'error.notFound': 'Not found.',
@@ -175,7 +175,8 @@ export const en = {
     'tournament.detail.description': 'Manage teams and settings.',
     'tournament.detail.sections': 'Tournament sections',
     'tournament.detail.publicVisibility.label': 'Public visibility',
-    'tournament.detail.publicVisibility.hint': 'Spectators can follow this tournament without signing in.',
+    'tournament.detail.publicVisibility.hint':
+        'Spectators can follow this tournament without signing in.',
 
     'tournament.start.action': 'Start tournament',
     'tournament.start.confirmDescription': 'Start the tournament and draw round 1?',
@@ -301,7 +302,6 @@ export const en = {
     'public.live.offline': 'Offline',
     'public.live.hint': 'New rounds and results appear here without reloading the page.',
 
-
     'teamLogin.exchangingTitle': 'Opening your team area',
     'teamLogin.exchangingDescription': 'Your access link is being validated. One moment, please.',
     'teamLogin.neutralTitle': 'Check your access link',
@@ -320,10 +320,10 @@ export const en = {
     'error.roundIncomplete': 'The next round can only start once every table is completed.',
     'error.totalRoundsReached': 'All rounds are played; the tournament can only be finished.',
     'error.roundsRemaining': 'The tournament can only be finished after its last round.',
-    'error.tournamentNotCompleted': 'The results can only be published once the tournament is completed.',
+    'error.tournamentNotCompleted':
+        'The results can only be published once the tournament is completed.',
     'error.resultsNotPublished': 'The Final Ranking is not published yet.',
-    'error.insufficientTeams':
-        'This tournament needs at least two teams before it can be started.',
+    'error.insufficientTeams': 'This tournament needs at least two teams before it can be started.',
     'error.gameValidationInvalid': 'The game could not be saved — check the entries and try again.',
     'error.gameAlreadyExists': 'This game has already been entered.',
     'error.gameConcurrentModification':
@@ -338,7 +338,8 @@ export const en = {
     'teamOverview.players': 'Players',
     'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
     'teamOverview.scoringLink': 'Enter results',
-    'teamOverview.completedNote': 'Tournament finished — the results are announced at the ceremony.',
+    'teamOverview.completedNote':
+        'Tournament finished — the results are announced at the ceremony.',
     'confirmation.games.label': 'Games',
     'confirmation.status.label': 'Status',
     'confirmation.status.playing': 'Playing',
@@ -351,14 +352,16 @@ export const en = {
     'confirmation.gamesEntered': 'games entered',
     'confirmation.confirm': 'Confirm all games',
     'confirmation.dialog.title': 'Confirm all games?',
-    'confirmation.dialog.description': 'Nobody can change them until your team retracts its confirmation.',
+    'confirmation.dialog.description':
+        'Nobody can change them until your team retracts its confirmation.',
     'confirmation.dialog.confirm': 'Confirm',
     'confirmation.retract': 'Retract confirmation',
     'confirmation.waiting.one': 'Waiting for the other team.',
     'confirmation.waiting.many': 'Waiting for the other teams.',
     'confirmation.frozen': 'The games are frozen. Review them and confirm too.',
     'confirmation.final': 'The games are final.',
-    'confirmation.stale': 'The games changed since you looked at them. Review them and confirm again.',
+    'confirmation.stale':
+        'The games changed since you looked at them. Review them and confirm again.',
 
     'publicHome.title': 'Public tournaments',
     'publicHome.description':
@@ -407,8 +410,10 @@ export const en = {
     'scoring.concurrent.reloadPrompt':
         'This game was changed in the meantime. Reload it to see the current entry, then redo your changes.',
     'scoring.concurrent.reload': 'Reload the game',
-    'scoring.frozen.byOwn': 'Your team confirmed these games. To change one, retract the confirmation on the team overview.',
-    'scoring.frozen.byOthers': 'To change a game, the confirming team must retract on its team overview.',
+    'scoring.frozen.byOwn':
+        'Your team confirmed these games. To change one, retract the confirmation on the team overview.',
+    'scoring.frozen.byOthers':
+        'To change a game, the confirming team must retract on its team overview.',
     'scoring.overviewLink': 'Back to team overview',
     'scoring.viewTable': 'View table',
     'scoring.allEntered': 'All games are entered.',

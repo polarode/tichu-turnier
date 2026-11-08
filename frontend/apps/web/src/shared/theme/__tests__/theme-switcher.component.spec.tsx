@@ -28,7 +28,10 @@ describe('ThemeSwitcher', () => {
         expect(document.documentElement.dataset.theme).toBe('light');
 
         await user.click(trigger);
-        expect(screen.getByRole('menuitemradio', { name: 'System' })).toHaveAttribute('aria-checked', 'true');
+        expect(screen.getByRole('menuitemradio', { name: 'System' })).toHaveAttribute(
+            'aria-checked',
+            'true',
+        );
         await user.click(screen.getByRole('menuitemradio', { name: 'Dunkel' }));
 
         expect(document.documentElement.dataset.theme).toBe('dark');
@@ -77,7 +80,9 @@ describe('ThemeSwitcher', () => {
         window.localStorage.setItem(THEME_STORAGE_KEY, 'dark');
         renderApp('/');
 
-        expect(await screen.findByRole('button', { name: 'Farbschema' })).toHaveAccessibleDescription('Dunkel');
+        expect(
+            await screen.findByRole('button', { name: 'Farbschema' }),
+        ).toHaveAccessibleDescription('Dunkel');
         expect(document.documentElement.dataset.theme).toBe('dark');
     });
 });

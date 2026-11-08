@@ -8,8 +8,12 @@ import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
  * these at the repository boundary, so a backend change that breaks the contract fails
  * loudly instead of propagating `any` through the app.
  */
-export const grandTichuBonusDtoSchema = z.union(GRAND_TICHU_BONUS_OPTIONS.map((bonus) => z.literal(bonus)));
-export const doubleWinBonusDtoSchema = z.union(DOUBLE_WIN_BONUS_OPTIONS.map((bonus) => z.literal(bonus)));
+export const grandTichuBonusDtoSchema = z.union(
+    GRAND_TICHU_BONUS_OPTIONS.map((bonus) => z.literal(bonus)),
+);
+export const doubleWinBonusDtoSchema = z.union(
+    DOUBLE_WIN_BONUS_OPTIONS.map((bonus) => z.literal(bonus)),
+);
 
 export const tournamentSettingsDtoSchema = z.object({
     grandTichuBonus: grandTichuBonusDtoSchema,

@@ -29,7 +29,11 @@ describe('tournamentDtoToDomain', () => {
         expect(tournament.name).toBe('Spring Classic');
         expect(tournament.maxTeams).toBe(16);
         expect(tournament.status).toBe(TournamentStatus.SETUP);
-        expect(tournament.settings).toEqual({ grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 });
+        expect(tournament.settings).toEqual({
+            grandTichuBonus: 100,
+            doubleWinBonus: 200,
+            totalRounds: 4,
+        });
         expect(tournament.createdAt).toBeInstanceOf(Date);
         expect(tournament.createdAt.toISOString()).toBe('2026-01-01T12:00:00.000Z');
         expect(tournament.updatedAt.toISOString()).toBe('2026-01-02T08:30:00.000Z');
@@ -38,13 +42,21 @@ describe('tournamentDtoToDomain', () => {
 
 describe('tournamentDtoToDomain publicVisibility', () => {
     it('carries the public visibility flag through to the domain', () => {
-        expect(tournamentDtoToDomain({ ...dto, publicVisibility: true }).publicVisibility).toBe(true);
+        expect(tournamentDtoToDomain({ ...dto, publicVisibility: true }).publicVisibility).toBe(
+            true,
+        );
     });
 });
 
 describe('tournament settings mapping', () => {
     it('maps settings DTO → domain', () => {
-        expect(tournamentSettingsDtoToDomain({ grandTichuBonus: 200, doubleWinBonus: 100, totalRounds: 6 })).toEqual({
+        expect(
+            tournamentSettingsDtoToDomain({
+                grandTichuBonus: 200,
+                doubleWinBonus: 100,
+                totalRounds: 6,
+            }),
+        ).toEqual({
             grandTichuBonus: 200,
             doubleWinBonus: 100,
             totalRounds: 6,
@@ -52,7 +64,9 @@ describe('tournament settings mapping', () => {
     });
 
     it('maps settings domain → DTO', () => {
-        expect(tournamentSettingsToDto({ grandTichuBonus: 100, doubleWinBonus: 100, totalRounds: 6 })).toEqual({
+        expect(
+            tournamentSettingsToDto({ grandTichuBonus: 100, doubleWinBonus: 100, totalRounds: 6 }),
+        ).toEqual({
             grandTichuBonus: 100,
             doubleWinBonus: 100,
             totalRounds: 6,

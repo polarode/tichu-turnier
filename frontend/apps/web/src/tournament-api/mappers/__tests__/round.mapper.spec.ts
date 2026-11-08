@@ -13,7 +13,10 @@ const dto: RoundDto = {
             status: 'CONFIRMING',
             confirmedTeamIds: ['team-b'],
             gameCount: 4,
-            schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
+            schedule: [1, 2, 3, 4].map((gameNumber) => ({
+                gameNumber,
+                teamIds: ['team-a', 'team-b'],
+            })),
             games: [
                 {
                     gameNumber: 2,
@@ -24,16 +27,40 @@ const dto: RoundDto = {
                             teamId: 'team-a',
                             baseScore: 55,
                             players: [
-                                { playerId: 'a1', position: 1, call: 'SMALL', bombs: 0, tichuSuccess: true },
-                                { playerId: 'a2', position: 3, call: 'NONE', bombs: 0, tichuSuccess: false },
+                                {
+                                    playerId: 'a1',
+                                    position: 1,
+                                    call: 'SMALL',
+                                    bombs: 0,
+                                    tichuSuccess: true,
+                                },
+                                {
+                                    playerId: 'a2',
+                                    position: 3,
+                                    call: 'NONE',
+                                    bombs: 0,
+                                    tichuSuccess: false,
+                                },
                             ],
                         },
                         {
                             teamId: 'team-b',
                             baseScore: 45,
                             players: [
-                                { playerId: 'b1', position: 2, call: 'NONE', bombs: 0, tichuSuccess: false },
-                                { playerId: 'b2', position: 4, call: 'NONE', bombs: 0, tichuSuccess: false },
+                                {
+                                    playerId: 'b1',
+                                    position: 2,
+                                    call: 'NONE',
+                                    bombs: 0,
+                                    tichuSuccess: false,
+                                },
+                                {
+                                    playerId: 'b2',
+                                    position: 4,
+                                    call: 'NONE',
+                                    bombs: 0,
+                                    tichuSuccess: false,
+                                },
                             ],
                         },
                     ],

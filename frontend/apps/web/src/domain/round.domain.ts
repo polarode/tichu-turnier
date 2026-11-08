@@ -1,4 +1,9 @@
-import type { RecordedGame, ScheduledGame, SeatedTeams, TableConfirmation } from '@/domain/game.domain.ts';
+import type {
+    RecordedGame,
+    ScheduledGame,
+    SeatedTeams,
+    TableConfirmation,
+} from '@/domain/game.domain.ts';
 
 /**
  * One table of a round as the admin follows it: the seating (two teams, or three at

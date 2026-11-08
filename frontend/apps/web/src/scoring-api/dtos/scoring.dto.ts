@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-import { doubleWinBonusDtoSchema, grandTichuBonusDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
+import {
+    doubleWinBonusDtoSchema,
+    grandTichuBonusDtoSchema,
+} from '@/tournament-api/dtos/tournament.dto.ts';
 import { TABLE_STATUSES } from '@/vocabulary/table-status.enum.ts';
 
 /**

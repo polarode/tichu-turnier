@@ -22,7 +22,12 @@ describe('AppShell', () => {
     beforeEach(() => {
         vi.resetAllMocks();
         auth.refresh.mockRejectedValue(
-            new ApiError({ code: 'UNAUTHENTICATED', status: 401, field: null, message: 'no session' }),
+            new ApiError({
+                code: 'UNAUTHENTICATED',
+                status: 401,
+                field: null,
+                message: 'no session',
+            }),
         );
     });
 
@@ -44,7 +49,10 @@ describe('AppShell', () => {
             '/public',
         );
         // The active area is announced, not only shown by its suit-coloured bar.
-        expect(within(nav).getByRole('link', { name: 'Öffentlich' })).toHaveAttribute('aria-current', 'page');
+        expect(within(nav).getByRole('link', { name: 'Öffentlich' })).toHaveAttribute(
+            'aria-current',
+            'page',
+        );
         expect(within(nav).getByRole('link', { name: 'Team' })).not.toHaveAttribute('aria-current');
     });
 
@@ -57,7 +65,9 @@ describe('AppShell', () => {
         expect(within(nav).getByRole('link', { name: 'Öffentlich' })).toBeInTheDocument();
         expect(within(nav).queryByRole('link', { name: 'Verwaltung' })).not.toBeInTheDocument();
         // Sign-in moves to the corner where a session's avatar would sit.
-        expect(await screen.findByRole('button', { name: 'Als Organisator anmelden' })).toBeInTheDocument();
+        expect(
+            await screen.findByRole('button', { name: 'Als Organisator anmelden' }),
+        ).toBeInTheDocument();
     });
 
     it('switches every visible string to English and updates <html lang>', async () => {

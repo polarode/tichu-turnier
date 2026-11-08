@@ -43,10 +43,12 @@ export const teamQueryKey = (tournamentId: string, teamId: string) =>
 export const roundsQueryKey = (tournamentId: string) => [QueryKeys.ROUNDS, tournamentId] as const;
 
 /** Key for a tournament's admin-only standings. */
-export const standingsQueryKey = (tournamentId: string) => [QueryKeys.STANDINGS, tournamentId] as const;
+export const standingsQueryKey = (tournamentId: string) =>
+    [QueryKeys.STANDINGS, tournamentId] as const;
 
 /** Key for a tournament's admin-only statistics. */
-export const statisticsQueryKey = (tournamentId: string) => [QueryKeys.STATISTICS, tournamentId] as const;
+export const statisticsQueryKey = (tournamentId: string) =>
+    [QueryKeys.STATISTICS, tournamentId] as const;
 
 /** Key for one public tournament's statistics (anonymous, published tournaments only). */
 export const publicStatisticsQueryKey = (id: string) => [QueryKeys.PUBLIC_STATISTICS, id] as const;
@@ -69,4 +71,3 @@ export const teamGamesPrefixQueryKey = () => [QueryKeys.TEAM_GAMES] as const;
 /** Key for the games entered at one round table (team-scoped read). */
 export const teamGamesQueryKey = (tournamentId: string, roundNumber: number, tableNumber: number) =>
     [QueryKeys.TEAM_GAMES, tournamentId, roundNumber, tableNumber] as const;
-

@@ -8,10 +8,7 @@ import {
     type TeamTable,
 } from '@/domain/game.domain.ts';
 import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
-import {
-    teamCurrentTableQueryKey,
-    teamGamesQueryKey,
-} from '@/shared/constants/query-keys.ts';
+import { teamCurrentTableQueryKey, teamGamesQueryKey } from '@/shared/constants/query-keys.ts';
 
 /**
  * Query options for the team's current table (`GET /api/team/me/current-table`).

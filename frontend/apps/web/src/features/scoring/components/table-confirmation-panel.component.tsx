@@ -16,7 +16,11 @@ import {
     useRetractTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
-import { confirmedCountLabel, TABLE_STATUS_LABEL_KEYS, tableHeading } from '@/features/scoring/labels.ts';
+import {
+    confirmedCountLabel,
+    TABLE_STATUS_LABEL_KEYS,
+    tableHeading,
+} from '@/features/scoring/labels.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
@@ -45,7 +49,13 @@ export function TableConfirmationPanel({
     const tableQuery = useCurrentTable();
     if (tableQuery.isPending) return null;
     if (!tableQuery.data) return <ScoringLink primary={!readOnly} readOnly={readOnly} />;
-    return <ConfirmationPanel table={tableQuery.data} viewerTeamId={viewerTeamId} readOnly={readOnly} />;
+    return (
+        <ConfirmationPanel
+            table={tableQuery.data}
+            viewerTeamId={viewerTeamId}
+            readOnly={readOnly}
+        />
+    );
 }
 
 /**
@@ -53,7 +63,13 @@ export function TableConfirmationPanel({
  * every game is in, then it yields to Confirm. Read-only (S7c, #116) it reads
  * "View table" instead and is never primary.
  */
-export function ScoringLink({ primary, readOnly = false }: { primary: boolean; readOnly?: boolean }) {
+export function ScoringLink({
+    primary,
+    readOnly = false,
+}: {
+    primary: boolean;
+    readOnly?: boolean;
+}) {
     const { t } = useI18n();
     return (
         <Link
@@ -102,9 +118,12 @@ function ConfirmationPanel({
 
     const { status, confirmedTeamIds } = table.confirmation;
     const games = gamesQuery.data;
-    const byNumber = new Map<number, RecordedGame>((games ?? []).map((game) => [game.gameNumber, game]));
+    const byNumber = new Map<number, RecordedGame>(
+        (games ?? []).map((game) => [game.gameNumber, game]),
+    );
     const gameCount = table.schedule.length;
-    const allEntered = games !== undefined && table.schedule.every((game) => byNumber.has(game.gameNumber));
+    const allEntered =
+        games !== undefined && table.schedule.every((game) => byNumber.has(game.gameNumber));
     const viewerConfirmed = confirmedTeamIds.includes(viewerTeamId);
 
     const teamName = (teamId: string) => teamNameOf(table, teamId);
@@ -132,7 +151,10 @@ function ConfirmationPanel({
     }
 
     return (
-        <section aria-label={heading} className="flex flex-col gap-3 rounded-md border border-border bg-card p-4 text-sm">
+        <section
+            aria-label={heading}
+            className="flex flex-col gap-3 rounded-md border border-border bg-card p-4 text-sm"
+        >
             <h2 className="font-semibold">{heading}</h2>
             {games ? (
                 <GameResultsTable
@@ -163,7 +185,11 @@ function ConfirmationPanel({
             ) : readOnly ? null : viewerConfirmed ? (
                 <>
                     <p className="text-muted-foreground">
-                        {t(table.teams.length > 2 ? 'confirmation.waiting.many' : 'confirmation.waiting.one')}
+                        {t(
+                            table.teams.length > 2
+                                ? 'confirmation.waiting.many'
+                                : 'confirmation.waiting.one',
+                        )}
                     </p>
                     <Button
                         variant="outline"

@@ -19,7 +19,15 @@ export function BackLink({ to, params, labelKey }: BackLinkProps) {
     const { t } = useI18n();
 
     return (
-        <Link to={to} params={params} className={buttonVariants({ variant: 'ghost', size: 'touch', className: '-ml-3 gap-1 self-start px-3' })}>
+        <Link
+            to={to}
+            params={params}
+            className={buttonVariants({
+                variant: 'ghost',
+                size: 'touch',
+                className: '-ml-3 gap-1 self-start px-3',
+            })}
+        >
             <ChevronLeft aria-hidden="true" className="size-4" />
             {t(labelKey)}
         </Link>

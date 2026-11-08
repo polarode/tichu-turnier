@@ -1,6 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@tichu/ui/button.tsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tichu/ui/select.tsx';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@tichu/ui/select.tsx';
 import { Controller, useForm, type Control } from 'react-hook-form';
 
 import {
@@ -161,7 +167,10 @@ function BonusSelect({ id, name, label, options, control, error }: BonusSelectPr
                 name={name}
                 render={({ field }) => (
                     // Select values are strings; the form value is a number.
-                    <Select value={String(field.value)} onValueChange={(value) => field.onChange(Number(value))}>
+                    <Select
+                        value={String(field.value)}
+                        onValueChange={(value) => field.onChange(Number(value))}
+                    >
                         <SelectTrigger
                             id={id}
                             ref={field.ref}

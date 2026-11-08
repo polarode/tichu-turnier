@@ -60,13 +60,13 @@ The app shell (`shared/components/app-shell.component.tsx`) renders the header,
 navigation, the language switch, the theme toggle and the account menu around every
 screen. The areas that hang off it:
 
-| Area    | Route       |
-| ------- | ----------- |
-| Admin   | `/admin`    |
-| Team    | `/team`     |
-| Public  | `/public`   |
-| Login   | `/login`    |
-| Register| `/register` |
+| Area     | Route       |
+| -------- | ----------- |
+| Admin    | `/admin`    |
+| Team     | `/team`     |
+| Public   | `/public`   |
+| Login    | `/login`    |
+| Register | `/register` |
 
 `/` redirects to the public area, which is still a placeholder.
 

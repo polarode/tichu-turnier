@@ -54,7 +54,8 @@ export const de: Catalog = {
     'error.invalidCredentials': 'E-Mail oder Passwort ist falsch.',
     'error.accountPending': 'Dieses Konto wartet noch auf Freigabe.',
     'error.accountDisabled': 'Dieses Konto wurde deaktiviert.',
-    'error.tooManyAttempts': 'Zu viele fehlgeschlagene Anmeldeversuche. Bitte in ein paar Minuten erneut versuchen.',
+    'error.tooManyAttempts':
+        'Zu viele fehlgeschlagene Anmeldeversuche. Bitte in ein paar Minuten erneut versuchen.',
     'error.unauthenticated': 'Bitte anmelden, um fortzufahren.',
     'error.forbidden': 'Du hast keine Berechtigung für diese Aktion.',
     'error.tournamentNotEditable': 'Dieses Turnier kann nicht mehr bearbeitet werden.',
@@ -63,10 +64,12 @@ export const de: Catalog = {
     'error.duplicateTeamPlayers': 'Die beiden Spieler müssen unterschiedlich sein.',
     'error.teamLimitReached': 'Dieses Turnier hat bereits die maximale Teamanzahl erreicht.',
     'error.maxTeamsBelowTeamCount': 'Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.',
-    'error.totalRoundsBelowRoundCount': 'Die Rundenzahl darf nicht unter den bereits ausgelosten Runden liegen.',
+    'error.totalRoundsBelowRoundCount':
+        'Die Rundenzahl darf nicht unter den bereits ausgelosten Runden liegen.',
     'error.adminStatusConflict': 'Das Konto ist nicht in einem Zustand, der diese Aktion erlaubt.',
     'error.inviteInvalid': 'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
-    'error.inviteExpired': 'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
+    'error.inviteExpired':
+        'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
     'error.inviteStatusConflict': 'Diese Einladung kann nicht mehr geändert werden.',
     'error.linkAlreadyRevealed':
         'Dieser Zugangs-Link wurde bereits angezeigt oder ist deaktiviert. Rotiere ihn, um einen neuen zu erhalten.',
@@ -182,7 +185,8 @@ export const de: Catalog = {
     'tournament.detail.description': 'Teams und Einstellungen verwalten.',
     'tournament.detail.sections': 'Turnierbereiche',
     'tournament.detail.publicVisibility.label': 'Öffentliche Sichtbarkeit',
-    'tournament.detail.publicVisibility.hint': 'Zuschauer können dieses Turnier ohne Anmeldung verfolgen.',
+    'tournament.detail.publicVisibility.hint':
+        'Zuschauer können dieses Turnier ohne Anmeldung verfolgen.',
 
     'tournament.start.action': 'Turnier starten',
     'tournament.start.confirmDescription': 'Turnier starten und Runde 1 auslosen?',
@@ -301,7 +305,6 @@ export const de: Catalog = {
     'public.live.offline': 'Offline',
     'public.live.hint': 'Neue Runden und Ergebnisse erscheinen hier ohne Neuladen der Seite.',
 
-
     'teamLogin.exchangingTitle': 'Teambereich wird geöffnet',
     'teamLogin.exchangingDescription': 'Dein Zugriffslink wird geprüft. Einen Moment bitte.',
     'teamLogin.neutralTitle': 'Zugriffslink prüfen',
@@ -317,10 +320,13 @@ export const de: Catalog = {
         'Dieses Turnier kann nicht gestartet werden, weil es nicht mehr in der Vorbereitung ist.',
     'error.tournamentNotStarted': 'Dieses Turnier hat noch nicht begonnen.',
     'error.tournamentNotActive': 'Das ist nur möglich, solange das Turnier läuft.',
-    'error.roundIncomplete': 'Die nächste Runde kann erst starten, wenn alle Tische abgeschlossen sind.',
-    'error.totalRoundsReached': 'Alle Runden sind gespielt; das Turnier kann nur noch abgeschlossen werden.',
+    'error.roundIncomplete':
+        'Die nächste Runde kann erst starten, wenn alle Tische abgeschlossen sind.',
+    'error.totalRoundsReached':
+        'Alle Runden sind gespielt; das Turnier kann nur noch abgeschlossen werden.',
     'error.roundsRemaining': 'Das Turnier kann erst nach der letzten Runde abgeschlossen werden.',
-    'error.tournamentNotCompleted': 'Die Ergebnisse können erst veröffentlicht werden, wenn das Turnier abgeschlossen ist.',
+    'error.tournamentNotCompleted':
+        'Die Ergebnisse können erst veröffentlicht werden, wenn das Turnier abgeschlossen ist.',
     'error.resultsNotPublished': 'Die Endrangliste ist noch nicht veröffentlicht.',
     'error.insufficientTeams':
         'Dieses Turnier braucht mindestens zwei Teams, um gestartet zu werden.',
@@ -329,7 +335,8 @@ export const de: Catalog = {
     'error.gameAlreadyExists': 'Dieses Spiel wurde bereits eingetragen.',
     'error.gameConcurrentModification':
         'Dieses Spiel wurde zwischenzeitlich geändert. Bitte neu laden und die Änderungen erneut anwenden.',
-    'error.gameConfirmed': 'Dieser Tisch ist bestätigt; seine Spiele können nicht mehr geändert werden.',
+    'error.gameConfirmed':
+        'Dieser Tisch ist bestätigt; seine Spiele können nicht mehr geändert werden.',
     'error.gameNotFound': 'Dieses Spiel wurde noch nicht eingetragen.',
     'error.tableIncomplete': 'Erst wenn alle Spiele eingetragen sind, kann bestätigt werden.',
     'error.tableCompleted': 'Dieser Tisch ist abgeschlossen; die Bestätigungen sind endgültig.',
@@ -339,7 +346,8 @@ export const de: Catalog = {
     'teamOverview.players': 'Spieler',
     'teamOverview.scheduleNote': 'Der Spielplan erscheint, sobald das Turnier gestartet ist.',
     'teamOverview.scoringLink': 'Ergebnisse eintragen',
-    'teamOverview.completedNote': 'Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.',
+    'teamOverview.completedNote':
+        'Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.',
     'confirmation.games.label': 'Spiele',
     'confirmation.status.label': 'Status',
     'confirmation.status.playing': 'Spielen',
@@ -352,14 +360,16 @@ export const de: Catalog = {
     'confirmation.gamesEntered': 'Spielen eingetragen',
     'confirmation.confirm': 'Alle Spiele bestätigen',
     'confirmation.dialog.title': 'Alle Spiele bestätigen?',
-    'confirmation.dialog.description': 'Niemand kann sie mehr ändern, bis dein Team die Bestätigung zurückzieht.',
+    'confirmation.dialog.description':
+        'Niemand kann sie mehr ändern, bis dein Team die Bestätigung zurückzieht.',
     'confirmation.dialog.confirm': 'Bestätigen',
     'confirmation.retract': 'Bestätigung zurückziehen',
     'confirmation.waiting.one': 'Warten auf das andere Team.',
     'confirmation.waiting.many': 'Warten auf die anderen Teams.',
     'confirmation.frozen': 'Die Spiele sind eingefroren. Prüfe sie und bestätige ebenfalls.',
     'confirmation.final': 'Die Spiele sind endgültig.',
-    'confirmation.stale': 'Die Spiele haben sich geändert, seit du sie angesehen hast. Prüfe sie und bestätige erneut.',
+    'confirmation.stale':
+        'Die Spiele haben sich geändert, seit du sie angesehen hast. Prüfe sie und bestätige erneut.',
 
     'publicHome.title': 'Öffentliche Turniere',
     'publicHome.description':
@@ -370,7 +380,8 @@ export const de: Catalog = {
 
     'publicTournament.backLink': 'Zurück zu den öffentlichen Turnieren',
     'publicTournament.noRounds': 'Noch keine Runden ausgelost.',
-    'publicTournament.notFound': 'Dieses Turnier konnte nicht gefunden werden. Vielleicht ist es nicht öffentlich.',
+    'publicTournament.notFound':
+        'Dieses Turnier konnte nicht gefunden werden. Vielleicht ist es nicht öffentlich.',
     'publicTournament.tabs.label': 'Turnierbereiche',
     'publicTournament.tabs.results': 'Ergebnisse',
     'publicTournament.tabs.statistics': 'Statistiken',
@@ -408,14 +419,17 @@ export const de: Catalog = {
     'scoring.concurrent.reloadPrompt':
         'Dieses Spiel wurde zwischenzeitlich geändert. Lade es neu, um den aktuellen Eintrag zu sehen, und wiederhole deine Änderungen.',
     'scoring.concurrent.reload': 'Spiel neu laden',
-    'scoring.frozen.byOwn': 'Dein Team hat diese Spiele bestätigt. Um eines zu ändern, ziehe die Bestätigung in der Teamübersicht zurück.',
-    'scoring.frozen.byOthers': 'Um ein Spiel zu ändern, muss das bestätigende Team in seiner Teamübersicht zurückziehen.',
+    'scoring.frozen.byOwn':
+        'Dein Team hat diese Spiele bestätigt. Um eines zu ändern, ziehe die Bestätigung in der Teamübersicht zurück.',
+    'scoring.frozen.byOthers':
+        'Um ein Spiel zu ändern, muss das bestätigende Team in seiner Teamübersicht zurückziehen.',
     'scoring.overviewLink': 'Zur Teamübersicht',
     'scoring.viewTable': 'Tisch ansehen',
     'scoring.allEntered': 'Alle Spiele sind eingetragen.',
     'scoring.allEntered.link': 'Zur Bestätigung',
     'scoring.completed': 'Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.',
-    'scoring.tournamentLocked': 'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',
+    'scoring.tournamentLocked':
+        'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',
     'scoring.changedElsewhere': 'Das andere Team hat dieses Spiel geändert.',
     'scoring.changedElsewhere.load': 'Deren Version laden',
 };

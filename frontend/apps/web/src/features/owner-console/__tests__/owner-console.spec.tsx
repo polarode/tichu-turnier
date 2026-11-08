@@ -82,7 +82,11 @@ describe('owner console', () => {
 
     it('approves a pending request and moves the account into the admin list', async () => {
         auth.refresh.mockResolvedValue(owner);
-        const pending = account({ id: 'pending-1', email: 'newbie@example.com', status: 'PENDING' });
+        const pending = account({
+            id: 'pending-1',
+            email: 'newbie@example.com',
+            status: 'PENDING',
+        });
         const active = account({ id: 'pending-1', email: 'newbie@example.com', status: 'ACTIVE' });
         adminRepo.listAccounts.mockResolvedValueOnce([pending]).mockResolvedValue([active]);
         adminRepo.approve.mockResolvedValue(active);
@@ -91,7 +95,10 @@ describe('owner console', () => {
 
         // Owners reach the console; the pending request is listed.
         expect(await screen.findByText('newbie@example.com')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
+        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute(
+            'href',
+            '/admin',
+        );
 
         await userEvent.click(screen.getByRole('button', { name: 'Freigeben' }));
 
@@ -103,7 +110,11 @@ describe('owner console', () => {
 
     it('rejects a pending request', async () => {
         auth.refresh.mockResolvedValue(owner);
-        const pending = account({ id: 'pending-1', email: 'newbie@example.com', status: 'PENDING' });
+        const pending = account({
+            id: 'pending-1',
+            email: 'newbie@example.com',
+            status: 'PENDING',
+        });
         adminRepo.listAccounts.mockResolvedValueOnce([pending]).mockResolvedValue([]);
         adminRepo.reject.mockResolvedValue(undefined);
 
@@ -144,7 +155,11 @@ describe('owner console', () => {
     it('disables an active admin and reflects the new status', async () => {
         auth.refresh.mockResolvedValue(owner);
         const active = account({ id: 'admin-2', email: 'existing@example.com', status: 'ACTIVE' });
-        const disabled = account({ id: 'admin-2', email: 'existing@example.com', status: 'DISABLED' });
+        const disabled = account({
+            id: 'admin-2',
+            email: 'existing@example.com',
+            status: 'DISABLED',
+        });
         adminRepo.listAccounts.mockResolvedValueOnce([active]).mockResolvedValue([disabled]);
         adminRepo.disable.mockResolvedValue(disabled);
 
@@ -162,7 +177,10 @@ describe('owner console', () => {
         renderApp('/admin/console');
 
         expect(await screen.findByRole('heading', { name: 'Nicht verfügbar' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute('href', '/admin');
+        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute(
+            'href',
+            '/admin',
+        );
         // Only owners get the console entry in the avatar menu.
         await userEvent.click(screen.getByRole('button', { name: 'Konto' }));
         expect(screen.getByRole('menu', { name: 'Konto' })).toBeInTheDocument();

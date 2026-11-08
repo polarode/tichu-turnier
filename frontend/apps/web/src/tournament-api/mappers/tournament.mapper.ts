@@ -68,9 +68,7 @@ export function tournamentFormToWriteInput(values: {
 }
 
 /** Domain write input → wire payload; keeps the DTO out of the hooks. */
-export function tournamentWriteInputToDto(
-    input: TournamentWriteInput,
-): TournamentWriteRequestDto {
+export function tournamentWriteInputToDto(input: TournamentWriteInput): TournamentWriteRequestDto {
     return {
         name: input.name,
         description: input.description,

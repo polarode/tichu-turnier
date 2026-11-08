@@ -26,7 +26,6 @@ const writeRequest: TournamentWriteInput = {
     settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
 };
 
-
 /** A normal table's four-game schedule: both teams play every game. */
 function schedule(first: string, second: string) {
     return [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: [first, second] }));
@@ -36,8 +35,26 @@ const startedResponse = {
     round: {
         roundNumber: 1,
         tables: [
-            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, status: 'PLAYING', confirmedTeamIds: [], gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
-            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, status: 'PLAYING', confirmedTeamIds: [], gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
+            {
+                tableNumber: 1,
+                teamIds: ['team-a', 'team-b'],
+                trio: false,
+                status: 'PLAYING',
+                confirmedTeamIds: [],
+                gameCount: 4,
+                schedule: schedule('team-a', 'team-b'),
+                games: [],
+            },
+            {
+                tableNumber: 2,
+                teamIds: ['team-c', 'team-d'],
+                trio: false,
+                status: 'PLAYING',
+                confirmedTeamIds: [],
+                gameCount: 4,
+                schedule: schedule('team-c', 'team-d'),
+                games: [],
+            },
         ],
     },
 };
@@ -45,7 +62,18 @@ const startedResponse = {
 const roundsResponse = [
     {
         roundNumber: 1,
-        tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, status: 'PLAYING', confirmedTeamIds: [], gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
+        tables: [
+            {
+                tableNumber: 1,
+                teamIds: ['team-a', 'team-b'],
+                trio: false,
+                status: 'PLAYING',
+                confirmedTeamIds: [],
+                gameCount: 4,
+                schedule: schedule('team-a', 'team-b'),
+                games: [],
+            },
+        ],
     },
 ];
 
@@ -144,16 +172,29 @@ describe('TournamentRepository start/rounds', () => {
         expect(tournament.status).toBe(TournamentStatus.ACTIVE);
         expect(round.number).toBe(1);
         expect(round.tables).toEqual([
-            { tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, confirmation: { status: 'PLAYING', confirmedTeamIds: [] }, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] },
-            { tableNumber: 2, teamIds: ['team-c', 'team-d'], trio: false, confirmation: { status: 'PLAYING', confirmedTeamIds: [] }, gameCount: 4, schedule: schedule('team-c', 'team-d'), games: [] },
+            {
+                tableNumber: 1,
+                teamIds: ['team-a', 'team-b'],
+                trio: false,
+                confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
+                gameCount: 4,
+                schedule: schedule('team-a', 'team-b'),
+                games: [],
+            },
+            {
+                tableNumber: 2,
+                teamIds: ['team-c', 'team-d'],
+                trio: false,
+                confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
+                gameCount: 4,
+                schedule: schedule('team-c', 'team-d'),
+                games: [],
+            },
         ]);
     });
 
     it('surfaces start-rejection codes as a typed ApiError', async () => {
-        for (const code of [
-            'TOURNAMENT_NOT_STARTABLE',
-            'INSUFFICIENT_TEAMS',
-        ] as const) {
+        for (const code of ['TOURNAMENT_NOT_STARTABLE', 'INSUFFICIENT_TEAMS'] as const) {
             mock.onPost('/api/tournaments/t-1/start').replyOnce(409, {
                 status: 409,
                 code,
@@ -175,7 +216,17 @@ describe('TournamentRepository start/rounds', () => {
         expect(rounds).toEqual([
             {
                 number: 1,
-                tables: [{ tableNumber: 1, teamIds: ['team-a', 'team-b'], trio: false, confirmation: { status: 'PLAYING', confirmedTeamIds: [] }, gameCount: 4, schedule: schedule('team-a', 'team-b'), games: [] }],
+                tables: [
+                    {
+                        tableNumber: 1,
+                        teamIds: ['team-a', 'team-b'],
+                        trio: false,
+                        confirmation: { status: 'PLAYING', confirmedTeamIds: [] },
+                        gameCount: 4,
+                        schedule: schedule('team-a', 'team-b'),
+                        games: [],
+                    },
+                ],
             },
         ]);
     });
@@ -222,28 +273,65 @@ describe('TournamentRepository standings/total rounds', () => {
 
     it('reads the standings in server order, mapped to domain', async () => {
         mock.onGet('/api/tournaments/t-1/standings').reply(200, [
-            { rank: 1, teamId: 'team-a', teamName: 'Alpha', gamesPlayed: 4, victoryPoints: 6, tichuPoints: 240 },
-            { rank: 2, teamId: 'team-b', teamName: 'Beta', gamesPlayed: 4, victoryPoints: 2, tichuPoints: 160 },
+            {
+                rank: 1,
+                teamId: 'team-a',
+                teamName: 'Alpha',
+                gamesPlayed: 4,
+                victoryPoints: 6,
+                tichuPoints: 240,
+            },
+            {
+                rank: 2,
+                teamId: 'team-b',
+                teamName: 'Beta',
+                gamesPlayed: 4,
+                victoryPoints: 2,
+                tichuPoints: 160,
+            },
         ]);
 
         const standings = await TournamentRepository.standings('t-1');
 
         expect(standings).toEqual([
-            { rank: 1, teamId: 'team-a', teamName: 'Alpha', gamesPlayed: 4, victoryPoints: 6, tichuPoints: 240 },
-            { rank: 2, teamId: 'team-b', teamName: 'Beta', gamesPlayed: 4, victoryPoints: 2, tichuPoints: 160 },
+            {
+                rank: 1,
+                teamId: 'team-a',
+                teamName: 'Alpha',
+                gamesPlayed: 4,
+                victoryPoints: 6,
+                tichuPoints: 240,
+            },
+            {
+                rank: 2,
+                teamId: 'team-b',
+                teamName: 'Beta',
+                gamesPlayed: 4,
+                victoryPoints: 2,
+                tichuPoints: 160,
+            },
         ]);
     });
 
     it('rejects a standings line without a rank at the zod boundary', async () => {
         mock.onGet('/api/tournaments/t-1/standings').reply(200, [
-            { teamId: 'team-a', teamName: 'Alpha', gamesPlayed: 4, victoryPoints: 6, tichuPoints: 240 },
+            {
+                teamId: 'team-a',
+                teamName: 'Alpha',
+                gamesPlayed: 4,
+                victoryPoints: 6,
+                tichuPoints: 240,
+            },
         ]);
 
         await expect(TournamentRepository.standings('t-1')).rejects.toThrow();
     });
 
     it('sets the total rounds and returns the updated tournament', async () => {
-        mock.onPut('/api/tournaments/t-1/total-rounds').reply(200, { ...dto, settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 } });
+        mock.onPut('/api/tournaments/t-1/total-rounds').reply(200, {
+            ...dto,
+            settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 },
+        });
 
         const tournament = await TournamentRepository.setTotalRounds('t-1', 6);
 
@@ -264,7 +352,10 @@ describe('TournamentRepository next round', () => {
     });
 
     it('starts the next round and maps the new round to domain', async () => {
-        mock.onPost('/api/tournaments/t-1/rounds').reply(200, { ...roundsResponse[0], roundNumber: 2 });
+        mock.onPost('/api/tournaments/t-1/rounds').reply(200, {
+            ...roundsResponse[0],
+            roundNumber: 2,
+        });
 
         const round = await TournamentRepository.startNextRound('t-1');
 
@@ -273,8 +364,16 @@ describe('TournamentRepository next round', () => {
     });
 
     it('surfaces advance-rejection codes as a typed ApiError', async () => {
-        for (const code of ['ROUND_INCOMPLETE', 'TOTAL_ROUNDS_REACHED', 'TOURNAMENT_NOT_ACTIVE'] as const) {
-            mock.onPost('/api/tournaments/t-1/rounds').replyOnce(409, { status: 409, code, detail: 'rejected' });
+        for (const code of [
+            'ROUND_INCOMPLETE',
+            'TOTAL_ROUNDS_REACHED',
+            'TOURNAMENT_NOT_ACTIVE',
+        ] as const) {
+            mock.onPost('/api/tournaments/t-1/rounds').replyOnce(409, {
+                status: 409,
+                code,
+                detail: 'rejected',
+            });
 
             const error = await TournamentRepository.startNextRound('t-1').catch((e: unknown) => e);
 

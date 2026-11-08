@@ -1,3 +1,4 @@
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,6 +45,8 @@ function tournament(status: Tournament['status'], totalRounds = 2): Tournament {
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility: false,
+        organizerRole: OrganizerRole.LEAD,
+        leadOrganizerEmail: 'lead@example.com',
         updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
 }

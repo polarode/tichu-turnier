@@ -21,6 +21,8 @@ export function tournamentDtoToDomain(dto: TournamentDto): Tournament {
         settings: tournamentSettingsDtoToDomain(dto.settings),
         status: dto.status,
         publicVisibility: dto.publicVisibility,
+        organizerRole: dto.organizerRole,
+        leadOrganizerEmail: dto.leadOrganizerEmail,
         createdAt: new Date(dto.createdAt),
         updatedAt: new Date(dto.updatedAt),
     };

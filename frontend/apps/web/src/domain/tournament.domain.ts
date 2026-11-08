@@ -1,4 +1,5 @@
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
+import type { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import type { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
@@ -44,6 +45,10 @@ export interface Tournament {
     status: TournamentStatus;
     /** Whether the tournament is listed on the public home page (set by the organizer). */
     publicVisibility: boolean;
+    /** Whether the signed-in organizer leads this tournament or only co-organizes it. */
+    organizerRole: OrganizerRole;
+    /** The email of the lead organizer, shown to co-organizers. */
+    leadOrganizerEmail: string;
     createdAt: Date;
     updatedAt: Date;
 }

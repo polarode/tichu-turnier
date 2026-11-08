@@ -1,3 +1,4 @@
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,6 +57,8 @@ const setupTournament = {
     status: 'SETUP' as const,
     createdAt: new Date('2025-01-01T10:00:00Z'),
     publicVisibility: false,
+    organizerRole: OrganizerRole.LEAD,
+    leadOrganizerEmail: 'lead@example.com',
     updatedAt: new Date('2025-01-01T10:00:00Z'),
 };
 

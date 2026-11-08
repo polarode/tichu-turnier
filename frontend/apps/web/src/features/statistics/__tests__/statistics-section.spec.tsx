@@ -1,3 +1,4 @@
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -64,6 +65,8 @@ function tournament(status: Tournament['status']): Tournament {
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility: false,
+        organizerRole: OrganizerRole.LEAD,
+        leadOrganizerEmail: 'lead@example.com',
         updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
 }
@@ -148,7 +151,7 @@ describe('statistics tab', () => {
                 within(tabs)
                     .getAllByRole('tab')
                     .map((tab) => tab.textContent),
-            ).toEqual(['Runden (1)', 'Rangliste', 'Statistiken', 'Teams (0)']),
+            ).toEqual(['Runden (1)', 'Rangliste', 'Statistiken', 'Teams (0)', 'Organisatoren']),
         );
     });
 

@@ -203,6 +203,10 @@
             {
                 "type": "fix",
                 "text": "A double win always counts as a win, with the winner marked and no tie point for the losing team, even when a failed Tichu leaves both teams level on Tichu points"
+            },
+            {
+                "type": "feature",
+                "text": "Run a tournament together: on the new Organizers tab, the organizer who created it can add other admins by email as co-organizers, who can then do everything except delete the tournament or add more organizers"
             }
         ]
     }

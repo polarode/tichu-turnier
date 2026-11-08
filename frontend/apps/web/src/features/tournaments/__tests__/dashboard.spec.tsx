@@ -1,3 +1,4 @@
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -43,6 +44,8 @@ function tournament(id: string, name: string, status: Tournament['status']): Tou
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility: false,
+        organizerRole: OrganizerRole.LEAD,
+        leadOrganizerEmail: 'lead@example.com',
         updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
 }
@@ -89,6 +92,30 @@ describe('dashboard', () => {
             'href',
             '/admin/tournaments/new',
         );
+    });
+
+    it('marks a co-organized tournament with its lead organizer and leaves led rows plain', async () => {
+        tournaments.list.mockResolvedValue([
+            tournament('t-1', 'Spring Classic', 'SETUP'),
+            {
+                ...tournament('t-2', 'Autumn Cup', 'ACTIVE'),
+                organizerRole: OrganizerRole.CO,
+                leadOrganizerEmail: 'lead@example.com',
+            },
+        ]);
+        teams.list.mockResolvedValue([]);
+
+        renderApp('/admin');
+
+        const coRow = (await screen.findByText('Autumn Cup')).closest('li');
+        expect(coRow).not.toBeNull();
+        expect(within(coRow!).getByText('Co-Organisator')).toBeInTheDocument();
+        expect(within(coRow!).getByText('Geleitet von lead@example.com')).toBeInTheDocument();
+
+        const leadRow = screen.getByText('Spring Classic').closest('li');
+        expect(leadRow).not.toBeNull();
+        expect(within(leadRow!).queryByText('Co-Organisator')).not.toBeInTheDocument();
+        expect(within(leadRow!).queryByText(/Geleitet von/)).not.toBeInTheDocument();
     });
 
     it('shows an empty state when the admin has no tournaments', async () => {

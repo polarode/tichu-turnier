@@ -5,6 +5,7 @@ export const QueryKeys = {
     PUBLIC_TOURNAMENTS: 'public-tournaments',
     PUBLIC_TOURNAMENT: 'public-tournament',
     TEAMS: 'teams',
+    ORGANIZERS: 'organizers',
     ROUNDS: 'rounds',
     STANDINGS: 'standings',
     STATISTICS: 'statistics',
@@ -34,6 +35,10 @@ export const publicTournamentQueryKey = (id: string) => [QueryKeys.PUBLIC_TOURNA
 
 /** Key for a tournament's team list. */
 export const teamsQueryKey = (tournamentId: string) => [QueryKeys.TEAMS, tournamentId] as const;
+
+/** Key for a tournament's lead organizer and co-organizers. */
+export const organizersQueryKey = (tournamentId: string) =>
+    [QueryKeys.ORGANIZERS, tournamentId] as const;
 
 /** Key for a single team within a tournament. */
 export const teamQueryKey = (tournamentId: string, teamId: string) =>

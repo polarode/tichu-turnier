@@ -1,3 +1,4 @@
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -49,6 +50,8 @@ function tournament(status: Tournament['status']): Tournament {
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility: false,
+        organizerRole: OrganizerRole.LEAD,
+        leadOrganizerEmail: 'lead@example.com',
         updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
 }
@@ -483,8 +486,13 @@ describe('rounds section', () => {
 
         await screen.findByRole('button', { name: 'Turnier starten' });
         expect(screen.queryByRole('region', { name: 'Runden' })).not.toBeInTheDocument();
-        // Setup shows the team list alone, without section tabs.
-        expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+        // Setup offers only the Teams and Organizers tabs, Teams selected.
+        const sections = screen.getByRole('tablist', { name: 'Turnierbereiche' });
+        expect(
+            within(sections)
+                .getAllByRole('tab')
+                .map((tab) => tab.textContent),
+        ).toEqual(['Teams (2)', 'Organisatoren']);
         expect(screen.getByText('Alpha 1 & Alpha 2')).toBeInTheDocument();
     });
 });

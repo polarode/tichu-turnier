@@ -66,6 +66,9 @@ export const de: Catalog = {
     'error.totalRoundsBelowRoundCount':
         'Die Rundenzahl darf nicht unter den bereits ausgelosten Runden liegen.',
     'error.adminStatusConflict': 'Das Konto ist nicht in einem Zustand, der diese Aktion erlaubt.',
+    'error.noActiveAdminWithEmail': 'Kein aktives Admin-Konto mit dieser E-Mail-Adresse.',
+    'error.cannotAddSelfAsCoOrganizer': 'Du leitest dieses Turnier bereits.',
+    'error.alreadyCoOrganizer': 'Dieses Admin-Konto ist bereits Co-Organisator.',
     'error.inviteInvalid': 'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
     'error.inviteExpired':
         'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
@@ -163,6 +166,8 @@ export const de: Catalog = {
     'dashboard.empty.title': 'Noch keine Turniere',
     'dashboard.empty.description': 'Erstelle dein erstes Turnier, um zu starten.',
     'dashboard.error': 'Die Turniere konnten nicht geladen werden.',
+    'dashboard.coOrganizerBadge': 'Co-Organisator',
+    'dashboard.ledBy': 'Geleitet von',
 
     'tournament.new.title': 'Neues Turnier',
     'tournament.new.description': 'Name, Beschreibung und Regeln festlegen.',
@@ -259,6 +264,17 @@ export const de: Catalog = {
     'progress.publish.action': 'Ergebnisse veröffentlichen',
     'progress.publish.confirmDescription': 'Danach sehen die Teams die Endrangliste.',
     'progress.published': 'Ergebnisse veröffentlicht',
+
+    'organizers.section.title': 'Organisatoren',
+    'organizers.lead': 'Leitung',
+    'organizers.coOrganizer': 'Co-Organisator',
+    'organizers.empty': 'Noch keine Co-Organisatoren.',
+    'organizers.form.helper':
+        'Füge ein Admin-Konto über seine E-Mail-Adresse hinzu. Der Zugriff gilt sofort.',
+    'organizers.form.email': 'E-Mail des Admins',
+    'organizers.form.placeholder': 'name@beispiel.de',
+    'organizers.form.add': 'Hinzufügen',
+    'organizers.form.adding': 'Wird hinzugefügt…',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',

@@ -17,6 +17,8 @@ const dto: TournamentDto = {
     settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 },
     status: TournamentStatus.SETUP,
     publicVisibility: false,
+    organizerRole: 'LEAD',
+    leadOrganizerEmail: 'lead@example.com',
     createdAt: '2026-01-01T12:00:00.000Z',
     updatedAt: '2026-01-02T08:30:00.000Z',
 };
@@ -45,6 +47,19 @@ describe('tournamentDtoToDomain publicVisibility', () => {
         expect(tournamentDtoToDomain({ ...dto, publicVisibility: true }).publicVisibility).toBe(
             true,
         );
+    });
+});
+
+describe('tournamentDtoToDomain organizer role', () => {
+    it('carries a co-organizer role and the lead organizer email through to the domain', () => {
+        const tournament = tournamentDtoToDomain({
+            ...dto,
+            organizerRole: 'CO',
+            leadOrganizerEmail: 'lead@example.com',
+        });
+
+        expect(tournament.organizerRole).toBe('CO');
+        expect(tournament.leadOrganizerEmail).toBe('lead@example.com');
     });
 });
 

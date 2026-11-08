@@ -26,6 +26,14 @@ export const ERROR_CODES = [
     'INVITE_STATUS_CONFLICT',
     'LINK_ALREADY_REVEALED',
 
+    // --- Co-organizers (#131) ---
+    /** Adding a co-organizer by an email that is no active admin account. */
+    'NO_ACTIVE_ADMIN_WITH_EMAIL',
+    /** Adding the lead organizer's own email as co-organizer. */
+    'CANNOT_ADD_SELF_AS_CO_ORGANIZER',
+    /** Adding an admin who already co-organizes the tournament. */
+    'ALREADY_CO_ORGANIZER',
+
     /** A team access link cannot be exchanged; all causes share this one code (ADR 0001). */
     'TEAM_ACCESS_INVALID',
 

@@ -5,6 +5,7 @@ import type { TournamentWriteInput } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 const dto = {
@@ -16,6 +17,8 @@ const dto = {
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T00:00:00.000Z',
     publicVisibility: false,
+    organizerRole: OrganizerRole.LEAD,
+    leadOrganizerEmail: 'lead@example.com',
     updatedAt: '2026-01-01T00:00:00.000Z',
 };
 

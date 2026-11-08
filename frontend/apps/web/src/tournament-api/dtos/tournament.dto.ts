@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { DOUBLE_WIN_BONUS_OPTIONS, GRAND_TICHU_BONUS_OPTIONS } from '@/domain/tournament.domain.ts';
+import { ORGANIZER_ROLES } from '@/vocabulary/organizer-role.enum.ts';
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
@@ -31,6 +32,8 @@ export const tournamentDtoSchema = z.object({
     settings: tournamentSettingsDtoSchema,
     status: z.enum(TOURNAMENT_STATUSES),
     publicVisibility: z.boolean(),
+    organizerRole: z.enum(ORGANIZER_ROLES),
+    leadOrganizerEmail: z.string(),
     createdAt: z.string(),
     updatedAt: z.string(),
 });

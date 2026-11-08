@@ -26,6 +26,10 @@ import {
     publicTournamentListDtoSchema,
 } from '@/tournament-api/dtos/public-tournament.dto.ts';
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
+import { organizersDtoToDomain } from '@/tournament-api/mappers/organizers.mapper.ts';
+import { organizersDtoSchema } from '@/tournament-api/dtos/organizers.dto.ts';
+import type { AddCoOrganizerRequestDto } from '@/tournament-api/dtos/organizers.dto.ts';
+import type { Organizers } from '@/domain/organizers.domain.ts';
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type {
     PublicTournament,
@@ -135,6 +139,19 @@ async function remove(id: string): Promise<void> {
     await apiClient.delete(`/api/tournaments/${id}`);
 }
 
+/** The lead organizer and the co-organizers of one tournament, in the order they were added. */
+async function listOrganizers(id: string): Promise<Organizers> {
+    const { data } = await apiClient.get<unknown>(`/api/tournaments/${id}/organizers`);
+    return organizersDtoToDomain(organizersDtoSchema.parse(data));
+}
+
+/** Adds an active admin as co-organizer (lead organizer only); returns the updated list. */
+async function addCoOrganizer(id: string, email: string): Promise<Organizers> {
+    const body: AddCoOrganizerRequestDto = { email };
+    const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/organizers`, body);
+    return organizersDtoToDomain(organizersDtoSchema.parse(data));
+}
+
 export const TournamentRepository = {
     list,
     get,
@@ -151,4 +168,6 @@ export const TournamentRepository = {
     startNextRound,
     finish,
     publish,
+    listOrganizers,
+    addCoOrganizer,
 };

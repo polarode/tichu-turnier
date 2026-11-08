@@ -200,7 +200,8 @@ finishes, or its results are published.
   session, so a team only ever receives events of its own tournament.
 
 There is no replay buffer: after a reconnect the client refetches everything once. A
-heartbeat keeps the connection alive about every 20 seconds.
+heartbeat keeps the connection alive every 10 seconds. A heartbeat is also sent as soon as a
+stream opens, so the browser sees the stream start right away.
 
 ## Layers
 

@@ -23,6 +23,7 @@ class SseTournamentEventBroadcasterTest {
 
     private class RecordingEmitter(timeout: Long, var failure: Exception? = null) : SseEmitter(timeout) {
         val sent = mutableListOf<String>()
+        val events get() = sent.filterNot { it.contains("heartbeat") }
         val payloads = mutableListOf<Any?>()
         var completion: Runnable? = null
         var timeoutCallback: Runnable? = null
@@ -67,11 +68,11 @@ class SseTournamentEventBroadcasterTest {
 
         broadcaster.publish(event)
 
-        assertEquals(1, created[0].sent.size)
-        assertEquals(1, created[1].sent.size)
-        assertEquals(0, created[2].sent.size)
-        assertTrue(created[0].sent[0].contains("tournamentId=t1"))
-        assertTrue(created[0].sent[0].contains("tableId=3"))
+        assertEquals(1, created[0].events.size)
+        assertEquals(1, created[1].events.size)
+        assertEquals(0, created[2].events.size)
+        assertTrue(created[0].events[0].contains("tournamentId=t1"))
+        assertTrue(created[0].events[0].contains("tableId=3"))
     }
 
     @ParameterizedTest
@@ -93,9 +94,9 @@ class SseTournamentEventBroadcasterTest {
         TransactionSynchronizationManager.initSynchronization()
         try {
             broadcaster.publish(event)
-            assertEquals(0, created[0].sent.size)
+            assertEquals(0, created[0].events.size)
             TransactionSynchronizationUtils.triggerAfterCommit()
-            assertEquals(1, created[0].sent.size)
+            assertEquals(1, created[0].events.size)
         } finally {
             TransactionSynchronizationManager.clearSynchronization()
         }
@@ -112,7 +113,7 @@ class SseTournamentEventBroadcasterTest {
         } finally {
             TransactionSynchronizationManager.clearSynchronization()
         }
-        assertEquals(0, created[0].sent.size)
+        assertEquals(0, created[0].events.size)
     }
 
     @Test
@@ -129,7 +130,7 @@ class SseTournamentEventBroadcasterTest {
         assertEquals(0, broadcaster.openStreamCount(t1))
         assertEquals(0, broadcaster.openStreamCount())
         broadcaster.publish(event)
-        created.forEach { assertEquals(0, it.sent.size) }
+        created.forEach { assertEquals(0, it.events.size) }
     }
 
     @Test
@@ -141,9 +142,9 @@ class SseTournamentEventBroadcasterTest {
         broadcaster.publish(event)
 
         assertEquals(1, broadcaster.openStreamCount(t1))
-        assertEquals(1, created[1].sent.size)
+        assertEquals(1, created[1].events.size)
         broadcaster.publish(event)
-        assertEquals(2, created[1].sent.size)
+        assertEquals(2, created[1].events.size)
     }
 
     @Test
@@ -186,15 +187,24 @@ class SseTournamentEventBroadcasterTest {
     }
 
     @Test
+    fun `a new stream gets a heartbeat right away`() {
+        broadcaster.subscribe(t1)
+
+        assertEquals(1, created[0].sent.size)
+        assertTrue(created[0].sent[0].contains("heartbeat"))
+    }
+
+    @Test
     fun `heartbeats go to every open stream as a comment`() {
         broadcaster.subscribe(t1)
         broadcaster.subscribe(t2)
 
         broadcaster.sendHeartbeats()
 
+        // One heartbeat on subscribe, one from the scheduled sweep.
         created.forEach {
-            assertEquals(1, it.sent.size)
-            assertTrue(it.sent[0].contains("heartbeat"))
+            assertEquals(2, it.sent.size)
+            assertTrue(it.sent.all { sent -> sent.contains("heartbeat") })
         }
     }
 }

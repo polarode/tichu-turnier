@@ -52,6 +52,8 @@ class SseTournamentEventBroadcaster(
             release(tournamentId, emitter)
             emitter.complete()
         }
+        // The response only starts with its first bytes; send them now so the browser sees the stream open at once.
+        send(tournamentId, emitter, heartbeat())
         return emitter
     }
 
@@ -69,13 +71,15 @@ class SseTournamentEventBroadcaster(
 
     fun sendHeartbeats() {
         streams.forEach { (tournamentId, emitters) ->
-            emitters.toList().forEach { send(tournamentId, it, SseEmitter.event().comment("heartbeat")) }
+            emitters.toList().forEach { send(tournamentId, it, heartbeat()) }
         }
     }
 
     fun openStreamCount(tournamentId: TournamentId): Int = streams[tournamentId]?.size ?: 0
 
     fun openStreamCount(): Int = streams.values.sumOf { it.size }
+
+    private fun heartbeat(): SseEmitter.SseEventBuilder = SseEmitter.event().comment("heartbeat")
 
     private fun deliver(event: TournamentEvent) {
         try {

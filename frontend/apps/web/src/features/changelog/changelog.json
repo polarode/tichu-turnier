@@ -186,23 +186,23 @@
             },
             {
                 "type": "feature",
-                "text": "Sort the standings and statistics tables by any column: click a column header to sort, click again to reverse, a third time to go back to the usual order"
+                "text": "Sortable standings and statistics tables"
             },
             {
                 "type": "feature",
-                "text": "Run a tournament together: add co-organizers by email on the new Organizers tab, remove them again, or leave a tournament yourself"
+                "text": "Run a tournament together with co-organizers"
             },
             {
                 "type": "improvement",
-                "text": "Clearer scoring screen: your table, your opponents, and games as tiles with winner and victory points"
+                "text": "Clearer scoring screen with games as tiles"
             },
             {
                 "type": "improvement",
-                "text": "Scoring screen shows a team's bonus points separately, with a tap-to-open breakdown of Tichu calls and double win"
+                "text": "Bonus points shown separately on the scoring screen"
             },
             {
                 "type": "improvement",
-                "text": "Public page shows one round at a time, with ranking and trend in their own tab"
+                "text": "Public page shows one round at a time"
             },
             {
                 "type": "improvement",
@@ -210,11 +210,11 @@
             },
             {
                 "type": "improvement",
-                "text": "Smaller live indicator that shows when the page is reconnecting"
+                "text": "Smaller live indicator with a reconnecting state"
             },
             {
                 "type": "fix",
-                "text": "A double win always counts as a win, even when a failed Tichu leaves both teams level"
+                "text": "A double win always counts as a win"
             },
             {
                 "type": "improvement",

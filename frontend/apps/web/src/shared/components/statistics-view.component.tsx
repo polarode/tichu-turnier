@@ -315,38 +315,41 @@ export function StatisticsView({ statistics }: StatisticsViewProps) {
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
-                        <table className="sr-only">
-                            <caption>{t('statistics.trend.caption')}</caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">{t('statistics.trend.round')}</th>
-                                    {trends.map((trend) => (
-                                        <th scope="col" key={trend.teamId}>
-                                            {trend.teamName}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {roundNumbers.map((roundNumber) => (
-                                    <tr key={roundNumber}>
-                                        <th scope="row">{roundNumber}</th>
-                                        {trends.map((trend) => {
-                                            const point = trend.points.find(
-                                                (p) => p.roundNumber === roundNumber,
-                                            );
-                                            return (
-                                                <td key={trend.teamId}>
-                                                    {point
-                                                        ? point.victoryPoints
-                                                        : t('statistics.noValue')}
-                                                </td>
-                                            );
-                                        })}
+                        {/* Firefox does not clip a table's caption with sr-only on the table itself. */}
+                        <div className="sr-only">
+                            <table>
+                                <caption>{t('statistics.trend.caption')}</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{t('statistics.trend.round')}</th>
+                                        {trends.map((trend) => (
+                                            <th scope="col" key={trend.teamId}>
+                                                {trend.teamName}
+                                            </th>
+                                        ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {roundNumbers.map((roundNumber) => (
+                                        <tr key={roundNumber}>
+                                            <th scope="row">{roundNumber}</th>
+                                            {trends.map((trend) => {
+                                                const point = trend.points.find(
+                                                    (p) => p.roundNumber === roundNumber,
+                                                );
+                                                return (
+                                                    <td key={trend.teamId}>
+                                                        {point
+                                                            ? point.victoryPoints
+                                                            : t('statistics.noValue')}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </figure>
                 ) : (
                     <p className="text-sm text-muted-foreground">{t('statistics.trend.empty')}</p>

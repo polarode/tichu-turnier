@@ -42,9 +42,14 @@ const BASE_SCORE_MIN = -25;
 const BASE_SCORE_MAX = 125;
 const BASE_SCORE_STEP = 5;
 
+/** A points figure with a typographic minus when negative: `50`, `−25`. */
+function formatPoints(points: number): string {
+    return points < 0 ? `\u2212${Math.abs(points)}` : `${points}`;
+}
+
 /** A signed points figure for the pill and the breakdown: `+100`, `−200`, and `+0` for zero. */
 function formatSigned(points: number): string {
-    return points < 0 ? `\u2212${Math.abs(points)}` : `+${points}`;
+    return points < 0 ? formatPoints(points) : `+${points}`;
 }
 
 /**
@@ -315,7 +320,7 @@ export function GameEntryForm({
                                 <span className="sr-only">{`${t('scoring.winner')}: `}</span>
                             </>
                         ) : null}
-                        {points[team].base}
+                        {formatPoints(points[team].base)}
                         {points[team].bonuses.length > 0 ? (
                             <>
                                 <span className="text-muted-foreground">

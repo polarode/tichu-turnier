@@ -305,6 +305,9 @@ describe('/team/score', () => {
         }
         expect(slider).toHaveValue('-25');
         expect(less).toBeDisabled();
+        // The pill writes a negative base with a typographic minus.
+        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
+        expect(within(alpha).getByText('\u221225')).toBeInTheDocument();
     });
 
     it('moves between games with the arrow keys (tabs pattern)', async () => {

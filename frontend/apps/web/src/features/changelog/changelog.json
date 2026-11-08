@@ -209,16 +209,12 @@
                 "text": "Smaller live indicator that shows when the page is reconnecting"
             },
             {
-                "type": "improvement",
-                "text": "Scoring screen shows the victory points each team gets as soon as a game's result is complete"
-            },
-            {
                 "type": "fix",
                 "text": "A double win always counts as a win, even when a failed Tichu leaves both teams level"
             },
             {
                 "type": "improvement",
-                "text": "More room for team names in the rounds overview: shorter confirmation badge, and a trio table's badges sit on top of each other"
+                "text": "More room for team names in the rounds overview"
             }
         ]
     }

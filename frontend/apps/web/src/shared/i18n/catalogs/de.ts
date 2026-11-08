@@ -60,7 +60,6 @@ export const de: Catalog = {
     'error.forbidden': 'Du hast keine Berechtigung für diese Aktion.',
     'error.tournamentNotEditable': 'Dieses Turnier kann nicht mehr bearbeitet werden.',
     'error.duplicateTeamName': 'Ein Team mit diesem Namen existiert bereits.',
-    'error.duplicatePlayerName': 'Ein Spieler mit diesem Namen spielt bereits in diesem Turnier.',
     'error.duplicateTeamPlayers': 'Die beiden Spieler müssen unterschiedlich sein.',
     'error.teamLimitReached': 'Dieses Turnier hat bereits die maximale Teamanzahl erreicht.',
     'error.maxTeamsBelowTeamCount': 'Das Maximum darf nicht unter der aktuellen Teamanzahl liegen.',

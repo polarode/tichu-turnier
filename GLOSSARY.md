@@ -77,7 +77,7 @@ the organizer.
 _Avoid_: group, pair, participant
 
 **Player**:
-A named participant belonging to exactly one team of a tournament.
+A named participant belonging to exactly one team of a tournament. The name is unique only within its team; two teams may each have a player of the same name, and the team tells them apart.
 _Avoid_: member, user
 
 **Access Link**:

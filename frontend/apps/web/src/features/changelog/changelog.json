@@ -195,6 +195,10 @@
             {
                 "type": "improvement",
                 "text": "Public page shows one round at a time, with ranking and trend in their own tab"
+            },
+            {
+                "type": "feature",
+                "text": "The player name now only needs to be unique within one team, but can be reused in other teams in the tournament"
             }
         ]
     }

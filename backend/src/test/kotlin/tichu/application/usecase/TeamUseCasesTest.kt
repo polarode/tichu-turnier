@@ -10,7 +10,6 @@ import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.InMemoryTeamTokenRepository
 import tichu.testsupport.RecordingSessionTokens
 import tichu.infra.persistence.InMemoryTournamentRepository
-import tichu.vocabulary.DuplicatePlayerNameException
 import tichu.vocabulary.DuplicateTeamNameException
 import tichu.vocabulary.DuplicateTeamPlayersException
 import tichu.vocabulary.ErrorCode
@@ -29,8 +28,8 @@ import kotlin.test.assertTrue
  * in isolation and deterministically.
  *
  * Covers the full team validation matrix at the use-case seam: field rules, the
- * tournament-scoped uniqueness rules (team name, player name, two identical
- * players in one team), capacity enforcement and the ownership rule inherited from
+ * uniqueness rules (team name within the tournament, two identical players in
+ * one team; player names may repeat across teams), capacity enforcement and the ownership rule inherited from
  * the tournament phase. The cross-tournament acceptance is proven by the same
  * organizer running two tournaments with identical names.
  */
@@ -188,27 +187,26 @@ class TeamUseCasesTest {
     }
 
     @Test
-    fun `rejects a player already on another team of the tournament anchored to the offending field`() {
+    fun `accepts a player name already on another team of the tournament`() {
         val tournamentId = createTournament("Spring Classic")
         createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
 
-        val ex = assertFailsWith<DuplicatePlayerNameException> {
-            createTeam.create(tournamentId, createTeamRequest(name = "Team Beta", playerOne = "Carol", playerTwo = "Alice"), owner)
-        }
-        assertEquals(ErrorCode.DUPLICATE_PLAYER_NAME, ex.code)
-        assertEquals("playerTwoName", ex.field)
+        val team = createTeam.create(tournamentId, createTeamRequest(name = "Team Beta", playerOne = "Carol", playerTwo = "Alice"), owner)
+
+        assertEquals("Team Beta", team.name)
+        assertEquals(listOf("Carol", "Alice"), team.players.map { it.name })
+        assertEquals(team, getTeam.get(tournamentId, team.id, owner), "the team is saved with the shared player name")
     }
 
     @Test
-    fun `rejects a player already on another team of the tournament case-insensitively`() {
+    fun `accepts a player name differing only in case from a player of another team`() {
         val tournamentId = createTournament("Spring Classic")
         createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
 
-        val ex = assertFailsWith<DuplicatePlayerNameException> {
-            createTeam.create(tournamentId, createTeamRequest(name = "Team Beta", playerOne = "ALICE", playerTwo = "Carol"), owner)
-        }
-        assertEquals(ErrorCode.DUPLICATE_PLAYER_NAME, ex.code)
-        assertEquals("playerOneName", ex.field)
+        val team = createTeam.create(tournamentId, createTeamRequest(name = "Team Beta", playerOne = "ALICE", playerTwo = "Carol"), owner)
+
+        assertEquals(listOf("ALICE", "Carol"), team.players.map { it.name })
+        assertEquals(team, getTeam.get(tournamentId, team.id, owner), "the team is saved with the shared player name")
     }
 
     @Test
@@ -441,17 +439,15 @@ class TeamUseCasesTest {
     }
 
     @Test
-    fun `update rejects a player already on another team anchored to the offending field`() {
+    fun `update accepts a player name already on another team of the tournament, case-insensitively`() {
         val tournamentId = createTournament("Spring Classic")
         val alpha = createTeamSafe(tournamentId, "Team Alpha", "Alice", "Bob")
         createTeamSafe(tournamentId, "Team Beta", "Carol", "Dave")
 
-        val ex = assertFailsWith<DuplicatePlayerNameException> {
-            updateTeam.update(tournamentId, alpha.id, createTeamRequest("Team Alpha", "Alice", "Carol"), owner)
-        }
+        val updated = updateTeam.update(tournamentId, alpha.id, createTeamRequest("Team Alpha", "Alice", "CAROL"), owner)
 
-        assertEquals(ErrorCode.DUPLICATE_PLAYER_NAME, ex.code)
-        assertEquals("playerTwoName", ex.field)
+        assertEquals(listOf("Alice", "CAROL"), updated.players.map { it.name })
+        assertEquals(updated, getTeam.get(tournamentId, alpha.id, owner), "the update is persisted with the shared player name")
     }
 
     @Test

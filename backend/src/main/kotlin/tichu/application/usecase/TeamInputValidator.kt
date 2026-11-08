@@ -2,7 +2,6 @@ package tichu.application.usecase
 
 import tichu.domain.Team
 import tichu.domain.TeamId
-import tichu.vocabulary.DuplicatePlayerNameException
 import tichu.vocabulary.DuplicateTeamNameException
 import tichu.vocabulary.DuplicateTeamPlayersException
 import tichu.vocabulary.InvalidFieldException
@@ -12,9 +11,10 @@ import tichu.vocabulary.InvalidFieldException
  * drift apart. Every failure names the offending field so the REST layer can anchor
  * the problem response to it (the frontend shows the message next to that input).
  *
- * Names are compared case-insensitively after trimming. Uniqueness is tournament-scoped:
- * the caller passes the tournament's current teams, and [validateUniqueness] excludes
- * one team id so an update does not clash with itself.
+ * Names are compared case-insensitively after trimming. Team names are unique per
+ * tournament: the caller passes the tournament's current teams, and [validateUniqueness]
+ * excludes one team id so an update does not clash with itself. Player names are only
+ * unique within their own team.
  */
 internal object TeamInputValidator {
 
@@ -28,15 +28,16 @@ internal object TeamInputValidator {
     }
 
     /**
-     * Tournament-scoped uniqueness rules:
+     * Uniqueness rules:
      *
-     * 1. the two players of one team must be different people;
-     * 2. the team name must be free among the other teams;
-     * 3. each player name must be free among the other teams — a player may not sit
-     *    on two teams of one tournament.
+     * 1. the two players of one team must be different people (within the team only);
+     * 2. the team name must be free among the other teams of the tournament.
+     *
+     * Player names are not checked against other teams: the same name may appear on
+     * several teams of one tournament.
      *
      * [excludingTeamId] is the team being updated (null on create), so a team keeping
-     * its own name or players is not treated as a duplicate of itself.
+     * its own name is not treated as a duplicate of itself.
      */
     fun validateUniqueness(
         teams: List<Team>,
@@ -56,13 +57,6 @@ internal object TeamInputValidator {
         if (otherTeams.any { it.name.equals(name, ignoreCase = true) }) {
             throw DuplicateTeamNameException("name", "Team name \"$name\" is already taken in this tournament")
         }
-        listOf("playerOneName" to playerOneName, "playerTwoName" to playerTwoName)
-            .firstOrNull { (_, playerName) ->
-                otherTeams.any { team -> team.players.any { it.name.equals(playerName, ignoreCase = true) } }
-            }
-            ?.let { (field, playerName) ->
-                throw DuplicatePlayerNameException(field, "Player \"$playerName\" is already on a team in this tournament")
-            }
     }
 
     private fun validateName(field: String, value: String) {

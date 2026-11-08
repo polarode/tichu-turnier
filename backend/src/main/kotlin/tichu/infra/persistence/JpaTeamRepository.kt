@@ -4,7 +4,6 @@ import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
-import tichu.vocabulary.DuplicatePlayerNameException
 import tichu.vocabulary.DuplicateTeamNameException
 import org.postgresql.util.PSQLException
 import org.springframework.dao.DataIntegrityViolationException
@@ -38,31 +37,19 @@ class JpaTeamRepository(
 
     /**
      * The use case checks uniqueness before saving, but a concurrent create can still
-     * slip through and hit the database's unique indexes. That race surfaces as a
+     * slip through and hit the database's unique team-name index. That race surfaces as a
      * [DataIntegrityViolationException]; it is translated into the same typed,
      * field-anchored errors the pre-save checks throw, so callers never see a 500
-     * for a duplicate. Violations the indexes cannot explain are rethrown.
+     * for a duplicate. Any other violation is returned unchanged.
      */
     private fun translateDuplicate(ex: DataIntegrityViolationException, team: Team): RuntimeException {
-        val detail = postgresDetail(ex)
-        return when {
-            detail.contains("uq_teams_tournament_name") -> DuplicateTeamNameException(
+        if (postgresDetail(ex).contains("uq_teams_tournament_name")) {
+            return DuplicateTeamNameException(
                 "name",
                 "Team name \"${team.name}\" is already taken in this tournament",
             )
-            detail.contains("uq_players_tournament_name") -> {
-                // The Postgres detail line carries the conflicting lower(name); match it
-                // back to the input field. Falls back to playerOneName if unparseable.
-                val duplicated = PLAYER_NAME_DETAIL.find(detail)?.groupValues?.get(2)
-                    ?: team.players.first().name.lowercase()
-                val field = when (duplicated) {
-                    team.players.getOrNull(1)?.name?.lowercase() -> "playerTwoName"
-                    else -> "playerOneName"
-                }
-                DuplicatePlayerNameException(field, "Player \"$duplicated\" is already on a team in this tournament")
-            }
-            else -> throw ex
         }
+        return ex
     }
 
     /**
@@ -109,12 +96,6 @@ class JpaTeamRepository(
 
     override fun delete(teamId: TeamId, tournamentId: TournamentId) {
         springDataTeamRepository.deleteByIdAndTournamentId(teamId.value, tournamentId.value)
-    }
-
-    /** Postgres detail format: `Key (tournament_id, lower(name))=(<uuid>, <name>) already exists.` */
-    private companion object {
-        // Postgres prints expression-index columns with their type, e.g. `lower(name::text)`.
-        val PLAYER_NAME_DETAIL = Regex("\\(tournament_id, lower\\(name(::text)?\\)\\)=\\([^,]+, (.*)\\) already exists\\.")
     }
 
     /** Loads the players of each team and reassembles the domain aggregates. */

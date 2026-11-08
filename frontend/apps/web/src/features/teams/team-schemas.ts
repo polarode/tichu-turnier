@@ -5,9 +5,10 @@ import type { I18n } from '@/shared/i18n/i18n.context.ts';
 /**
  * Form schema for adding and editing a team, built per locale so its messages are
  * localized. Mirrors the backend's input rules: no blank names and two distinct
- * players (compared case-insensitively, as the backend does). Cross-team duplicates
- * and the tournament's team capacity stay server-side — that is where the
- * authoritative check lives.
+ * players (compared case-insensitively, as the backend does). Player names may repeat
+ * across teams; only the within-team rule applies here. Team-name uniqueness and the
+ * tournament's team capacity stay server-side — that is where the authoritative check
+ * lives.
  */
 export function teamFormSchema(t: I18n['t']) {
     return z

@@ -31,9 +31,9 @@ import java.time.Clock
  * 3. field rules: blank / overlong names (see [TeamInputValidator]);
  * 4. capacity: the tournament must be below its configured `max_teams`;
  * 5. the two players of one team must be different people (typed, field-anchored);
- * 6. the team name must be free within the tournament (typed, field-anchored);
- * 7. each player name must be free within the tournament — a player may not sit on
- *    two teams of one tournament (typed, field-anchored).
+ * 6. the team name must be free within the tournament (typed, field-anchored).
+ *    Player names are not checked against other teams, so a name may repeat across
+ *    the teams of one tournament.
  *
  * The field and uniqueness matrix is delegated to [TeamInputValidator] so it stays
  * identical to the update path. Names are compared case-insensitively after trimming,

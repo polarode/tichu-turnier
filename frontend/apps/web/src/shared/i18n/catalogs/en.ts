@@ -61,7 +61,6 @@ export const en = {
     'error.forbidden': 'You do not have permission to do that.',
     'error.tournamentNotEditable': 'This tournament can no longer be edited.',
     'error.duplicateTeamName': 'A team with this name already exists.',
-    'error.duplicatePlayerName': 'A player with this name already plays in this tournament.',
     'error.duplicateTeamPlayers': 'The two players must be different.',
     'error.teamLimitReached': 'This tournament already has the maximum number of teams.',
     'error.maxTeamsBelowTeamCount': 'The maximum cannot be lower than the current number of teams.',

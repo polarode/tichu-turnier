@@ -19,7 +19,6 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     FORBIDDEN: 'error.forbidden',
     TOURNAMENT_NOT_EDITABLE: 'error.tournamentNotEditable',
     DUPLICATE_TEAM_NAME: 'error.duplicateTeamName',
-    DUPLICATE_PLAYER_NAME: 'error.duplicatePlayerName',
     DUPLICATE_TEAM_PLAYERS: 'error.duplicateTeamPlayers',
     TEAM_LIMIT_REACHED: 'error.teamLimitReached',
     MAX_TEAMS_BELOW_TEAM_COUNT: 'error.maxTeamsBelowTeamCount',

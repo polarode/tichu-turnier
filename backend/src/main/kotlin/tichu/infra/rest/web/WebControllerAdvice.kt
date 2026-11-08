@@ -4,7 +4,6 @@ import tichu.vocabulary.AdminStatusConflictException
 import tichu.vocabulary.ApiException
 import tichu.vocabulary.AccountDisabledException
 import tichu.vocabulary.AccountPendingException
-import tichu.vocabulary.DuplicatePlayerNameException
 import tichu.vocabulary.DuplicateTeamNameException
 import tichu.vocabulary.DuplicateTeamPlayersException
 import tichu.vocabulary.EmailAlreadyRegisteredException
@@ -203,10 +202,6 @@ class WebControllerAdvice {
     fun handleDuplicateTeamName(ex: DuplicateTeamNameException): ProblemDetail =
         anchoredConflict(ex, ex.field)
 
-    @ExceptionHandler(DuplicatePlayerNameException::class)
-    fun handleDuplicatePlayerName(ex: DuplicatePlayerNameException): ProblemDetail =
-        anchoredConflict(ex, ex.field)
-
     @ExceptionHandler(DuplicateTeamPlayersException::class)
     fun handleDuplicateTeamPlayers(ex: DuplicateTeamPlayersException): ProblemDetail =
         anchoredConflict(ex, ex.field)
@@ -289,7 +284,11 @@ class WebControllerAdvice {
             // Jackson reports a missing required property without a structured
             // property name, only in the message: "Missing required creator
             // property 'maxTeams' (index 1)".
-            missingCreatorProperty.find(cause.message ?: "")?.groupValues?.get(1)?.let {
+            // Explicit type: without it the Kotlin 2.4 compiler infers a type annotated with
+            // checker-qual's Nullable, which is not on the compile classpath
+            // (MISSING_DEPENDENCY_IN_INFERRED_TYPE_ANNOTATION_ERROR).
+            val creatorMatch: String? = missingCreatorProperty.find(cause.message ?: "")?.groupValues?.get(1)
+            creatorMatch?.let {
                 problem.anchor(it)
                 break
             }

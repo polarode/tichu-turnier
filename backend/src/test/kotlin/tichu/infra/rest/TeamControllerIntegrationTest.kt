@@ -171,22 +171,6 @@ class TeamControllerIntegrationTest(
     }
 
     @Test
-    fun `create rejects a player already on another team with a typed field-anchored 409`() {
-        val tournamentId = createTournament("Spring Classic")
-        createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
-
-        mockMvc.perform(
-            post("/api/tournaments/$tournamentId/teams").cookie(sessionCookie)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(teamBody("Team Beta", "Carol", "Alice")),
-        )
-            .andExpect(status().isConflict)
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-            .andExpect(jsonPath("$.code").value("DUPLICATE_PLAYER_NAME"))
-            .andExpect(jsonPath("$.field").value("playerTwoName"))
-    }
-
-    @Test
     fun `the same team and player names are accepted in another tournament of the same organizer`() {
         val first = createTournament("Spring Classic")
         val second = createTournament("Autumn Cup")
@@ -326,22 +310,6 @@ class TeamControllerIntegrationTest(
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("DUPLICATE_TEAM_NAME"))
             .andExpect(jsonPath("$.field").value("name"))
-    }
-
-    @Test
-    fun `update rejects a player already on another team with a typed field-anchored 409`() {
-        val tournamentId = createTournament("Spring Classic")
-        val teamId = createTeam(tournamentId, "Team Alpha", "Alice", "Bob")
-        createTeam(tournamentId, "Team Beta", "Carol", "Dave")
-
-        mockMvc.perform(
-            put("/api/tournaments/$tournamentId/teams/$teamId").cookie(sessionCookie)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(teamBody("Team Alpha", "Alice", "Carol")),
-        )
-            .andExpect(status().isConflict)
-            .andExpect(jsonPath("$.code").value("DUPLICATE_PLAYER_NAME"))
-            .andExpect(jsonPath("$.field").value("playerTwoName"))
     }
 
     @Test

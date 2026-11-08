@@ -28,9 +28,6 @@ enum class ErrorCode {
     /** A team name is already taken within the same tournament. */
     DUPLICATE_TEAM_NAME,
 
-    /** A player name is already taken within the same tournament. */
-    DUPLICATE_PLAYER_NAME,
-
     /** The two players of one team are the same player. */
     DUPLICATE_TEAM_PLAYERS,
 
@@ -321,15 +318,6 @@ class DuplicateTeamNameException(
     val field: String,
     message: String,
 ) : ApiException(ErrorCode.DUPLICATE_TEAM_NAME, message)
-
-/**
- * Thrown when a player name is already taken within the same tournament (by another
- * team). Field-anchored to the offending player input field. Mapped to HTTP 409.
- */
-class DuplicatePlayerNameException(
-    val field: String,
-    message: String,
-) : ApiException(ErrorCode.DUPLICATE_PLAYER_NAME, message)
 
 /**
  * Thrown when the two players of one team are the same player (same name).

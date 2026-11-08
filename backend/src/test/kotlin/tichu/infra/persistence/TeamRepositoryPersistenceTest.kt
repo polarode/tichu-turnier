@@ -14,7 +14,6 @@ import tichu.domain.TournamentStatus
 import tichu.main.Application
 import tichu.testsupport.PostgresBackedIntegrationTest
 import tichu.testsupport.insertAdminRow
-import tichu.vocabulary.DuplicatePlayerNameException
 import tichu.vocabulary.DuplicateTeamNameException
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -148,13 +147,14 @@ class TeamRepositoryPersistenceTest(
     }
 
     @Test
-    fun `a duplicate player name within the tournament violates the database constraint`() {
+    fun `the same player names, also differing in case, are accepted on two teams of one tournament`() {
         val tournamentId = insertTournament()
         teamRepository.save(team("t6-team-1", tournamentId, name = "Team Alpha", playerOneName = "Alice", playerTwoName = "Bob"))
 
-        val duplicate = team("t6-team-2", tournamentId, name = "Team Beta", playerOneName = "Carol", playerTwoName = "Alice")
-        val ex = assertFailsWith<DuplicatePlayerNameException> { teamRepository.save(duplicate) }
-        assertEquals("playerTwoName", ex.field)
+        teamRepository.save(team("t6-team-2", tournamentId, name = "Team Beta", playerOneName = "Carol", playerTwoName = "alice"))
+
+        assertEquals(listOf("Alice", "Bob"), teamRepository.findById(TeamId("t6-team-1"), tournamentId)?.players?.map { it.name })
+        assertEquals(listOf("Carol", "alice"), teamRepository.findById(TeamId("t6-team-2"), tournamentId)?.players?.map { it.name })
     }
 
     @Test

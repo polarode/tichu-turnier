@@ -11,11 +11,11 @@ import jakarta.persistence.Table
 
 /**
  * Persistence model for [Player]. Lives in the infra layer — the domain entity
- * stays framework-free. Players are tournament-scoped (no global player table):
- * the same name may recur in another tournament, but within one tournament each
- * name exists exactly once (see the V5 migration's unique constraint), which is
- * what keeps a player off two teams. A team update replaces its two player rows,
- * preserving the player ids and changing the names.
+ * stays framework-free. Players are tournament-scoped (no global player table),
+ * but player names are not unique in the database: the same name may recur across
+ * teams and tournaments, and the application rejects a name repeated within one
+ * team. A team update replaces its two player rows, preserving the player ids and
+ * changing the names.
  */
 @Entity
 @Table(name = "players")

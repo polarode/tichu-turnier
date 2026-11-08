@@ -50,14 +50,14 @@ and cascades to everything scoped to the tournament. An access link is revealed 
 most once (`409 LINK_ALREADY_REVEALED` afterwards); rotating issues a new token and
 invalidates the old one.
 
-Teams are tournament-scoped and validated server-side: names are compared
-case-insensitively, a player may sit on only one team per tournament, and the two
-players of a team must be different people. Field and uniqueness violations answer
-`409` with a stable `code` (`DUPLICATE_TEAM_NAME`, `DUPLICATE_PLAYER_NAME`,
-`DUPLICATE_TEAM_PLAYERS`) and a `field` member. Creating a team when the tournament
+Teams are tournament-scoped and validated server-side: team names are compared
+case-insensitively and must be unique per tournament, while player names only need
+to be different within one team (the two players of a team must be different
+people). Field and uniqueness violations answer `409` with a stable `code`
+(`DUPLICATE_TEAM_NAME`, `DUPLICATE_TEAM_PLAYERS`) and a `field` member. Creating a team when the tournament
 already holds its `maxTeams` answers `409 TEAM_LIMIT_REACHED`; lowering `maxTeams`
 below the registered team count answers `409 MAX_TEAMS_BELOW_TEAM_COUNT` anchored to
-`maxTeams`. Team and player names may repeat across different tournaments. Creating,
+`maxTeams`. Player names may repeat across teams and tournaments. Creating,
 editing and deleting a team answers `409 TOURNAMENT_NOT_EDITABLE` once the tournament
 has left `setup`.
 

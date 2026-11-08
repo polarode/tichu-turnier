@@ -10,6 +10,7 @@ pnpm install
 pnpm dev          # http://localhost:3000 (expects backend on :8080)
 pnpm typecheck
 pnpm lint
+pnpm format:check # `pnpm format` rewrites files
 pnpm test
 ```
 

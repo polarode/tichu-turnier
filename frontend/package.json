@@ -7,7 +7,9 @@
         "build": "pnpm --filter @tichu/web build",
         "typecheck": "pnpm -r typecheck",
         "lint": "oxlint",
-        "test": "pnpm -r test"
+        "test": "pnpm -r test",
+        "format": "oxfmt",
+        "format:check": "oxfmt --check"
     },
     "devDependencies": {
         "@tanstack/router-plugin": "1.168.48",
@@ -19,8 +21,8 @@
         "@types/react-dom": "19.3.0",
         "@vitejs/plugin-react": "6.1.2",
         "happy-dom": "21.0.4",
+        "oxfmt": "0.75.0",
         "oxlint": "1.90.0",
-        "prettier": "3.9.10",
         "typescript": "7.0.2",
         "vite": "8.3.5",
         "vitest": "5.0.5"

@@ -304,11 +304,9 @@ describe('rounds section', () => {
         const confirming = within(section).getByRole('button', { name: /^Tisch B/ });
         const completed = within(section).getByRole('button', { name: /^Tisch C/ });
 
-        // Playing keeps the entry progress; once someone confirms, the chip shows the status.
+        // Playing keeps the entry progress; once someone confirms, the chip counts confirmations.
         expect(within(playing).getByText('3/4 eingetragen')).toBeInTheDocument();
-        expect(
-            within(confirming).getByText('Bestätigung läuft · 1 von 2 bestätigt'),
-        ).toBeInTheDocument();
+        expect(within(confirming).getByText('1/2 bestätigt')).toBeInTheDocument();
         expect(within(confirming).queryByText(/eingetragen/)).not.toBeInTheDocument();
         expect(within(completed).getByText('Abgeschlossen')).toBeInTheDocument();
 

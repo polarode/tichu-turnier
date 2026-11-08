@@ -8,11 +8,7 @@ import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import { GameResults } from '@/features/scoring/components/game-results.component.tsx';
-import {
-    confirmedCountLabel,
-    TABLE_STATUS_LABEL_KEYS,
-    tableHeading,
-} from '@/features/scoring/labels.ts';
+import { TABLE_STATUS_LABEL_KEYS, tableHeading } from '@/features/scoring/labels.ts';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { TeamDot } from '@/shared/components/team-dot.component.tsx';
@@ -190,14 +186,17 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                         </Fragment>
                     ))}
                 </span>
-                {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
-                <span
-                    className={cn(
-                        'rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
-                        chip.tone,
-                    )}
-                >
-                    {chip.label}
+                {/* Stacked so a trio table's two badges don't squeeze the team names. */}
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                    {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
+                    <span
+                        className={cn(
+                            'rounded-full px-2 py-0.5 text-xs font-medium tabular-nums',
+                            chip.tone,
+                        )}
+                    >
+                        {chip.label}
+                    </span>
                 </span>
             </button>
             {/* Stays mounted while collapsed so the toggle's aria-controls always resolves. */}
@@ -219,7 +218,7 @@ const UNTOUCHED_TONE = 'bg-muted text-muted-foreground';
 
 /**
  * The table's chip: the entry progress while Playing (grey untouched, amber once
- * games come in), the status with "k of n confirmed" while Confirming (amber),
+ * games come in), "k/n confirmed" while Confirming (amber),
  * and "Completed" in the done tint — the only state the round's ✓ counts.
  */
 function tableChip(table: TableOverview, t: I18n['t']): { label: string; tone: string } {
@@ -230,7 +229,7 @@ function tableChip(table: TableOverview, t: I18n['t']): { label: string; tone: s
             return { label: statusLabel, tone: DONE_TONE };
         case TableStatus.CONFIRMING:
             return {
-                label: `${statusLabel} · ${confirmedCountLabel(table.confirmation, table.teamIds.length, t)}`,
+                label: `${table.confirmation.confirmedTeamIds.length}/${table.teamIds.length} ${t('confirmation.count.confirmed')}`,
                 tone: PENDING_TONE,
             };
         case TableStatus.PLAYING:

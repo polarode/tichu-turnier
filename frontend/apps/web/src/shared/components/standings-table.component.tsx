@@ -30,9 +30,6 @@ export function StandingsTable({ entries, caption, highlightTeamId }: StandingsT
                             {t('standings.team')}
                         </th>
                         <th scope="col" className="px-3 py-2 text-right font-medium">
-                            {t('standings.games')}
-                        </th>
-                        <th scope="col" className="px-3 py-2 text-right font-medium">
                             <abbr
                                 title={t('standings.victoryPoints.long')}
                                 className="no-underline"
@@ -64,7 +61,6 @@ export function StandingsTable({ entries, caption, highlightTeamId }: StandingsT
                                 <th scope="row" className="px-3 py-2 text-left font-medium">
                                     {entry.teamName}
                                 </th>
-                                <td className="px-3 py-2 text-right">{entry.gamesPlayed}</td>
                                 <td className="px-3 py-2 text-right font-medium">
                                     {entry.victoryPoints}
                                 </td>

@@ -179,11 +179,11 @@ describe('/team', () => {
         renderApp('/team');
 
         const ranking = await screen.findByRole('table', { name: 'Endrangliste' });
-        expect(columnHeaders(ranking)).toEqual(['Platz', 'Team', 'Spiele', 'SP', 'TP']);
+        expect(columnHeaders(ranking)).toEqual(['Platz', 'Team', 'SP', 'TP']);
         expect(bodyRows(ranking)).toEqual([
-            ['Team Beta', '1', '12', '9', '450'],
-            ['Team Alpha', '2', '12', '7', '300'],
-            ['Team Gamma', '2', '12', '7', '300'],
+            ['Team Beta', '1', '9', '450'],
+            ['Team Alpha', '2', '7', '300'],
+            ['Team Gamma', '2', '7', '300'],
         ]);
         expect(within(ranking).getByRole('row', { name: /Team Alpha/ })).toHaveAttribute(
             'aria-current',

@@ -130,14 +130,14 @@ describe('standings tab', () => {
         renderApp('/admin/tournaments/t-1?tab=standings');
 
         const standings = await screen.findByRole('table', { name: 'Rangliste' });
-        expect(columnHeaders(standings)).toEqual(['Platz', 'Team', 'Spiele', 'SP', 'TP']);
+        expect(columnHeaders(standings)).toEqual(['Platz', 'Team', 'SP', 'TP']);
         // Row header (team) first, then the cells: rank, games, VP, TP.
         expect(bodyRows(standings)).toEqual([
-            ['Ravens', '1', '4', '8', '280'],
-            ['Badgers', '2', '4', '4', '200'],
-            ['Falcons', '2', '4', '4', '200'],
-            ['Owls', '2', '4', '4', '200'],
-            ['Wolves', '5', '4', '0', '120'],
+            ['Ravens', '1', '8', '280'],
+            ['Badgers', '2', '4', '200'],
+            ['Falcons', '2', '4', '200'],
+            ['Owls', '2', '4', '200'],
+            ['Wolves', '5', '0', '120'],
         ]);
     });
 

@@ -108,6 +108,17 @@ export function displayTotals(state: GameFormState, bonuses: ScoringBonuses): [n
 }
 
 /**
+ * The team (0 or 1) that wins this game: the double-win team outright (even when
+ * a failed call levels the [totals]), otherwise the team ahead on points; null
+ * on a tie. Mirrors the server's Victory Points (ADR 0004).
+ */
+export function gameWinner(state: GameFormState, totals: [number, number]): 0 | 1 | null {
+    const dw = doubleWinTeam(state.positions);
+    if (dw !== null) return dw;
+    return totals[0] === totals[1] ? null : totals[0] > totals[1] ? 0 : 1;
+}
+
+/**
  * Builds the write payload from the grid state and the game's [matchup] (the two
  * playing teams and their rosters). Groups the four slots back into the two
  * teams; on a double win both base scores are 0 and the losing players carry no

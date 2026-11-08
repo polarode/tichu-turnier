@@ -7,6 +7,7 @@ import {
     doubleWinTeam,
     emptyFormState,
     fromRecordedGame,
+    gameWinner,
     nextFinishPosition,
     toWriteInput,
     withSlot,
@@ -158,6 +159,28 @@ describe('displayTotals', () => {
         };
         // team 1 took 1+2: 0 base + 100 small Tichu + 100 double win.
         expect(displayTotals(state, { ...normalBonuses, doubleWinBonus: 100 })).toEqual([0, 200]);
+    });
+});
+
+describe('gameWinner', () => {
+    const state = (positions: GameFormState['positions']): GameFormState => ({
+        positions,
+        calls: ['NONE', 'NONE', 'NONE', 'NONE'],
+        bombs: [0, 0, 0, 0],
+        baseScoreTeam0: 50,
+        beschiss: false,
+    });
+
+    it('is the team ahead on points', () => {
+        expect(gameWinner(state([2, 4, 1, 3]), [40, 60])).toBe(1);
+    });
+
+    it('is nobody on a tie', () => {
+        expect(gameWinner(state([1, 3, 2, 4]), [50, 50])).toBeNull();
+    });
+
+    it('is the double-win team even when a failed call levels the points', () => {
+        expect(gameWinner(state([null, null, 2, 1]), [0, 0])).toBe(1);
     });
 });
 

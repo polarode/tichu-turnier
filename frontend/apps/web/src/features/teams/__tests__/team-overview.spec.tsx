@@ -460,6 +460,26 @@ describe('/team confirmation panel', () => {
         expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
     });
 
+    it('marks the double-win team as winner even when a failed call levels the points', async () => {
+        const levelled: RecordedGame = {
+            ...game(1),
+            outcome: {
+                tichuSuccesses: [],
+                doubleWinTeam: 'team-1',
+                teamPoints: { 'team-1': 0, 'team-2': 0 },
+                victoryPoints: { 'team-1': 3, 'team-2': 0 },
+            },
+        };
+        const { panel } = await renderPanel(seatedTable(), [levelled]);
+
+        expect(gameTiles(within(panel).getByRole('list', { name: 'Spiele' }))[0]).toEqual([
+            'Spiel 1',
+            'Team Alpha, Gewinner 0 +3 Siegpunkte',
+            'Team Beta 0',
+            'Doppelsieg',
+        ]);
+    });
+
     it('confirms through the dialog with the versions the team saw', async () => {
         const user = userEvent.setup();
         const games = [game(1, 3), game(2), game(3), game(4, 2)];

@@ -17,6 +17,7 @@ import {
     complementBaseScore,
     displayTotals,
     doubleWinTeam,
+    gameWinner,
     emptyFormState,
     fromRecordedGame,
     nextFinishPosition,
@@ -151,8 +152,7 @@ export function GameEntryForm({
         dw === null ? state.baseScoreTeam0 : 0,
         complementBaseScore(state.baseScoreTeam0, dw !== null),
     ] as const;
-    // The team ahead on this game's points; none on a tie.
-    const winner = totals[0] === totals[1] ? null : totals[0] > totals[1] ? 0 : 1;
+    const winner = gameWinner(state, totals);
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
     // the same read-only mode when the table freezes mid-edit.

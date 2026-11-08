@@ -168,15 +168,17 @@ function GameTile({
         victoryPoints: game?.outcome.victoryPoints[id] ?? 0,
     }));
     const [first, second] = rows;
-    // A tie, or a game not entered, has no winner.
+    // A double win decides the game outright, even when a failed call levels the
+    // points; otherwise the team ahead wins. A tie, or a game not entered, has none.
     const winner =
-        first?.points === undefined ||
+        game?.outcome.doubleWinTeam ??
+        (first?.points === undefined ||
         second?.points === undefined ||
         first.points === second.points
             ? undefined
             : first.points > second.points
               ? first.id
-              : second.id;
+              : second.id);
 
     return (
         <li

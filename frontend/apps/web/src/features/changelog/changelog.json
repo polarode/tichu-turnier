@@ -202,7 +202,7 @@
             },
             {
                 "type": "fix",
-                "text": "A double win no longer gives the losing team a tie point when a failed Tichu leaves both teams level on Tichu points"
+                "text": "A double win always counts as a win, with the winner marked and no tie point for the losing team, even when a failed Tichu leaves both teams level on Tichu points"
             }
         ]
     }

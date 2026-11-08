@@ -210,7 +210,7 @@
             },
             {
                 "type": "improvement",
-                "text": "The live indicator is now a small dot that pulses red while the page is receiving live updates and turns grey while it reconnects, and it switches on as soon as the page connects"
+                "text": "The live indicator is now a small dot that pulses red while the page is receiving live updates and turns into a grey ring while it reconnects, and it switches on as soon as the page connects"
             }
         ]
     }

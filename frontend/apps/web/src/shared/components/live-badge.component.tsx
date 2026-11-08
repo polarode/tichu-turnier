@@ -9,8 +9,9 @@ export interface LiveBadgeProps {
 }
 
 /**
- * Whether the live stream is connected: a pulsing red dot while connected, a static grey dot
- * while offline or reconnecting. The label stays in the DOM for screen readers.
+ * Whether the live stream is connected: a pulsing red dot while connected, a hollow grey ring
+ * while offline or reconnecting, so the state does not rest on colour alone. The label stays in
+ * the DOM for screen readers.
  */
 export function LiveBadge({ connected, labelKeyPrefix }: LiveBadgeProps) {
     const { t } = useI18n();
@@ -30,7 +31,7 @@ export function LiveBadge({ connected, labelKeyPrefix }: LiveBadgeProps) {
                 aria-hidden
                 className={cn(
                     'relative inline-flex size-2.5 rounded-full',
-                    connected ? 'bg-destructive' : 'bg-muted-foreground',
+                    connected ? 'bg-destructive' : 'border-2 border-muted-foreground',
                 )}
             />
             <span className="sr-only">

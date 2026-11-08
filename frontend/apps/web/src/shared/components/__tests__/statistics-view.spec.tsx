@@ -145,11 +145,11 @@ describe('StatisticsView', () => {
         expect(labels).toEqual([
             'Tichu-Ansagen',
             'Erfolgreiche Tichus',
-            'Meiste Bomben',
-            'Doppelsiege',
             'Zerstörte Tichus',
-            'Beschiss-Spiele',
+            'Doppelsiege',
+            'Meiste Bomben',
             'Gutes Pferd',
+            'Beschiss-Spiele',
         ]);
     });
 

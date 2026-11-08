@@ -7,8 +7,8 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 
 class GetTournamentQuery(
-    private val repository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
 ) : GetTournament {
     override fun get(id: TournamentId, owner: AdminUserId): Tournament =
-        repository.findOwnedOrThrow(id, owner)
+        tournamentAccess.organizedOrThrow(id, owner)
 }

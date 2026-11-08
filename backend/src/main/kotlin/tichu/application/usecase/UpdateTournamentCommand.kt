@@ -23,6 +23,7 @@ import java.time.Clock
 @Transactional
 class UpdateTournamentCommand(
     private val repository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
     private val clock: Clock,
 ) : UpdateTournament {
@@ -32,7 +33,7 @@ class UpdateTournamentCommand(
         command: TournamentWriteRequest,
         owner: AdminUserId,
     ): Tournament {
-        val tournament = repository.findOwnedOrThrow(id, owner)
+        val tournament = tournamentAccess.organizedOrThrow(id, owner)
         tournament.requireSetupPhase()
 
         val name = command.name.trim()

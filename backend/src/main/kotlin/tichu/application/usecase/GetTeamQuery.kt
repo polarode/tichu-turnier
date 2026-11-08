@@ -16,12 +16,12 @@ import tichu.vocabulary.NotFoundException
  * as forbidden, so the caller cannot learn that the id exists.
  */
 class GetTeamQuery(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
 ) : GetTeam {
 
     override fun get(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId): Team {
-        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        tournamentAccess.organizedOrThrow(tournamentId, owner)
         return teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
     }

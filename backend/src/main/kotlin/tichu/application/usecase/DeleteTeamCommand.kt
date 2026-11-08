@@ -22,13 +22,13 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Transactional
 class DeleteTeamCommand(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
     private val teamTokenRepository: TeamTokenRepository,
 ) : DeleteTeam {
 
     override fun delete(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId) {
-        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentAccess.organizedOrThrow(tournamentId, owner)
         teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
         tournament.requireSetupPhase()

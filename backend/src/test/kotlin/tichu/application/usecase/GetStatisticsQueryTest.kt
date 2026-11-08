@@ -59,7 +59,7 @@ class GetStatisticsQueryTest {
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val query = GetStatisticsQuery(
-        tournamentRepository,
+        TournamentAccess(tournamentRepository),
         teamRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
     )

@@ -50,7 +50,7 @@ class StartTournamentCommandTest {
     private val startEvents = RecordingTournamentEvents()
 
     private val createTeam = CreateTeamCommand(
-        tournamentRepository,
+        TournamentAccess(tournamentRepository),
         teamRepository,
         InMemoryTeamTokenRepository(),
         RecordingSessionTokens(),
@@ -59,6 +59,7 @@ class StartTournamentCommandTest {
     )
     private val startTournament = StartTournamentCommand(
         tournamentRepository,
+        TournamentAccess(tournamentRepository),
         teamRepository,
         roundRepository,
         idGenerator,
@@ -116,15 +117,15 @@ class StartTournamentCommandTest {
                     owner,
                 )
             val id = TournamentId("id-1")
-            CreateTeamCommand(tournaments, teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
+            CreateTeamCommand(TournamentAccess(tournaments), teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
                 .create(id, TeamWriteRequest("Team Alpha", "A1", "A2"), owner)
-            CreateTeamCommand(tournaments, teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
+            CreateTeamCommand(TournamentAccess(tournaments), teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
                 .create(id, TeamWriteRequest("Team Beta", "B1", "B2"), owner)
-            CreateTeamCommand(tournaments, teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
+            CreateTeamCommand(TournamentAccess(tournaments), teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
                 .create(id, TeamWriteRequest("Team Gamma", "G1", "G2"), owner)
-            CreateTeamCommand(tournaments, teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
+            CreateTeamCommand(TournamentAccess(tournaments), teams, InMemoryTeamTokenRepository(), RecordingSessionTokens(), idGenerator, fixedClock)
                 .create(id, TeamWriteRequest("Team Delta", "D1", "D2"), owner)
-            val start = StartTournamentCommand(tournaments, teams, rounds, idGenerator, Random(seed), fixedClock, RecordingTournamentEvents())
+            val start = StartTournamentCommand(tournaments, TournamentAccess(tournaments), teams, rounds, idGenerator, Random(seed), fixedClock, RecordingTournamentEvents())
             val started = start.start(id, owner)
             return started.round.pairing.tables.map { table ->
                 teams.findById(table.seatedTeams[0])!!.name to teams.findById(table.seatedTeams[1])!!.name
@@ -265,6 +266,7 @@ class StartTournamentCommandTest {
         }
         val failingStart = StartTournamentCommand(
             tournamentRepository,
+            TournamentAccess(tournamentRepository),
             teamRepository,
             failingRounds,
             idGenerator,

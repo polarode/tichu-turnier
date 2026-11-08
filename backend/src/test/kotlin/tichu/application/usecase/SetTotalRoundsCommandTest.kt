@@ -43,7 +43,7 @@ class SetTotalRoundsCommandTest {
     private val tournamentRepository = InMemoryTournamentRepository()
     private val roundRepository = InMemoryRoundRepository()
     private val totalRoundsEvents = RecordingTournamentEvents()
-    private val command = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock, totalRoundsEvents)
+    private val command = SetTotalRoundsCommand(tournamentRepository, TournamentAccess(tournamentRepository), roundRepository, clock, totalRoundsEvents)
 
     private fun tournament(status: TournamentStatus, settings: TournamentSettings = TournamentSettings(grandTichuBonus = 100)) =
         tournamentRepository.save(

@@ -84,8 +84,13 @@ class UseCaseConfiguration(
 ) {
 
     @Bean
+    fun tournamentAccess(tournamentRepository: TournamentRepository): TournamentAccess =
+        TournamentAccess(tournamentRepository)
+
+    @Bean
     fun startTournament(
         tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         roundRepository: RoundRepository,
         idGenerator: IdGenerator,
@@ -94,7 +99,7 @@ class UseCaseConfiguration(
         tournamentEvents: TournamentEvents,
     ): StartTournament =
         StartTournamentCommand(
-            tournamentRepository, teamRepository, roundRepository, idGenerator, random, clock, tournamentEvents,
+            tournamentRepository, tournamentAccess, teamRepository, roundRepository, idGenerator, random, clock, tournamentEvents,
         )
 
     @Bean
@@ -107,6 +112,7 @@ class UseCaseConfiguration(
     @Bean
     fun startNextRound(
         tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         roundRepository: RoundRepository,
         playedRoundsReader: PlayedRoundsReader,
@@ -115,45 +121,47 @@ class UseCaseConfiguration(
         tournamentEvents: TournamentEvents,
     ): StartNextRound =
         StartNextRoundCommand(
-            tournamentRepository, teamRepository, roundRepository, playedRoundsReader, idGenerator, random, tournamentEvents,
+            tournamentRepository, tournamentAccess, teamRepository, roundRepository, playedRoundsReader, idGenerator, random, tournamentEvents,
         )
 
     @Bean
     fun finishTournament(
         tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         playedRoundsReader: PlayedRoundsReader,
         clock: Clock,
         tournamentEvents: TournamentEvents,
-    ): FinishTournament = FinishTournamentCommand(tournamentRepository, playedRoundsReader, clock, tournamentEvents)
+    ): FinishTournament = FinishTournamentCommand(tournamentRepository, tournamentAccess, playedRoundsReader, clock, tournamentEvents)
 
     @Bean
     fun publishTournament(
         tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         clock: Clock,
         tournamentEvents: TournamentEvents,
-    ): PublishTournament = PublishTournamentCommand(tournamentRepository, clock, tournamentEvents)
+    ): PublishTournament = PublishTournamentCommand(tournamentRepository, tournamentAccess, clock, tournamentEvents)
 
     @Bean
     fun listRounds(
-        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         roundRepository: RoundRepository,
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
-    ): ListRounds = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository, confirmationRepository)
+    ): ListRounds = ListRoundsQuery(tournamentAccess, roundRepository, gameRepository, confirmationRepository)
 
     @Bean
     fun getStandings(
-        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         playedRoundsReader: PlayedRoundsReader,
-    ): GetStandings = GetStandingsQuery(tournamentRepository, teamRepository, playedRoundsReader)
+    ): GetStandings = GetStandingsQuery(tournamentAccess, teamRepository, playedRoundsReader)
 
     @Bean
     fun getStatistics(
-        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         playedRoundsReader: PlayedRoundsReader,
-    ): GetStatistics = GetStatisticsQuery(tournamentRepository, teamRepository, playedRoundsReader)
+    ): GetStatistics = GetStatisticsQuery(tournamentAccess, teamRepository, playedRoundsReader)
 
     @Bean
     fun getFinalRanking(
@@ -165,17 +173,19 @@ class UseCaseConfiguration(
     @Bean
     fun setTotalRounds(
         tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         roundRepository: RoundRepository,
         clock: Clock,
         tournamentEvents: TournamentEvents,
-    ): SetTotalRounds = SetTotalRoundsCommand(tournamentRepository, roundRepository, clock, tournamentEvents)
+    ): SetTotalRounds = SetTotalRoundsCommand(tournamentRepository, tournamentAccess, roundRepository, clock, tournamentEvents)
 
     @Bean
     fun setPublicVisibility(
         tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         clock: Clock,
         tournamentEvents: TournamentEvents,
-    ): SetPublicVisibility = SetPublicVisibilityCommand(tournamentRepository, clock, tournamentEvents)
+    ): SetPublicVisibility = SetPublicVisibilityCommand(tournamentRepository, tournamentAccess, clock, tournamentEvents)
 
     @Bean
     fun recordGame(
@@ -229,34 +239,37 @@ class UseCaseConfiguration(
         ListTournamentsQuery(repository)
 
     @Bean
-    fun getTournament(repository: TournamentRepository): GetTournament =
-        GetTournamentQuery(repository)
+    fun getTournament(tournamentAccess: TournamentAccess): GetTournament =
+        GetTournamentQuery(tournamentAccess)
 
     @Bean
     fun updateTournament(
         repository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         clock: Clock,
-    ): UpdateTournament = UpdateTournamentCommand(repository, teamRepository, clock)
+    ): UpdateTournament = UpdateTournamentCommand(repository, tournamentAccess, teamRepository, clock)
 
     @Bean
-    fun deleteTournament(repository: TournamentRepository): DeleteTournament =
-        DeleteTournamentCommand(repository)
+    fun deleteTournament(
+        repository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
+    ): DeleteTournament = DeleteTournamentCommand(repository, tournamentAccess)
 
     @Bean
     fun createTeam(
-        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         teamTokenRepository: TeamTokenRepository,
         sessionTokens: SessionTokens,
         idGenerator: IdGenerator,
         clock: Clock,
     ): CreateTeam =
-        CreateTeamCommand(tournamentRepository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
+        CreateTeamCommand(tournamentAccess, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
 
     @Bean
-    fun listTeams(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListTeams =
-        ListTeamsQuery(tournamentRepository, teamRepository)
+    fun listTeams(tournamentAccess: TournamentAccess, teamRepository: TeamRepository): ListTeams =
+        ListTeamsQuery(tournamentAccess, teamRepository)
 
     @Bean
     fun listPublicTournaments(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): ListPublicTournaments =
@@ -281,19 +294,19 @@ class UseCaseConfiguration(
         CheckPublicTournamentVisibleQuery(tournamentRepository)
 
     @Bean
-    fun getTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): GetTeam =
-        GetTeamQuery(tournamentRepository, teamRepository)
+    fun getTeam(tournamentAccess: TournamentAccess, teamRepository: TeamRepository): GetTeam =
+        GetTeamQuery(tournamentAccess, teamRepository)
 
     @Bean
-    fun updateTeam(tournamentRepository: TournamentRepository, teamRepository: TeamRepository): UpdateTeam =
-        UpdateTeamCommand(tournamentRepository, teamRepository)
+    fun updateTeam(tournamentAccess: TournamentAccess, teamRepository: TeamRepository): UpdateTeam =
+        UpdateTeamCommand(tournamentAccess, teamRepository)
 
     @Bean
     fun deleteTeam(
-        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         teamTokenRepository: TeamTokenRepository,
-    ): DeleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository, teamTokenRepository)
+    ): DeleteTeam = DeleteTeamCommand(tournamentAccess, teamRepository, teamTokenRepository)
 
     @Bean
     fun teamSessionIssuer(
@@ -426,7 +439,7 @@ class UseCaseConfiguration(
 
     @Bean
     fun manageTeamAccessLink(
-        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
         teamRepository: TeamRepository,
         teamTokenRepository: TeamTokenRepository,
         teamSessionRepository: TeamSessionRepository,
@@ -434,7 +447,7 @@ class UseCaseConfiguration(
         clock: Clock,
     ): ManageTeamAccessLinkCommand =
         ManageTeamAccessLinkCommand(
-            tournamentRepository,
+            tournamentAccess,
             teamRepository,
             teamTokenRepository,
             teamSessionRepository,

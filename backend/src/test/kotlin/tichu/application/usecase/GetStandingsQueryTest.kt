@@ -54,7 +54,7 @@ class GetStandingsQueryTest {
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val query = GetStandingsQuery(
-        tournamentRepository,
+        TournamentAccess(tournamentRepository),
         teamRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
     )

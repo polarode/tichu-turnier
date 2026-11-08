@@ -7,7 +7,7 @@ package tichu.domain
  * [Team] is the aggregate root: saving a team also persists its two players.
  * Every lookup is scoped to a [TournamentId] — teams never exist outside a
  * tournament, and the ownership check happens one layer up via
- * `TournamentRepository.findOwnedOrThrow` before these methods are reached.
+ * `TournamentAccess.organizedOrThrow` before these methods are reached.
  */
 interface TeamRepository {
 

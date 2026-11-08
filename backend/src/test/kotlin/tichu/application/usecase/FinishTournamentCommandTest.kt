@@ -55,6 +55,7 @@ class FinishTournamentCommandTest {
 
     private val command = FinishTournamentCommand(
         tournamentRepository,
+        TournamentAccess(tournamentRepository),
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
         clock,
         finishEvents,

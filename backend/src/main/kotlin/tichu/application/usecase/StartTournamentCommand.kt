@@ -31,6 +31,7 @@ import kotlin.random.Random
 @Transactional
 class StartTournamentCommand(
     private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
     private val roundRepository: RoundRepository,
     private val idGenerator: IdGenerator,
@@ -40,7 +41,7 @@ class StartTournamentCommand(
 ) : StartTournament {
 
     override fun start(tournamentId: TournamentId, owner: AdminUserId): StartedTournament {
-        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentAccess.organizedOrThrow(tournamentId, owner)
         if (tournament.status != TournamentStatus.SETUP) {
             throw TournamentNotStartableException(
                 "Tournament ${tournamentId.value} cannot be started: it is ${tournament.status}, not SETUP.",

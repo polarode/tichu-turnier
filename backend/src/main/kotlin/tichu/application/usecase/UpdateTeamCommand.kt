@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Transactional
 class UpdateTeamCommand(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
 ) : UpdateTeam {
 
@@ -38,7 +38,7 @@ class UpdateTeamCommand(
         command: TeamWriteRequest,
         owner: AdminUserId,
     ): Team {
-        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentAccess.organizedOrThrow(tournamentId, owner)
         val team = teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
         tournament.requireSetupPhase()

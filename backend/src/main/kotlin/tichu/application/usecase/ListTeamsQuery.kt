@@ -9,12 +9,12 @@ import tichu.domain.TournamentRepository
 
 /** Lists the teams of the caller's tournament. Ownership-scoped: 404 on foreign ids. */
 class ListTeamsQuery(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
 ) : ListTeams {
 
     override fun list(tournamentId: TournamentId, owner: AdminUserId): List<Team> {
-        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        tournamentAccess.organizedOrThrow(tournamentId, owner)
         return teamRepository.findAllByTournament(tournamentId)
     }
 }

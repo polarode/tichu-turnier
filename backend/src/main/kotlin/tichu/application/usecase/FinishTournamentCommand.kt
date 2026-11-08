@@ -27,6 +27,7 @@ import java.time.Clock
 @Transactional
 class FinishTournamentCommand(
     private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val playedRounds: PlayedRoundsReader,
     private val clock: Clock,
     private val tournamentEvents: TournamentEvents,
@@ -35,7 +36,7 @@ class FinishTournamentCommand(
     override fun finish(tournamentId: TournamentId, owner: AdminUserId): Tournament {
         // Lock before reading, so a request that waited sees the state the first one committed.
         tournamentRepository.lock(tournamentId)
-        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentAccess.organizedOrThrow(tournamentId, owner)
         if (tournament.status != TournamentStatus.ACTIVE) {
             throw TournamentNotActiveException(
                 "Tournament ${tournamentId.value} is ${tournament.status}; only an active tournament finishes",

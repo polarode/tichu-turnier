@@ -52,8 +52,8 @@ class TeamAccessUseCasesTest {
         get() = clock.now
 
     private val createTeam =
-        CreateTeamCommand(tournamentRepository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
-    private val deleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository, teamTokenRepository)
+        CreateTeamCommand(TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
+    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository)
     private val teamSessionIssuer = TeamSessionIssuer(teamSessionRepository, sessionTokens, idGenerator, Duration.ofHours(12))
     private val exchangeTeamAccess = ExchangeTeamAccessCommand(
         teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer,
@@ -61,7 +61,7 @@ class TeamAccessUseCasesTest {
     )
     private val getOwnTeam = GetOwnTeamQuery(teamRepository, tournamentRepository)
     private val accessLinks = ManageTeamAccessLinkCommand(
-        tournamentRepository, teamRepository, teamTokenRepository, teamSessionRepository, sessionTokens, clock,
+        TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository, teamSessionRepository, sessionTokens, clock,
     )
 
     private fun createTournament(name: String, status: TournamentStatus = TournamentStatus.SETUP): TournamentId {

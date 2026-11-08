@@ -25,7 +25,7 @@ import java.time.Clock
  * All rules are enforced here so the validation matrix is testable at the
  * use-case seam without Spring:
  *
- * 1. ownership: a foreign or missing tournament id fails as not-found (`findOwnedOrThrow`);
+ * 1. ownership: a foreign or missing tournament id fails as not-found (`organizedOrThrow`);
  * 2. setup lock: the tournament must still be in `setup`, otherwise it answers
  *    `409 TOURNAMENT_NOT_EDITABLE` (typed, [TournamentNotEditableException]);
  * 3. field rules: blank / overlong names (see [TeamInputValidator]);
@@ -47,7 +47,7 @@ import java.time.Clock
  */
 @Transactional
 class CreateTeamCommand(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
     private val teamTokenRepository: TeamTokenRepository,
     private val sessionTokens: SessionTokens,
@@ -56,7 +56,7 @@ class CreateTeamCommand(
 ) : CreateTeam {
 
     override fun create(tournamentId: TournamentId, command: TeamWriteRequest, owner: AdminUserId): Team {
-        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentAccess.organizedOrThrow(tournamentId, owner)
         tournament.requireSetupPhase()
 
         val name = command.name.trim()

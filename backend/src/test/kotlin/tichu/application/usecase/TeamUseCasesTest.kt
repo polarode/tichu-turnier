@@ -49,11 +49,11 @@ class TeamUseCasesTest {
 
     private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T12:00:00Z"), java.time.ZoneOffset.UTC)
     private val createTournament = CreateTournamentCommand(tournamentRepository, idGenerator, clock)
-    private val createTeam = CreateTeamCommand(tournamentRepository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
-    private val listTeams = ListTeamsQuery(tournamentRepository, teamRepository)
-    private val getTeam = GetTeamQuery(tournamentRepository, teamRepository)
-    private val updateTeam = UpdateTeamCommand(tournamentRepository, teamRepository)
-    private val deleteTeam = DeleteTeamCommand(tournamentRepository, teamRepository, teamTokenRepository)
+    private val createTeam = CreateTeamCommand(TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
+    private val listTeams = ListTeamsQuery(TournamentAccess(tournamentRepository), teamRepository)
+    private val getTeam = GetTeamQuery(TournamentAccess(tournamentRepository), teamRepository)
+    private val updateTeam = UpdateTeamCommand(TournamentAccess(tournamentRepository), teamRepository)
+    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository)
 
     private fun createTournament(name: String, asAdmin: AdminUserId = owner, maxTeams: Int = 16) =
         createTournament.create(

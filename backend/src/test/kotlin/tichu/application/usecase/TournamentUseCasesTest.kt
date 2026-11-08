@@ -50,12 +50,12 @@ class TournamentUseCasesTest {
 
     private val createTournament = CreateTournamentCommand(repository, idGenerator, fixedClock)
     private val listTournaments = ListTournamentsQuery(repository)
-    private val getTournament = GetTournamentQuery(repository)
-    private val updateTournament = UpdateTournamentCommand(repository, teamRepository, laterClock)
-    private val deleteTournament = DeleteTournamentCommand(repository)
+    private val getTournament = GetTournamentQuery(TournamentAccess(repository))
+    private val updateTournament = UpdateTournamentCommand(repository, TournamentAccess(repository), teamRepository, laterClock)
+    private val deleteTournament = DeleteTournamentCommand(repository, TournamentAccess(repository))
     private val teamTokenRepository = InMemoryTeamTokenRepository()
     private val sessionTokens = RecordingSessionTokens()
-    private val createTeam = CreateTeamCommand(repository, teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
+    private val createTeam = CreateTeamCommand(TournamentAccess(repository), teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
 
     private fun create(name: String = "Spring Classic", asAdmin: AdminUserId = owner) =
         createTournament.create(

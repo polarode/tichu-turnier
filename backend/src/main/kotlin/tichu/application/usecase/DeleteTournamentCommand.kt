@@ -15,10 +15,11 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class DeleteTournamentCommand(
     private val repository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
 ) : DeleteTournament {
 
     override fun delete(id: TournamentId, owner: AdminUserId) {
-        repository.findOwnedOrThrow(id, owner)
+        tournamentAccess.ledOrThrow(id, owner)
         repository.delete(id)
     }
 }

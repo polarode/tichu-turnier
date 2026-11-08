@@ -33,7 +33,7 @@ class PublishTournamentCommandTest {
     private val clock = MutableClock(now)
 
     private val publishEvents = RecordingTournamentEvents()
-    private val command = PublishTournamentCommand(tournamentRepository, clock, publishEvents)
+    private val command = PublishTournamentCommand(tournamentRepository, TournamentAccess(tournamentRepository), clock, publishEvents)
 
     private fun tournament(status: TournamentStatus) =
         tournamentRepository.save(

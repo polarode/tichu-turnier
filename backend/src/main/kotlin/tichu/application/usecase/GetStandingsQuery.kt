@@ -16,12 +16,12 @@ import tichu.vocabulary.TournamentNotStartedException
  * no standings yet (409).
  */
 class GetStandingsQuery(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
     private val playedRounds: PlayedRoundsReader,
 ) : GetStandings {
     override fun get(tournamentId: TournamentId, owner: AdminUserId): Standings {
-        val tournament = tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        val tournament = tournamentAccess.organizedOrThrow(tournamentId, owner)
         if (tournament.status == TournamentStatus.SETUP) {
             throw TournamentNotStartedException("Tournament ${tournamentId.value} has no standings before it starts")
         }

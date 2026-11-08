@@ -22,12 +22,13 @@ import java.time.Clock
 @Transactional
 class SetPublicVisibilityCommand(
     private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val clock: Clock,
     private val tournamentEvents: TournamentEvents,
 ) : SetPublicVisibility {
 
     override fun set(id: TournamentId, publicVisibility: Boolean, owner: AdminUserId): Tournament {
-        val tournament = tournamentRepository.findOwnedOrThrow(id, owner)
+        val tournament = tournamentAccess.organizedOrThrow(id, owner)
         if (publicVisibility == tournament.publicVisibility) return tournament
 
         val saved = tournamentRepository.save(

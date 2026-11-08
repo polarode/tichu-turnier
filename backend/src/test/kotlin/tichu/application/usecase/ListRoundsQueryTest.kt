@@ -49,7 +49,7 @@ class ListRoundsQueryTest {
     private val gameRepository = InMemoryGameRepository()
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
-    private val query = ListRoundsQuery(tournamentRepository, roundRepository, gameRepository, confirmationRepository)
+    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository), roundRepository, gameRepository, confirmationRepository)
 
     @BeforeEach
     fun setUp() {

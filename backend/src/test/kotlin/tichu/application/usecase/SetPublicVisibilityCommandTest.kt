@@ -32,7 +32,7 @@ class SetPublicVisibilityCommandTest {
 
     private val tournamentRepository = InMemoryTournamentRepository()
     private val visibilityEvents = RecordingTournamentEvents()
-    private val command = SetPublicVisibilityCommand(tournamentRepository, clock, visibilityEvents)
+    private val command = SetPublicVisibilityCommand(tournamentRepository, TournamentAccess(tournamentRepository), clock, visibilityEvents)
 
     private fun tournament(
         status: TournamentStatus,

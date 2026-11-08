@@ -36,7 +36,7 @@ import java.time.Clock
  */
 @Transactional
 class ManageTeamAccessLinkCommand(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val teamRepository: TeamRepository,
     private val teamTokens: TeamTokenRepository,
     private val teamSessions: TeamSessionRepository,
@@ -87,7 +87,7 @@ class ManageTeamAccessLinkCommand(
     }
 
     private fun requireOwnedTeam(tournamentId: TournamentId, teamId: TeamId, owner: AdminUserId): Team {
-        tournamentRepository.findOwnedOrThrow(tournamentId, owner)
+        tournamentAccess.organizedOrThrow(tournamentId, owner)
         return teamRepository.findById(teamId, tournamentId)
             ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
     }

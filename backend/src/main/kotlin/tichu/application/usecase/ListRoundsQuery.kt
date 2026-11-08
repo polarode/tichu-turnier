@@ -18,13 +18,13 @@ import tichu.domain.TournamentRepository
  * responses take. Owner-scoped; there is no admin write path for games.
  */
 class ListRoundsQuery(
-    private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val roundRepository: RoundRepository,
     private val gameRepository: GameRepository,
     private val confirmationRepository: TableConfirmationRepository,
 ) : ListRounds {
     override fun list(tournamentId: TournamentId, owner: AdminUserId): List<RoundOverview> {
-        val settings = tournamentRepository.findOwnedOrThrow(tournamentId, owner).settings
+        val settings = tournamentAccess.organizedOrThrow(tournamentId, owner).settings
         return roundRepository.findByTournament(tournamentId).map { round ->
             val gamesByTable = gameRepository.findByRound(tournamentId, round.number).groupBy { it.tableNumber }
             val confirmedByTable = confirmationRepository.findByRound(tournamentId, round.number)

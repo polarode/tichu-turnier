@@ -59,6 +59,7 @@ class StartNextRoundCommandTest {
     private val startEvents = RecordingTournamentEvents()
     private val command = StartNextRoundCommand(
         tournamentRepository,
+        TournamentAccess(tournamentRepository),
         teamRepository,
         roundRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),

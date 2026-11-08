@@ -30,13 +30,14 @@ import java.time.Clock
 @Transactional
 class SetTotalRoundsCommand(
     private val tournamentRepository: TournamentRepository,
+    private val tournamentAccess: TournamentAccess,
     private val roundRepository: RoundRepository,
     private val clock: Clock,
     private val tournamentEvents: TournamentEvents,
 ) : SetTotalRounds {
 
     override fun set(id: TournamentId, totalRounds: Int, owner: AdminUserId): Tournament {
-        val tournament = tournamentRepository.findOwnedOrThrow(id, owner)
+        val tournament = tournamentAccess.organizedOrThrow(id, owner)
         if (tournament.status != TournamentStatus.ACTIVE) {
             throw TournamentNotEditableException(
                 "Tournament ${id.value}'s total rounds change here only while active; " +

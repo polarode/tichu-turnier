@@ -13,6 +13,7 @@ import tichu.application.api.ExchangeTeamAccess
 import tichu.application.api.FinishTournament
 import tichu.application.api.GetFinalRanking
 import tichu.application.api.GetOwnTeam
+import tichu.application.api.GetPublicStatistics
 import tichu.application.api.GetPublicTournament
 import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
@@ -37,6 +38,7 @@ import tichu.application.api.LogoutAdmin
 import tichu.application.api.RefreshSession
 import tichu.application.api.RegisterAdmin
 import tichu.application.api.GetStandings
+import tichu.application.api.GetStatistics
 import tichu.application.api.ListRounds
 import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
@@ -88,6 +90,7 @@ class RestConfiguration(
         startTournament: StartTournament,
         listRounds: ListRounds,
         getStandings: GetStandings,
+        getStatistics: GetStatistics,
         setTotalRounds: SetTotalRounds,
         startNextRound: StartNextRound,
         finishTournament: FinishTournament,
@@ -102,6 +105,7 @@ class RestConfiguration(
         startTournament,
         listRounds,
         getStandings,
+        getStatistics,
         setTotalRounds,
         startNextRound,
         finishTournament,
@@ -153,7 +157,9 @@ class RestConfiguration(
     fun publicTournamentController(
         listPublicTournaments: ListPublicTournaments,
         getPublicTournament: GetPublicTournament,
-    ): PublicTournamentController = PublicTournamentController(listPublicTournaments, getPublicTournament)
+        getPublicStatistics: GetPublicStatistics,
+    ): PublicTournamentController =
+        PublicTournamentController(listPublicTournaments, getPublicTournament, getPublicStatistics)
 
     @Bean
     fun publicTournamentEventsController(

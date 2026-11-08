@@ -1,47 +1,67 @@
 import { Badge } from '@tichu/ui/badge.tsx';
+import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type { PublicRound, PublicTable, PublicTableTotals } from '@/domain/tournament.domain.ts';
-import { usePublicTournament } from '@/features/public-tournaments/hooks/public-tournaments.hook.ts';
+import {
+    usePublicStatistics,
+    usePublicTournament,
+} from '@/features/public-tournaments/hooks/public-tournaments.hook.ts';
 import { usePublicTournamentLiveStream } from '@/features/public-tournaments/hooks/public-tournament-live-stream.hook.ts';
 import { tableHeading } from '@/features/scoring/labels.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
+import { StatisticsPanel } from '@/shared/components/statistics-panel.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
 import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+
+/** The tabs of a published tournament: its results (the default) and its statistics. */
+export type PublicTab = 'results' | 'statistics';
 
 interface PublicTournamentPageProps {
     tournamentId: string;
+    /** The active tab, kept in the URL by the route. Ignored until the tournament is published. */
+    tab: PublicTab;
+    onTabChange: (tab: PublicTab) => void;
 }
 
 /**
  * The public tournament page: the pairings of every drawn round, newest on top. Once the
  * tournament is published it adds the Final Ranking above the rounds and each team's table
- * totals (VP and TP) on its table. Never games, outcomes or table status. Anonymous, so no
- * session is needed; a tournament that is not public reads as not found.
+ * totals (VP and TP) on its table. Never games, outcomes or table status. Once published the
+ * results sit in a Results tab next to a Statistics tab. Anonymous, so no session is needed;
+ * a tournament that is not public reads as not found.
  */
-export function PublicTournamentPage({ tournamentId }: PublicTournamentPageProps) {
+export function PublicTournamentPage({
+    tournamentId,
+    tab,
+    onTabChange,
+}: PublicTournamentPageProps) {
     // Outside the body, so loading, not-found and error states keep a way back too.
     return (
         <div className="flex flex-col gap-4">
             <BackLink to="/public" labelKey="publicTournament.backLink" />
-            <PublicTournamentBody tournamentId={tournamentId} />
+            <PublicTournamentBody tournamentId={tournamentId} tab={tab} onTabChange={onTabChange} />
         </div>
     );
 }
 
-function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
+function PublicTournamentBody({ tournamentId, tab, onTabChange }: PublicTournamentPageProps) {
     const { t } = useI18n();
     const tournamentQuery = usePublicTournament(tournamentId);
     const { live, connected } = usePublicTournamentLiveStream(
         tournamentId,
         tournamentQuery.data?.status,
     );
+    const published = tournamentQuery.data?.status === TournamentStatus.PUBLISHED;
+    // Only fetched while the Statistics tab of a published tournament is open.
+    const statisticsQuery = usePublicStatistics(tournamentId, published && tab === 'statistics');
 
     if (tournamentQuery.isPending) {
         return <p className="text-muted-foreground">{t('common.loading')}</p>;
@@ -64,14 +84,8 @@ function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
     const tournament = tournamentQuery.data;
     const roundsNewestFirst = [...tournament.rounds].sort((a, b) => b.number - a.number);
 
-    return (
-        <section className="flex flex-col gap-6">
-            <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-xl font-semibold sm:text-2xl">{tournament.name}</h1>
-                <TournamentStatusBadge status={tournament.status} />
-                {live ? <LiveBadge connected={connected} labelKeyPrefix="public.live" /> : null}
-            </div>
-
+    const results = (
+        <>
             {tournament.finalRanking ? (
                 <FinalRankingSection entries={tournament.finalRanking} />
             ) : null}
@@ -82,6 +96,50 @@ function PublicTournamentBody({ tournamentId }: { tournamentId: string }) {
                 roundsNewestFirst.map((round) => (
                     <PublicRoundSection key={round.number} round={round} />
                 ))
+            )}
+        </>
+    );
+
+    return (
+        <section className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-xl font-semibold sm:text-2xl">{tournament.name}</h1>
+                <TournamentStatusBadge status={tournament.status} />
+                {live ? <LiveBadge connected={connected} labelKeyPrefix="public.live" /> : null}
+            </div>
+
+            {published ? (
+                <div className="flex flex-col gap-4">
+                    <TabList
+                        id="public-tournament-section"
+                        variant="underline"
+                        label={t('publicTournament.tabs.label')}
+                        value={tab}
+                        onValueChange={onTabChange}
+                        items={[
+                            { value: 'results', label: t('publicTournament.tabs.results') },
+                            { value: 'statistics', label: t('publicTournament.tabs.statistics') },
+                        ]}
+                    />
+                    <TabPanel
+                        id="public-tournament-section"
+                        value={tab}
+                        className="flex flex-col gap-6"
+                    >
+                        {tab === 'statistics' ? (
+                            <section
+                                aria-label={t('statistics.title')}
+                                className="flex flex-col gap-3"
+                            >
+                                <StatisticsPanel query={statisticsQuery} />
+                            </section>
+                        ) : (
+                            results
+                        )}
+                    </TabPanel>
+                </div>
+            ) : (
+                results
             )}
         </section>
     );

@@ -216,5 +216,18 @@
                 "text": "Spectators see new rounds, the finish and the published results on the public tournament page right away, with a Live badge, without reloading the page"
             }
         ]
+    },
+    {
+        "date": "2026-11-08",
+        "changes": [
+            {
+                "type": "feature",
+                "text": "A Statistics tab on the tournament page shows each team's successful Tichu calls, bombs and double wins, the leading teams, and a chart of every team's Victory Points round by round"
+            },
+            {
+                "type": "feature",
+                "text": "Once you publish the results of a public tournament, spectators find the statistics in a Statistics tab on the public tournament page"
+            }
+        ]
     }
 ]

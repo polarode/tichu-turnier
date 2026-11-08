@@ -7,6 +7,7 @@ import tichu.application.api.FinishTournament
 import tichu.application.api.GetTournament
 import tichu.application.api.ListTournaments
 import tichu.application.api.GetStandings
+import tichu.application.api.GetStatistics
 import tichu.application.api.ListRounds
 import tichu.application.api.PublishTournament
 import tichu.application.api.SetPublicVisibility
@@ -50,6 +51,7 @@ class TournamentController(
     private val startTournament: StartTournament,
     private val listRounds: ListRounds,
     private val getStandings: GetStandings,
+    private val getStatistics: GetStatistics,
     private val setTotalRounds: SetTotalRounds,
     private val startNextRound: StartNextRound,
     private val finishTournament: FinishTournament,
@@ -106,6 +108,14 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): List<StandingsEntryResponse> =
         getStandings.get(TournamentId(id), principal.adminUserId).entries.map(StandingsEntryResponse::from)
+
+    /** The organizer's statistics at any time after setup: every team's statistics, highlights and trends. */
+    @GetMapping("/{id}/statistics")
+    fun statistics(
+        @PathVariable id: String,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentStatisticsResponse =
+        TournamentStatisticsResponse.from(getStatistics.get(TournamentId(id), principal.adminUserId))
 
     /** Finishes the tournament once every Total Round is played and the last round is complete. */
     @PostMapping("/{id}/finish")

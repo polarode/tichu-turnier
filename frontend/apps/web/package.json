@@ -25,6 +25,7 @@
         "react": "catalog:",
         "react-dom": "catalog:",
         "react-hook-form": "catalog:",
+        "recharts": "catalog:",
         "tailwindcss": "catalog:",
         "zod": "catalog:",
         "zustand": "catalog:"

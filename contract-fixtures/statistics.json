@@ -1,0 +1,147 @@
+{
+  "scenario": [
+    "Five teams, default settings (grand Tichu bonus 200, double win bonus 200, small Tichu bonus 100). Every game is entered with its base scores, finish positions, calls and bombs; the values below are worked by hand from those games.",
+    "Round 1, table 1 (Falcons vs Owls), completed: Falcons win 60/40 with a successful grand Tichu, 30/70 lost to Owls' successful small Tichu, a 50/50 tie, and a double win for Falcons (base 0/0, Falcons' first player makes a successful small Tichu). Falcons 6 VP, Owls 3 VP; Falcons 1 bomb, Owls 2 bombs.",
+    "Round 1, table 2 (Ravens vs Badgers), completed: a 50/50 tie, Ravens win 70/30 with a successful grand Tichu and 3 bombs, Badgers win 60/40 with a successful small Tichu, a 50/50 tie. Ravens 4 VP, Badgers 4 VP; Badgers 1 bomb.",
+    "Round 2, table 1 (Falcons vs Ravens), completed: a 50/50 tie, Ravens win 80/20 with a successful small Tichu and 1 bomb, Falcons win 90/10 with 1 bomb, Ravens win 60/40 with Falcons playing 2 bombs. Falcons 3 VP (total 9), Ravens 5 VP (total 9).",
+    "Round 2, table 2 (Owls vs Badgers), completed: Owls win 70/30 with a successful grand Tichu, Badgers take a double win (base 0/0), a 60/40 win for Owls with 1 bomb, Badgers win 55/45 with a successful small Tichu. Owls 4 VP (total 7), Badgers 5 VP (total 9).",
+    "Wolves sit out both rounds: zero in every count, no bombs per game to report, and no trend point.",
+    "Highlights: four teams tie at 2 successful Tichu calls; Falcons and Ravens tie at 4 bombs; Falcons and Badgers tie at 1 double win.",
+    "Teams are listed by name (Badgers, Falcons, Owls, Ravens, Wolves), which is the order the API returns them in, and so are the teams inside each highlight and trend list."
+  ],
+  "response": {
+    "teams": [
+      {
+        "teamId": "team-badgers",
+        "teamName": "Badgers",
+        "successfulSmallTichu": 2,
+        "successfulGrandTichu": 0,
+        "bombCount": 3,
+        "bombsPerGame": 0.375,
+        "doubleWins": 1
+      },
+      {
+        "teamId": "team-falcons",
+        "teamName": "Falcons",
+        "successfulSmallTichu": 1,
+        "successfulGrandTichu": 1,
+        "bombCount": 4,
+        "bombsPerGame": 0.5,
+        "doubleWins": 1
+      },
+      {
+        "teamId": "team-owls",
+        "teamName": "Owls",
+        "successfulSmallTichu": 1,
+        "successfulGrandTichu": 1,
+        "bombCount": 3,
+        "bombsPerGame": 0.375,
+        "doubleWins": 0
+      },
+      {
+        "teamId": "team-ravens",
+        "teamName": "Ravens",
+        "successfulSmallTichu": 1,
+        "successfulGrandTichu": 1,
+        "bombCount": 4,
+        "bombsPerGame": 0.5,
+        "doubleWins": 0
+      },
+      {
+        "teamId": "team-wolves",
+        "teamName": "Wolves",
+        "successfulSmallTichu": 0,
+        "successfulGrandTichu": 0,
+        "bombCount": 0,
+        "bombsPerGame": null,
+        "doubleWins": 0
+      }
+    ],
+    "highlights": [
+      {
+        "metric": "SUCCESSFUL_TICHU",
+        "value": 2,
+        "teamIds": [
+          "team-badgers",
+          "team-falcons",
+          "team-owls",
+          "team-ravens"
+        ]
+      },
+      {
+        "metric": "BOMBS",
+        "value": 4,
+        "teamIds": [
+          "team-falcons",
+          "team-ravens"
+        ]
+      },
+      {
+        "metric": "DOUBLE_WINS",
+        "value": 1,
+        "teamIds": [
+          "team-badgers",
+          "team-falcons"
+        ]
+      }
+    ],
+    "trends": [
+      {
+        "teamId": "team-badgers",
+        "points": [
+          {
+            "roundNumber": 1,
+            "victoryPoints": 4
+          },
+          {
+            "roundNumber": 2,
+            "victoryPoints": 9
+          }
+        ]
+      },
+      {
+        "teamId": "team-falcons",
+        "points": [
+          {
+            "roundNumber": 1,
+            "victoryPoints": 6
+          },
+          {
+            "roundNumber": 2,
+            "victoryPoints": 9
+          }
+        ]
+      },
+      {
+        "teamId": "team-owls",
+        "points": [
+          {
+            "roundNumber": 1,
+            "victoryPoints": 3
+          },
+          {
+            "roundNumber": 2,
+            "victoryPoints": 7
+          }
+        ]
+      },
+      {
+        "teamId": "team-ravens",
+        "points": [
+          {
+            "roundNumber": 1,
+            "victoryPoints": 4
+          },
+          {
+            "roundNumber": 2,
+            "victoryPoints": 9
+          }
+        ]
+      },
+      {
+        "teamId": "team-wolves",
+        "points": []
+      }
+    ]
+  }
+}

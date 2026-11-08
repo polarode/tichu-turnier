@@ -117,7 +117,7 @@ describe('standings tab', () => {
                 within(tabs)
                     .getAllByRole('tab')
                     .map((tab) => tab.textContent),
-            ).toEqual(['Runden (1)', 'Rangliste', 'Teams (0)']),
+            ).toEqual(['Runden (1)', 'Rangliste', 'Statistiken', 'Teams (0)']),
         );
     });
 

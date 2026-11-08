@@ -1,5 +1,6 @@
 package tichu.infra.rest.web
 
+import tichu.application.api.GetPublicStatistics
 import tichu.application.api.GetPublicTournament
 import tichu.application.api.ListPublicTournaments
 import tichu.domain.TournamentId
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 class PublicTournamentController(
     private val listPublicTournaments: ListPublicTournaments,
     private val getPublicTournament: GetPublicTournament,
+    private val getPublicStatistics: GetPublicStatistics,
 ) {
 
     @GetMapping
@@ -28,4 +30,8 @@ class PublicTournamentController(
     @GetMapping("/{id}")
     fun get(@PathVariable id: String): PublicTournamentDetailResponse =
         PublicTournamentDetailResponse.from(getPublicTournament.get(TournamentId(id)))
+
+    @GetMapping("/{id}/statistics")
+    fun statistics(@PathVariable id: String): TournamentStatisticsResponse =
+        TournamentStatisticsResponse.from(getPublicStatistics.get(TournamentId(id)))
 }

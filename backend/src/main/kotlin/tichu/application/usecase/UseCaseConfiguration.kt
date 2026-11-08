@@ -16,6 +16,7 @@ import tichu.application.api.ExchangeTeamAccess
 import tichu.application.api.FinishTournament
 import tichu.application.api.GetFinalRanking
 import tichu.application.api.GetOwnTeam
+import tichu.application.api.GetPublicStatistics
 import tichu.application.api.GetPublicTournament
 import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
@@ -37,6 +38,7 @@ import tichu.application.api.LogoutAdmin
 import tichu.application.api.RefreshSession
 import tichu.application.api.RegisterAdmin
 import tichu.application.api.GetStandings
+import tichu.application.api.GetStatistics
 import tichu.application.api.ListRounds
 import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
@@ -143,6 +145,13 @@ class UseCaseConfiguration(
         teamRepository: TeamRepository,
         playedRoundsReader: PlayedRoundsReader,
     ): GetStandings = GetStandingsQuery(tournamentRepository, teamRepository, playedRoundsReader)
+
+    @Bean
+    fun getStatistics(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        playedRoundsReader: PlayedRoundsReader,
+    ): GetStatistics = GetStatisticsQuery(tournamentRepository, teamRepository, playedRoundsReader)
 
     @Bean
     fun getFinalRanking(
@@ -257,6 +266,13 @@ class UseCaseConfiguration(
         teamRepository: TeamRepository,
         playedRoundsReader: PlayedRoundsReader,
     ): GetPublicTournament = GetPublicTournamentQuery(tournamentRepository, teamRepository, playedRoundsReader)
+
+    @Bean
+    fun getPublicStatistics(
+        tournamentRepository: TournamentRepository,
+        teamRepository: TeamRepository,
+        playedRoundsReader: PlayedRoundsReader,
+    ): GetPublicStatistics = GetPublicStatisticsQuery(tournamentRepository, teamRepository, playedRoundsReader)
 
     @Bean
     fun checkPublicTournamentVisible(tournamentRepository: TournamentRepository): CheckPublicTournamentVisible =

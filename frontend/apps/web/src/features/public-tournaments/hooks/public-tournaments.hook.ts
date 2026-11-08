@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
+import type { TournamentStatistics } from '@/domain/statistics.domain.ts';
 import {
+    publicStatisticsQueryKey,
     publicTournamentQueryKey,
     publicTournamentsQueryKey,
 } from '@/shared/constants/query-keys.ts';
+import { StatisticsRepository } from '@/statistics-api/statistics.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 
 /**
@@ -25,5 +28,17 @@ export function usePublicTournament(id: string) {
     return useQuery({
         queryKey: publicTournamentQueryKey(id),
         queryFn: () => TournamentRepository.getPublicTournament(id),
+    });
+}
+
+/**
+ * The anonymous statistics of one published public tournament. Only asked for while the
+ * Statistics tab is open (`enabled`), so the page does not fetch them on the Results tab.
+ */
+export function usePublicStatistics(id: string, enabled: boolean) {
+    return useQuery({
+        queryKey: publicStatisticsQueryKey(id),
+        queryFn: (): Promise<TournamentStatistics> => StatisticsRepository.publicStatistics(id),
+        enabled,
     });
 }

@@ -7,6 +7,8 @@ export const QueryKeys = {
     TEAMS: 'teams',
     ROUNDS: 'rounds',
     STANDINGS: 'standings',
+    STATISTICS: 'statistics',
+    PUBLIC_STATISTICS: 'public-statistics',
     ADMIN_ACCOUNTS: 'admin-accounts',
     ADMIN_INVITES: 'admin-invites',
     TEAM_ME: 'team-me',
@@ -42,6 +44,12 @@ export const roundsQueryKey = (tournamentId: string) => [QueryKeys.ROUNDS, tourn
 
 /** Key for a tournament's admin-only standings. */
 export const standingsQueryKey = (tournamentId: string) => [QueryKeys.STANDINGS, tournamentId] as const;
+
+/** Key for a tournament's admin-only statistics. */
+export const statisticsQueryKey = (tournamentId: string) => [QueryKeys.STATISTICS, tournamentId] as const;
+
+/** Key for one public tournament's statistics (anonymous, published tournaments only). */
+export const publicStatisticsQueryKey = (id: string) => [QueryKeys.PUBLIC_STATISTICS, id] as const;
 
 /** Key for the owner console's admin-account list. */
 export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;

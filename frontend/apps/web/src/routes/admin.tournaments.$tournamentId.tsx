@@ -9,6 +9,7 @@ import { TournamentStatusBadge } from '@/features/tournaments/components/tournam
 import { ProgressCard } from '@/features/tournaments/components/progress-card.component.tsx';
 import { RoundsSection } from '@/features/tournaments/components/rounds-section.component.tsx';
 import { StandingsSection } from '@/features/tournaments/components/standings-section.component.tsx';
+import { StatisticsSection } from '@/features/statistics/components/statistics-section.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { StartTournamentButton } from '@/features/tournaments/components/start-tournament-button.component.tsx';
 import { useTournamentLiveStream } from '@/features/tournaments/hooks/tournament-live-stream.hook.ts';
@@ -25,9 +26,9 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /** The sections of a started tournament, switched by tabs and kept in the URL. */
-type DetailTab = 'rounds' | 'standings' | 'teams';
+type DetailTab = 'rounds' | 'standings' | 'statistics' | 'teams';
 
-const DETAIL_TABS: readonly DetailTab[] = ['rounds', 'standings', 'teams'];
+const DETAIL_TABS: readonly DetailTab[] = ['rounds', 'standings', 'statistics', 'teams'];
 
 function isDetailTab(value: unknown): value is DetailTab {
     return DETAIL_TABS.some((tab) => tab === value);
@@ -209,6 +210,10 @@ function TournamentDetailBody() {
                                 label: t(isFinal ? 'standings.finalTitle' : 'standings.title'),
                             },
                             {
+                                value: 'statistics',
+                                label: t('statistics.title'),
+                            },
+                            {
                                 value: 'teams',
                                 label: `${t('teams.section.title')} (${teams.length})`,
                             },
@@ -223,6 +228,8 @@ function TournamentDetailBody() {
                             />
                         ) : tab === 'standings' ? (
                             <StandingsSection tournamentId={tournament.id} final={isFinal} />
+                        ) : tab === 'statistics' ? (
+                            <StatisticsSection tournamentId={tournament.id} />
                         ) : (
                             <TeamsSection
                                 tournamentId={tournament.id}

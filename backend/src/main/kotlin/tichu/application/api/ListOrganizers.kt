@@ -18,15 +18,23 @@ data class Organizers(
     val coOrganizers: List<CoOrganizerEntry>,
 )
 
-/** The lead organizer as the organizer list shows it. Fixed for the tournament's lifetime, never added. */
+/**
+ * The lead organizer as the organizer list shows it. Fixed for the tournament's lifetime, never
+ * added. [disabled] is true while the lead's admin account is disabled (#132).
+ */
 data class LeadOrganizer(
     val adminUserId: AdminUserId,
     val email: String,
+    val disabled: Boolean,
 )
 
-/** A co-organizer as the organizer list shows it, with the moment the access was granted. */
+/**
+ * A co-organizer as the organizer list shows it, with the moment the access was granted.
+ * [disabled] is true while the co-organizer's admin account is disabled; they stay listed (#132).
+ */
 data class CoOrganizerEntry(
     val adminUserId: AdminUserId,
     val email: String,
     val addedAt: Instant,
+    val disabled: Boolean,
 )

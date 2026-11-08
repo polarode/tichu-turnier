@@ -1,5 +1,6 @@
 package tichu.infra.rest
 
+import tichu.domain.AdminRole
 import tichu.domain.AdminStatus
 import tichu.domain.AdminUserRepository
 import tichu.domain.PasswordHasher
@@ -239,6 +240,142 @@ class OrganizersIntegrationTest(
             .andExpect(request().asyncStarted())
             .andExpect(status().isOk)
             .andExpect(header().string(HttpHeaders.CONTENT_TYPE, org.hamcrest.Matchers.startsWith("text/event-stream")))
+    }
+
+    @Test
+    fun `the list carries each co-organizer's admin id and a disabled flag that is false while active`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+
+        mockMvc.perform(get("/api/tournaments/$id/organizers").cookie(leadCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.lead.disabled").value(false))
+            .andExpect(jsonPath("$.coOrganizers[0].adminUserId").value(coAdminId()))
+            .andExpect(jsonPath("$.coOrganizers[0].disabled").value(false))
+    }
+
+    @Test
+    fun `the lead removes a co-organizer, who loses the tournament at once`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+
+        removeOrganizer(leadCookie, id, coAdminId()).andExpect(status().isNoContent)
+
+        mockMvc.perform(get("/api/tournaments/$id/organizers").cookie(leadCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.coOrganizers.length()").value(0))
+        mockMvc.perform(get("/api/tournaments").cookie(coCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(0))
+        mockMvc.perform(get("/api/tournaments/$id").cookie(coCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+    }
+
+    @Test
+    fun `a co-organizer leaves the tournament by deleting their own id and loses access`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+
+        removeOrganizer(coCookie, id, coAdminId()).andExpect(status().isNoContent)
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(coCookie))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+        mockMvc.perform(get("/api/tournaments/$id/organizers").cookie(leadCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.coOrganizers.length()").value(0))
+    }
+
+    @Test
+    fun `a co-organizer cannot remove another co-organizer and gets 403`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+        val thirdEmail = uniqueEmail("third")
+        seedAdmin(adminUsers, passwordHasher, thirdEmail)
+        postOrganizer(leadCookie, id, thirdEmail).andExpect(status().isCreated)
+        val thirdId = adminUsers.findByEmail(thirdEmail)!!.id.value
+
+        removeOrganizer(coCookie, id, thirdId)
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+
+        mockMvc.perform(get("/api/tournaments/$id/organizers").cookie(leadCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.coOrganizers.length()").value(2))
+    }
+
+    @Test
+    fun `the lead organizer cannot leave their own tournament and gets 409`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+        val leadId = adminUsers.findByEmail(leadEmail)!!.id.value
+
+        removeOrganizer(leadCookie, id, leadId)
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("LEAD_ORGANIZER_CANNOT_LEAVE"))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(leadCookie))
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `the lead removes a co-organizer after the tournament has started`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+        createTeam(leadCookie, id, "Team Alpha")
+        createTeam(leadCookie, id, "Team Beta")
+        mockMvc.perform(post("/api/tournaments/$id/start").cookie(leadCookie)).andExpect(status().isOk)
+
+        removeOrganizer(leadCookie, id, coAdminId()).andExpect(status().isNoContent)
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(coCookie))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `disabling a co-organizer keeps them listed as disabled and reactivation restores access without re-adding`() {
+        val id = createTournament(leadCookie, "Shared Cup")
+        postOrganizer(leadCookie, id, coEmail).andExpect(status().isCreated)
+        val ownerEmail = uniqueEmail("owner")
+        seedAdmin(adminUsers, passwordHasher, ownerEmail, role = AdminRole.OWNER)
+        val ownerCookie = mockMvc.loginAndCaptureSession(objectMapper, ownerEmail)
+
+        mockMvc.perform(post("/api/admins/${coAdminId()}/disable").cookie(ownerCookie)).andExpect(status().isOk)
+
+        mockMvc.perform(get("/api/tournaments/$id/organizers").cookie(leadCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.coOrganizers[0].email").value(coEmail))
+            .andExpect(jsonPath("$.coOrganizers[0].disabled").value(true))
+        mockMvc.perform(get("/api/tournaments/$id").cookie(coCookie)).andExpect(status().isUnauthorized)
+
+        mockMvc.perform(post("/api/admins/${coAdminId()}/reactivate").cookie(ownerCookie)).andExpect(status().isOk)
+
+        mockMvc.perform(get("/api/tournaments/$id/organizers").cookie(leadCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.coOrganizers[0].disabled").value(false))
+        val freshCoCookie = mockMvc.loginAndCaptureSession(objectMapper, coEmail)
+        mockMvc.perform(get("/api/tournaments/$id").cookie(freshCoCookie))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.organizerRole").value("CO"))
+    }
+
+    private fun coAdminId(): String = adminUsers.findByEmail(coEmail)!!.id.value
+
+    private fun removeOrganizer(cookie: Cookie, tournamentId: String, adminUserId: String) = mockMvc.perform(
+        delete("/api/tournaments/$tournamentId/organizers/$adminUserId").cookie(cookie),
+    )
+
+    private fun createTeam(cookie: Cookie, tournamentId: String, name: String) {
+        mockMvc.perform(
+            post("/api/tournaments/$tournamentId/teams").cookie(cookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        mapOf("name" to name, "playerOneName" to "$name 1", "playerTwoName" to "$name 2"),
+                    ),
+                ),
+        ).andExpect(status().isCreated)
     }
 
     private fun postOrganizer(cookie: Cookie, tournamentId: String, email: String) = mockMvc.perform(

@@ -23,6 +23,7 @@ import tichu.vocabulary.InviteExpiredException
 import tichu.vocabulary.InviteInvalidException
 import tichu.vocabulary.InviteStatusConflictException
 import tichu.vocabulary.InsufficientTeamsException
+import tichu.vocabulary.LeadOrganizerCannotLeaveException
 import tichu.vocabulary.MaxTeamsBelowTeamCountException
 import tichu.vocabulary.NoActiveAdminWithEmailException
 import tichu.vocabulary.TotalRoundsBelowRoundCountException
@@ -119,6 +120,11 @@ class WebControllerAdvice {
     @ExceptionHandler(ForbiddenException::class)
     fun handleForbidden(ex: ForbiddenException): ProblemDetail =
         problem(HttpStatus.FORBIDDEN, ex)
+
+    /** The lead organizer tried to leave their own tournament: 409, the lead deletes instead. */
+    @ExceptionHandler(LeadOrganizerCannotLeaveException::class)
+    fun handleLeadOrganizerCannotLeave(ex: LeadOrganizerCannotLeaveException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
 
     /** An admin-management mutation that contradicts the target's current status: 409. */
     @ExceptionHandler(AdminStatusConflictException::class)

@@ -22,6 +22,9 @@ interface CoOrganizerRepository {
 
     fun add(coOrganizer: CoOrganizer)
 
+    /** Ends the co-organizer access of [adminUserId] on [tournamentId]. A no-op when they hold none. */
+    fun remove(tournamentId: TournamentId, adminUserId: AdminUserId)
+
     /** Whether [adminUserId] is a co-organizer of [tournamentId]. Says nothing about the lead. */
     fun isCoOrganizer(tournamentId: TournamentId, adminUserId: AdminUserId): Boolean
 

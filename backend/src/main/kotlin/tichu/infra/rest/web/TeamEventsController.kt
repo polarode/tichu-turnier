@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import tichu.application.api.AuthenticatedTeam
+import tichu.domain.TournamentEventType
 import tichu.infra.events.SseTournamentEventBroadcaster
 
 /**
@@ -29,6 +30,10 @@ class TeamEventsController(
     ): SseEmitter {
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache")
         response.setHeader("X-Accel-Buffering", "no")
-        return broadcaster.subscribe(principal.tournamentId)
+        // Teams see every event of their tournament except organizer changes, which are for organizers only.
+        return broadcaster.subscribe(
+            principal.tournamentId,
+            TournamentEventType.entries.toSet() - TournamentEventType.ORGANIZERS_CHANGED,
+        )
     }
 }

@@ -124,6 +124,9 @@ enum class ErrorCode {
 
     /** The admin already co-organizes this tournament (#131). */
     ALREADY_CO_ORGANIZER,
+
+    /** The lead organizer tried to leave their own tournament; they can only delete it (#132). */
+    LEAD_ORGANIZER_CANNOT_LEAVE,
 }
 
 /**
@@ -254,6 +257,13 @@ class TeamAccessLinkConflictException(message: String) : ApiException(ErrorCode.
  */
 class TournamentNotEditableException(message: String) :
     ApiException(ErrorCode.TOURNAMENT_NOT_EDITABLE, message)
+
+/**
+ * Thrown when the lead organizer tries to leave their own tournament. The lead ends the
+ * tournament by deleting it, never by leaving. Mapped to HTTP 409.
+ */
+class LeadOrganizerCannotLeaveException(message: String) :
+    ApiException(ErrorCode.LEAD_ORGANIZER_CANNOT_LEAVE, message)
 
 /**
  * Thrown when a tournament that is not in `setup` is started — starting twice or

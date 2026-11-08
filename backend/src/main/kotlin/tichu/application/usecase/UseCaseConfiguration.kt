@@ -32,6 +32,7 @@ import tichu.application.api.PublishTournament
 import tichu.application.api.RecordGame
 import tichu.application.api.ReactivateAdmin
 import tichu.application.api.RejectAdmin
+import tichu.application.api.RemoveCoOrganizer
 import tichu.application.api.RevokeInvite
 import tichu.application.api.UpdateTeam
 import tichu.application.api.UpdateTournament
@@ -105,7 +106,16 @@ class UseCaseConfiguration(
         coOrganizerRepository: CoOrganizerRepository,
         adminUserRepository: AdminUserRepository,
         clock: Clock,
-    ): AddCoOrganizer = AddCoOrganizerCommand(tournamentAccess, coOrganizerRepository, adminUserRepository, clock)
+        tournamentEvents: TournamentEvents,
+    ): AddCoOrganizer =
+        AddCoOrganizerCommand(tournamentAccess, coOrganizerRepository, adminUserRepository, clock, tournamentEvents)
+
+    @Bean
+    fun removeCoOrganizer(
+        tournamentAccess: TournamentAccess,
+        coOrganizerRepository: CoOrganizerRepository,
+        tournamentEvents: TournamentEvents,
+    ): RemoveCoOrganizer = RemoveCoOrganizerCommand(tournamentAccess, coOrganizerRepository, tournamentEvents)
 
     @Bean
     fun startTournament(

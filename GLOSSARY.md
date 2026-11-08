@@ -22,7 +22,9 @@ _Avoid_: tournament owner (Owner is the platform role), creator, host
 **Co-Organizer**:
 An admin the lead organizer added to a tournament to help run it. May do everything
 on that tournament except delete it and manage its co-organizers; may leave it at
-any time. Gains access as soon as added, without accepting.
+any time. Gains access as soon as added, without accepting. While their admin
+account is disabled, their access is paused rather than ended; it returns on
+reactivation.
 _Avoid_: co-admin, helper, tournament admin
 
 **Admin**:

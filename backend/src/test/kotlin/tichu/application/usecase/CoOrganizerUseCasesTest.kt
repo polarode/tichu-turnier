@@ -7,16 +7,20 @@ import tichu.domain.AdminStatus
 import tichu.domain.AdminUser
 import tichu.domain.AdminUserId
 import tichu.domain.Tournament
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.testsupport.InMemoryCoOrganizerRepository
+import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.AlreadyCoOrganizerException
 import tichu.vocabulary.CannotAddSelfAsCoOrganizerException
 import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.ForbiddenException
+import tichu.vocabulary.LeadOrganizerCannotLeaveException
 import tichu.vocabulary.NoActiveAdminWithEmailException
 import tichu.vocabulary.NotFoundException
 import org.junit.jupiter.api.BeforeEach
@@ -50,10 +54,13 @@ class CoOrganizerUseCasesTest {
     private val tournamentRepository = InMemoryTournamentRepository()
     private val coOrganizerRepository = InMemoryCoOrganizerRepository()
     private val adminUserRepository = InMemoryAdminUserRepository()
+    private val events = RecordingTournamentEvents()
 
     private fun tournamentAccess() = TournamentAccess(tournamentRepository, coOrganizerRepository)
     private val listOrganizers get() = ListOrganizersQuery(tournamentAccess(), coOrganizerRepository, adminUserRepository)
-    private val addCoOrganizer get() = AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, clock)
+    private val addCoOrganizer get() =
+        AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, clock, events)
+    private val removeCoOrganizer get() = RemoveCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, events)
     private val getTournament get() = GetTournamentQuery(tournamentAccess(), adminUserRepository)
     private val listTournaments get() = ListTournamentsQuery(tournamentRepository, coOrganizerRepository, adminUserRepository)
 
@@ -162,9 +169,9 @@ class CoOrganizerUseCasesTest {
         // Insertion order and addedAt order therefore disagree.
         val later = Clock.fixed(Instant.parse("2026-01-05T08:00:00Z"), ZoneOffset.UTC)
         val earlier = Clock.fixed(Instant.parse("2026-01-02T08:00:00Z"), ZoneOffset.UTC)
-        AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, later)
+        AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, later, events)
             .add(tournamentA, "bob@example.com", lead)
-        AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, earlier)
+        AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, earlier, events)
             .add(tournamentA, "alice@example.com", lead)
 
         val listed = listOrganizers.list(tournamentA, lead)
@@ -226,6 +233,76 @@ class CoOrganizerUseCasesTest {
 
         assertFailsWith<NotFoundException> { getTournament.get(tournamentA, platformOwner) }
         assertTrue(listTournaments.list(platformOwner).isEmpty())
+    }
+
+    @Test
+    fun `adding a co-organizer publishes an organizers-changed event`() {
+        addCoOrganizer.add(tournamentA, "co@example.com", lead)
+
+        assertEquals(listOf(TournamentEvent(TournamentEventType.ORGANIZERS_CHANGED, tournamentA)), events.published)
+    }
+
+    @Test
+    fun `the lead organizer removes a co-organizer, who loses the tournament`() {
+        addCoOrganizer.add(tournamentA, "co@example.com", lead)
+        events.published.clear()
+
+        removeCoOrganizer.remove(tournamentA, co, lead)
+
+        assertTrue(listOrganizers.list(tournamentA, lead).coOrganizers.isEmpty())
+        assertTrue(listTournaments.list(co).none { it.tournament.id == tournamentA })
+        assertEquals(listOf(TournamentEvent(TournamentEventType.ORGANIZERS_CHANGED, tournamentA)), events.published)
+    }
+
+    @Test
+    fun `a co-organizer leaves the tournament and loses access to it`() {
+        addCoOrganizer.add(tournamentA, "co@example.com", lead)
+        events.published.clear()
+
+        removeCoOrganizer.remove(tournamentA, co, co)
+
+        assertTrue(listOrganizers.list(tournamentA, lead).coOrganizers.isEmpty())
+        assertFailsWith<NotFoundException> { getTournament.get(tournamentA, co) }
+        assertEquals(listOf(TournamentEvent(TournamentEventType.ORGANIZERS_CHANGED, tournamentA)), events.published)
+    }
+
+    @Test
+    fun `a co-organizer cannot remove another co-organizer`() {
+        addCoOrganizer.add(tournamentA, "co@example.com", lead)
+        addCoOrganizer.add(tournamentA, "alice@example.com", lead)
+        events.published.clear()
+
+        assertFailsWith<ForbiddenException> { removeCoOrganizer.remove(tournamentA, alice, co) }
+
+        assertEquals(listOf(co, alice), listOrganizers.list(tournamentA, lead).coOrganizers.map { it.adminUserId })
+        assertTrue(events.published.isEmpty())
+    }
+
+    @Test
+    fun `the lead organizer cannot leave their own tournament`() {
+        val ex = assertFailsWith<LeadOrganizerCannotLeaveException> {
+            removeCoOrganizer.remove(tournamentA, lead, lead)
+        }
+        assertEquals(ErrorCode.LEAD_ORGANIZER_CANNOT_LEAVE, ex.code)
+        assertTrue(events.published.isEmpty())
+    }
+
+    @Test
+    fun `removing an admin who is not a co-organizer succeeds silently`() {
+        removeCoOrganizer.remove(tournamentA, bob, lead)
+
+        assertTrue(listOrganizers.list(tournamentA, lead).coOrganizers.isEmpty())
+    }
+
+    @Test
+    fun `a stranger gets not-found when removing`() {
+        addCoOrganizer.add(tournamentA, "co@example.com", lead)
+        events.published.clear()
+
+        assertFailsWith<NotFoundException> { removeCoOrganizer.remove(tournamentA, co, stranger) }
+        assertFailsWith<NotFoundException> { removeCoOrganizer.remove(tournamentA, stranger, stranger) }
+        assertEquals(listOf(co), listOrganizers.list(tournamentA, lead).coOrganizers.map { it.adminUserId })
+        assertTrue(events.published.isEmpty())
     }
 
     private fun admin(

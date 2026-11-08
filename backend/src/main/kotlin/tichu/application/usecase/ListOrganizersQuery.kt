@@ -4,6 +4,7 @@ import tichu.application.api.CoOrganizerEntry
 import tichu.application.api.LeadOrganizer
 import tichu.application.api.ListOrganizers
 import tichu.application.api.Organizers
+import tichu.domain.AdminStatus
 import tichu.domain.AdminUserId
 import tichu.domain.AdminUserRepository
 import tichu.domain.CoOrganizerRepository
@@ -35,10 +36,15 @@ internal fun organizersOf(
 ): Organizers {
     val lead = adminUserRepository.requireById(tournament.ownerId)
     return Organizers(
-        lead = LeadOrganizer(adminUserId = lead.id, email = lead.email),
+        lead = LeadOrganizer(adminUserId = lead.id, email = lead.email, disabled = lead.status == AdminStatus.DISABLED),
         coOrganizers = coOrganizerRepository.findByTournament(tournament.id).map { row ->
             val admin = adminUserRepository.requireById(row.adminUserId)
-            CoOrganizerEntry(adminUserId = admin.id, email = admin.email, addedAt = row.addedAt)
+            CoOrganizerEntry(
+                adminUserId = admin.id,
+                email = admin.email,
+                addedAt = row.addedAt,
+                disabled = admin.status == AdminStatus.DISABLED,
+            )
         },
     )
 }

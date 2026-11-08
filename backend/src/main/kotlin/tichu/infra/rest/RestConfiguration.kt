@@ -29,6 +29,7 @@ import tichu.application.api.PublishTournament
 import tichu.application.api.RecordGame
 import tichu.application.api.ReactivateAdmin
 import tichu.application.api.RejectAdmin
+import tichu.application.api.RemoveCoOrganizer
 import tichu.application.api.RevokeInvite
 import tichu.application.api.RevealTeamAccessLink
 import tichu.application.api.RotateTeamAccessLink
@@ -120,7 +121,8 @@ class RestConfiguration(
     fun organizersController(
         listOrganizers: ListOrganizers,
         addCoOrganizer: AddCoOrganizer,
-    ): OrganizersController = OrganizersController(listOrganizers, addCoOrganizer)
+        removeCoOrganizer: RemoveCoOrganizer,
+    ): OrganizersController = OrganizersController(listOrganizers, addCoOrganizer, removeCoOrganizer)
 
     @Bean
     fun tournamentEventsController(

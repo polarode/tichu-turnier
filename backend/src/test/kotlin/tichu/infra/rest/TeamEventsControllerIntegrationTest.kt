@@ -48,6 +48,7 @@ import tichu.testsupport.loginAndCaptureSession
 import tichu.testsupport.seedAdmin
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
+import java.util.UUID
 
 /**
  * Seam: `GET /api/team/events` through the full Spring context and security chain
@@ -206,6 +207,24 @@ class TeamEventsControllerIntegrationTest(
         assertEquals(tournamentId, data["tournamentId"].asString())
         assertEquals("r-1", data["roundId"].asString())
         assertEquals(1, data["tableId"].asInt())
+    }
+
+    @Test
+    fun `an organizer change is not sent to the team stream, but the game after it is`() {
+        val stream = openStream()
+        val coEmail = "team-stream-co-${UUID.randomUUID()}@example.com"
+        seedAdmin(adminUsers, passwordHasher, coEmail)
+
+        mockMvc.perform(
+            post("/api/tournaments/$tournamentId/organizers").cookie(adminCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"$coEmail"}"""),
+        ).andExpect(status().isCreated)
+        recordGame().andExpect(status().isCreated)
+
+        val content = streamContentWithin(stream, 1000) { it.contains("event:GAME_RECORDED") }
+        assertTrue(content.contains("event:GAME_RECORDED"), content)
+        assertFalse(content.contains("ORGANIZERS_CHANGED"), content)
     }
 
     @Test

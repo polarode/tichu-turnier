@@ -14,6 +14,10 @@ class InMemoryCoOrganizerRepository : CoOrganizerRepository {
         rows[coOrganizer.tournamentId to coOrganizer.adminUserId] = coOrganizer
     }
 
+    override fun remove(tournamentId: TournamentId, adminUserId: AdminUserId) {
+        rows.remove(tournamentId to adminUserId)
+    }
+
     override fun isCoOrganizer(tournamentId: TournamentId, adminUserId: AdminUserId): Boolean =
         rows.containsKey(tournamentId to adminUserId)
 

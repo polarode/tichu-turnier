@@ -6,6 +6,9 @@ import tichu.domain.AdminUserId
 import tichu.domain.AdminUserRepository
 import tichu.domain.CoOrganizer
 import tichu.domain.CoOrganizerRepository
+import tichu.domain.TournamentEvent
+import tichu.domain.TournamentEventType
+import tichu.domain.TournamentEvents
 import tichu.domain.TournamentId
 import tichu.domain.normalizeEmail
 import tichu.vocabulary.AlreadyCoOrganizerException
@@ -27,6 +30,7 @@ class AddCoOrganizerCommand(
     private val coOrganizerRepository: CoOrganizerRepository,
     private val adminUserRepository: AdminUserRepository,
     private val clock: Clock,
+    private val tournamentEvents: TournamentEvents,
 ) : AddCoOrganizer {
 
     override fun add(tournamentId: TournamentId, email: String, caller: AdminUserId): Organizers {
@@ -44,6 +48,7 @@ class AddCoOrganizerCommand(
         }
 
         coOrganizerRepository.add(CoOrganizer(tournamentId, admin.id, clock.instant()))
+        tournamentEvents.publish(TournamentEvent(TournamentEventType.ORGANIZERS_CHANGED, tournamentId))
         return organizersOf(tournament, coOrganizerRepository, adminUserRepository)
     }
 

@@ -24,6 +24,10 @@ class JpaCoOrganizerRepository(
         )
     }
 
+    override fun remove(tournamentId: TournamentId, adminUserId: AdminUserId) {
+        springData.deleteByTournamentIdAndAdminUserId(tournamentId.value, adminUserId.value)
+    }
+
     override fun isCoOrganizer(tournamentId: TournamentId, adminUserId: AdminUserId): Boolean =
         springData.existsByTournamentIdAndAdminUserId(tournamentId.value, adminUserId.value)
 

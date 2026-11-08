@@ -46,17 +46,6 @@ class TeamAuthController(
     @GetMapping("/me")
     fun me(@AuthenticationPrincipal principal: AuthenticatedTeam) =
         TeamOverviewResponseDto.from(getOwnTeam.get(principal))
-
-    /**
-     * The client address feeding the rate limiter. Behind the TLS-terminating
-     * proxy, the right-most `X-Forwarded-For` entry is the one our own
-     * trusted proxy appended — the left-most entries are client-controlled and
-     * would let an attacker rotate spoofed IPs to dodge the limiter. Without the
-     * header, fall back to the direct remote address.
-     */
-    private fun sourceIpOf(request: jakarta.servlet.http.HttpServletRequest): String? =
-        request.getHeader("X-Forwarded-For")?.substringAfterLast(',')?.trim()?.takeIf { it.isNotEmpty() }
-            ?: request.remoteAddr?.takeIf { it.isNotEmpty() }
 }
 
 data class TeamExchangeRequestDto(

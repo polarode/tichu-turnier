@@ -6,15 +6,14 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * In-memory, per-source-IP rate limiter for failed team access-link exchanges
- * (#26). After [maxFailures] failures within [window] from one IP, that IP is
- * temporarily blocked.
+ * In-memory, per-source-IP limiter for failed attempts. After [maxFailures] failures
+ * within [window] from one IP, that IP is temporarily blocked. Each guarded entry point
+ * gets its own instance: team access-link exchanges (#26) and admin logins.
  *
- * Deliberate properties, per the Phase 5 design:
- * - counting is **per IP, never per token**, so an attacker cannot lock a specific
- *   team out — their failures only ever block their own address;
- * - a blocked caller is indistinguishable from a wrong guess: the exchange use
- *   case rejects with the same generic error and does not even look at the token.
+ * Counting is **per IP, never per account or token**, so an attacker cannot lock a
+ * specific team or organizer out — their failures only ever block their own address.
+ * How a blocked caller is answered is the use case's decision (see
+ * [ExchangeTeamAccessCommand] and [LoginAdminCommand]).
  *
  * Single-instance assumption: the counters live in one JVM's memory (the VPS
  * deploy is one container). If deployment ever scales out, replace with a shared
@@ -23,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
  * A plain class wired via [UseCaseConfiguration] — thresholds are constructor
  * arguments resolved from configuration there, never Spring annotations here.
  */
-class ExchangeRateLimiter(
+class FailedAttemptLimiter(
     private val clock: Clock,
     private val maxFailures: Int,
     private val window: Duration,

@@ -162,6 +162,39 @@ class AuthControllerIntegrationTest(
     }
 
     @Test
+    fun `repeated failed logins trip the per-ip limiter and refuse the correct password`() {
+        val email = uniqueEmail()
+        seedAdmin(adminUsers, passwordHasher, email)
+        val attackerIp = "203.0.113.40"
+
+        fun loginFrom(ip: String, password: String) = mockMvc.perform(
+            post("/api/auth/login")
+                .header("X-Forwarded-For", ip)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"$email","password":"$password"}"""),
+        )
+
+        repeat(5) {
+            loginFrom(attackerIp, "wrong-password")
+                .andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+        }
+
+        // Blocked: the correct password is refused before it is checked, and no session is issued.
+        val blocked = loginFrom(attackerIp, "s3cret-pw")
+            .andExpect(status().isTooManyRequests)
+            .andExpect(jsonPath("$.code").value("TOO_MANY_ATTEMPTS"))
+            .andReturn()
+        assertTrue(
+            blocked.response.getHeaders(HttpHeaders.SET_COOKIE).isEmpty(),
+            "a blocked source must not be issued a session cookie",
+        )
+
+        // ...while another source logs in with the same account: the limiter is per ip.
+        loginFrom("203.0.113.41", "s3cret-pw").andExpect(status().isOk)
+    }
+
+    @Test
     fun `refresh rotates the token and rejects the old one`() {
         val email = uniqueEmail()
         seedAdmin(adminUsers, passwordHasher, email)

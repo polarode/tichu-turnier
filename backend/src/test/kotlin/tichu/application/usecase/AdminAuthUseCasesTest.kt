@@ -2,6 +2,7 @@ package tichu.application.usecase
 
 import tichu.application.api.LoginAdmin
 import tichu.application.api.RegisterAdmin
+import tichu.testsupport.MutableClock
 import tichu.domain.AdminRole
 import tichu.domain.AdminSession
 import tichu.domain.AdminStatus
@@ -16,6 +17,7 @@ import tichu.vocabulary.EmailAlreadyRegisteredException
 import tichu.vocabulary.AccountDisabledException
 import tichu.vocabulary.AccountPendingException
 import tichu.vocabulary.InvalidCredentialsException
+import tichu.vocabulary.TooManyAttemptsException
 import tichu.vocabulary.UnauthenticatedException
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -54,7 +56,11 @@ class AdminAuthUseCasesTest {
 
     private val sessionIssuer = AdminSessionIssuer(sessions, sessionTokens, idGenerator, ttl)
     private val registerAdmin = RegisterAdminCommand(users, invites, passwordHasher, sessionTokens, idGenerator, fixedClock)
-    private val loginAdmin = LoginAdminCommand(users, passwordHasher, sessionIssuer, fixedClock)
+    private val loginClock = MutableClock(now)
+    private val loginAdmin = LoginAdminCommand(
+        users, passwordHasher, sessionIssuer,
+        FailedAttemptLimiter(loginClock, maxFailures = 5, window = Duration.ofMinutes(15)), loginClock,
+    )
     private val refreshSession = RefreshSessionCommand(sessions, users, sessionTokens, sessionIssuer, fixedClock)
     private val logoutAdmin = LogoutAdminCommand(sessions, sessionTokens)
 
@@ -146,6 +152,61 @@ class AdminAuthUseCasesTest {
         assertFailsWith<InvalidCredentialsException> {
             loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "wrong-pw"))
         }
+    }
+
+    // ------------------------------------------------------------- rate limiting
+
+    @Test
+    fun `five failed logins block that ip - even the correct password is refused until the window passes`() {
+        registerActive("ada@example.com")
+        val attackerIp = "203.0.113.7"
+
+        repeat(5) {
+            assertFailsWith<InvalidCredentialsException> {
+                loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "wrong-pw", attackerIp))
+            }
+        }
+
+        // Blocked: the correct password is not even checked for this ip.
+        assertFailsWith<TooManyAttemptsException> {
+            loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", attackerIp))
+        }
+
+        // Per-ip: a request without an ip is never limited, and another ip is unaffected.
+        assertTrue(loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", "198.51.100.9")).token.isNotBlank())
+        assertTrue(loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", null)).token.isNotBlank())
+
+        // Once the window has passed, the blocked ip can log in again.
+        loginClock.advance(Duration.ofMinutes(16))
+        assertTrue(loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", attackerIp)).token.isNotBlank())
+    }
+
+    @Test
+    fun `a successful login clears the ip's failures and a correct password on a pending account is not counted`() {
+        registerAdmin.register(RegisterAdmin.RegisterAdminRequest("ada@example.com", "s3cret-pw"))
+        val ip = "203.0.113.7"
+
+        // Correct password on a pending account: refused, but not a failure for the limiter.
+        repeat(5) {
+            assertFailsWith<AccountPendingException> {
+                loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", ip))
+            }
+        }
+        users.save(users.findByEmail("ada@example.com")!!.copy(status = AdminStatus.ACTIVE))
+
+        // Four failures, then a success, clears the history: four more failures still do not block.
+        repeat(4) {
+            assertFailsWith<InvalidCredentialsException> {
+                loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "wrong-pw", ip))
+            }
+        }
+        assertTrue(loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", ip)).token.isNotBlank())
+        repeat(4) {
+            assertFailsWith<InvalidCredentialsException> {
+                loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "wrong-pw", ip))
+            }
+        }
+        assertTrue(loginAdmin.login(LoginAdmin.LoginAdminRequest("ada@example.com", "s3cret-pw", ip)).token.isNotBlank())
     }
 
     @Test

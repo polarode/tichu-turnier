@@ -47,10 +47,15 @@ class AuthController(
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody body: LoginRequestBody,
+        request: HttpServletRequest,
         response: HttpServletResponse,
     ): AdminResponse {
         val issued = loginAdmin.login(
-            LoginAdmin.LoginAdminRequest(email = body.email, password = body.password),
+            LoginAdmin.LoginAdminRequest(
+                email = body.email,
+                password = body.password,
+                sourceIp = sourceIpOf(request),
+            ),
         )
         response.addHeader(HttpHeaders.SET_COOKIE, sessionCookie.session(issued.token).toString())
         return AdminResponse(id = issued.adminUserId.value, email = issued.email, role = issued.role)

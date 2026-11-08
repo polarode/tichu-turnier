@@ -14,6 +14,7 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     INVALID_CREDENTIALS: 'error.invalidCredentials',
     ACCOUNT_PENDING: 'error.accountPending',
     ACCOUNT_DISABLED: 'error.accountDisabled',
+    TOO_MANY_ATTEMPTS: 'error.tooManyAttempts',
     UNAUTHENTICATED: 'error.unauthenticated',
     FORBIDDEN: 'error.forbidden',
     TOURNAMENT_NOT_EDITABLE: 'error.tournamentNotEditable',

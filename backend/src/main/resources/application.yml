@@ -47,9 +47,14 @@ app:
     team-session-ttl: PT12H
     team-session-cookie-name: team_session
     # Failed team-link exchanges are rate-limited in memory, per source IP
-    # (single-instance assumption — see ExchangeRateLimiter). Blocked callers get
+    # (single-instance assumption — see FailedAttemptLimiter). Blocked callers get
     # the same generic rejection as a wrong guess.
     exchange-rate-limit:
+      max-failures: 5
+      window: PT15M
+    # Failed admin logins are rate-limited in memory, per source IP (same single-instance
+    # assumption as the team-link limit). A blocked source is refused even with the right password.
+    login-rate-limit:
       max-failures: 5
       window: PT15M
     # Cadence (ms) of the expired-session sweep (hourly).

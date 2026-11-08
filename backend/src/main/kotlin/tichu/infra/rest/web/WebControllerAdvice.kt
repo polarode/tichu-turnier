@@ -30,6 +30,7 @@ import tichu.vocabulary.TableIncompleteException
 import tichu.vocabulary.TeamAccessException
 import tichu.vocabulary.TeamAccessLinkConflictException
 import tichu.vocabulary.TeamLimitReachedException
+import tichu.vocabulary.TooManyAttemptsException
 import tichu.vocabulary.TournamentNotEditableException
 import tichu.vocabulary.TournamentNotStartableException
 import tichu.vocabulary.TournamentNotStartedException
@@ -98,6 +99,11 @@ class WebControllerAdvice {
     @ExceptionHandler(AccountDisabledException::class)
     fun handleAccountDisabled(ex: AccountDisabledException): ProblemDetail =
         problem(HttpStatus.FORBIDDEN, ex)
+
+    /** Too many failed admin logins from one source: 429, the caller must wait for the window to pass. */
+    @ExceptionHandler(TooManyAttemptsException::class)
+    fun handleTooManyAttempts(ex: TooManyAttemptsException): ProblemDetail =
+        problem(HttpStatus.TOO_MANY_REQUESTS, ex)
 
     @ExceptionHandler(UnauthenticatedException::class)
     fun handleUnauthenticated(ex: UnauthenticatedException): ProblemDetail =

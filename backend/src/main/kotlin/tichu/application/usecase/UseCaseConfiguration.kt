@@ -77,6 +77,8 @@ class UseCaseConfiguration(
     @param:Value("\${app.auth.invite-ttl}") private val inviteTtl: Duration,
     @param:Value("\${app.auth.exchange-rate-limit.max-failures:5}") private val exchangeMaxFailures: Int,
     @param:Value("\${app.auth.exchange-rate-limit.window:PT15M}") private val exchangeWindow: Duration,
+    @param:Value("\${app.auth.login-rate-limit.max-failures:5}") private val loginMaxFailures: Int,
+    @param:Value("\${app.auth.login-rate-limit.window:PT15M}") private val loginWindow: Duration,
     @param:Value("\${app.auth.owner.email:}") private val ownerEmail: String,
     @param:Value("\${app.auth.owner.password-hash:}") private val ownerPasswordHash: String,
 ) {
@@ -367,7 +369,7 @@ class UseCaseConfiguration(
         passwordHasher: PasswordHasher,
         sessionIssuer: AdminSessionIssuer,
         clock: Clock,
-    ): LoginAdmin = LoginAdminCommand(adminUsers, passwordHasher, sessionIssuer, clock)
+    ): LoginAdmin = LoginAdminCommand(adminUsers, passwordHasher, sessionIssuer, loginRateLimiter(), clock)
 
     @Bean
     fun refreshSession(
@@ -417,7 +419,10 @@ class UseCaseConfiguration(
     fun revokeInvite(adminInvites: AdminInviteRepository): RevokeInvite = RevokeInviteCommand(adminInvites)
 
     @Bean
-    fun exchangeRateLimiter(): ExchangeRateLimiter = ExchangeRateLimiter(clock(), exchangeMaxFailures, exchangeWindow)
+    fun exchangeRateLimiter(): FailedAttemptLimiter = FailedAttemptLimiter(clock(), exchangeMaxFailures, exchangeWindow)
+
+    @Bean
+    fun loginRateLimiter(): FailedAttemptLimiter = FailedAttemptLimiter(clock(), loginMaxFailures, loginWindow)
 
     @Bean
     fun manageTeamAccessLink(

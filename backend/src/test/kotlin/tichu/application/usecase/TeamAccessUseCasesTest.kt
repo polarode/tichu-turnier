@@ -57,7 +57,7 @@ class TeamAccessUseCasesTest {
     private val teamSessionIssuer = TeamSessionIssuer(teamSessionRepository, sessionTokens, idGenerator, Duration.ofHours(12))
     private val exchangeTeamAccess = ExchangeTeamAccessCommand(
         teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer,
-        ExchangeRateLimiter(clock, maxFailures = 5, window = Duration.ofMinutes(15)), clock,
+        FailedAttemptLimiter(clock, maxFailures = 5, window = Duration.ofMinutes(15)), clock,
     )
     private val getOwnTeam = GetOwnTeamQuery(teamRepository, tournamentRepository)
     private val accessLinks = ManageTeamAccessLinkCommand(

@@ -22,7 +22,7 @@ import java.time.Clock
  * A valid link is multi-use — both team members may exchange it, each receiving
  * their own team session.
  *
- * Failed attempts are counted per source IP by [ExchangeRateLimiter] (#26); a
+ * Failed attempts are counted per source IP by [FailedAttemptLimiter] (#26); a
  * blocked source is rejected before the token is even looked at, with exactly the
  * same generic error — being rate-limited discloses nothing about a token.
  */
@@ -32,7 +32,7 @@ class ExchangeTeamAccessCommand(
     private val tournamentRepository: TournamentRepository,
     private val sessionTokens: SessionTokens,
     private val teamSessionIssuer: TeamSessionIssuer,
-    private val rateLimiter: ExchangeRateLimiter,
+    private val rateLimiter: FailedAttemptLimiter,
     private val clock: Clock,
 ) : ExchangeTeamAccess {
 

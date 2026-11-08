@@ -16,6 +16,9 @@ enum class ErrorCode {
 
     /** Correct credentials on an account that has been disabled. Mapped to HTTP 403. */
     ACCOUNT_DISABLED,
+
+    /** Too many failed admin logins from one source; the caller must wait for the window to pass. Mapped to HTTP 429. */
+    TOO_MANY_ATTEMPTS,
     UNAUTHENTICATED,
     FORBIDDEN,
 
@@ -167,6 +170,14 @@ class AccountPendingException(message: String) :
  */
 class AccountDisabledException(message: String) :
     ApiException(ErrorCode.ACCOUNT_DISABLED, message)
+
+/**
+ * Thrown when a source has failed too many admin logins recently. Raised before the
+ * password is checked, so even correct credentials are refused until the window passes.
+ * Mapped to HTTP 429.
+ */
+class TooManyAttemptsException(message: String) :
+    ApiException(ErrorCode.TOO_MANY_ATTEMPTS, message)
 
 /** Thrown when a session is missing, invalid or expired. Mapped to HTTP 401. */
 class UnauthenticatedException(message: String) :

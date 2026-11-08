@@ -56,6 +56,7 @@ export const en = {
     'error.invalidCredentials': 'Email or password is incorrect.',
     'error.accountPending': 'This account is still awaiting approval.',
     'error.accountDisabled': 'This account has been disabled.',
+    'error.tooManyAttempts': 'Too many failed sign-in attempts. Please try again in a few minutes.',
     'error.unauthenticated': 'Please sign in to continue.',
     'error.forbidden': 'You do not have permission to do that.',
     'error.tournamentNotEditable': 'This tournament can no longer be edited.',

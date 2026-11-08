@@ -54,6 +54,7 @@ export const de: Catalog = {
     'error.invalidCredentials': 'E-Mail oder Passwort ist falsch.',
     'error.accountPending': 'Dieses Konto wartet noch auf Freigabe.',
     'error.accountDisabled': 'Dieses Konto wurde deaktiviert.',
+    'error.tooManyAttempts': 'Zu viele fehlgeschlagene Anmeldeversuche. Bitte in ein paar Minuten erneut versuchen.',
     'error.unauthenticated': 'Bitte anmelden, um fortzufahren.',
     'error.forbidden': 'Du hast keine Berechtigung für diese Aktion.',
     'error.tournamentNotEditable': 'Dieses Turnier kann nicht mehr bearbeitet werden.',

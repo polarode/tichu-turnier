@@ -183,14 +183,6 @@
             {
                 "type": "feature",
                 "text": "Statistics tab for organizers and spectators"
-            },
-            {
-                "type": "feature",
-                "text": "Statistics show Tichu calls, destroyed Tichus, Beschiss games and the Good Horse (fewest Tichu points per victory point), each with its own highlight"
-            },
-            {
-                "type": "feature",
-                "text": "Choose which columns the team statistics table shows; phones start with a compact set and the choice is remembered"
             }
         ]
     }

@@ -139,6 +139,7 @@ export function OrganizersSection({
                                     setActionError(null);
                                     setConfirmRemove(coOrganizer);
                                 }}
+                                aria-label={`${t('organizers.remove')} – ${coOrganizer.email}`}
                             >
                                 {t('organizers.remove')}
                             </Button>

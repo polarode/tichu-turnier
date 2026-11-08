@@ -3,10 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     organizersQueryKey,
     QueryKeys,
-    roundsQueryKey,
-    standingsQueryKey,
-    teamsQueryKey,
-    tournamentQueryKey,
+    tournamentScopedQueryKeys,
 } from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 
@@ -57,11 +54,9 @@ export function useLeaveTournament(tournamentId: string) {
         mutationFn: (adminUserId: string) =>
             TournamentRepository.removeCoOrganizer(tournamentId, adminUserId),
         onSuccess: async () => {
-            queryClient.removeQueries({ queryKey: tournamentQueryKey(tournamentId) });
-            queryClient.removeQueries({ queryKey: organizersQueryKey(tournamentId) });
-            queryClient.removeQueries({ queryKey: teamsQueryKey(tournamentId) });
-            queryClient.removeQueries({ queryKey: roundsQueryKey(tournamentId) });
-            queryClient.removeQueries({ queryKey: standingsQueryKey(tournamentId) });
+            for (const queryKey of tournamentScopedQueryKeys(tournamentId)) {
+                queryClient.removeQueries({ queryKey });
+            }
             await queryClient.invalidateQueries({ queryKey: [QueryKeys.TOURNAMENTS] });
         },
     });

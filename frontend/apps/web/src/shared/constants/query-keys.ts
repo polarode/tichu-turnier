@@ -1,3 +1,5 @@
+import type { QueryKey } from '@tanstack/react-query';
+
 /** Centralized TanStack Query keys so invalidation stays consistent across features. */
 export const QueryKeys = {
     SESSION: 'session',
@@ -57,6 +59,21 @@ export const statisticsQueryKey = (tournamentId: string) =>
 
 /** Key for one public tournament's statistics (anonymous, published tournaments only). */
 export const publicStatisticsQueryKey = (id: string) => [QueryKeys.PUBLIC_STATISTICS, id] as const;
+
+/**
+ * Every admin query keyed by one tournament, matched by prefix: the tournament, its teams
+ * (which also covers a single team), rounds, standings, statistics and organizers. Use it
+ * to drop a tournament's data from the cache at once. Public and team-session keys are not
+ * listed, because they are not the admin's view of this tournament.
+ */
+export const tournamentScopedQueryKeys = (tournamentId: string): QueryKey[] => [
+    tournamentQueryKey(tournamentId),
+    teamsQueryKey(tournamentId),
+    roundsQueryKey(tournamentId),
+    standingsQueryKey(tournamentId),
+    statisticsQueryKey(tournamentId),
+    organizersQueryKey(tournamentId),
+];
 
 /** Key for the owner console's admin-account list. */
 export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;

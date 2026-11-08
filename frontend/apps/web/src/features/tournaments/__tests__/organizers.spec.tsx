@@ -8,6 +8,7 @@ import type { Player } from '@/domain/player.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { statisticsQueryKey } from '@/shared/constants/query-keys.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
@@ -190,7 +191,9 @@ describe('organizers as lead organizer', () => {
 
         const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
         await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
-        await userEvent.click(await screen.findByRole('button', { name: 'Entfernen' }));
+        await userEvent.click(
+            await screen.findByRole('button', { name: 'Entfernen – co@example.com' }),
+        );
         const confirmDialog = await screen.findByRole('dialog', {
             name: 'Co-Organisator entfernen?',
         });
@@ -203,6 +206,25 @@ describe('organizers as lead organizer', () => {
             ),
         );
         await waitFor(() => expect(screen.queryByText('co@example.com')).not.toBeInTheDocument());
+    });
+
+    it('gives each co-organizer a remove button addressable by their email', async () => {
+        tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.LEAD));
+        tournaments.listOrganizers.mockResolvedValue(
+            organizers('co@example.com', 'other@example.com'),
+        );
+        renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+
+        expect(
+            await screen.findByRole('button', { name: 'Entfernen – co@example.com' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Entfernen – other@example.com' }),
+        ).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Entfernen' })).not.toBeInTheDocument();
     });
 
     it('offers no leave button to the lead organizer', async () => {
@@ -267,7 +289,7 @@ describe('organizers as co-organizer', () => {
         expect(screen.queryByRole('button', { name: 'Entfernen' })).not.toBeInTheDocument();
     });
 
-    it('lets the co-organizer leave and lands on the dashboard with the notice', async () => {
+    it('lets the co-organizer leave, drops the tournament from the cache and lands on the dashboard with the notice', async () => {
         tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.CO));
         tournaments.list.mockResolvedValue([tournament('SETUP', OrganizerRole.CO)]);
         tournaments.listOrganizers.mockResolvedValue({
@@ -282,10 +304,15 @@ describe('organizers as co-organizer', () => {
             ],
         });
         tournaments.removeCoOrganizer.mockResolvedValue(undefined);
-        renderApp('/admin/tournaments/t-1');
+        const { queryClient } = renderApp('/admin/tournaments/t-1');
 
         const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
         await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+        queryClient.setQueryData(statisticsQueryKey('t-1'), {
+            teams: [],
+            highlights: [],
+            trends: [],
+        });
         const ownRow = (await screen.findByText('admin@example.com')).closest('li');
         await userEvent.click(within(ownRow!).getByRole('button', { name: 'Verlassen' }));
         const confirmDialog = await screen.findByRole('dialog', { name: 'Turnier verlassen?' });
@@ -298,6 +325,7 @@ describe('organizers as co-organizer', () => {
             'Du hast Jahresturnier verlassen.',
         );
         expect(tournaments.get).toHaveBeenCalledTimes(1);
+        expect(queryClient.getQueryData(statisticsQueryKey('t-1'))).toBeUndefined();
     });
 });
 

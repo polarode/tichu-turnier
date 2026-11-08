@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@tichu/ui/button.tsx';
 import { teamsQueryOptions } from '@/features/teams/hooks/team-queries.hook.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { useTournaments } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
+import { fillPlaceholders } from '@/shared/i18n/fill-placeholders.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { useNoticeStore, type Notice } from '@/shared/stores/notice.store.ts';
 import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
@@ -96,9 +97,10 @@ export function Dashboard() {
 }
 
 /**
- * The notice a previous screen handed over, shown once. The store is cleared when the
- * dashboard unmounts; the banner keeps its own copy, because StrictMode runs that cleanup
- * right after mount in development and must not hide the banner.
+ * The notice a previous screen handed over. It is read once, on mount: a notice that arrives
+ * while the dashboard is already open is not shown. The store is cleared when the dashboard
+ * unmounts; the banner keeps its own copy, because StrictMode runs that cleanup right after
+ * mount in development and must not hide the banner.
  */
 function DashboardNotice() {
     const { t } = useI18n();
@@ -130,13 +132,5 @@ function DashboardNotice() {
                 <X className="size-4" aria-hidden="true" />
             </Button>
         </div>
-    );
-}
-
-/** Replaces each `{name}` in the catalog text with its value. */
-function fillPlaceholders(template: string, values: Record<string, string> = {}): string {
-    return Object.entries(values).reduce(
-        (text, [name, value]) => text.replaceAll(`{${name}}`, value),
-        template,
     );
 }

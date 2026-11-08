@@ -9,8 +9,9 @@
 # Stage 1: build the SPA bundle; VITE_API_URL=/ makes it talk to its own origin.
 FROM node:26.12.1-alpine AS frontend
 WORKDIR /fe
-RUN corepack enable
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/tsconfig.base.json ./
+# Node 25+ no longer bundles corepack; install the pnpm pinned in packageManager.
+RUN npm install -g "$(node -p 'require("./package.json").packageManager')"
 COPY frontend/apps ./apps
 COPY frontend/packages ./packages
 RUN pnpm install --frozen-lockfile

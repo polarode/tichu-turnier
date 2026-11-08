@@ -185,36 +185,28 @@
                 "text": "Statistics tab for organizers and spectators"
             },
             {
-                "type": "improvement",
-                "text": "Compact scoring screen showing your table and opponents"
+                "type": "feature",
+                "text": "Run a tournament together: add co-organizers by email on the new Organizers tab, remove them again, or leave a tournament yourself"
             },
             {
                 "type": "improvement",
-                "text": "Games shown as tiles with winner and victory points"
+                "text": "Clearer scoring screen: your table, your opponents, and games as tiles with winner and victory points"
             },
             {
                 "type": "improvement",
                 "text": "Public page shows one round at a time, with ranking and trend in their own tab"
             },
             {
-                "type": "feature",
-                "text": "The player name now only needs to be unique within one team, but can be reused in other teams in the tournament"
-            },
-            {
-                "type": "fix",
-                "text": "A double win always counts as a win, with the winner marked and no tie point for the losing team, even when a failed Tichu leaves both teams level on Tichu points"
-            },
-            {
-                "type": "feature",
-                "text": "Run a tournament together: on the new Organizers tab, the organizer who created it can add other admins by email as co-organizers, who can then do everything except delete the tournament or add more organizers"
+                "type": "improvement",
+                "text": "Player names only need to be unique within a team"
             },
             {
                 "type": "improvement",
-                "text": "The live indicator is now a small dot that pulses red while the page is receiving live updates and turns into a grey ring while it reconnects, and it switches on as soon as the page connects"
+                "text": "Smaller live indicator that shows when the page is reconnecting"
             },
             {
-                "type": "feature",
-                "text": "The lead organizer can remove co-organizers from the Organizers tab, and co-organizers can leave a tournament themselves. Disabled admin accounts are marked on the list."
+                "type": "fix",
+                "text": "A double win always counts as a win, even when a failed Tichu leaves both teams level"
             }
         ]
     }

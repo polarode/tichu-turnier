@@ -76,8 +76,10 @@ object GameScoring {
         val teamPoints = teams.associate { it.teamId to totalPoints(it, doubleWinTeam, settings) }
         val tie = teamPoints.values.distinct().size == 1
         val victoryPoints = teams.associate { team ->
-            val vp = when (team.teamId) {
-                doubleWinTeam -> 3
+            // A double win decides the game outright: the losers get 0 VP even if a
+            // failed call by the winners levels the TP totals.
+            val vp = when {
+                doubleWinTeam != null -> if (team.teamId == doubleWinTeam) 3 else 0
                 else -> when {
                     tie -> 1
                     teamPoints[team.teamId] == teamPoints.values.max() -> 2

@@ -300,4 +300,21 @@ class GameScoringTest {
         assertEquals(200, outcome.teamPoints[TeamId("t1")])
         assertEquals(-200, outcome.teamPoints[TeamId("t2")])
     }
+
+    @Test
+    fun `double win with a failed call levelling TP still leaves the losers without a tie point`() {
+        val outcome = GameScoring.score(
+            teams = listOf(
+                TeamResult(TeamId("t1"), 0, listOf(playerResult(2, TichuCall.GRAND), playerResult(1))),
+                TeamResult(TeamId("t2"), 0, listOf(playerResult(null), playerResult(null))),
+            ),
+            settings = settings,
+        )
+
+        // 0 base - 200 failed grand + 200 double win = 0, level with the losers' 0.
+        assertEquals(0, outcome.teamPoints[TeamId("t1")])
+        assertEquals(0, outcome.teamPoints[TeamId("t2")])
+        assertEquals(3, outcome.victoryPoints[TeamId("t1")])
+        assertEquals(0, outcome.victoryPoints[TeamId("t2")])
+    }
 }

@@ -199,6 +199,10 @@
             {
                 "type": "feature",
                 "text": "The player name now only needs to be unique within one team, but can be reused in other teams in the tournament"
+            },
+            {
+                "type": "fix",
+                "text": "A double win no longer gives the losing team a tie point when a failed Tichu leaves both teams level on Tichu points"
             }
         ]
     }

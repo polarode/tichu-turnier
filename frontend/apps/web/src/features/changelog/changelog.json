@@ -4,15 +4,15 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Register and sign in as an organizer; new accounts are activated after approval or through an invite"
+                "text": "Organizer accounts, activated after approval or by invite"
             },
             {
                 "type": "feature",
-                "text": "Dashboard listing your tournaments with their status and team count"
+                "text": "Dashboard of your tournaments"
             },
             {
                 "type": "feature",
-                "text": "Interface available in German and English"
+                "text": "German and English interface"
             }
         ]
     },
@@ -25,11 +25,11 @@
             },
             {
                 "type": "feature",
-                "text": "Add, edit and remove teams and players while the tournament is in setup"
+                "text": "Manage teams and players during setup"
             },
             {
                 "type": "feature",
-                "text": "Give each team a private access link that you can reveal, rotate or revoke"
+                "text": "Private team access links"
             }
         ]
     },
@@ -38,7 +38,7 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Teams sign in with their access link and see their team overview"
+                "text": "Teams sign in with their link and see their overview"
             }
         ]
     },
@@ -47,11 +47,11 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Start a tournament; the first round's tables are drawn automatically"
+                "text": "Start a tournament with automatic first-round tables"
             },
             {
                 "type": "feature",
-                "text": "Rounds view showing which teams play at which table"
+                "text": "Rounds view with table assignments"
             }
         ]
     },
@@ -60,7 +60,7 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Teams enter their own game scores"
+                "text": "Teams enter their own scores"
             }
         ]
     },
@@ -69,7 +69,7 @@
         "changes": [
             {
                 "type": "improvement",
-                "text": "Rounds view shows each game's status and the entered scores"
+                "text": "Rounds view shows game status and scores"
             },
             {
                 "type": "improvement",
@@ -77,15 +77,15 @@
             },
             {
                 "type": "improvement",
-                "text": "Team screens optimized for phones, with a confirmation after saving a game; the scoring link on the team overview only appears while the tournament is running"
+                "text": "Phone-friendly team screens"
             },
             {
                 "type": "improvement",
-                "text": "Account menu behind your avatar; language picker as a flag dropdown"
+                "text": "Avatar account menu and flag language picker"
             },
             {
                 "type": "feature",
-                "text": "New light theme"
+                "text": "Light theme"
             }
         ]
     },
@@ -94,15 +94,15 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Odd team counts are seated with a table of three teams"
+                "text": "Tables of three for odd team counts"
             },
             {
                 "type": "feature",
-                "text": "Teams confirm or retract their table's results from the team overview"
+                "text": "Teams confirm or retract their table's results"
             },
             {
                 "type": "improvement",
-                "text": "Choose between light, dark and system theme"
+                "text": "Light, dark or system theme"
             }
         ]
     },
@@ -111,27 +111,27 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Set the total number of rounds, adjustable while the tournament is running"
+                "text": "Adjustable total number of rounds"
             },
             {
                 "type": "feature",
-                "text": "Standings tab and a progress card showing the current round and completed tables"
+                "text": "Standings tab and progress card"
             },
             {
                 "type": "improvement",
-                "text": "Rounds view labels tables by letter, shows whether each table has confirmed its results, and lists a table's games as a results table with Victory Points totals"
+                "text": "Clearer rounds view with table letters, confirmations and Victory Points totals"
             },
             {
                 "type": "feature",
-                "text": "Grand Tichu bonus is a tournament setting of 100 or 200"
+                "text": "Grand Tichu bonus of 100 or 200"
             },
             {
                 "type": "fix",
-                "text": "A double win is no longer rejected when the team's second player is entered as finishing first"
+                "text": "Double wins with the second player finishing first are accepted"
             },
             {
                 "type": "improvement",
-                "text": "Back links across the admin screens and a more compact team overview"
+                "text": "Back links and a more compact team overview"
             }
         ]
     },
@@ -140,7 +140,7 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Start the next round from the progress card once every table is complete; teams are paired by standings, avoiding rematches"
+                "text": "Start the next round, paired by standings without rematches"
             }
         ]
     },
@@ -149,31 +149,31 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "Double win bonus is a tournament setting of 100 or 200"
+                "text": "Double win bonus of 100 or 200"
             },
             {
                 "type": "improvement",
-                "text": "Sign in directly from the header; the admin tab is hidden from visitors"
+                "text": "Sign in from the header"
             },
             {
                 "type": "feature",
-                "text": "This changelog, with each change marked as a feature, improvement or fix"
+                "text": "This changelog"
             },
             {
                 "type": "feature",
-                "text": "Finish the tournament after its last round, then publish the results; the Standings tab becomes the Final Ranking. Teams keep read-only access to their games and see the Final Ranking once you publish it"
+                "text": "Finish a tournament and publish the Final Ranking"
             },
             {
                 "type": "feature",
-                "text": "Your tournament page and the team pages update live, with a Live badge: entered games, table confirmations, new rounds, changes to the total rounds, the finish and the published results appear right away, also in other open tabs"
+                "text": "Live updates for organizers and teams"
             },
             {
                 "type": "feature",
-                "text": "Make a tournament public with the Public Visibility toggle and switch it off again at any time; a public home page lists the public tournaments, grouped by status, so spectators can find them without signing in"
+                "text": "Public tournaments and a public home page"
             },
             {
                 "type": "feature",
-                "text": "Spectators follow a public tournament live: every round's pairings with each table's teams and players and, once you publish the results, the Final Ranking with each team's Victory Points and Tichu Points per table"
+                "text": "Spectators follow pairings and results live"
             }
         ]
     },
@@ -182,7 +182,7 @@
         "changes": [
             {
                 "type": "feature",
-                "text": "A Statistics tab on the tournament page shows each team's successful Tichu calls, bombs and double wins, the leading teams, and a chart of every team's Victory Points round by round; once you publish the results of a public tournament, spectators see it too"
+                "text": "Statistics tab for organizers and spectators"
             }
         ]
     }

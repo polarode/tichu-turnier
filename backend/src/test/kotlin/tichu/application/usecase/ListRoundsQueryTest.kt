@@ -20,6 +20,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
@@ -49,7 +50,7 @@ class ListRoundsQueryTest {
     private val gameRepository = InMemoryGameRepository()
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
-    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository), roundRepository, gameRepository, confirmationRepository)
+    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), roundRepository, gameRepository, confirmationRepository)
 
     @BeforeEach
     fun setUp() {

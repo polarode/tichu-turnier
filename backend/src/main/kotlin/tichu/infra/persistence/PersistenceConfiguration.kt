@@ -3,6 +3,7 @@ package tichu.infra.persistence
 import tichu.domain.AdminInviteRepository
 import tichu.domain.AdminSessionRepository
 import tichu.domain.AdminUserRepository
+import tichu.domain.CoOrganizerRepository
 import tichu.domain.GameRepository
 import tichu.domain.IdGenerator
 import tichu.domain.TeamRepository
@@ -33,6 +34,7 @@ class PersistenceConfiguration(
     private val springDataTournamentRepository: SpringDataTournamentRepository,
     private val springDataAdminUserRepository: SpringDataAdminUserRepository,
     private val springDataAdminInviteRepository: SpringDataAdminInviteRepository,
+    private val springDataCoOrganizerRepository: SpringDataCoOrganizerRepository,
     private val springDataAdminSessionRepository: SpringDataAdminSessionRepository,
     private val springDataTeamRepository: SpringDataTeamRepository,
     private val springDataPlayerRepository: SpringDataPlayerRepository,
@@ -87,6 +89,10 @@ class PersistenceConfiguration(
     @Bean
     fun adminInviteRepository(): AdminInviteRepository =
         JpaAdminInviteRepository(springDataAdminInviteRepository)
+
+    @Bean
+    fun coOrganizerRepository(): CoOrganizerRepository =
+        JpaCoOrganizerRepository(springDataCoOrganizerRepository)
 
     @Bean
     fun adminSessionRepository(): AdminSessionRepository =

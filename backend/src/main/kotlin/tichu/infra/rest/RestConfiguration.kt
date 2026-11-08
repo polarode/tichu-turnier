@@ -1,5 +1,6 @@
 package tichu.infra.rest
 
+import tichu.application.api.AddCoOrganizer
 import tichu.application.api.ApproveAdmin
 import tichu.application.api.CheckPublicTournamentVisible
 import tichu.application.api.ConfirmTable
@@ -19,6 +20,7 @@ import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
 import tichu.application.api.ListAdmins
+import tichu.application.api.ListOrganizers
 import tichu.application.api.ListInvites
 import tichu.application.api.ListTeams
 import tichu.application.api.ListPublicTournaments
@@ -52,6 +54,7 @@ import tichu.infra.rest.web.GameController
 import tichu.infra.rest.web.PublicTournamentController
 import tichu.infra.rest.web.PublicTournamentEventsController
 import tichu.infra.rest.web.InviteController
+import tichu.infra.rest.web.OrganizersController
 import tichu.infra.rest.web.SessionCookieFactory
 import tichu.infra.rest.web.TeamAuthController
 import tichu.infra.rest.web.TeamController
@@ -112,6 +115,12 @@ class RestConfiguration(
         publishTournament,
         setPublicVisibility,
     )
+
+    @Bean
+    fun organizersController(
+        listOrganizers: ListOrganizers,
+        addCoOrganizer: AddCoOrganizer,
+    ): OrganizersController = OrganizersController(listOrganizers, addCoOrganizer)
 
     @Bean
     fun tournamentEventsController(

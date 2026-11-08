@@ -16,6 +16,7 @@ import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
 import tichu.application.api.TournamentWriteRequest
 import tichu.application.api.UpdateTournament
+import tichu.domain.AdminUserId
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import jakarta.validation.Valid
@@ -64,9 +65,10 @@ class TournamentController(
     fun create(
         @Valid @RequestBody body: TournamentWriteRequestBody,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        createTournament.create(body.toWriteRequest(), principal.adminUserId),
-    )
+    ): TournamentResponse {
+        val created = createTournament.create(body.toWriteRequest(), principal.adminUserId)
+        return viewOf(created.id, principal.adminUserId)
+    }
 
     @GetMapping
     fun list(@AuthenticationPrincipal principal: AuthenticatedAdmin): List<TournamentResponse> =
@@ -76,17 +78,16 @@ class TournamentController(
     fun get(
         @PathVariable id: String,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        getTournament.get(TournamentId(id), principal.adminUserId),
-    )
+    ): TournamentResponse = TournamentResponse.from(getTournament.get(TournamentId(id), principal.adminUserId))
 
     @PostMapping("/{id}/start")
     fun start(
         @PathVariable id: String,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): StartedTournamentResponse = StartedTournamentResponse.from(
-        startTournament.start(TournamentId(id), principal.adminUserId),
-    )
+    ): StartedTournamentResponse {
+        val started = startTournament.start(TournamentId(id), principal.adminUserId)
+        return StartedTournamentResponse.from(getTournament.get(started.tournament.id, principal.adminUserId), started)
+    }
 
     @GetMapping("/{id}/rounds")
     fun rounds(
@@ -122,18 +123,20 @@ class TournamentController(
     fun finish(
         @PathVariable id: String,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        finishTournament.finish(TournamentId(id), principal.adminUserId),
-    )
+    ): TournamentResponse {
+        finishTournament.finish(TournamentId(id), principal.adminUserId)
+        return viewOf(TournamentId(id), principal.adminUserId)
+    }
 
     /** Publishes the completed tournament's results, opening the Final Ranking to the teams. */
     @PostMapping("/{id}/publish")
     fun publish(
         @PathVariable id: String,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        publishTournament.publish(TournamentId(id), principal.adminUserId),
-    )
+    ): TournamentResponse {
+        publishTournament.publish(TournamentId(id), principal.adminUserId)
+        return viewOf(TournamentId(id), principal.adminUserId)
+    }
 
     /** Changes only the Total Rounds — the one setting still adjustable while active. */
     @PutMapping("/{id}/total-rounds")
@@ -141,9 +144,10 @@ class TournamentController(
         @PathVariable id: String,
         @Valid @RequestBody body: TotalRoundsRequestBody,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        setTotalRounds.set(TournamentId(id), body.totalRounds, principal.adminUserId),
-    )
+    ): TournamentResponse {
+        setTotalRounds.set(TournamentId(id), body.totalRounds, principal.adminUserId)
+        return viewOf(TournamentId(id), principal.adminUserId)
+    }
 
     /** Switches public visibility on or off; allowed in every Tournament Status. */
     @PutMapping("/{id}/public-visibility")
@@ -151,18 +155,20 @@ class TournamentController(
         @PathVariable id: String,
         @RequestBody body: PublicVisibilityRequestBody,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        setPublicVisibility.set(TournamentId(id), body.publicVisibility, principal.adminUserId),
-    )
+    ): TournamentResponse {
+        setPublicVisibility.set(TournamentId(id), body.publicVisibility, principal.adminUserId)
+        return viewOf(TournamentId(id), principal.adminUserId)
+    }
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: String,
         @Valid @RequestBody body: TournamentWriteRequestBody,
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
-    ): TournamentResponse = TournamentResponse.from(
-        updateTournament.update(TournamentId(id), body.toWriteRequest(), principal.adminUserId),
-    )
+    ): TournamentResponse {
+        updateTournament.update(TournamentId(id), body.toWriteRequest(), principal.adminUserId)
+        return viewOf(TournamentId(id), principal.adminUserId)
+    }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -172,6 +178,13 @@ class TournamentController(
     ) {
         deleteTournament.delete(TournamentId(id), principal.adminUserId)
     }
+
+    /**
+     * The caller's view of a tournament after a mutation. The write use cases answer a bare
+     * tournament, so one extra read keeps the organizer-role rule in the use case.
+     */
+    private fun viewOf(id: TournamentId, caller: AdminUserId): TournamentResponse =
+        TournamentResponse.from(getTournament.get(id, caller))
 
     /** One wire-body -> application-payload mapping, shared by create and update. */
     private fun TournamentWriteRequestBody.toWriteRequest(): TournamentWriteRequest =

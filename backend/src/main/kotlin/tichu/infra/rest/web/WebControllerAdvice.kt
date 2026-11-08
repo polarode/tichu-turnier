@@ -1,6 +1,8 @@
 package tichu.infra.rest.web
 
 import tichu.vocabulary.AdminStatusConflictException
+import tichu.vocabulary.AlreadyCoOrganizerException
+import tichu.vocabulary.CannotAddSelfAsCoOrganizerException
 import tichu.vocabulary.ApiException
 import tichu.vocabulary.AccountDisabledException
 import tichu.vocabulary.AccountPendingException
@@ -22,6 +24,7 @@ import tichu.vocabulary.InviteInvalidException
 import tichu.vocabulary.InviteStatusConflictException
 import tichu.vocabulary.InsufficientTeamsException
 import tichu.vocabulary.MaxTeamsBelowTeamCountException
+import tichu.vocabulary.NoActiveAdminWithEmailException
 import tichu.vocabulary.TotalRoundsBelowRoundCountException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TableCompletedException
@@ -210,6 +213,21 @@ class WebControllerAdvice {
     @ExceptionHandler(TeamLimitReachedException::class)
     fun handleTeamLimitReached(ex: TeamLimitReachedException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
+
+    /** Adding a co-organizer by an email that is not an active admin: 400, field-anchored to `email` (#131). */
+    @ExceptionHandler(NoActiveAdminWithEmailException::class)
+    fun handleNoActiveAdminWithEmail(ex: NoActiveAdminWithEmailException): ProblemDetail =
+        anchoredBadRequest(ex, ex.field)
+
+    /** The lead organizer adding themself as co-organizer: 400, field-anchored to `email` (#131). */
+    @ExceptionHandler(CannotAddSelfAsCoOrganizerException::class)
+    fun handleCannotAddSelfAsCoOrganizer(ex: CannotAddSelfAsCoOrganizerException): ProblemDetail =
+        anchoredBadRequest(ex, ex.field)
+
+    /** The admin already co-organizes the tournament: 409, field-anchored to `email` (#131). */
+    @ExceptionHandler(AlreadyCoOrganizerException::class)
+    fun handleAlreadyCoOrganizer(ex: AlreadyCoOrganizerException): ProblemDetail =
+        anchoredConflict(ex, ex.field)
 
     /** Lowering `max_teams` below the registered team count: 409, anchored to `maxTeams`. */
     @ExceptionHandler(MaxTeamsBelowTeamCountException::class)

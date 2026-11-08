@@ -28,6 +28,7 @@ import tichu.domain.TrendPoint
 import tichu.application.api.TeamStatisticsEntry
 import tichu.application.api.TournamentStatistics
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
@@ -59,7 +60,7 @@ class GetStatisticsQueryTest {
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val query = GetStatisticsQuery(
-        TournamentAccess(tournamentRepository),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
         teamRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
     )

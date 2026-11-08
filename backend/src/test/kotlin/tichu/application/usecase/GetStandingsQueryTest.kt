@@ -23,6 +23,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
@@ -54,7 +55,7 @@ class GetStandingsQueryTest {
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val query = GetStandingsQuery(
-        TournamentAccess(tournamentRepository),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
         teamRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
     )

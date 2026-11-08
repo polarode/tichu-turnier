@@ -16,6 +16,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
@@ -55,7 +56,7 @@ class FinishTournamentCommandTest {
 
     private val command = FinishTournamentCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
         clock,
         finishEvents,

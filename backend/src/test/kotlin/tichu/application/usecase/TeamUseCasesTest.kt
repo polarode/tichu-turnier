@@ -6,6 +6,7 @@ import tichu.domain.IdGenerator
 import tichu.domain.TeamId
 import tichu.domain.TournamentId
 import tichu.domain.TournamentStatus
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.InMemoryTeamTokenRepository
 import tichu.testsupport.RecordingSessionTokens
@@ -49,11 +50,11 @@ class TeamUseCasesTest {
 
     private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T12:00:00Z"), java.time.ZoneOffset.UTC)
     private val createTournament = CreateTournamentCommand(tournamentRepository, idGenerator, clock)
-    private val createTeam = CreateTeamCommand(TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
-    private val listTeams = ListTeamsQuery(TournamentAccess(tournamentRepository), teamRepository)
-    private val getTeam = GetTeamQuery(TournamentAccess(tournamentRepository), teamRepository)
-    private val updateTeam = UpdateTeamCommand(TournamentAccess(tournamentRepository), teamRepository)
-    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository), teamRepository, teamTokenRepository)
+    private val createTeam = CreateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
+    private val listTeams = ListTeamsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository)
+    private val getTeam = GetTeamQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository)
+    private val updateTeam = UpdateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository)
+    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository)
 
     private fun createTournament(name: String, asAdmin: AdminUserId = owner, maxTeams: Int = 16) =
         createTournament.create(

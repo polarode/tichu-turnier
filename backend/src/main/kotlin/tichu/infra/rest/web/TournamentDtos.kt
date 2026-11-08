@@ -1,5 +1,6 @@
 package tichu.infra.rest.web
 
+import tichu.application.api.OrganizedTournament
 import tichu.application.api.RecordedGame
 import tichu.application.api.RoundOverview
 import tichu.application.api.StartedTournament
@@ -12,7 +13,6 @@ import tichu.domain.Round
 import tichu.domain.ScheduledGame
 import tichu.domain.StandingsEntry
 import tichu.domain.Table
-import tichu.domain.Tournament
 import tichu.domain.TournamentSettings
 import tichu.domain.TeamTrend
 import tichu.domain.TournamentStatus
@@ -37,19 +37,28 @@ data class TournamentResponse(
     val publicVisibility: Boolean,
     val createdAt: Instant,
     val updatedAt: Instant,
+    /** The caller's role on the tournament: `LEAD` or `CO` (#131). */
+    val organizerRole: String,
+    /** The email of the tournament's lead organizer (#131). */
+    val leadOrganizerEmail: String,
 ) {
     companion object {
-        fun from(tournament: Tournament): TournamentResponse = TournamentResponse(
-            id = tournament.id.value,
-            name = tournament.name,
-            description = tournament.description,
-            maxTeams = tournament.maxTeams,
-            settings = TournamentSettingsResponse.from(tournament.settings),
-            status = tournament.status,
-            publicVisibility = tournament.publicVisibility,
-            createdAt = tournament.createdAt,
-            updatedAt = tournament.updatedAt,
-        )
+        fun from(view: OrganizedTournament): TournamentResponse {
+            val tournament = view.tournament
+            return TournamentResponse(
+                id = tournament.id.value,
+                name = tournament.name,
+                description = tournament.description,
+                maxTeams = tournament.maxTeams,
+                settings = TournamentSettingsResponse.from(tournament.settings),
+                status = tournament.status,
+                publicVisibility = tournament.publicVisibility,
+                createdAt = tournament.createdAt,
+                updatedAt = tournament.updatedAt,
+                organizerRole = view.role.name,
+                leadOrganizerEmail = view.leadOrganizerEmail,
+            )
+        }
     }
 }
 
@@ -218,10 +227,12 @@ data class StartedTournamentResponse(
     val round: RoundResponse,
 ) {
     companion object {
-        fun from(started: StartedTournament): StartedTournamentResponse = StartedTournamentResponse(
-            tournament = TournamentResponse.from(started.tournament),
-            round = RoundResponse.from(started.round),
-        )
+        /** [tournament] is the caller's view after the start, so it carries the caller's role. */
+        fun from(tournament: OrganizedTournament, started: StartedTournament): StartedTournamentResponse =
+            StartedTournamentResponse(
+                tournament = TournamentResponse.from(tournament),
+                round = RoundResponse.from(started.round),
+            )
     }
 }
 

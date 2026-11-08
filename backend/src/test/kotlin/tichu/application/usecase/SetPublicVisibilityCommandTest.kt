@@ -8,6 +8,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.NotFoundException
 import org.junit.jupiter.api.Test
@@ -32,7 +33,7 @@ class SetPublicVisibilityCommandTest {
 
     private val tournamentRepository = InMemoryTournamentRepository()
     private val visibilityEvents = RecordingTournamentEvents()
-    private val command = SetPublicVisibilityCommand(tournamentRepository, TournamentAccess(tournamentRepository), clock, visibilityEvents)
+    private val command = SetPublicVisibilityCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), clock, visibilityEvents)
 
     private fun tournament(
         status: TournamentStatus,

@@ -2,12 +2,17 @@ package tichu.application.usecase
 
 import tichu.application.api.TeamWriteRequest
 import tichu.application.api.TournamentWriteRequest
+import tichu.domain.AdminRole
+import tichu.domain.AdminStatus
+import tichu.domain.AdminUser
 import tichu.domain.AdminUserId
 import tichu.domain.IdGenerator
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.testsupport.InMemoryAdminUserRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.InMemoryTeamTokenRepository
 import tichu.testsupport.RecordingSessionTokens
@@ -49,13 +54,17 @@ class TournamentUseCasesTest {
     private val intruder = AdminUserId("admin-intruder")
 
     private val createTournament = CreateTournamentCommand(repository, idGenerator, fixedClock)
-    private val listTournaments = ListTournamentsQuery(repository)
-    private val getTournament = GetTournamentQuery(TournamentAccess(repository))
-    private val updateTournament = UpdateTournamentCommand(repository, TournamentAccess(repository), teamRepository, laterClock)
-    private val deleteTournament = DeleteTournamentCommand(repository, TournamentAccess(repository))
+    private val adminUserRepository = InMemoryAdminUserRepository().apply {
+        save(admin(AdminUserId("admin-owner"), "owner@example.com"))
+        save(admin(AdminUserId("admin-intruder"), "intruder@example.com"))
+    }
+    private val listTournaments = ListTournamentsQuery(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()), InMemoryCoOrganizerRepository(), adminUserRepository)
+    private val getTournament = GetTournamentQuery(TournamentAccess(repository, InMemoryCoOrganizerRepository()), adminUserRepository)
+    private val updateTournament = UpdateTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()), teamRepository, laterClock)
+    private val deleteTournament = DeleteTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()))
     private val teamTokenRepository = InMemoryTeamTokenRepository()
     private val sessionTokens = RecordingSessionTokens()
-    private val createTeam = CreateTeamCommand(TournamentAccess(repository), teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
+    private val createTeam = CreateTeamCommand(TournamentAccess(repository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
 
     private fun create(name: String = "Spring Classic", asAdmin: AdminUserId = owner) =
         createTournament.create(
@@ -197,7 +206,7 @@ class TournamentUseCasesTest {
     fun `owner reads their own tournament`() {
         val created = create()
 
-        assertEquals(created, getTournament.get(created.id, owner))
+        assertEquals(created, getTournament.get(created.id, owner).tournament)
     }
 
     @Test
@@ -206,8 +215,8 @@ class TournamentUseCasesTest {
         val alsoMine = create("also mine")
         val theirs = create("theirs", asAdmin = intruder)
 
-        val ownerIds = listTournaments.list(owner).map { it.id }.toSet()
-        val intruderIds = listTournaments.list(intruder).map { it.id }.toSet()
+        val ownerIds = listTournaments.list(owner).map { it.tournament.id }.toSet()
+        val intruderIds = listTournaments.list(intruder).map { it.tournament.id }.toSet()
 
         assertEquals(setOf(mine.id, alsoMine.id), ownerIds)
         assertEquals(setOf(theirs.id), intruderIds)
@@ -249,7 +258,7 @@ class TournamentUseCasesTest {
         assertEquals(TournamentStatus.SETUP, updated.status, "update does not change status")
         assertEquals(created.createdAt, updated.createdAt, "createdAt is preserved")
         assertEquals(laterClock.instant(), updated.updatedAt, "updatedAt is bumped")
-        assertEquals(updated, getTournament.get(created.id, owner), "the update is persisted")
+        assertEquals(updated, getTournament.get(created.id, owner).tournament, "the update is persisted")
     }
 
     @Test
@@ -306,7 +315,7 @@ class TournamentUseCasesTest {
         }
 
         assertEquals(ErrorCode.TOURNAMENT_NOT_EDITABLE, ex.code)
-        assertEquals("Spring Classic", getTournament.get(created.id, owner).name)
+        assertEquals("Spring Classic", getTournament.get(created.id, owner).tournament.name)
     }
 
     @Test
@@ -331,7 +340,7 @@ class TournamentUseCasesTest {
 
         assertEquals(ErrorCode.MAX_TEAMS_BELOW_TEAM_COUNT, ex.code)
         assertEquals("maxTeams", ex.field)
-        assertEquals(16, getTournament.get(created.id, owner).maxTeams, "a rejected update changes nothing")
+        assertEquals(16, getTournament.get(created.id, owner).tournament.maxTeams, "a rejected update changes nothing")
     }
 
     @Test
@@ -363,7 +372,7 @@ class TournamentUseCasesTest {
         assertFailsWith<NotFoundException> {
             updateTournament.update(created.id, updateRequest(name = "hijacked"), intruder)
         }
-        assertEquals("Spring Classic", getTournament.get(created.id, owner).name)
+        assertEquals("Spring Classic", getTournament.get(created.id, owner).tournament.name)
     }
 
     @Test
@@ -408,4 +417,12 @@ class TournamentUseCasesTest {
         assertFailsWith<NotFoundException> { deleteTournament.delete(TournamentId("nope"), owner) }
     }
 
+    private fun admin(id: AdminUserId, email: String) = AdminUser(
+        id = id,
+        email = email,
+        passwordHash = "hash",
+        status = AdminStatus.ACTIVE,
+        role = AdminRole.ADMIN,
+        createdAt = Instant.parse("2026-01-01T09:00:00Z"),
+    )
 }

@@ -112,6 +112,18 @@ enum class ErrorCode {
 
     /** A completed table is final; its confirmations can no longer be retracted (#105). */
     TABLE_COMPLETED,
+
+    /**
+     * The email named as a new co-organizer matches no active admin. Unknown, pending and
+     * disabled accounts share this one code and message, so the caller cannot probe accounts (#131).
+     */
+    NO_ACTIVE_ADMIN_WITH_EMAIL,
+
+    /** The lead organizer tried to add their own account as co-organizer (#131). */
+    CANNOT_ADD_SELF_AS_CO_ORGANIZER,
+
+    /** The admin already co-organizes this tournament (#131). */
+    ALREADY_CO_ORGANIZER,
 }
 
 /**
@@ -401,3 +413,32 @@ class TableIncompleteException(message: String) : ApiException(ErrorCode.TABLE_I
 
 /** Thrown when a team retracts its confirmation of a completed table (#105). Mapped to HTTP 409. */
 class TableCompletedException(message: String) : ApiException(ErrorCode.TABLE_COMPLETED, message)
+
+/**
+ * Thrown when a co-organizer is added by an email that matches no active admin account.
+ * Unknown, pending and disabled accounts all raise this same exception with the same
+ * message, so the lead organizer cannot tell them apart. Field-anchored to `email`.
+ * Mapped to HTTP 400.
+ */
+class NoActiveAdminWithEmailException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.NO_ACTIVE_ADMIN_WITH_EMAIL, message)
+
+/**
+ * Thrown when the lead organizer names their own account as a co-organizer. Field-anchored
+ * to `email`. Mapped to HTTP 400.
+ */
+class CannotAddSelfAsCoOrganizerException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.CANNOT_ADD_SELF_AS_CO_ORGANIZER, message)
+
+/**
+ * Thrown when an admin is added as co-organizer of a tournament they already co-organize.
+ * Field-anchored to `email`. Mapped to HTTP 409.
+ */
+class AlreadyCoOrganizerException(
+    val field: String,
+    message: String,
+) : ApiException(ErrorCode.ALREADY_CO_ORGANIZER, message)

@@ -17,6 +17,7 @@ import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
@@ -59,7 +60,7 @@ class StartNextRoundCommandTest {
     private val startEvents = RecordingTournamentEvents()
     private val command = StartNextRoundCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
         teamRepository,
         roundRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),

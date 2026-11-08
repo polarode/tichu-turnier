@@ -14,6 +14,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.ErrorCode
@@ -43,7 +44,7 @@ class SetTotalRoundsCommandTest {
     private val tournamentRepository = InMemoryTournamentRepository()
     private val roundRepository = InMemoryRoundRepository()
     private val totalRoundsEvents = RecordingTournamentEvents()
-    private val command = SetTotalRoundsCommand(tournamentRepository, TournamentAccess(tournamentRepository), roundRepository, clock, totalRoundsEvents)
+    private val command = SetTotalRoundsCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), roundRepository, clock, totalRoundsEvents)
 
     private fun tournament(status: TournamentStatus, settings: TournamentSettings = TournamentSettings(grandTichuBonus = 100)) =
         tournamentRepository.save(

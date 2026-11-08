@@ -1,9 +1,11 @@
 package tichu.application.api
 
 import tichu.domain.AdminUserId
-import tichu.domain.Tournament
 
 interface ListTournaments {
-    /** Lists only the tournaments owned by [owner]; another admin's never appear. */
-    fun list(owner: AdminUserId): List<Tournament>
+    /**
+     * Lists the tournaments [owner] organizes: those they lead ([OrganizerRole.LEAD]) and
+     * those they co-organize ([OrganizerRole.CO]), newest first. Another admin's never appear.
+     */
+    fun list(owner: AdminUserId): List<OrganizedTournament>
 }

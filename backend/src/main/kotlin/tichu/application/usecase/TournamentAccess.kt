@@ -1,6 +1,8 @@
 package tichu.application.usecase
 
+import tichu.application.api.OrganizerRole
 import tichu.domain.AdminUserId
+import tichu.domain.CoOrganizerRepository
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
@@ -13,21 +15,44 @@ import tichu.vocabulary.NotFoundException
  * cannot even learn that the id exists. Returning not-found (rather than forbidden) is
  * the rule; [ledOrThrow] keeps it for strangers and adds the lead check on top.
  *
- * Verbs that any organizer may run use [organizedOrThrow]. Lead-only verbs (deleting
- * the tournament, managing its co-organizers) use [ledOrThrow]. Shared so every verb
- * (edit, delete, start, …) cannot drift apart.
+ * An organizer is the lead organizer (the tournament's `ownerId`) or one of its
+ * co-organizers. Verbs that any organizer may run use [organizedOrThrow]. Lead-only
+ * verbs (deleting the tournament, managing its co-organizers) use [ledOrThrow]. Shared
+ * so every verb (edit, delete, start, …) cannot drift apart.
  */
 class TournamentAccess(
     private val tournamentRepository: TournamentRepository,
+    private val coOrganizerRepository: CoOrganizerRepository,
 ) {
 
-    /** The tournament, if [admin] organizes it. Otherwise not-found, as for a missing id. */
-    fun organizedOrThrow(id: TournamentId, admin: AdminUserId): Tournament {
+    /**
+     * The tournament, if [admin] organizes it (lead or co-organizer). Otherwise not-found,
+     * as for a missing id.
+     */
+    fun organizedOrThrow(id: TournamentId, admin: AdminUserId): Tournament =
+        organizedWithRoleOrThrow(id, admin).first
+
+    /**
+     * The tournament together with [admin]'s role on it, if [admin] organizes it. Otherwise
+     * not-found, as for a missing id.
+     */
+    fun organizedWithRoleOrThrow(id: TournamentId, admin: AdminUserId): Pair<Tournament, OrganizerRole> {
         val tournament = tournamentRepository.findById(id)
-        if (tournament == null || !tournament.isOwnedBy(admin)) {
+        val role = tournament?.let { roleOf(it, admin) }
+        if (tournament == null || role == null) {
             throw NotFoundException("Tournament ${id.value} not found")
         }
-        return tournament
+        return tournament to role
+    }
+
+    /**
+     * [admin]'s role on [tournament]: [OrganizerRole.LEAD] for the lead organizer (the
+     * `ownerId`), [OrganizerRole.CO] for a co-organizer, null for anyone else.
+     */
+    fun roleOf(tournament: Tournament, admin: AdminUserId): OrganizerRole? = when {
+        tournament.isOwnedBy(admin) -> OrganizerRole.LEAD
+        coOrganizerRepository.isCoOrganizer(tournament.id, admin) -> OrganizerRole.CO
+        else -> null
     }
 
     /**

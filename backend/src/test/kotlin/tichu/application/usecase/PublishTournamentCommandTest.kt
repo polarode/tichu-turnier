@@ -8,6 +8,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
+import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.MutableClock
 import tichu.testsupport.RecordingTournamentEvents
 import tichu.vocabulary.ErrorCode
@@ -33,7 +34,7 @@ class PublishTournamentCommandTest {
     private val clock = MutableClock(now)
 
     private val publishEvents = RecordingTournamentEvents()
-    private val command = PublishTournamentCommand(tournamentRepository, TournamentAccess(tournamentRepository), clock, publishEvents)
+    private val command = PublishTournamentCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), clock, publishEvents)
 
     private fun tournament(status: TournamentStatus) =
         tournamentRepository.save(

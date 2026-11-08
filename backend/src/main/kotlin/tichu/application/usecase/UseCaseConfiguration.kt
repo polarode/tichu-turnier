@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.application.api.AddCoOrganizer
 import tichu.application.api.ApproveAdmin
 import tichu.application.api.AuthenticateSession
 import tichu.application.api.AuthenticateTeamSession
@@ -22,6 +23,7 @@ import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
 import tichu.application.api.ListAdmins
+import tichu.application.api.ListOrganizers
 import tichu.application.api.ListInvites
 import tichu.application.api.ListPublicTournaments
 import tichu.application.api.ListTeams
@@ -47,6 +49,7 @@ import tichu.application.api.StartTournament
 import tichu.domain.AdminInviteRepository
 import tichu.domain.AdminSessionRepository
 import tichu.domain.AdminUserRepository
+import tichu.domain.CoOrganizerRepository
 import tichu.domain.GameRepository
 import tichu.domain.IdGenerator
 import tichu.domain.PasswordHasher
@@ -84,8 +87,25 @@ class UseCaseConfiguration(
 ) {
 
     @Bean
-    fun tournamentAccess(tournamentRepository: TournamentRepository): TournamentAccess =
-        TournamentAccess(tournamentRepository)
+    fun tournamentAccess(
+        tournamentRepository: TournamentRepository,
+        coOrganizerRepository: CoOrganizerRepository,
+    ): TournamentAccess = TournamentAccess(tournamentRepository, coOrganizerRepository)
+
+    @Bean
+    fun listOrganizers(
+        tournamentAccess: TournamentAccess,
+        coOrganizerRepository: CoOrganizerRepository,
+        adminUserRepository: AdminUserRepository,
+    ): ListOrganizers = ListOrganizersQuery(tournamentAccess, coOrganizerRepository, adminUserRepository)
+
+    @Bean
+    fun addCoOrganizer(
+        tournamentAccess: TournamentAccess,
+        coOrganizerRepository: CoOrganizerRepository,
+        adminUserRepository: AdminUserRepository,
+        clock: Clock,
+    ): AddCoOrganizer = AddCoOrganizerCommand(tournamentAccess, coOrganizerRepository, adminUserRepository, clock)
 
     @Bean
     fun startTournament(
@@ -235,12 +255,16 @@ class UseCaseConfiguration(
     ): CreateTournament = CreateTournamentCommand(repository, idGenerator, clock)
 
     @Bean
-    fun listTournaments(repository: TournamentRepository): ListTournaments =
-        ListTournamentsQuery(repository)
+    fun listTournaments(
+        repository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
+        coOrganizerRepository: CoOrganizerRepository,
+        adminUserRepository: AdminUserRepository,
+    ): ListTournaments = ListTournamentsQuery(repository, tournamentAccess, coOrganizerRepository, adminUserRepository)
 
     @Bean
-    fun getTournament(tournamentAccess: TournamentAccess): GetTournament =
-        GetTournamentQuery(tournamentAccess)
+    fun getTournament(tournamentAccess: TournamentAccess, adminUserRepository: AdminUserRepository): GetTournament =
+        GetTournamentQuery(tournamentAccess, adminUserRepository)
 
     @Bean
     fun updateTournament(

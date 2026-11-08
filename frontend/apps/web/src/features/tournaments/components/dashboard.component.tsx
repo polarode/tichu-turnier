@@ -51,6 +51,7 @@ export function Dashboard() {
                 <ul className="flex flex-col gap-3">
                     {tournaments.map((tournament, index) => {
                         const teamCount = teamQueries[index]?.data?.length;
+                        const coOrganized = tournament.organizerRole === OrganizerRole.CO;
                         return (
                             <li
                                 key={tournament.id}
@@ -60,14 +61,14 @@ export function Dashboard() {
                                     <span className="font-medium">{tournament.name}</span>
                                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                                         <TournamentStatusBadge status={tournament.status} />
-                                        {tournament.organizerRole === OrganizerRole.CO ? (
+                                        {coOrganized ? (
                                             <Badge variant="outline">
-                                                {t('dashboard.coOrganizerBadge')}
+                                                {t('organizers.coOrganizer')}
                                             </Badge>
                                         ) : null}
                                         <span>{`${t('dashboard.teamCount')}: ${teamCount ?? '…'}`}</span>
                                     </div>
-                                    {tournament.organizerRole === OrganizerRole.CO ? (
+                                    {coOrganized ? (
                                         <span className="text-xs text-muted-foreground">
                                             {`${t('dashboard.ledBy')} ${tournament.leadOrganizerEmail}`}
                                         </span>

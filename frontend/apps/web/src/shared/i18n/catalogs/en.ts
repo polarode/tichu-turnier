@@ -163,7 +163,6 @@ export const en = {
     'dashboard.empty.title': 'No tournaments yet',
     'dashboard.empty.description': 'Create your first tournament to get started.',
     'dashboard.error': 'The tournaments could not be loaded.',
-    'dashboard.coOrganizerBadge': 'Co-organizer',
     'dashboard.ledBy': 'Led by',
 
     'tournament.new.title': 'New tournament',

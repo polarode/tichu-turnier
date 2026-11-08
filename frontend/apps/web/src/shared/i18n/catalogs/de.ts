@@ -166,7 +166,6 @@ export const de: Catalog = {
     'dashboard.empty.title': 'Noch keine Turniere',
     'dashboard.empty.description': 'Erstelle dein erstes Turnier, um zu starten.',
     'dashboard.error': 'Die Turniere konnten nicht geladen werden.',
-    'dashboard.coOrganizerBadge': 'Co-Organisator',
     'dashboard.ledBy': 'Geleitet von',
 
     'tournament.new.title': 'Neues Turnier',

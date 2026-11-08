@@ -69,18 +69,13 @@ export function OrganizersSection({ tournamentId, isLead }: OrganizersSectionPro
             </h2>
 
             <ul className="flex flex-col gap-2">
-                <li className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
-                    <span className="font-medium">{lead.email}</span>
-                    <Badge variant="secondary">{t('organizers.lead')}</Badge>
-                </li>
+                <OrganizerRow email={lead.email} role={t('organizers.lead')} />
                 {coOrganizers.map((coOrganizer) => (
-                    <li
+                    <OrganizerRow
                         key={coOrganizer.email}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3"
-                    >
-                        <span className="font-medium">{coOrganizer.email}</span>
-                        <Badge variant="secondary">{t('organizers.coOrganizer')}</Badge>
-                    </li>
+                        email={coOrganizer.email}
+                        role={t('organizers.coOrganizer')}
+                    />
                 ))}
             </ul>
             {coOrganizers.length === 0 ? (
@@ -110,5 +105,15 @@ export function OrganizersSection({ tournamentId, isLead }: OrganizersSectionPro
                 </form>
             ) : null}
         </section>
+    );
+}
+
+/** One organizer in the list: the account email and the role on this tournament. */
+function OrganizerRow({ email, role }: { email: string; role: string }) {
+    return (
+        <li className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3">
+            <span className="font-medium">{email}</span>
+            <Badge variant="secondary">{role}</Badge>
+        </li>
     );
 }

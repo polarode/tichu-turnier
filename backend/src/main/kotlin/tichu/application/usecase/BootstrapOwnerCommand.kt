@@ -7,6 +7,7 @@ import tichu.domain.AdminUser
 import tichu.domain.AdminUserId
 import tichu.domain.AdminUserRepository
 import tichu.domain.IdGenerator
+import tichu.domain.isBcryptHash
 import tichu.domain.normalizeEmail
 import org.slf4j.LoggerFactory
 import java.time.Clock
@@ -25,6 +26,11 @@ import java.time.Clock
  * — for instance a self-registered `PENDING` request — is somebody else's: it is never
  * promoted and never has its password overwritten. That conflict is logged rather than
  * thrown, so a squatter cannot stop the application from starting.
+ *
+ * A configured hash that is not well-formed bcrypt is different: it is operator error (a
+ * deployment tool most likely interpolated the `$` characters), and writing it would lock
+ * the owner out of a working credential. So it fails startup with an [IllegalStateException]
+ * before any repository lookup, and the message never echoes the configured value.
  */
 class BootstrapOwnerCommand(
     private val adminUsers: AdminUserRepository,
@@ -40,6 +46,11 @@ class BootstrapOwnerCommand(
         val email = normalizeEmail(ownerEmail)
         if (email.isEmpty() || ownerPasswordHash.isBlank()) {
             return null
+        }
+        check(isBcryptHash(ownerPasswordHash)) {
+            "app.auth.owner.password-hash (OWNER_PASSWORD_HASH) must be a bcrypt hash. A '\$' may have been " +
+                "interpolated by the deployment environment; mark the variable as literal or double each '\$' " +
+                "as '\$\$'."
         }
 
         val existing = adminUsers.findByEmail(email)

@@ -224,13 +224,38 @@ A Tichu Call that succeeded. A team's count is the sum of its two players' succe
 calls, kept apart for small and grand.
 _Avoid_: Tichu hit, Tichu win
 
+**Tichu Calls Made**:
+Every small or grand Tichu Call a team's two players made, successful or not, summed
+into one count.
+_Avoid_: Tichu attempts, Tichus announced
+
+**Destroyed Tichu**:
+An opponent's Tichu Call that failed because a player of this team finished first.
+Counted per call, so one game can destroy two. A call broken by the caller's own
+partner going out first is destroyed by nobody. In a double win, every call of the
+losing team is destroyed.
+_Avoid_: blocked Tichu, broken Tichu, failed Tichu (that also covers a partner going out first)
+
+**Beschiss Games**:
+The number of games a team played that were flagged Beschiss. Since the flag belongs
+to the game rather than to an accuser, both teams of a flagged game count it.
+_Avoid_: Beschiss calls, cheating count
+
+**Good Horse Ratio**:
+A team's summed Tichu Points divided by its summed Victory Points: how few Tichu Points
+it needed per victory point ("a good horse jumps only as high as it must"). Lower is
+better, and a negative ratio is the best of all. A team with no Victory Points has no
+ratio. Called "Gutes Pferd" / "Good Horse".
+_Avoid_: efficiency, TP/SP
+
 **Bomb Count**:
 The bombs a team's players played across its games, shown as a total and as an
 average per game.
 _Avoid_: bomb tally
 
 **Highlight**:
-The team leading one statistic, with every tied team shown.
+The team leading one statistic, with every tied team shown. Leading means the highest
+value, except for the Good Horse Ratio, where it means the lowest.
 _Avoid_: award, top team
 
 **Team Trend**:

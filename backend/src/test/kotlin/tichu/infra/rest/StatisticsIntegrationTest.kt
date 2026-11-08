@@ -157,7 +157,7 @@ class StatisticsIntegrationTest(
     /** One team's side of a game: its base score and its two seats, first player then second. */
     private data class Side(val team: String, val base: Int, val first: Seat, val second: Seat)
 
-    private fun game(round: Int, table: Int, number: Int, a: Side, b: Side) {
+    private fun game(round: Int, table: Int, number: Int, a: Side, b: Side, beschiss: Boolean = false) {
         fun players(side: Side) = listOf(
             PlayerResult(PlayerId("team-${side.team}-1"), side.first.position, side.first.call, side.first.bombs),
             PlayerResult(PlayerId("team-${side.team}-2"), side.second.position, side.second.call, side.second.bombs),
@@ -170,7 +170,7 @@ class StatisticsIntegrationTest(
                         TeamResult(TeamId("team-${a.team}"), a.base, players(a)),
                         TeamResult(TeamId("team-${b.team}"), b.base, players(b)),
                     ),
-                    beschiss = false,
+                    beschiss = beschiss,
                     settings = TournamentSettings(),
                 ),
             )
@@ -186,7 +186,7 @@ class StatisticsIntegrationTest(
         game(1, 1, 4, Side("falcons", 0, Seat(1, TichuCall.SMALL), Seat(2)), Side("owls", 0, Seat(null), Seat(null)))
         game(1, 2, 1, Side("ravens", 50, Seat(1), Seat(3)), Side("badgers", 50, Seat(2, bombs = 1), Seat(4)))
         game(1, 2, 2, Side("ravens", 70, Seat(1, TichuCall.GRAND), Seat(3, bombs = 3)), Side("badgers", 30, Seat(2), Seat(4)))
-        game(1, 2, 3, Side("ravens", 40, Seat(2), Seat(4)), Side("badgers", 60, Seat(3), Seat(1, TichuCall.SMALL)))
+        game(1, 2, 3, Side("ravens", 40, Seat(2), Seat(4)), Side("badgers", 60, Seat(3), Seat(1, TichuCall.SMALL)), beschiss = true)
         game(1, 2, 4, Side("ravens", 50, Seat(1), Seat(3)), Side("badgers", 50, Seat(2), Seat(4)))
         confirmTable(1, 1, "falcons", "owls")
         confirmTable(1, 2, "ravens", "badgers")
@@ -194,10 +194,10 @@ class StatisticsIntegrationTest(
         round(2, listOf("falcons", "ravens"), listOf("owls", "badgers"))
         game(2, 1, 1, Side("falcons", 50, Seat(1), Seat(3)), Side("ravens", 50, Seat(2), Seat(4)))
         game(2, 1, 2, Side("falcons", 20, Seat(2), Seat(4)), Side("ravens", 80, Seat(1, TichuCall.SMALL), Seat(3, bombs = 1)))
-        game(2, 1, 3, Side("falcons", 90, Seat(1), Seat(3, bombs = 1)), Side("ravens", 10, Seat(2), Seat(4)))
+        game(2, 1, 3, Side("falcons", 90, Seat(1), Seat(3, bombs = 1)), Side("ravens", 10, Seat(2), Seat(4)), beschiss = true)
         game(2, 1, 4, Side("falcons", 40, Seat(2, bombs = 2), Seat(4)), Side("ravens", 60, Seat(1), Seat(3)))
         game(2, 2, 1, Side("owls", 70, Seat(1, TichuCall.GRAND), Seat(3)), Side("badgers", 30, Seat(2), Seat(4)))
-        game(2, 2, 2, Side("owls", 0, Seat(null), Seat(null)), Side("badgers", 0, Seat(1, bombs = 2), Seat(2)))
+        game(2, 2, 2, Side("owls", 0, Seat(null, TichuCall.SMALL), Seat(null)), Side("badgers", 0, Seat(1, bombs = 2), Seat(2)))
         game(2, 2, 3, Side("owls", 60, Seat(1, bombs = 1), Seat(3)), Side("badgers", 40, Seat(2), Seat(4)))
         game(2, 2, 4, Side("owls", 45, Seat(2), Seat(4)), Side("badgers", 55, Seat(1, TichuCall.SMALL), Seat(3)))
         confirmTable(2, 1, "falcons", "ravens")
@@ -245,7 +245,7 @@ class StatisticsIntegrationTest(
         assertEquals(true, teamNode("team-ravens")["bombsPerGame"].isNull)
 
         assertEquals(
-            objectMapper.readTree("""[{"metric":"SUCCESSFUL_TICHU","value":4,"teamIds":["team-falcons"]}]"""),
+            objectMapper.readTree("""[{"metric":"SUCCESSFUL_TICHU","value":4.0,"teamIds":["team-falcons"]},{"metric":"TICHU_CALLS","value":4.0,"teamIds":["team-falcons"]},{"metric":"GOOD_HORSE","value":130.0,"teamIds":["team-falcons"]}]"""),
             body["highlights"],
         )
         fun points(id: String): List<Pair<Int, Int>> {

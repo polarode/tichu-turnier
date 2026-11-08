@@ -134,7 +134,10 @@ data class TournamentStatisticsResponse(
     }
 }
 
-/** One team's Team Statistics with its name; `bombsPerGame` is null when the team has no completed table yet. */
+/**
+ * One team's Team Statistics with its name; `bombsPerGame` is null when the team has no completed table yet.
+ * `goodHorseRatio` is the summed Tichu Points over the summed Victory Points, null when the team has no Victory Points yet.
+ */
 data class TeamStatisticsResponse(
     val teamId: String,
     val teamName: String,
@@ -143,6 +146,10 @@ data class TeamStatisticsResponse(
     val bombCount: Int,
     val bombsPerGame: Double?,
     val doubleWins: Int,
+    val tichuCalls: Int,
+    val destroyedTichus: Int,
+    val beschissGames: Int,
+    val goodHorseRatio: Double?,
 ) {
     companion object {
         fun from(entry: TeamStatisticsEntry): TeamStatisticsResponse = TeamStatisticsResponse(
@@ -153,6 +160,10 @@ data class TeamStatisticsResponse(
             bombCount = entry.statistics.bombCount,
             bombsPerGame = entry.statistics.bombsPerGame,
             doubleWins = entry.statistics.doubleWins,
+            tichuCalls = entry.statistics.tichuCalls,
+            destroyedTichus = entry.statistics.destroyedTichus,
+            beschissGames = entry.statistics.beschissGames,
+            goodHorseRatio = entry.statistics.goodHorseRatio,
         )
     }
 }
@@ -160,7 +171,7 @@ data class TeamStatisticsResponse(
 /** One Highlight: the statistic [metric] led by [teamIds] with [value]. */
 data class HighlightResponse(
     val metric: HighlightMetric,
-    val value: Int,
+    val value: Double,
     val teamIds: List<String>,
 ) {
     companion object {

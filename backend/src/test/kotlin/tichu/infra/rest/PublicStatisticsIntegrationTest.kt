@@ -191,7 +191,7 @@ class PublicStatisticsIntegrationTest(
         assertEquals(0.0, owls["bombsPerGame"].asDouble())
 
         assertEquals(
-            objectMapper.readTree("""[{"metric":"SUCCESSFUL_TICHU","value":4,"teamIds":["team-falcons"]}]"""),
+            objectMapper.readTree("""[{"metric":"SUCCESSFUL_TICHU","value":4.0,"teamIds":["team-falcons"]},{"metric":"TICHU_CALLS","value":4.0,"teamIds":["team-falcons"]},{"metric":"GOOD_HORSE","value":130.0,"teamIds":["team-falcons"]}]"""),
             body["highlights"],
         )
         // Four game wins at 2 VP each: 8 VP for Falcons, and nothing for the losing Owls.

@@ -1,13 +1,16 @@
 {
   "scenario": [
-    "Five teams, default settings (grand Tichu bonus 200, double win bonus 200, small Tichu bonus 100). Every game is entered with its base scores, finish positions, calls and bombs; the values below are worked by hand from those games.",
-    "Round 1, table 1 (Falcons vs Owls), completed: Falcons win 60/40 with a successful grand Tichu, 30/70 lost to Owls' successful small Tichu, a 50/50 tie, and a double win for Falcons (base 0/0, Falcons' first player makes a successful small Tichu). Falcons 6 VP, Owls 3 VP; Falcons 1 bomb, Owls 2 bombs.",
-    "Round 1, table 2 (Ravens vs Badgers), completed: a 50/50 tie, Ravens win 70/30 with a successful grand Tichu and 3 bombs, Badgers win 60/40 with a successful small Tichu, a 50/50 tie. Ravens 4 VP, Badgers 4 VP; Badgers 1 bomb.",
-    "Round 2, table 1 (Falcons vs Ravens), completed: a 50/50 tie, Ravens win 80/20 with a successful small Tichu and 1 bomb, Falcons win 90/10 with 1 bomb, Ravens win 60/40 with Falcons playing 2 bombs. Falcons 3 VP (total 9), Ravens 5 VP (total 9).",
-    "Round 2, table 2 (Owls vs Badgers), completed: Owls win 70/30 with a successful grand Tichu, Badgers take a double win (base 0/0), a 60/40 win for Owls with 1 bomb, Badgers win 55/45 with a successful small Tichu. Owls 4 VP (total 7), Badgers 5 VP (total 9).",
-    "Wolves sit out both rounds: zero in every count, no bombs per game to report, and no trend point.",
-    "Highlights: four teams tie at 2 successful Tichu calls; Falcons and Ravens tie at 4 bombs; Falcons and Badgers tie at 1 double win.",
-    "Teams are listed by name (Badgers, Falcons, Owls, Ravens, Wolves), which is the order the API returns them in, and so are the teams inside each highlight and trend list."
+    "Five teams, default settings (grand Tichu bonus 200, double win bonus 200, small Tichu bonus 100). Every game is entered with its base scores, finish positions, calls, bombs and Beschiss flag; the values below are worked by hand from those games. Tichu Points (TP) are the base score, plus the bonus of each successful call, minus the bonus of each failed call, plus the double win bonus. Victory Points (VP) are 3 for a double win, 1 each on a tie, 2 for the higher TP and 0 otherwise.",
+    "Round 1, table 1 (Falcons vs Owls), completed: Falcons win 60/40 with a successful grand Tichu (TP 260 vs 40, 2 VP), 30/70 lost to Owls' successful small Tichu (TP 30 vs 170, 2 VP for Owls), a 50/50 tie (TP 50 vs 50, 1 VP each), and a double win for Falcons (base 0/0, Falcons' first player makes a successful small Tichu: TP 300 vs 0, 3 VP). Falcons 6 VP, Owls 3 VP; Falcons 1 bomb, Owls 2 bombs. Falcons TP 260+30+50+300 = 640, Owls TP 40+170+50+0 = 260. Calls: Falcons 2 and Owls 1, all successful.",
+    "Round 1, table 2 (Ravens vs Badgers), completed: a 50/50 tie, Ravens win 70/30 with a successful grand Tichu and 3 bombs (TP 270 vs 30, 2 VP), Badgers win 60/40 with a successful small Tichu (TP 160 vs 40, 2 VP), flagged Beschiss, and a 50/50 tie. Ravens 4 VP, Badgers 4 VP; Badgers 1 bomb. Ravens TP 50+270+40+50 = 410, Badgers TP 50+30+160+50 = 290. Calls: Ravens 1 and Badgers 1, all successful.",
+    "Round 2, table 1 (Falcons vs Ravens), completed: a 50/50 tie, Ravens win 80/20 with a successful small Tichu and 1 bomb (TP 180 vs 20, 2 VP), Falcons win 90/10 with 1 bomb (TP 90 vs 10, 2 VP), flagged Beschiss, and Ravens win 60/40 with Falcons playing 2 bombs (TP 60 vs 40, 2 VP). Falcons 3 VP (total 9), Ravens 5 VP (total 9). Falcons TP 50+20+90+40 = 200, Ravens TP 50+180+10+60 = 300. Calls: Ravens 1, successful.",
+    "Round 2, table 2 (Owls vs Badgers), completed: Owls win 70/30 with a successful grand Tichu (TP 270 vs 30, 2 VP), Badgers take a double win (base 0/0; Owls' first player makes a small Tichu that fails, so Owls get TP -100, and Badgers' first player, holding position 1, destroys that call; Badgers TP 0+200 = 200, 3 VP), a 60/40 win for Owls with 1 bomb (TP 60 vs 40, 2 VP), and Badgers win 55/45 with a successful small Tichu (TP 155 vs 45, 2 VP for Badgers). Owls 4 VP (total 7), Badgers 5 VP (total 9). Owls TP 270-100+60+45 = 275, Badgers TP 30+200+40+155 = 425. Calls: Owls 2 (one successful grand, one failed small), Badgers 1 successful small.",
+    "Wolves sit out both rounds: zero in every count, no bombs per game to report, no trend point and no Good Horse Ratio.",
+    "Beschiss: two games are flagged, Round 1 table 2's 60/40 win (Ravens vs Badgers) and Round 2 table 1's 90/10 win (Falcons vs Ravens). Each flag counts for both teams of its game: Ravens 2, Falcons 1, Badgers 1, Owls 0.",
+    "Tichu Calls Made (successful or not): Falcons 2, Badgers 2, Ravens 2, Owls 3 (the failed small call included). Destroyed Tichu: only the failed Owls call in the double win is destroyed, by Badgers, so Badgers 1 and the others 0.",
+    "Good Horse Ratio (summed TP over summed VP, lowest leads): Badgers 715 / 9 = 79.44444444444444, Falcons 840 / 9 = 93.33333333333333, Owls 535 / 7 = 76.42857142857143, Ravens 710 / 9 = 78.88888888888889, Wolves null (no VP).",
+    "Highlights: four teams tie at 2 successful Tichu calls; Falcons and Ravens tie at 4 bombs; Falcons and Badgers tie at 1 double win; Owls alone lead Tichu Calls Made with 3; Badgers alone lead Destroyed Tichus with 1; Ravens alone lead Beschiss games with 2; Owls alone lead the Good Horse with the lowest ratio, 76.42857142857143.",
+    "Teams are listed by name (Badgers, Falcons, Owls, Ravens, Wolves), which is the order the API returns them in, and so are the teams inside each highlight and trend list. Highlight values are decimals (2.0, 76.42857142857143) because the backend value is a Double."
   ],
   "response": {
     "teams": [
@@ -18,7 +21,11 @@
         "successfulGrandTichu": 0,
         "bombCount": 3,
         "bombsPerGame": 0.375,
-        "doubleWins": 1
+        "doubleWins": 1,
+        "tichuCalls": 2,
+        "destroyedTichus": 1,
+        "beschissGames": 1,
+        "goodHorseRatio": 79.44444444444444
       },
       {
         "teamId": "team-falcons",
@@ -27,7 +34,11 @@
         "successfulGrandTichu": 1,
         "bombCount": 4,
         "bombsPerGame": 0.5,
-        "doubleWins": 1
+        "doubleWins": 1,
+        "tichuCalls": 2,
+        "destroyedTichus": 0,
+        "beschissGames": 1,
+        "goodHorseRatio": 93.33333333333333
       },
       {
         "teamId": "team-owls",
@@ -36,7 +47,11 @@
         "successfulGrandTichu": 1,
         "bombCount": 3,
         "bombsPerGame": 0.375,
-        "doubleWins": 0
+        "doubleWins": 0,
+        "tichuCalls": 3,
+        "destroyedTichus": 0,
+        "beschissGames": 0,
+        "goodHorseRatio": 76.42857142857143
       },
       {
         "teamId": "team-ravens",
@@ -45,7 +60,11 @@
         "successfulGrandTichu": 1,
         "bombCount": 4,
         "bombsPerGame": 0.5,
-        "doubleWins": 0
+        "doubleWins": 0,
+        "tichuCalls": 2,
+        "destroyedTichus": 0,
+        "beschissGames": 2,
+        "goodHorseRatio": 78.88888888888889
       },
       {
         "teamId": "team-wolves",
@@ -54,13 +73,17 @@
         "successfulGrandTichu": 0,
         "bombCount": 0,
         "bombsPerGame": null,
-        "doubleWins": 0
+        "doubleWins": 0,
+        "tichuCalls": 0,
+        "destroyedTichus": 0,
+        "beschissGames": 0,
+        "goodHorseRatio": null
       }
     ],
     "highlights": [
       {
         "metric": "SUCCESSFUL_TICHU",
-        "value": 2,
+        "value": 2.0,
         "teamIds": [
           "team-badgers",
           "team-falcons",
@@ -70,7 +93,7 @@
       },
       {
         "metric": "BOMBS",
-        "value": 4,
+        "value": 4.0,
         "teamIds": [
           "team-falcons",
           "team-ravens"
@@ -78,10 +101,38 @@
       },
       {
         "metric": "DOUBLE_WINS",
-        "value": 1,
+        "value": 1.0,
         "teamIds": [
           "team-badgers",
           "team-falcons"
+        ]
+      },
+      {
+        "metric": "TICHU_CALLS",
+        "value": 3.0,
+        "teamIds": [
+          "team-owls"
+        ]
+      },
+      {
+        "metric": "DESTROYED_TICHUS",
+        "value": 1.0,
+        "teamIds": [
+          "team-badgers"
+        ]
+      },
+      {
+        "metric": "BESCHISS_GAMES",
+        "value": 2.0,
+        "teamIds": [
+          "team-ravens"
+        ]
+      },
+      {
+        "metric": "GOOD_HORSE",
+        "value": 76.42857142857143,
+        "teamIds": [
+          "team-owls"
         ]
       }
     ],

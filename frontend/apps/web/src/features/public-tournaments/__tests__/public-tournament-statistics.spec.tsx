@@ -3,17 +3,19 @@ import { resolve } from 'node:path';
 
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import type { PublicTournamentDetail } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { useStatisticsColumnsStore } from '@/shared/stores/statistics-columns.store.ts';
 import { statisticsDtoSchema } from '@/statistics-api/dtos/statistics.dto.ts';
 import { statisticsDtoToDomain } from '@/statistics-api/mappers/statistics.mapper.ts';
 import { StatisticsRepository } from '@/statistics-api/statistics.repository.ts';
 import { publicTournamentDetailDtoSchema } from '@/tournament-api/dtos/public-tournament.dto.ts';
 import { publicTournamentDetailDtoToDomain } from '@/tournament-api/mappers/public-tournament.mapper.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
+import { installMatchMedia, type FakeMatchMedia } from '@/test-helpers/match-media.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 import { bodyRows } from '@/test-helpers/table-rows.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
@@ -72,10 +74,20 @@ function tabsOf(): HTMLElement {
 }
 
 describe('public tournament statistics tab', () => {
+    let viewport: FakeMatchMedia;
+
     beforeEach(() => {
+        viewport = installMatchMedia({ dark: false, width: 1024 });
+        window.localStorage.clear();
+        useStatisticsColumnsStore.setState({ visible: null });
         vi.resetAllMocks();
         auth.refresh.mockRejectedValue(noSession);
         statistics.publicStatistics.mockResolvedValue(harvestStatistics);
+    });
+
+    afterEach(() => {
+        viewport.uninstall();
+        window.localStorage.clear();
     });
 
     it('offers a Results and a Statistics tab once the tournament is published', async () => {
@@ -111,7 +123,18 @@ describe('public tournament statistics tab', () => {
 
         const statisticsTable = await screen.findByRole('table', { name: 'Statistics' });
         expect(statistics.publicStatistics).toHaveBeenCalledWith('t-harvest-cup');
-        expect(bodyRows(statisticsTable)[0]).toEqual(['Badgers', '2', '0', '3', '0.4', '1']);
+        expect(bodyRows(statisticsTable)[0]).toEqual([
+            'Badgers',
+            '2',
+            '2',
+            '0',
+            '1',
+            '3',
+            '0.4',
+            '1',
+            '1',
+            '79.4',
+        ]);
         expect(screen.queryByRole('heading', { level: 2, name: 'Final Ranking' })).toBeNull();
     });
 
@@ -121,7 +144,18 @@ describe('public tournament statistics tab', () => {
         renderApp('/public/tournaments/t-harvest-cup?tab=statistics', { initialLocale: 'en' });
 
         const statisticsTable = await screen.findByRole('table', { name: 'Statistics' });
-        expect(bodyRows(statisticsTable)[0]).toEqual(['Badgers', '2', '0', '3', '0.4', '1']);
+        expect(bodyRows(statisticsTable)[0]).toEqual([
+            'Badgers',
+            '2',
+            '2',
+            '0',
+            '1',
+            '3',
+            '0.4',
+            '1',
+            '1',
+            '79.4',
+        ]);
         // Directly under the tournament's h1, like the Final Ranking on the Results tab.
         expect(screen.getByRole('heading', { level: 2, name: 'Trend' })).toBeInTheDocument();
         expect(screen.getByRole('tab', { name: 'Statistics' })).toHaveAttribute(

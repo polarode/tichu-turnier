@@ -32,6 +32,10 @@ export function statisticsDtoToDomain(dto: TournamentStatisticsDto): TournamentS
             bombCount: team.bombCount,
             bombsPerGame: team.bombsPerGame,
             doubleWins: team.doubleWins,
+            tichuCalls: team.tichuCalls,
+            destroyedTichus: team.destroyedTichus,
+            beschissGames: team.beschissGames,
+            goodHorseRatio: team.goodHorseRatio,
         })),
         highlights: dto.highlights.map((highlight): Highlight => ({
             metric: highlight.metric,

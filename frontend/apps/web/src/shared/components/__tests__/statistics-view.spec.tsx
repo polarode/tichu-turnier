@@ -2,12 +2,18 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { screen, within } from '@testing-library/react';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { TournamentStatistics } from '@/domain/statistics.domain.ts';
 import { statisticsDtoSchema } from '@/statistics-api/dtos/statistics.dto.ts';
 import { statisticsDtoToDomain } from '@/statistics-api/mappers/statistics.mapper.ts';
 import { StatisticsView } from '@/shared/components/statistics-view.component.tsx';
+import {
+    STATISTICS_COLUMNS_STORAGE_KEY,
+    useStatisticsColumnsStore,
+} from '@/shared/stores/statistics-columns.store.ts';
+import { installMatchMedia, type FakeMatchMedia } from '@/test-helpers/match-media.ts';
 import { renderWithProviders } from '@/test-helpers/render-with-providers.tsx';
 import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
 
@@ -44,12 +50,49 @@ class FixedSizeResizeObserver {
 
 const originalResizeObserver = globalThis.ResizeObserver;
 
+/** The header row of the team table on a phone: Team plus the four default columns. */
+const COMPACT_HEADERS = [
+    'Team',
+    'Tichu-Ansagen',
+    'Erfolgreiche kleine Tichus',
+    'Erfolgreiche große Tichus',
+    'Zerstörte Tichus',
+];
+
+const ALL_HEADERS = [
+    'Team',
+    'Tichu-Ansagen',
+    'Erfolgreiche kleine Tichus',
+    'Erfolgreiche große Tichus',
+    'Zerstörte Tichus',
+    'Bomben',
+    'Bomben pro Spiel',
+    'Doppelsiege',
+    'Beschiss-Spiele',
+    'Gutes Pferd (TP pro SP)',
+];
+
+const teamTable = () => screen.getByRole('table', { name: 'Statistiken' });
+
+let viewport: FakeMatchMedia;
+
 beforeAll(() => {
     globalThis.ResizeObserver = FixedSizeResizeObserver as unknown as typeof ResizeObserver;
 });
 
 afterAll(() => {
     globalThis.ResizeObserver = originalResizeObserver;
+});
+
+beforeEach(() => {
+    viewport = installMatchMedia({ dark: false, width: 1024 });
+    window.localStorage.clear();
+    useStatisticsColumnsStore.setState({ visible: null });
+});
+
+afterEach(() => {
+    viewport.uninstall();
+    window.localStorage.clear();
 });
 
 describe('StatisticsView', () => {
@@ -69,19 +112,40 @@ describe('StatisticsView', () => {
         const table = screen.getByRole('table', { name: 'Statistiken' });
         expect(columnHeaders(table)).toEqual([
             'Team',
+            'Tichu-Ansagen',
             'Erfolgreiche kleine Tichus',
             'Erfolgreiche große Tichus',
+            'Zerstörte Tichus',
             'Bomben',
             'Bomben pro Spiel',
             'Doppelsiege',
+            'Beschiss-Spiele',
+            'Gutes Pferd (TP pro SP)',
         ]);
         expect(bodyRows(table)).toEqual([
-            ['Badgers', '2', '0', '3', '0,4', '1'],
-            ['Falcons', '1', '1', '4', '0,5', '1'],
-            ['Owls', '1', '1', '3', '0,4', '0'],
-            ['Ravens', '1', '1', '4', '0,5', '0'],
-            ['Wolves', '0', '0', '0', '—', '0'],
+            ['Badgers', '2', '2', '0', '1', '3', '0,4', '1', '1', '79,4'],
+            ['Falcons', '2', '1', '1', '0', '4', '0,5', '1', '1', '93,3'],
+            ['Owls', '3', '1', '1', '0', '3', '0,4', '0', '0', '76,4'],
+            ['Ravens', '2', '1', '1', '0', '4', '0,5', '0', '2', '78,9'],
+            ['Wolves', '0', '0', '0', '0', '0', '—', '0', '0', '—'],
         ]);
+    });
+
+    it('formats highlight counts as integers and the Good Horse with one decimal', () => {
+        renderWithProviders(<StatisticsView statistics={statistics} />);
+
+        // Each tile reads as [label, value, leading teams]; the fixture backs each value.
+        const tileTexts = (label: string) =>
+            Array.from(
+                screen.getByText(label).closest('li')?.querySelectorAll('span') ?? [],
+                (span) => span.textContent,
+            );
+        expect(tileTexts('Erfolgreiche Tichus')).toEqual([
+            'Erfolgreiche Tichus',
+            '2',
+            'Badgers, Falcons, Owls, Ravens',
+        ]);
+        expect(tileTexts('Gutes Pferd')).toEqual(['Gutes Pferd', '76,4', 'Owls']);
     });
 
     it('shows an em dash instead of bombs per game for a team without a completed table', () => {
@@ -89,7 +153,7 @@ describe('StatisticsView', () => {
 
         const table = screen.getByRole('table', { name: 'Statistiken' });
         const wolves = bodyRows(table).find((row) => row[0] === 'Wolves');
-        expect(wolves?.[4]).toBe('—');
+        expect(wolves?.[6]).toBe('—');
     });
 
     it('gives screen readers the cumulative Victory Points per round in a table', () => {
@@ -130,5 +194,85 @@ describe('StatisticsView', () => {
             screen.queryByRole('table', { name: 'Kumulierte Siegpunkte je Runde' }),
         ).not.toBeInTheDocument();
         expect(screen.queryByText('Bestwerte')).not.toBeInTheDocument();
+    });
+
+    describe('column selection', () => {
+        it('shows every column on a wide viewport when the viewer never chose', () => {
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            expect(columnHeaders(teamTable())).toEqual(ALL_HEADERS);
+        });
+
+        it('shows Team and the four default columns on a narrow viewport', () => {
+            viewport.uninstall();
+            viewport = installMatchMedia({ dark: false, width: 390 });
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            expect(columnHeaders(teamTable())).toEqual(COMPACT_HEADERS);
+        });
+
+        it('keeps the device default when the viewport is resized after mount', () => {
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            viewport.setWidth(390);
+
+            expect(columnHeaders(teamTable())).toEqual(ALL_HEADERS);
+        });
+
+        it('hides a column the viewer switches off and keeps that choice after a reload', async () => {
+            const user = userEvent.setup();
+            const first = renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            await user.click(screen.getByRole('button', { name: 'Spalten' }));
+            await user.click(
+                screen.getByRole('menuitemcheckbox', { name: 'Erfolgreiche kleine Tichus' }),
+            );
+
+            expect(columnHeaders(teamTable())).toEqual(
+                ALL_HEADERS.filter((header) => header !== 'Erfolgreiche kleine Tichus'),
+            );
+            expect(
+                JSON.parse(window.localStorage.getItem(STATISTICS_COLUMNS_STORAGE_KEY) ?? 'null')
+                    .state.visible,
+            ).not.toContain('successfulSmallTichu');
+
+            // A reload: the store starts again from localStorage, not from its in-memory state.
+            const saved = window.localStorage.getItem(STATISTICS_COLUMNS_STORAGE_KEY);
+            first.unmount();
+            useStatisticsColumnsStore.setState({ visible: null });
+            window.localStorage.setItem(STATISTICS_COLUMNS_STORAGE_KEY, saved ?? '');
+            useStatisticsColumnsStore.persist.rehydrate();
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            expect(columnHeaders(teamTable())).toEqual(
+                ALL_HEADERS.filter((header) => header !== 'Erfolgreiche kleine Tichus'),
+            );
+        });
+
+        it('lets a stored choice win over the narrow-viewport default', () => {
+            viewport.uninstall();
+            viewport = installMatchMedia({ dark: false, width: 390 });
+            window.localStorage.setItem(
+                STATISTICS_COLUMNS_STORAGE_KEY,
+                JSON.stringify({ state: { visible: ['bombCount'] }, version: 0 }),
+            );
+            useStatisticsColumnsStore.persist.rehydrate();
+
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            expect(columnHeaders(teamTable())).toEqual(['Team', 'Bomben']);
+        });
+
+        it('ignores unknown column ids in the stored choice', () => {
+            window.localStorage.setItem(
+                STATISTICS_COLUMNS_STORAGE_KEY,
+                JSON.stringify({ state: { visible: ['bogus', 'bombCount'] }, version: 0 }),
+            );
+            useStatisticsColumnsStore.persist.rehydrate();
+
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            expect(columnHeaders(teamTable())).toEqual(['Team', 'Bomben']);
+        });
     });
 });

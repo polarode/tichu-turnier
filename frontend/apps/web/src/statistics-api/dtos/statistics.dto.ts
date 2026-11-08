@@ -9,11 +9,24 @@ export const teamStatisticsDtoSchema = z.object({
     bombCount: z.number().int().nonnegative(),
     bombsPerGame: z.number().nullable(),
     doubleWins: z.number().int().nonnegative(),
+    tichuCalls: z.number().int().nonnegative(),
+    destroyedTichus: z.number().int().nonnegative(),
+    beschissGames: z.number().int().nonnegative(),
+    goodHorseRatio: z.number().nullable(),
 });
 
 export const highlightDtoSchema = z.object({
-    metric: z.enum(['SUCCESSFUL_TICHU', 'BOMBS', 'DOUBLE_WINS']),
-    value: z.number().int().nonnegative(),
+    metric: z.enum([
+        'SUCCESSFUL_TICHU',
+        'BOMBS',
+        'DOUBLE_WINS',
+        'TICHU_CALLS',
+        'DESTROYED_TICHUS',
+        'BESCHISS_GAMES',
+        'GOOD_HORSE',
+    ]),
+    // Decimal for the Good Horse Ratio, and negative when a ratio is negative.
+    value: z.number(),
     teamIds: z.array(z.string()),
 });
 

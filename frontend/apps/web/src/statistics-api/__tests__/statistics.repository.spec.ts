@@ -41,6 +41,10 @@ describe('StatisticsRepository', () => {
             bombCount: 4,
             bombsPerGame: 0.5,
             doubleWins: 1,
+            tichuCalls: 2,
+            destroyedTichus: 0,
+            beschissGames: 1,
+            goodHorseRatio: 93.33333333333333,
         });
         expect(statistics.trends[1]!.points).toEqual([
             { roundNumber: 1, victoryPoints: 6 },
@@ -61,6 +65,10 @@ describe('StatisticsRepository', () => {
             bombCount: 0,
             bombsPerGame: null,
             doubleWins: 0,
+            tichuCalls: 0,
+            destroyedTichus: 0,
+            beschissGames: 0,
+            goodHorseRatio: null,
         });
     });
 

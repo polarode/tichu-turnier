@@ -2,18 +2,20 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import type { TableConfirmation } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { useStatisticsColumnsStore } from '@/shared/stores/statistics-columns.store.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { statisticsDtoSchema } from '@/statistics-api/dtos/statistics.dto.ts';
 import { statisticsDtoToDomain } from '@/statistics-api/mappers/statistics.mapper.ts';
 import { StatisticsRepository } from '@/statistics-api/statistics.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
+import { installMatchMedia, type FakeMatchMedia } from '@/test-helpers/match-media.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 import { bodyRows } from '@/test-helpers/table-rows.ts';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
@@ -89,12 +91,22 @@ function table(tableNumber: number): TableOverview {
 
 const rounds: Round[] = [{ number: 1, tables: [table(1)] }];
 
+let viewport: FakeMatchMedia;
+
 beforeEach(() => {
+    viewport = installMatchMedia({ dark: false, width: 1024 });
+    window.localStorage.clear();
+    useStatisticsColumnsStore.setState({ visible: null });
     vi.clearAllMocks();
     auth.refresh.mockResolvedValue({ id: 'admin-1', email: '[EMAIL]', role: 'ADMIN' });
     teams.list.mockResolvedValue([]);
     tournaments.get.mockResolvedValue(tournament('ACTIVE'));
     tournaments.rounds.mockResolvedValue(rounds);
+});
+
+afterEach(() => {
+    viewport.uninstall();
+    window.localStorage.clear();
 });
 
 describe('statistics tab', () => {
@@ -108,8 +120,20 @@ describe('statistics tab', () => {
         // Directly under the page's h1, like the other tabs' headings.
         expect(screen.getByRole('heading', { level: 2, name: 'Verlauf' })).toBeInTheDocument();
         expect(statistics.organizer).toHaveBeenCalledWith('t-1');
-        expect(bodyRows(statisticsTable)[0]).toEqual(['Badgers', '2', '0', '3', '0,4', '1']);
-        expect(within(statisticsTable).getByText('—')).toBeInTheDocument();
+        expect(bodyRows(statisticsTable)[0]).toEqual([
+            'Badgers',
+            '2',
+            '2',
+            '0',
+            '1',
+            '3',
+            '0,4',
+            '1',
+            '1',
+            '79,4',
+        ]);
+        // Wolves has no completed table (bombs per game) and no Good Horse ratio: two dashes.
+        expect(within(statisticsTable).getAllByText('—')).toHaveLength(2);
     });
 
     it('sits after Standings and before Teams', async () => {

@@ -1,9 +1,18 @@
 /** The team statistics a Highlight can lead (mirrors the backend `HighlightMetric`). */
-export type HighlightMetric = 'SUCCESSFUL_TICHU' | 'BOMBS' | 'DOUBLE_WINS';
+export type HighlightMetric =
+    | 'SUCCESSFUL_TICHU'
+    | 'BOMBS'
+    | 'DOUBLE_WINS'
+    | 'TICHU_CALLS'
+    | 'DESTROYED_TICHUS'
+    | 'BESCHISS_GAMES'
+    | 'GOOD_HORSE';
 
 /**
- * One team's Team Statistics (glossary): call successes, bombs and double wins over the
- * games of completed tables. `bombsPerGame` is null while the team has no completed table.
+ * One team's Team Statistics (glossary): call successes, bombs, double wins, Tichu calls made,
+ * destroyed Tichus, Beschiss games and the Good Horse Ratio over the games of completed tables.
+ * `bombsPerGame` is null while the team has no completed table; `goodHorseRatio` is null while
+ * the team has no Victory Points.
  */
 export interface TeamStatistics {
     teamId: string;
@@ -13,6 +22,10 @@ export interface TeamStatistics {
     bombCount: number;
     bombsPerGame: number | null;
     doubleWins: number;
+    tichuCalls: number;
+    destroyedTichus: number;
+    beschissGames: number;
+    goodHorseRatio: number | null;
 }
 
 /** A team named by a Highlight or a Team Trend, resolved to its name so screens need no lookup. */

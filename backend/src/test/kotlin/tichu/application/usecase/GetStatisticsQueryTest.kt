@@ -120,10 +120,14 @@ class GetStatisticsQueryTest {
         assertEquals(
             TournamentStatistics(
                 teams = listOf(
-                    TeamStatisticsEntry("Falcons", TeamStatistics(TeamId("a"), 0, 4, 0, 0.0, 0)),
-                    TeamStatisticsEntry("Owls", TeamStatistics(TeamId("b"), 0, 0, 0, 0.0, 0)),
+                    TeamStatisticsEntry("Falcons", TeamStatistics(TeamId("a"), 0, 4, 0, 0.0, 0, 4, 0, 0, 130.0)),
+                    TeamStatisticsEntry("Owls", TeamStatistics(TeamId("b"), 0, 0, 0, 0.0, 0, 0, 0, 0, null)),
                 ),
-                highlights = listOf(Highlight(HighlightMetric.SUCCESSFUL_TICHU, 4, listOf(TeamId("a")))),
+                highlights = listOf(
+                    Highlight(HighlightMetric.SUCCESSFUL_TICHU, 4.0, listOf(TeamId("a"))),
+                    Highlight(HighlightMetric.TICHU_CALLS, 4.0, listOf(TeamId("a"))),
+                    Highlight(HighlightMetric.GOOD_HORSE, 130.0, listOf(TeamId("a"))),
+                ),
                 trends = listOf(
                     TeamTrend(TeamId("a"), listOf(TrendPoint(1, 8))),
                     TeamTrend(TeamId("b"), listOf(TrendPoint(1, 0))),

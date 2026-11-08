@@ -391,7 +391,8 @@ export const de: Catalog = {
     'publicTournament.notFound':
         'Dieses Turnier konnte nicht gefunden werden. Vielleicht ist es nicht öffentlich.',
     'publicTournament.tabs.label': 'Turnierbereiche',
-    'publicTournament.tabs.results': 'Ergebnisse',
+    'publicTournament.tabs.ranking': 'Rangliste',
+    'publicTournament.tabs.rounds': 'Runden',
     'publicTournament.tabs.statistics': 'Statistiken',
 
     'scoring.title': 'Ergebnisse eintragen',

@@ -32,8 +32,8 @@ export function usePublicTournament(id: string) {
 }
 
 /**
- * The anonymous statistics of one published public tournament. Only asked for while the
- * Statistics tab is open (`enabled`), so the page does not fetch them on the Results tab.
+ * The anonymous statistics of one published public tournament. Only asked for while a tab
+ * that shows them is open (`enabled`): the Ranking (its Team Trend) or the Statistics tab.
  */
 export function usePublicStatistics(id: string, enabled: boolean) {
     return useQuery({

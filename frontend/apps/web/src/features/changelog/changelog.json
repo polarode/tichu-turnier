@@ -191,6 +191,10 @@
             {
                 "type": "improvement",
                 "text": "Games shown as tiles with winner and victory points"
+            },
+            {
+                "type": "improvement",
+                "text": "Public page shows one round at a time, with ranking and trend in their own tab"
             }
         ]
     }

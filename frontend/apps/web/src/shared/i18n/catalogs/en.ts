@@ -382,7 +382,8 @@ export const en = {
     'publicTournament.noRounds': 'No rounds drawn yet.',
     'publicTournament.notFound': 'This tournament could not be found. It may not be public.',
     'publicTournament.tabs.label': 'Tournament sections',
-    'publicTournament.tabs.results': 'Results',
+    'publicTournament.tabs.ranking': 'Ranking',
+    'publicTournament.tabs.rounds': 'Rounds',
     'publicTournament.tabs.statistics': 'Statistics',
 
     'scoring.title': 'Enter results',

@@ -90,7 +90,7 @@ describe('public tournament statistics tab', () => {
         window.localStorage.clear();
     });
 
-    it('offers a Results and a Statistics tab once the tournament is published', async () => {
+    it('offers Ranking, Rounds and Statistics tabs once published, opening on the ranking with its trend', async () => {
         tournaments.getPublicTournament.mockResolvedValue(harvestCup);
 
         renderApp('/public/tournaments/t-harvest-cup', { initialLocale: 'en' });
@@ -101,22 +101,27 @@ describe('public tournament statistics tab', () => {
             within(tabs)
                 .getAllByRole('tab')
                 .map((tab) => tab.textContent),
-        ).toEqual(['Results', 'Statistics']);
-        expect(screen.getByRole('tab', { name: 'Results' })).toHaveAttribute(
+        ).toEqual(['Ranking', 'Rounds', 'Statistics']);
+        expect(screen.getByRole('tab', { name: 'Ranking' })).toHaveAttribute(
             'aria-selected',
             'true',
         );
+        const finalHeading = screen.getByRole('heading', { level: 2, name: 'Final Ranking' });
+        // The Team Trend sits under the ranking, not in the Statistics tab.
+        const trendHeading = await screen.findByRole('heading', { level: 2, name: 'Trend' });
         expect(
-            screen.getByRole('heading', { level: 2, name: 'Final Ranking' }),
-        ).toBeInTheDocument();
+            finalHeading.compareDocumentPosition(trendHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(statistics.publicStatistics).toHaveBeenCalledWith('t-harvest-cup');
+        expect(screen.queryByRole('region', { name: /^Round/ })).toBeNull();
     });
 
-    it('loads the statistics only when the Statistics tab is selected', async () => {
+    it('loads the statistics only when a tab showing them is open', async () => {
         tournaments.getPublicTournament.mockResolvedValue(harvestCup);
 
-        renderApp('/public/tournaments/t-harvest-cup', { initialLocale: 'en' });
+        renderApp('/public/tournaments/t-harvest-cup?tab=rounds', { initialLocale: 'en' });
 
-        await screen.findByRole('tab', { name: 'Statistics' });
+        await screen.findByRole('region', { name: 'Round 2' });
         expect(statistics.publicStatistics).not.toHaveBeenCalled();
 
         await userEvent.click(screen.getByRole('tab', { name: 'Statistics' }));
@@ -156,21 +161,24 @@ describe('public tournament statistics tab', () => {
             '1',
             '79.4',
         ]);
-        // Directly under the tournament's h1, like the Final Ranking on the Results tab.
-        expect(screen.getByRole('heading', { level: 2, name: 'Trend' })).toBeInTheDocument();
+        // The Team Trend moved to the Ranking tab.
+        expect(screen.queryByRole('heading', { level: 2, name: 'Trend' })).toBeNull();
         expect(screen.getByRole('tab', { name: 'Statistics' })).toHaveAttribute(
             'aria-selected',
             'true',
         );
     });
 
-    it('falls back to the Results tab for an unknown tab in the URL', async () => {
+    it('falls back to the Ranking tab for an unknown tab in the URL', async () => {
         tournaments.getPublicTournament.mockResolvedValue(harvestCup);
 
         renderApp('/public/tournaments/t-harvest-cup?tab=bogus', { initialLocale: 'en' });
 
         await screen.findByRole('heading', { level: 2, name: 'Final Ranking' });
-        expect(statistics.publicStatistics).not.toHaveBeenCalled();
+        expect(screen.getByRole('tab', { name: 'Ranking' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
     });
 
     it('shows no tabs and never asks for statistics while the tournament is active', async () => {
@@ -179,7 +187,7 @@ describe('public tournament statistics tab', () => {
         renderApp('/public/tournaments/t-harvest-cup', { initialLocale: 'en' });
 
         await screen.findByRole('heading', { name: 'Harvest Cup' });
-        expect(screen.queryByRole('tablist')).toBeNull();
+        expect(screen.queryByRole('tablist', { name: 'Tournament sections' })).toBeNull();
         expect(screen.queryByRole('tab', { name: 'Statistics' })).toBeNull();
         expect(statistics.publicStatistics).not.toHaveBeenCalled();
     });
@@ -190,7 +198,7 @@ describe('public tournament statistics tab', () => {
         renderApp('/public/tournaments/t-harvest-cup?tab=statistics', { initialLocale: 'en' });
 
         await screen.findByRole('heading', { name: 'Harvest Cup' });
-        await waitFor(() => expect(screen.getByRole('region', { name: 'Round 1' })).toBeVisible());
+        await waitFor(() => expect(screen.getByRole('region', { name: 'Round 2' })).toBeVisible());
         expect(screen.queryByRole('table', { name: 'Statistics' })).toBeNull();
         expect(statistics.publicStatistics).not.toHaveBeenCalled();
     });

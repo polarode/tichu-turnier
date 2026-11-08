@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
@@ -165,6 +166,11 @@ const autumnCup: PublicTournamentDetail = {
     ],
 };
 
+/** A round's table, found through its heading. */
+function tableItem(round: HTMLElement, heading: string): HTMLElement {
+    return within(round).getByRole('heading', { level: 3, name: heading }).closest('li')!;
+}
+
 describe('public tournament page', () => {
     beforeEach(() => {
         vi.resetAllMocks();
@@ -172,50 +178,70 @@ describe('public tournament page', () => {
         auth.refresh.mockRejectedValue(noSession);
     });
 
-    it('shows every round newest first, with its tables, trio marker, teams and players', async () => {
+    it('opens on the newest round and switches rounds through the selector', async () => {
         tournaments.getPublicTournament.mockResolvedValue(autumnCup);
+        const user = userEvent.setup();
 
         renderApp('/public/tournaments/t-1', { initialLocale: 'en' });
 
         expect(await screen.findByRole('heading', { name: 'Autumn Cup' })).toBeInTheDocument();
 
-        const roundHeadings = screen
-            .getAllByRole('heading', { level: 2 })
-            .map((heading) => heading.textContent);
-        expect(roundHeadings).toEqual(['Round 2', 'Round 1']);
+        const selector = screen.getByRole('tablist', { name: 'Select round' });
+        expect(
+            within(selector)
+                .getAllByRole('tab')
+                .map((tab) => tab.textContent),
+        ).toEqual(['Round 1', 'Round 2']);
+        expect(screen.getByRole('tab', { name: 'Round 2' })).toHaveAttribute(
+            'aria-selected',
+            'true',
+        );
+        expect(screen.queryByRole('region', { name: 'Round 1' })).toBeNull();
 
         const round2 = screen.getByRole('region', { name: 'Round 2' });
+        expect(
+            within(round2)
+                .getAllByRole('heading', { level: 3 })
+                .map((heading) => heading.textContent),
+        ).toEqual(['Table A', 'Table B']);
+
+        const trioTable = tableItem(round2, 'Table B');
+        expect(within(trioTable).getByText('Trio')).toBeInTheDocument();
+        expect(within(trioTable).getByText('Owls')).toBeInTheDocument();
+        expect(within(trioTable).getByText('Cid Moss · Dan Fox')).toBeInTheDocument();
+        expect(within(trioTable).getByText('Pagoda')).toBeInTheDocument();
+        expect(within(trioTable).getByText('Gus Hale · Hana Ito')).toBeInTheDocument();
+        expect(within(trioTable).getByText('Comet')).toBeInTheDocument();
+        expect(within(trioTable).getByText('Ivy Kent · Jon Lowe')).toBeInTheDocument();
+
+        const normalTable = tableItem(round2, 'Table A');
+        expect(within(normalTable).queryByText('Trio')).toBeNull();
+        expect(within(normalTable).getByText('Falcons')).toBeInTheDocument();
+        expect(within(normalTable).getByText('Ann Lee · Ben Ray')).toBeInTheDocument();
+        expect(within(normalTable).getByText('Star')).toBeInTheDocument();
+        expect(within(normalTable).getByText('Eva Dunn · Finn Gray')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('tab', { name: 'Round 1' }));
+
         const round1 = screen.getByRole('region', { name: 'Round 1' });
-
-        const round2Tables = within(round2).getAllByRole('article');
+        expect(screen.queryByRole('region', { name: 'Round 2' })).toBeNull();
+        expect(within(round1).queryByText('Trio')).toBeNull();
+        expect(within(tableItem(round1, 'Table B')).getByText('Pagoda')).toBeInTheDocument();
         expect(
-            round2Tables.map((card) => within(card).getByRole('heading', { level: 3 }).textContent),
-        ).toEqual(['Table A', 'Table B']);
+            within(tableItem(round1, 'Table B')).getByText('Gus Hale · Hana Ito'),
+        ).toBeInTheDocument();
+    });
 
-        const round1Tables = within(round1).getAllByRole('article');
-        expect(
-            round1Tables.map((card) => within(card).getByRole('heading', { level: 3 }).textContent),
-        ).toEqual(['Table A', 'Table B']);
+    it('shows a single round without a selector', async () => {
+        tournaments.getPublicTournament.mockResolvedValue({
+            ...autumnCup,
+            rounds: autumnCup.rounds.slice(0, 1),
+        });
 
-        const trioCard = round2Tables[1]!;
-        expect(within(trioCard).getByText('Trio')).toBeInTheDocument();
-        expect(within(trioCard).getByText('Owls')).toBeInTheDocument();
-        expect(within(trioCard).getByText('Cid Moss · Dan Fox')).toBeInTheDocument();
-        expect(within(trioCard).getByText('Pagoda')).toBeInTheDocument();
-        expect(within(trioCard).getByText('Gus Hale · Hana Ito')).toBeInTheDocument();
-        expect(within(trioCard).getByText('Comet')).toBeInTheDocument();
-        expect(within(trioCard).getByText('Ivy Kent · Jon Lowe')).toBeInTheDocument();
+        renderApp('/public/tournaments/t-1', { initialLocale: 'en' });
 
-        const normalCard = round2Tables[0]!;
-        expect(within(normalCard).queryByText('Trio')).toBeNull();
-        expect(within(normalCard).getByText('Falcons')).toBeInTheDocument();
-        expect(within(normalCard).getByText('Ann Lee · Ben Ray')).toBeInTheDocument();
-        expect(within(normalCard).getByText('Star')).toBeInTheDocument();
-        expect(within(normalCard).getByText('Eva Dunn · Finn Gray')).toBeInTheDocument();
-
-        expect(screen.getAllByText('Trio')).toHaveLength(1);
-        expect(within(round1Tables[1]!).getByText('Pagoda')).toBeInTheDocument();
-        expect(within(round1Tables[1]!).getByText('Gus Hale · Hana Ito')).toBeInTheDocument();
+        expect(await screen.findByRole('region', { name: 'Round 1' })).toBeInTheDocument();
+        expect(screen.queryByRole('tablist', { name: 'Select round' })).toBeNull();
     });
 
     it.each([TournamentStatus.ACTIVE, TournamentStatus.COMPLETED])(
@@ -231,18 +257,13 @@ describe('public tournament page', () => {
         },
     );
 
-    it('shows the Final Ranking above the rounds and each team totals per table once published', async () => {
+    it('shows the Final Ranking first and each team totals per table on the Rounds tab once published', async () => {
         tournaments.getPublicTournament.mockResolvedValue(harvestCup);
+        const user = userEvent.setup();
 
         renderApp('/public/tournaments/t-harvest-cup', { initialLocale: 'en' });
 
         await screen.findByRole('heading', { name: 'Harvest Cup' });
-
-        const finalHeading = screen.getByRole('heading', { level: 2, name: 'Final Ranking' });
-        const round2Heading = screen.getByRole('heading', { level: 2, name: 'Round 2' });
-        expect(
-            finalHeading.compareDocumentPosition(round2Heading) & Node.DOCUMENT_POSITION_FOLLOWING,
-        ).toBeTruthy();
 
         const ranking = screen.getByRole('table', { name: 'Final Ranking' });
         expect(bodyRows(ranking).map(([team, rank]) => [team, rank])).toEqual([
@@ -253,15 +274,17 @@ describe('public tournament page', () => {
             ['Wolves', '5'],
         ]);
 
-        const round1 = screen.getByRole('region', { name: 'Round 1' });
-        const round1Tables = within(round1).getAllByRole('article');
-        const wolves = within(round1Tables[1]!).getByText('Wolves').closest('li')!;
-        expect(wolves).toHaveTextContent('0 VP 120 TP');
+        await user.click(screen.getByRole('tab', { name: 'Rounds' }));
 
         const round2 = screen.getByRole('region', { name: 'Round 2' });
-        const round2Tables = within(round2).getAllByRole('article');
-        const falcons = within(round2Tables[0]!).getByText('Falcons').closest('li')!;
+        const falcons = within(tableItem(round2, 'Table A')).getByText('Falcons').closest('li')!;
         expect(falcons).toHaveTextContent('8 VP 240 TP');
+
+        await user.click(screen.getByRole('tab', { name: 'Round 1' }));
+
+        const round1 = screen.getByRole('region', { name: 'Round 1' });
+        const wolves = within(tableItem(round1, 'Table B')).getByText('Wolves').closest('li')!;
+        expect(wolves).toHaveTextContent('0 VP 120 TP');
     });
 
     it('shows no Final Ranking before the tournament is published', async () => {

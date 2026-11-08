@@ -186,6 +186,10 @@
             },
             {
                 "type": "feature",
+                "text": "Sort the standings and statistics tables by any column: click a column header to sort, click again to reverse, a third time to go back to the usual order"
+            },
+            {
+                "type": "feature",
                 "text": "Run a tournament together: add co-organizers by email on the new Organizers tab, remove them again, or leave a tournament yourself"
             },
             {

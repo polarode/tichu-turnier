@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 
 import { buttonVariants } from '@tichu/ui/button.tsx';
+import { DataTable, type DataTableColumn } from '@tichu/ui/data-table.tsx';
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -60,10 +61,12 @@ interface CellFormat {
     decimal: Intl.NumberFormat;
 }
 
-/** One column of the team table: its id, its header key and how it renders a team. */
+/** One column of the team table: its id, its header key, its raw figure and how it renders a team. */
 interface StatisticsColumnDef {
     id: StatisticsColumn;
     header: TranslationKey;
+    /** The raw figure a click sorts by; null means no value and sorts last. Never the formatted text. */
+    value: (team: TeamStatistics) => number | null;
     cell: (team: TeamStatistics, format: CellFormat) => string | number;
 }
 
@@ -72,37 +75,58 @@ const noValueOr = (value: number | null, { t, decimal }: CellFormat) =>
 
 /** The team table columns after the always-shown Team column, in display order. */
 const STATISTICS_COLUMNS: readonly StatisticsColumnDef[] = [
-    { id: 'tichuCalls', header: 'statistics.tichuCalls', cell: (team) => team.tichuCalls },
+    {
+        id: 'tichuCalls',
+        header: 'statistics.tichuCalls',
+        value: (team) => team.tichuCalls,
+        cell: (team) => team.tichuCalls,
+    },
     {
         id: 'successfulSmallTichu',
         header: 'statistics.smallTichu',
+        value: (team) => team.successfulSmallTichu,
         cell: (team) => team.successfulSmallTichu,
     },
     {
         id: 'successfulGrandTichu',
         header: 'statistics.grandTichu',
+        value: (team) => team.successfulGrandTichu,
         cell: (team) => team.successfulGrandTichu,
     },
     {
         id: 'destroyedTichus',
         header: 'statistics.destroyedTichus',
+        value: (team) => team.destroyedTichus,
         cell: (team) => team.destroyedTichus,
     },
-    { id: 'bombCount', header: 'statistics.bombs', cell: (team) => team.bombCount },
+    {
+        id: 'bombCount',
+        header: 'statistics.bombs',
+        value: (team) => team.bombCount,
+        cell: (team) => team.bombCount,
+    },
     {
         id: 'bombsPerGame',
         header: 'statistics.bombsPerGame',
+        value: (team) => team.bombsPerGame,
         cell: (team, format) => noValueOr(team.bombsPerGame, format),
     },
-    { id: 'doubleWins', header: 'statistics.doubleWins', cell: (team) => team.doubleWins },
+    {
+        id: 'doubleWins',
+        header: 'statistics.doubleWins',
+        value: (team) => team.doubleWins,
+        cell: (team) => team.doubleWins,
+    },
     {
         id: 'beschissGames',
         header: 'statistics.beschissGames',
+        value: (team) => team.beschissGames,
         cell: (team) => team.beschissGames,
     },
     {
         id: 'goodHorseRatio',
         header: 'statistics.goodHorse',
+        value: (team) => team.goodHorseRatio,
         cell: (team, format) => noValueOr(team.goodHorseRatio, format),
     },
 ];
@@ -132,7 +156,6 @@ export function StatisticsView({ statistics, withTrend = true }: StatisticsViewP
     // Resolved once per mount, so resizing or rotating the device never changes the table.
     const [deviceColumns] = useState(deviceDefaultColumns);
     const visibleColumns = storedColumns ?? deviceColumns;
-    const shownColumns = STATISTICS_COLUMNS.filter((column) => visibleColumns.includes(column.id));
 
     const decimal = new Intl.NumberFormat(locale, {
         minimumFractionDigits: 1,
@@ -140,6 +163,25 @@ export function StatisticsView({ statistics, withTrend = true }: StatisticsViewP
     });
     const integer = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
     const format: CellFormat = { t, decimal };
+    const teamColumns: DataTableColumn<TeamStatistics>[] = [
+        {
+            id: 'team',
+            header: t('statistics.team'),
+            cell: (team) => team.teamName,
+            sortValue: (team) => team.teamName,
+            sortFirst: 'asc',
+            rowHeader: true,
+            headClassName: 'sticky left-0 bg-card',
+            cellClassName: 'sticky left-0 bg-card font-medium',
+        },
+        ...STATISTICS_COLUMNS.map((column) => ({
+            id: column.id,
+            header: t(column.header),
+            cell: (team: TeamStatistics) => column.cell(team, format),
+            sortValue: column.value,
+            align: 'end' as const,
+        })),
+    ];
     const formatHighlight = (highlight: Highlight) =>
         highlight.metric === 'GOOD_HORSE'
             ? decimal.format(highlight.value)
@@ -196,46 +238,16 @@ export function StatisticsView({ statistics, withTrend = true }: StatisticsViewP
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <div className="overflow-x-auto rounded-md border border-border bg-card">
-                    <table className="w-full text-sm tabular-nums">
-                        <caption className="sr-only">{t('statistics.title')}</caption>
-                        <thead>
-                            <tr className="border-b border-border text-left text-muted-foreground">
-                                <th
-                                    scope="col"
-                                    className="sticky left-0 bg-card px-3 py-2 font-medium"
-                                >
-                                    {t('statistics.team')}
-                                </th>
-                                {shownColumns.map((column) => (
-                                    <th
-                                        key={column.id}
-                                        scope="col"
-                                        className="px-3 py-2 text-right font-medium"
-                                    >
-                                        {t(column.header)}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                            {teams.map((team) => (
-                                <tr key={team.teamId}>
-                                    <th
-                                        scope="row"
-                                        className="sticky left-0 bg-card px-3 py-2 text-left font-medium"
-                                    >
-                                        {team.teamName}
-                                    </th>
-                                    {shownColumns.map((column) => (
-                                        <td key={column.id} className="px-3 py-2 text-right">
-                                            {column.cell(team, format)}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="rounded-md border border-border bg-card">
+                    <DataTable
+                        className="text-sm tabular-nums"
+                        columns={teamColumns}
+                        rows={teams}
+                        getRowId={(team) => team.teamId}
+                        caption={t('statistics.title')}
+                        locale={locale}
+                        visibleColumns={['team', ...visibleColumns]}
+                    />
                 </div>
             </div>
 

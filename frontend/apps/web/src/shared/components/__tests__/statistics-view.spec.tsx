@@ -297,4 +297,101 @@ describe('StatisticsView', () => {
             expect(columnHeaders(teamTable())).toEqual(['Team', 'Bomben']);
         });
     });
+
+    describe('team table sorting', () => {
+        /** The full team rows of the fixture, in the literal values the table shows. */
+        const ROWS = {
+            Badgers: ['Badgers', '2', '2', '0', '1', '3', '0,4', '1', '1', '79,4'],
+            Falcons: ['Falcons', '2', '1', '1', '0', '4', '0,5', '1', '1', '93,3'],
+            Owls: ['Owls', '3', '1', '1', '0', '3', '0,4', '0', '0', '76,4'],
+            Ravens: ['Ravens', '2', '1', '1', '0', '4', '0,5', '0', '2', '78,9'],
+            Wolves: ['Wolves', '0', '0', '0', '0', '0', '—', '0', '0', '—'],
+        };
+
+        const goodHorseHeader = () =>
+            within(teamTable()).getByRole('button', { name: 'Gutes Pferd (TP pro SP)' });
+
+        it('sorts Good Horse descending with the missing value last, then ascending with it still last', async () => {
+            const user = userEvent.setup();
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            await user.click(goodHorseHeader());
+            expect(bodyRows(teamTable())).toEqual([
+                ROWS.Falcons,
+                ROWS.Badgers,
+                ROWS.Ravens,
+                ROWS.Owls,
+                ROWS.Wolves,
+            ]);
+
+            await user.click(goodHorseHeader());
+            expect(bodyRows(teamTable())).toEqual([
+                ROWS.Owls,
+                ROWS.Ravens,
+                ROWS.Badgers,
+                ROWS.Falcons,
+                ROWS.Wolves,
+            ]);
+        });
+
+        it('sorts numbers by value, not by their formatted text', async () => {
+            const user = userEvent.setup();
+            // As text, "10" sorts before "9" and "3"; as numbers, 10 leads.
+            const teams = statistics.teams.map((team) =>
+                team.teamId === 'team-badgers'
+                    ? { ...team, tichuCalls: 9 }
+                    : team.teamId === 'team-falcons'
+                      ? { ...team, tichuCalls: 10 }
+                      : team,
+            );
+            renderWithProviders(<StatisticsView statistics={{ ...statistics, teams }} />);
+
+            await user.click(within(teamTable()).getByRole('button', { name: 'Tichu-Ansagen' }));
+
+            expect(bodyRows(teamTable())).toEqual([
+                ['Falcons', '10', '1', '1', '0', '4', '0,5', '1', '1', '93,3'],
+                ['Badgers', '9', '2', '0', '1', '3', '0,4', '1', '1', '79,4'],
+                ROWS.Owls,
+                ROWS.Ravens,
+                ROWS.Wolves,
+            ]);
+        });
+
+        it('sorts by a visible column while a column hidden through the picker stays out of the table', async () => {
+            const user = userEvent.setup();
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            await user.click(screen.getByRole('button', { name: 'Spalten' }));
+            await user.click(screen.getByRole('menuitemcheckbox', { name: 'Bomben' }));
+            expect(columnHeaders(teamTable())).toEqual(
+                ALL_HEADERS.filter((header) => header !== 'Bomben'),
+            );
+
+            await user.click(goodHorseHeader());
+            expect(bodyRows(teamTable())).toEqual([
+                ['Falcons', '2', '1', '1', '0', '0,5', '1', '1', '93,3'],
+                ['Badgers', '2', '2', '0', '1', '0,4', '1', '1', '79,4'],
+                ['Ravens', '2', '1', '1', '0', '0,5', '0', '2', '78,9'],
+                ['Owls', '3', '1', '1', '0', '0,4', '0', '0', '76,4'],
+                ['Wolves', '0', '0', '0', '0', '—', '0', '0', '—'],
+            ]);
+        });
+
+        it('sorts the team name A to Z on its first click', async () => {
+            const user = userEvent.setup();
+            renderWithProviders(<StatisticsView statistics={statistics} />);
+
+            // Start from a non-alphabetical order so the Team click visibly sorts.
+            await user.click(goodHorseHeader());
+            await user.click(within(teamTable()).getByRole('button', { name: 'Team' }));
+
+            expect(bodyRows(teamTable())).toEqual([
+                ROWS.Badgers,
+                ROWS.Falcons,
+                ROWS.Owls,
+                ROWS.Ravens,
+                ROWS.Wolves,
+            ]);
+        });
+    });
 });

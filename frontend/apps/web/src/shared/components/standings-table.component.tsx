@@ -1,8 +1,10 @@
+import { DataTable, type DataTableColumn } from '@tichu/ui/data-table.tsx';
+
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 interface StandingsTableProps {
-    /** One line per team, in the server's order; ranks are rendered verbatim. */
+    /** One line per team, in the server's order: that is the default order. Ranks are rendered verbatim. */
     entries: StandingsEntry[];
     /** Accessible name of the table, shown as its (visually hidden) caption. */
     caption: string;
@@ -11,65 +13,75 @@ interface StandingsTableProps {
 }
 
 /**
- * The presentational standings table shared by the admin Standings tab and the
- * team's Final Ranking (S7c, #116). It renders the entries it is given and computes
- * nothing, so the admin and the team see the same markup and the same order.
+ * The presentational standings table shared by the admin Standings tab, the
+ * team's Final Ranking (S7c, #116) and the public tournament page. It renders the
+ * entries it is given and computes nothing, so every screen shows the same markup.
+ * The server order is the default order; viewers can re-sort by any column, and the
+ * rank column always shows each team's real rank, shared ranks included.
  */
 export function StandingsTable({ entries, caption, highlightTeamId }: StandingsTableProps) {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
+    const columns: DataTableColumn<StandingsEntry>[] = [
+        {
+            id: 'rank',
+            header: t('standings.rank'),
+            cell: (entry) => entry.rank,
+            sortValue: (entry) => entry.rank,
+            sortFirst: 'asc',
+        },
+        {
+            id: 'team',
+            header: t('standings.team'),
+            cell: (entry) => entry.teamName,
+            sortValue: (entry) => entry.teamName,
+            sortFirst: 'asc',
+            rowHeader: true,
+            cellClassName: 'font-medium',
+        },
+        {
+            id: 'victoryPoints',
+            header: (
+                <abbr title={t('standings.victoryPoints.long')} className="no-underline">
+                    {t('standings.victoryPoints')}
+                </abbr>
+            ),
+            cell: (entry) => entry.victoryPoints,
+            sortValue: (entry) => entry.victoryPoints,
+            align: 'end',
+            cellClassName: 'font-medium',
+        },
+        {
+            id: 'tichuPoints',
+            header: (
+                <abbr title={t('standings.tichuPoints.long')} className="no-underline">
+                    {t('standings.tichuPoints')}
+                </abbr>
+            ),
+            cell: (entry) => entry.tichuPoints,
+            sortValue: (entry) => entry.tichuPoints,
+            align: 'end',
+        },
+    ];
+
     return (
-        <div className="overflow-x-auto rounded-md border border-border bg-card">
-            <table className="w-full text-sm tabular-nums">
-                <caption className="sr-only">{caption}</caption>
-                <thead>
-                    <tr className="border-b border-border text-left text-muted-foreground">
-                        <th scope="col" className="px-3 py-2 font-medium">
-                            {t('standings.rank')}
-                        </th>
-                        <th scope="col" className="px-3 py-2 font-medium">
-                            {t('standings.team')}
-                        </th>
-                        <th scope="col" className="px-3 py-2 text-right font-medium">
-                            <abbr
-                                title={t('standings.victoryPoints.long')}
-                                className="no-underline"
-                            >
-                                {t('standings.victoryPoints')}
-                            </abbr>
-                        </th>
-                        <th scope="col" className="px-3 py-2 text-right font-medium">
-                            <abbr title={t('standings.tichuPoints.long')} className="no-underline">
-                                {t('standings.tichuPoints')}
-                            </abbr>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                    {entries.map((entry) => {
-                        const own = entry.teamId === highlightTeamId;
-                        return (
-                            <tr
-                                key={entry.teamId}
-                                aria-current={own ? 'true' : undefined}
-                                className={
-                                    own
-                                        ? 'bg-secondary font-semibold text-secondary-foreground'
-                                        : undefined
-                                }
-                            >
-                                <td className="px-3 py-2">{entry.rank}</td>
-                                <th scope="row" className="px-3 py-2 text-left font-medium">
-                                    {entry.teamName}
-                                </th>
-                                <td className="px-3 py-2 text-right font-medium">
-                                    {entry.victoryPoints}
-                                </td>
-                                <td className="px-3 py-2 text-right">{entry.tichuPoints}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+        <div className="rounded-md border border-border bg-card">
+            <DataTable
+                className="text-sm tabular-nums"
+                columns={columns}
+                rows={entries}
+                getRowId={(entry) => entry.teamId}
+                caption={caption}
+                locale={locale}
+                rowProps={(entry) => {
+                    const own = entry.teamId === highlightTeamId;
+                    return own
+                        ? {
+                              'aria-current': 'true',
+                              className: 'bg-secondary font-semibold text-secondary-foreground',
+                          }
+                        : {};
+                }}
+            />
         </div>
     );
 }

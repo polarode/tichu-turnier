@@ -8,9 +8,22 @@ teams of two players each, and hand out access links so players can join.
 ### Accounts & access
 
 **Organizer**:
-The person running a tournament: creates it, registers its teams, starts, advances,
-finishes and publishes it. Logs in with an admin account.
+The person running a tournament: registers its teams, starts, advances, finishes
+and publishes it. A tournament has one lead organizer and any number of
+co-organizers. Logs in with an admin account.
 _Avoid_: tournament director, host
+
+**Lead Organizer**:
+The organizer who created a tournament. Besides everything a co-organizer may do,
+only the lead organizer may delete the tournament and add or remove its
+co-organizers. Fixed for the tournament's lifetime; there is no handover.
+_Avoid_: tournament owner (Owner is the platform role), creator, host
+
+**Co-Organizer**:
+An admin the lead organizer added to a tournament to help run it. May do everything
+on that tournament except delete it and manage its co-organizers; may leave it at
+any time. Gains access as soon as added, without accepting.
+_Avoid_: co-admin, helper, tournament admin
 
 **Admin**:
 The account kind an organizer logs in with: email and password, a lifecycle status

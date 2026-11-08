@@ -30,19 +30,19 @@ class TournamentAccess(
      * as for a missing id.
      */
     fun organizedOrThrow(id: TournamentId, admin: AdminUserId): Tournament =
-        organizedWithRoleOrThrow(id, admin).first
+        organizedWithRoleOrThrow(id, admin).tournament
 
     /**
      * The tournament together with [admin]'s role on it, if [admin] organizes it. Otherwise
      * not-found, as for a missing id.
      */
-    fun organizedWithRoleOrThrow(id: TournamentId, admin: AdminUserId): Pair<Tournament, OrganizerRole> {
+    fun organizedWithRoleOrThrow(id: TournamentId, admin: AdminUserId): RoleOnTournament {
         val tournament = tournamentRepository.findById(id)
         val role = tournament?.let { roleOf(it, admin) }
         if (tournament == null || role == null) {
             throw NotFoundException("Tournament ${id.value} not found")
         }
-        return tournament to role
+        return RoleOnTournament(tournament, role)
     }
 
     /**
@@ -57,13 +57,19 @@ class TournamentAccess(
 
     /**
      * The tournament, if [admin] is its lead organizer. Strangers get not-found; a
-     * co-organizer gets forbidden. The lead organizer is the tournament's `ownerId`.
+     * co-organizer gets forbidden. The lead check is [roleOf]'s, so there is one definition.
      */
     fun ledOrThrow(id: TournamentId, admin: AdminUserId): Tournament {
-        val tournament = organizedOrThrow(id, admin)
-        if (tournament.ownerId != admin) {
+        val organized = organizedWithRoleOrThrow(id, admin)
+        if (organized.role != OrganizerRole.LEAD) {
             throw ForbiddenException("Only the lead organizer may do this on tournament ${id.value}")
         }
-        return tournament
+        return organized.tournament
     }
 }
+
+/** A tournament together with the caller's [role] on it, as [TournamentAccess] resolves it. */
+data class RoleOnTournament(
+    val tournament: Tournament,
+    val role: OrganizerRole,
+)

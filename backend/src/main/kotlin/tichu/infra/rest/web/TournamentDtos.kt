@@ -228,9 +228,9 @@ data class StartedTournamentResponse(
 ) {
     companion object {
         /** [tournament] is the caller's view after the start, so it carries the caller's role. */
-        fun from(tournament: OrganizedTournament, started: StartedTournament): StartedTournamentResponse =
+        fun from(tournament: TournamentResponse, started: StartedTournament): StartedTournamentResponse =
             StartedTournamentResponse(
-                tournament = TournamentResponse.from(tournament),
+                tournament = tournament,
                 round = RoundResponse.from(started.round),
             )
     }

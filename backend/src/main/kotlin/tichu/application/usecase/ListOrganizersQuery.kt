@@ -1,7 +1,8 @@
 package tichu.application.usecase
 
+import tichu.application.api.CoOrganizerEntry
+import tichu.application.api.LeadOrganizer
 import tichu.application.api.ListOrganizers
-import tichu.application.api.Organizer
 import tichu.application.api.Organizers
 import tichu.domain.AdminUserId
 import tichu.domain.AdminUserRepository
@@ -34,10 +35,10 @@ internal fun organizersOf(
 ): Organizers {
     val lead = adminUserRepository.requireById(tournament.ownerId)
     return Organizers(
-        lead = Organizer(adminUserId = lead.id, email = lead.email, addedAt = null),
+        lead = LeadOrganizer(adminUserId = lead.id, email = lead.email),
         coOrganizers = coOrganizerRepository.findByTournament(tournament.id).map { row ->
             val admin = adminUserRepository.requireById(row.adminUserId)
-            Organizer(adminUserId = admin.id, email = admin.email, addedAt = row.addedAt)
+            CoOrganizerEntry(adminUserId = admin.id, email = admin.email, addedAt = row.addedAt)
         },
     )
 }

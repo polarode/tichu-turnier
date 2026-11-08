@@ -257,10 +257,9 @@ class UseCaseConfiguration(
     @Bean
     fun listTournaments(
         repository: TournamentRepository,
-        tournamentAccess: TournamentAccess,
         coOrganizerRepository: CoOrganizerRepository,
         adminUserRepository: AdminUserRepository,
-    ): ListTournaments = ListTournamentsQuery(repository, tournamentAccess, coOrganizerRepository, adminUserRepository)
+    ): ListTournaments = ListTournamentsQuery(repository, coOrganizerRepository, adminUserRepository)
 
     @Bean
     fun getTournament(tournamentAccess: TournamentAccess, adminUserRepository: AdminUserRepository): GetTournament =

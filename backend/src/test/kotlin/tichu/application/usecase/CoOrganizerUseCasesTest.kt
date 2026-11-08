@@ -43,6 +43,7 @@ class CoOrganizerUseCasesTest {
     private val pending = AdminUserId("admin-pending")
     private val disabled = AdminUserId("admin-disabled")
     private val stranger = AdminUserId("admin-stranger")
+    private val platformOwner = AdminUserId("admin-platform-owner")
     private val createdAt = Instant.parse("2026-01-01T09:00:00Z")
     private val clock = Clock.fixed(Instant.parse("2026-01-02T08:00:00Z"), ZoneOffset.UTC)
 
@@ -54,7 +55,7 @@ class CoOrganizerUseCasesTest {
     private val listOrganizers get() = ListOrganizersQuery(tournamentAccess(), coOrganizerRepository, adminUserRepository)
     private val addCoOrganizer get() = AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, clock)
     private val getTournament get() = GetTournamentQuery(tournamentAccess(), adminUserRepository)
-    private val listTournaments get() = ListTournamentsQuery(tournamentRepository, tournamentAccess(), coOrganizerRepository, adminUserRepository)
+    private val listTournaments get() = ListTournamentsQuery(tournamentRepository, coOrganizerRepository, adminUserRepository)
 
     @BeforeEach
     fun setUp() {
@@ -218,12 +219,26 @@ class CoOrganizerUseCasesTest {
         assertTrue(listTournaments.list(stranger).isEmpty())
     }
 
-    private fun admin(id: AdminUserId, email: String, status: AdminStatus) = AdminUser(
+    @Test
+    fun `the platform owner neither reads nor lists a tournament they do not organize`() {
+        // The platform Owner role grants no access to other admins' tournaments.
+        adminUserRepository.save(admin(platformOwner, "platform-owner@example.com", AdminStatus.ACTIVE, AdminRole.OWNER))
+
+        assertFailsWith<NotFoundException> { getTournament.get(tournamentA, platformOwner) }
+        assertTrue(listTournaments.list(platformOwner).isEmpty())
+    }
+
+    private fun admin(
+        id: AdminUserId,
+        email: String,
+        status: AdminStatus,
+        role: AdminRole = AdminRole.ADMIN,
+    ) = AdminUser(
         id = id,
         email = email,
         passwordHash = "hash",
         status = status,
-        role = AdminRole.ADMIN,
+        role = role,
         createdAt = createdAt,
     )
 

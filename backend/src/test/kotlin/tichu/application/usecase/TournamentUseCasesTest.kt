@@ -58,7 +58,7 @@ class TournamentUseCasesTest {
         save(admin(AdminUserId("admin-owner"), "owner@example.com"))
         save(admin(AdminUserId("admin-intruder"), "intruder@example.com"))
     }
-    private val listTournaments = ListTournamentsQuery(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()), InMemoryCoOrganizerRepository(), adminUserRepository)
+    private val listTournaments = ListTournamentsQuery(repository, InMemoryCoOrganizerRepository(), adminUserRepository)
     private val getTournament = GetTournamentQuery(TournamentAccess(repository, InMemoryCoOrganizerRepository()), adminUserRepository)
     private val updateTournament = UpdateTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()), teamRepository, laterClock)
     private val deleteTournament = DeleteTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()))

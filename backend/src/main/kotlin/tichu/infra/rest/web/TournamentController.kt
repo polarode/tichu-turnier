@@ -86,7 +86,7 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): StartedTournamentResponse {
         val started = startTournament.start(TournamentId(id), principal.adminUserId)
-        return StartedTournamentResponse.from(getTournament.get(started.tournament.id, principal.adminUserId), started)
+        return StartedTournamentResponse.from(viewOf(started.tournament.id, principal.adminUserId), started)
     }
 
     @GetMapping("/{id}/rounds")

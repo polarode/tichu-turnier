@@ -21,12 +21,7 @@ data class OrganizersResponse(
     companion object {
         fun from(organizers: Organizers): OrganizersResponse = OrganizersResponse(
             lead = LeadOrganizerResponse(email = organizers.lead.email),
-            coOrganizers = organizers.coOrganizers.map { organizer ->
-                CoOrganizerResponse(
-                    email = organizer.email,
-                    addedAt = requireNotNull(organizer.addedAt) { "a co-organizer always has an addedAt" },
-                )
-            },
+            coOrganizers = organizers.coOrganizers.map { CoOrganizerResponse(email = it.email, addedAt = it.addedAt) },
         )
     }
 }

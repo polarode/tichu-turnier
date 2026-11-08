@@ -14,16 +14,19 @@ interface ListOrganizers {
 
 /** The organizers of one tournament: exactly one [lead] plus the [coOrganizers] in the order they were added. */
 data class Organizers(
-    val lead: Organizer,
-    val coOrganizers: List<Organizer>,
+    val lead: LeadOrganizer,
+    val coOrganizers: List<CoOrganizerEntry>,
 )
 
-/**
- * One organizer as the organizer list shows it. [addedAt] is null for the lead organizer,
- * who is fixed for the tournament's lifetime and was never added.
- */
-data class Organizer(
+/** The lead organizer as the organizer list shows it. Fixed for the tournament's lifetime, never added. */
+data class LeadOrganizer(
     val adminUserId: AdminUserId,
     val email: String,
-    val addedAt: Instant?,
+)
+
+/** A co-organizer as the organizer list shows it, with the moment the access was granted. */
+data class CoOrganizerEntry(
+    val adminUserId: AdminUserId,
+    val email: String,
+    val addedAt: Instant,
 )

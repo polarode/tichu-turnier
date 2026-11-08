@@ -458,7 +458,6 @@ export const en = {
     'scoring.overviewLink': 'Back to team overview',
     'scoring.viewTable': 'View table',
     'scoring.allEntered': 'All games are entered.',
-    'scoring.allEntered.link': 'Go to confirmation',
     'scoring.completed': 'This table is completed; its games are final.',
     'scoring.tournamentLocked': 'The tournament is over — the games can no longer be changed.',
     'scoring.changedElsewhere': 'The other team changed this game.',

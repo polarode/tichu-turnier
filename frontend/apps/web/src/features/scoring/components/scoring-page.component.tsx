@@ -115,20 +115,7 @@ export function ScoringPage({
                 <p className="rounded-md bg-muted px-3 py-2 text-sm">
                     {t('scoring.tournamentLocked')}
                 </p>
-            ) : allEntered ? (
-                <div className="flex flex-col gap-3 rounded-md bg-success-soft px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                    <p className="flex items-center gap-2 font-medium text-success">
-                        <CircleCheck aria-hidden="true" className="size-4 shrink-0" />
-                        {t('scoring.allEntered')}
-                    </p>
-                    <Link
-                        to="/team"
-                        className={buttonVariants({ variant: 'outline', size: 'touch' })}
-                    >
-                        {t('scoring.allEntered.link')}
-                    </Link>
-                </div>
-            ) : null}
+            ) : null }
 
             <TabList
                 id="game"
@@ -201,6 +188,21 @@ export function ScoringPage({
                     tournamentLocked={tournamentLocked}
                 />
             </TabPanel>
+
+            {allEntered ? (
+                <div className="flex flex-col gap-3 rounded-md bg-success-soft px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p className="flex items-center gap-2 font-medium text-success">
+                        <CircleCheck aria-hidden="true" className="size-4 shrink-0" />
+                        {t('scoring.allEntered')}
+                    </p>
+                    <Link
+                        to="/team"
+                        className={buttonVariants({ variant: 'outline', size: 'touch' })}
+                    >
+                        {t('scoring.overviewLink')}
+                    </Link>
+                </div>
+            ) : null}
 
             {/* Always mounted so screen readers announce the text when it appears. */}
             <p

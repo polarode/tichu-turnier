@@ -470,7 +470,6 @@ export const de: Catalog = {
     'scoring.overviewLink': 'Zur Teamübersicht',
     'scoring.viewTable': 'Tisch ansehen',
     'scoring.allEntered': 'Alle Spiele sind eingetragen.',
-    'scoring.allEntered.link': 'Zur Bestätigung',
     'scoring.completed': 'Dieser Tisch ist abgeschlossen; seine Spiele sind endgültig.',
     'scoring.tournamentLocked':
         'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',

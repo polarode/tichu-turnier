@@ -171,7 +171,7 @@ describe('/team/score', () => {
         renderApp('/team/score');
 
         const prompt = (await screen.findByText('Alle Spiele sind eingetragen.')).parentElement!;
-        expect(within(prompt).getByRole('link', { name: 'Zur Bestätigung' })).toHaveAttribute(
+        expect(within(prompt).getByRole('link', { name: 'Zur Teamübersicht' })).toHaveAttribute(
             'href',
             '/team',
         );

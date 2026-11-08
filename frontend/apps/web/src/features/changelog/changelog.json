@@ -211,6 +211,10 @@
             {
                 "type": "improvement",
                 "text": "The live indicator is now a small dot that pulses red while the page is receiving live updates and turns into a grey ring while it reconnects, and it switches on as soon as the page connects"
+            },
+            {
+                "type": "feature",
+                "text": "The lead organizer can remove co-organizers from the Organizers tab, and co-organizers can leave a tournament themselves. Disabled admin accounts are marked on the list."
             }
         ]
     }

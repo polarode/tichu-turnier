@@ -1,6 +1,7 @@
 import { type QueryKey } from '@tanstack/react-query';
 
 import {
+    organizersQueryKey,
     roundsQueryKey,
     standingsQueryKey,
     teamsQueryKey,
@@ -15,6 +16,7 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
     const tournament = tournamentQueryKey(tournamentId);
     const rounds = roundsQueryKey(tournamentId);
     const standings = standingsQueryKey(tournamentId);
+    const organizers = organizersQueryKey(tournamentId);
     const queryKeysByEvent: Record<TournamentEventType, readonly QueryKey[]> = {
         // A recorded game or a confirmation change alters the tables' results.
         [TournamentEventType.GAME_RECORDED]: [rounds, standings],
@@ -27,6 +29,9 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
         // Only the tournament's own fields change.
         [TournamentEventType.TOTAL_ROUNDS_CHANGED]: [tournament],
         [TournamentEventType.RESULTS_PUBLISHED]: [tournament],
+        // Remove, leave and add change the organizer list; the tournament is refetched too so
+        // a removed admin's tournament query hits not-found and the page can send them away.
+        [TournamentEventType.ORGANIZERS_CHANGED]: [organizers, tournament],
     };
     return Object.entries(queryKeysByEvent).map(([event, queryKeys]) => ({ event, queryKeys }));
 }

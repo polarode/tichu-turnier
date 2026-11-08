@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { organizersQueryKey } from '@/shared/constants/query-keys.ts';
+import {
+    organizersQueryKey,
+    QueryKeys,
+    roundsQueryKey,
+    standingsQueryKey,
+    teamsQueryKey,
+    tournamentQueryKey,
+} from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 
 /**
@@ -21,5 +28,41 @@ export function useAddCoOrganizer(tournamentId: string) {
         mutationFn: (email: string) => TournamentRepository.addCoOrganizer(tournamentId, email),
         onSuccess: (organizers) =>
             queryClient.setQueryData(organizersQueryKey(tournamentId), organizers),
+    });
+}
+
+/** The lead organizer removes a co-organizer; the list refetches and the dashboard list follows. */
+export function useRemoveCoOrganizer(tournamentId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (adminUserId: string) =>
+            TournamentRepository.removeCoOrganizer(tournamentId, adminUserId),
+        onSuccess: () =>
+            Promise.all([
+                queryClient.invalidateQueries({ queryKey: organizersQueryKey(tournamentId) }),
+                queryClient.invalidateQueries({ queryKey: [QueryKeys.TOURNAMENTS] }),
+            ]),
+    });
+}
+
+/**
+ * A co-organizer leaves the tournament (the caller passes their own admin id). The
+ * tournament's queries are dropped instead of refetched: a refetch would now hit not-found
+ * and send the admin to the dashboard with the lost-access notice. The dashboard list is
+ * refetched, so the tournament disappears from it.
+ */
+export function useLeaveTournament(tournamentId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (adminUserId: string) =>
+            TournamentRepository.removeCoOrganizer(tournamentId, adminUserId),
+        onSuccess: async () => {
+            queryClient.removeQueries({ queryKey: tournamentQueryKey(tournamentId) });
+            queryClient.removeQueries({ queryKey: organizersQueryKey(tournamentId) });
+            queryClient.removeQueries({ queryKey: teamsQueryKey(tournamentId) });
+            queryClient.removeQueries({ queryKey: roundsQueryKey(tournamentId) });
+            queryClient.removeQueries({ queryKey: standingsQueryKey(tournamentId) });
+            await queryClient.invalidateQueries({ queryKey: [QueryKeys.TOURNAMENTS] });
+        },
     });
 }

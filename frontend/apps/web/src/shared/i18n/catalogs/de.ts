@@ -69,6 +69,7 @@ export const de: Catalog = {
     'error.noActiveAdminWithEmail': 'Kein aktives Admin-Konto mit dieser E-Mail-Adresse.',
     'error.cannotAddSelfAsCoOrganizer': 'Du leitest dieses Turnier bereits.',
     'error.alreadyCoOrganizer': 'Dieses Admin-Konto ist bereits Co-Organisator.',
+    'error.leadOrganizerCannotLeave': 'Die Turnierleitung kann das Turnier nicht verlassen.',
     'error.inviteInvalid': 'Dieser Einladungslink ist ungültig. Bitte um einen neuen Link bitten.',
     'error.inviteExpired':
         'Dieser Einladungslink ist abgelaufen. Bitte um einen neuen Link bitten.',
@@ -274,6 +275,20 @@ export const de: Catalog = {
     'organizers.form.placeholder': 'name@beispiel.de',
     'organizers.form.add': 'Hinzufügen',
     'organizers.form.adding': 'Wird hinzugefügt…',
+    'organizers.notice.lostAccess': 'Du hast keinen Zugriff mehr auf dieses Turnier.',
+    'organizers.notice.dismiss': 'Schließen',
+    'organizers.notice.left': 'Du hast {name} verlassen.',
+    'organizers.disabled': 'Deaktiviert',
+    'organizers.remove': 'Entfernen',
+    'organizers.remove.title': 'Co-Organisator entfernen?',
+    'organizers.remove.description':
+        'Dieser Co-Organisator verliert sofort den Zugriff auf das Turnier:',
+    'organizers.remove.confirm': 'Entfernen',
+    'organizers.leave': 'Verlassen',
+    'organizers.leave.title': 'Turnier verlassen?',
+    'organizers.leave.description':
+        'Du verlierst den Zugriff, bis die Leitung dich wieder hinzufügt.',
+    'organizers.leave.confirm': 'Verlassen',
 
     'teams.section.title': 'Teams',
     'teams.section.add': 'Team hinzufügen',

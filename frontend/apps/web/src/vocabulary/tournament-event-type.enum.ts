@@ -8,6 +8,7 @@ export const TournamentEventType = {
     TOTAL_ROUNDS_CHANGED: 'TOTAL_ROUNDS_CHANGED',
     TOURNAMENT_FINISHED: 'TOURNAMENT_FINISHED',
     RESULTS_PUBLISHED: 'RESULTS_PUBLISHED',
+    ORGANIZERS_CHANGED: 'ORGANIZERS_CHANGED',
 } as const;
 
 export type TournamentEventType = (typeof TournamentEventType)[keyof typeof TournamentEventType];

@@ -152,6 +152,11 @@ async function addCoOrganizer(id: string, email: string): Promise<Organizers> {
     return organizersDtoToDomain(organizersDtoSchema.parse(data));
 }
 
+/** Removes a co-organizer (lead organizer), or leaves the tournament (a co-organizer removing themself). */
+async function removeCoOrganizer(id: string, adminUserId: string): Promise<void> {
+    await apiClient.delete(`/api/tournaments/${id}/organizers/${adminUserId}`);
+}
+
 export const TournamentRepository = {
     list,
     get,
@@ -170,4 +175,5 @@ export const TournamentRepository = {
     publish,
     listOrganizers,
     addCoOrganizer,
+    removeCoOrganizer,
 };

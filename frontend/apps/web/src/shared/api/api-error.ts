@@ -39,3 +39,8 @@ export class ApiError extends Error {
         });
     }
 }
+
+/** True when the backend answered NOT_FOUND, e.g. for an unknown tournament or lost access. */
+export function isNotFound(error: unknown): boolean {
+    return error instanceof ApiError && error.code === 'NOT_FOUND';
+}

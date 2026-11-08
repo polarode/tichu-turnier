@@ -31,6 +31,7 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     NO_ACTIVE_ADMIN_WITH_EMAIL: 'error.noActiveAdminWithEmail',
     CANNOT_ADD_SELF_AS_CO_ORGANIZER: 'error.cannotAddSelfAsCoOrganizer',
     ALREADY_CO_ORGANIZER: 'error.alreadyCoOrganizer',
+    LEAD_ORGANIZER_CANNOT_LEAVE: 'error.leadOrganizerCannotLeave',
     TEAM_ACCESS_INVALID: 'error.teamAccessInvalid',
     TOURNAMENT_NOT_STARTABLE: 'error.tournamentNotStartable',
     INSUFFICIENT_TEAMS: 'error.insufficientTeams',

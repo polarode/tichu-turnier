@@ -14,7 +14,7 @@ import {
 import { usePublicTournamentLiveStream } from '@/features/public-tournaments/hooks/public-tournament-live-stream.hook.ts';
 import { tableHeading } from '@/features/scoring/labels.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
-import { ApiError } from '@/shared/api/api-error.ts';
+import { isNotFound } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { StatisticsPanel } from '@/shared/components/statistics-panel.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
@@ -145,11 +145,6 @@ function PublicTournamentBody({ tournamentId, tab, onTabChange }: PublicTourname
             )}
         </section>
     );
-}
-
-/** The backend answers NOT_FOUND for setup, non-public and unknown tournaments alike. */
-function isNotFound(error: unknown): boolean {
-    return error instanceof ApiError && error.code === 'NOT_FOUND';
 }
 
 function FinalRankingSection({ entries }: { entries: StandingsEntry[] }) {

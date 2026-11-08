@@ -4,10 +4,20 @@ import { organizersDtoToDomain } from '@/tournament-api/mappers/organizers.mappe
 import type { OrganizersDto } from '@/tournament-api/dtos/organizers.dto.ts';
 
 const dto: OrganizersDto = {
-    lead: { email: 'lead@example.com' },
+    lead: { email: 'lead@example.com', disabled: false },
     coOrganizers: [
-        { email: 'second@example.com', addedAt: '2026-02-01T09:00:00.000Z' },
-        { email: 'third@example.com', addedAt: '2026-02-03T17:45:30.000Z' },
+        {
+            adminUserId: 'admin-2',
+            email: 'second@example.com',
+            addedAt: '2026-02-01T09:00:00.000Z',
+            disabled: false,
+        },
+        {
+            adminUserId: 'admin-3',
+            email: 'third@example.com',
+            addedAt: '2026-02-03T17:45:30.000Z',
+            disabled: true,
+        },
     ],
 };
 
@@ -15,7 +25,7 @@ describe('organizersDtoToDomain', () => {
     it('maps the lead organizer and the co-organizers, parsing addedAt into Date objects', () => {
         const organizers = organizersDtoToDomain(dto);
 
-        expect(organizers.lead).toEqual({ email: 'lead@example.com' });
+        expect(organizers.lead).toEqual({ email: 'lead@example.com', disabled: false });
         expect(
             organizers.coOrganizers.every((organizer) => organizer.addedAt instanceof Date),
         ).toBe(true);
@@ -31,6 +41,28 @@ describe('organizersDtoToDomain', () => {
             'second@example.com',
             'third@example.com',
         ]);
+    });
+
+    it('maps each co-organizer admin id and disabled flag', () => {
+        const organizers = organizersDtoToDomain(dto);
+
+        expect(organizers.coOrganizers.map((organizer) => organizer.adminUserId)).toEqual([
+            'admin-2',
+            'admin-3',
+        ]);
+        expect(organizers.coOrganizers.map((organizer) => organizer.disabled)).toEqual([
+            false,
+            true,
+        ]);
+    });
+
+    it('maps a disabled lead organizer as disabled', () => {
+        const organizers = organizersDtoToDomain({
+            ...dto,
+            lead: { email: 'lead@example.com', disabled: true },
+        });
+
+        expect(organizers.lead).toEqual({ email: 'lead@example.com', disabled: true });
     });
 
     it('maps an empty co-organizer list to an empty list', () => {

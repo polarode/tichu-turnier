@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { buttonVariants } from '@tichu/ui/button.tsx';
 import { Switch } from '@tichu/ui/switch.tsx';
@@ -22,7 +22,9 @@ import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { PageHeader } from '@/shared/components/page-header.component.tsx';
+import { isNotFound } from '@/shared/api/api-error.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
+import { useNoticeStore } from '@/shared/stores/notice.store.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
@@ -97,6 +99,14 @@ function TournamentDetailBody() {
         setRoundsViewKey((key) => key + 1);
         void navigate({ search: { tab: 'rounds' }, replace: true });
     };
+    const showNoticeUnlessPending = useNoticeStore((state) => state.showUnlessPending);
+    // NOT_FOUND on this query means the admin lost access (removed or left): tell them on the dashboard.
+    const lostAccess = tournamentQuery.isError && isNotFound(tournamentQuery.error);
+    useEffect(() => {
+        if (!lostAccess) return;
+        showNoticeUnlessPending({ key: 'organizers.notice.lostAccess' });
+        void navigate({ to: '/admin' });
+    }, [lostAccess, navigate, showNoticeUnlessPending]);
 
     if (tournamentQuery.isPending) {
         return <p className="text-muted-foreground">{t('common.loading')}</p>;
@@ -254,6 +264,7 @@ function TournamentDetailBody() {
                         ) : activeTab === 'organizers' ? (
                             <OrganizersSection
                                 tournamentId={tournament.id}
+                                tournamentName={tournament.name}
                                 isLead={tournament.organizerRole === OrganizerRole.LEAD}
                             />
                         ) : (

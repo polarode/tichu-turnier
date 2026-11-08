@@ -67,10 +67,12 @@ function team(id: string, name: string): Team {
 
 function organizers(...coEmails: string[]): Organizers {
     return {
-        lead: { email: 'lead@example.com' },
+        lead: { email: 'lead@example.com', disabled: false },
         coOrganizers: coEmails.map((email) => ({
+            adminUserId: `admin-${email}`,
             email,
             addedAt: new Date('2026-02-01T00:00:00Z'),
+            disabled: false,
         })),
     };
 }
@@ -177,6 +179,43 @@ describe('organizers as lead organizer', () => {
         expect(message).toBeInTheDocument();
         expect(screen.getByLabelText('E-Mail des Admins')).toHaveAttribute('aria-invalid', 'true');
     });
+
+    it('removes a co-organizer after confirmation and drops the row after the refetch', async () => {
+        tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.LEAD));
+        tournaments.listOrganizers
+            .mockResolvedValueOnce(organizers('co@example.com'))
+            .mockResolvedValueOnce(organizers());
+        tournaments.removeCoOrganizer.mockResolvedValue(undefined);
+        renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Entfernen' }));
+        const confirmDialog = await screen.findByRole('dialog', {
+            name: 'Co-Organisator entfernen?',
+        });
+        await userEvent.click(within(confirmDialog).getByRole('button', { name: 'Entfernen' }));
+
+        await waitFor(() =>
+            expect(tournaments.removeCoOrganizer).toHaveBeenCalledWith(
+                't-1',
+                'admin-co@example.com',
+            ),
+        );
+        await waitFor(() => expect(screen.queryByText('co@example.com')).not.toBeInTheDocument());
+    });
+
+    it('offers no leave button to the lead organizer', async () => {
+        tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.LEAD));
+        tournaments.listOrganizers.mockResolvedValue(organizers('co@example.com'));
+        renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+
+        expect(await screen.findByText('co@example.com')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Verlassen' })).not.toBeInTheDocument();
+    });
 });
 
 describe('organizers as co-organizer', () => {
@@ -191,5 +230,99 @@ describe('organizers as co-organizer', () => {
         expect(await screen.findByText('co@example.com')).toBeInTheDocument();
         expect(screen.queryByLabelText('E-Mail des Admins')).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Hinzufügen' })).not.toBeInTheDocument();
+    });
+
+    it('shows Leave only on the own row and no remove buttons', async () => {
+        tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.CO));
+        tournaments.listOrganizers.mockResolvedValue({
+            lead: { email: 'lead@example.com', disabled: false },
+            coOrganizers: [
+                {
+                    adminUserId: 'admin-1',
+                    email: 'admin@example.com',
+                    addedAt: new Date('2026-02-01T00:00:00Z'),
+                    disabled: false,
+                },
+                {
+                    adminUserId: 'admin-2',
+                    email: 'other@example.com',
+                    addedAt: new Date('2026-02-02T00:00:00Z'),
+                    disabled: false,
+                },
+            ],
+        });
+        renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+
+        const ownRow = (await screen.findByText('admin@example.com')).closest('li');
+        const otherRow = screen.getByText('other@example.com').closest('li');
+        expect(ownRow).not.toBeNull();
+        expect(otherRow).not.toBeNull();
+        expect(within(ownRow!).getByRole('button', { name: 'Verlassen' })).toBeInTheDocument();
+        expect(
+            within(otherRow!).queryByRole('button', { name: 'Verlassen' }),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Entfernen' })).not.toBeInTheDocument();
+    });
+
+    it('lets the co-organizer leave and lands on the dashboard with the notice', async () => {
+        tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.CO));
+        tournaments.list.mockResolvedValue([tournament('SETUP', OrganizerRole.CO)]);
+        tournaments.listOrganizers.mockResolvedValue({
+            lead: { email: 'lead@example.com', disabled: false },
+            coOrganizers: [
+                {
+                    adminUserId: 'admin-1',
+                    email: 'admin@example.com',
+                    addedAt: new Date('2026-02-01T00:00:00Z'),
+                    disabled: false,
+                },
+            ],
+        });
+        tournaments.removeCoOrganizer.mockResolvedValue(undefined);
+        renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+        const ownRow = (await screen.findByText('admin@example.com')).closest('li');
+        await userEvent.click(within(ownRow!).getByRole('button', { name: 'Verlassen' }));
+        const confirmDialog = await screen.findByRole('dialog', { name: 'Turnier verlassen?' });
+        await userEvent.click(within(confirmDialog).getByRole('button', { name: 'Verlassen' }));
+
+        await waitFor(() =>
+            expect(tournaments.removeCoOrganizer).toHaveBeenCalledWith('t-1', 'admin-1'),
+        );
+        expect(await screen.findByRole('status')).toHaveTextContent(
+            'Du hast Jahresturnier verlassen.',
+        );
+        expect(tournaments.get).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('organizers disabled marking', () => {
+    it('marks a disabled lead and a disabled co-organizer with a Disabled badge', async () => {
+        tournaments.get.mockResolvedValue(tournament('SETUP', OrganizerRole.LEAD));
+        tournaments.listOrganizers.mockResolvedValue({
+            lead: { email: 'lead@example.com', disabled: true },
+            coOrganizers: [
+                {
+                    adminUserId: 'admin-co',
+                    email: 'co@example.com',
+                    addedAt: new Date('2026-02-01T00:00:00Z'),
+                    disabled: true,
+                },
+            ],
+        });
+        renderApp('/admin/tournaments/t-1');
+
+        const sections = await screen.findByRole('tablist', { name: 'Turnierbereiche' });
+        await userEvent.click(within(sections).getByRole('tab', { name: 'Organisatoren' }));
+
+        const leadRow = (await screen.findByText('lead@example.com')).closest('li');
+        const coRow = screen.getByText('co@example.com').closest('li');
+        expect(within(leadRow!).getByText('Deaktiviert')).toBeInTheDocument();
+        expect(within(coRow!).getByText('Deaktiviert')).toBeInTheDocument();
     });
 });

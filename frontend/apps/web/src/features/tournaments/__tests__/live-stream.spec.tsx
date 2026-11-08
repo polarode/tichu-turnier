@@ -113,6 +113,22 @@ describe('live stream of an active tournament', () => {
         },
     );
 
+    it('refetches the organizers and the tournament on ORGANIZERS_CHANGED', async () => {
+        tournaments.listOrganizers.mockResolvedValue({
+            lead: { email: '[EMAIL]', disabled: false },
+            coOrganizers: [],
+        });
+        renderApp('/admin/tournaments/t-1?tab=organizers', { initialLocale: 'en' });
+        const source = await openedSource();
+        await waitFor(() => expect(tournaments.listOrganizers).toHaveBeenCalledTimes(1));
+        const tournamentBefore = tournaments.get.mock.calls.length;
+
+        act(() => source.emit('ORGANIZERS_CHANGED', eventPayload('ORGANIZERS_CHANGED')));
+
+        await waitFor(() => expect(tournaments.listOrganizers).toHaveBeenCalledTimes(2));
+        expect(tournaments.get.mock.calls.length).toBeGreaterThan(tournamentBefore);
+    });
+
     it('refetches tournament, teams, rounds and standings on every open, including a reconnect', async () => {
         renderApp('/admin/tournaments/t-1?tab=standings', { initialLocale: 'en' });
         const first = await openedSource();

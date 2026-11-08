@@ -33,6 +33,8 @@ export const ERROR_CODES = [
     'CANNOT_ADD_SELF_AS_CO_ORGANIZER',
     /** Adding an admin who already co-organizes the tournament. */
     'ALREADY_CO_ORGANIZER',
+    /** The lead organizer targeting their own id on the organizer removal endpoint. */
+    'LEAD_ORGANIZER_CANNOT_LEAVE',
 
     /** A team access link cannot be exchanged; all causes share this one code (ADR 0001). */
     'TEAM_ACCESS_INVALID',

@@ -35,6 +35,8 @@ const queryKeysByEvent: Record<TournamentEventType, readonly QueryKey[]> = {
     ],
     // The publish brings the status change and the Final Ranking.
     [TournamentEventType.RESULTS_PUBLISHED]: [teamOverviewQueryKey(), teamFinalRankingQueryKey()],
+    // Organizer changes are not part of the team's view; the team stream never sends them.
+    [TournamentEventType.ORGANIZERS_CHANGED]: [],
 };
 
 const TEAM_SUBSCRIPTIONS: SseSubscription[] = Object.entries(queryKeysByEvent).map(

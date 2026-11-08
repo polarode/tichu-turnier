@@ -1,12 +1,15 @@
+import { useEffect, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
+import { X } from 'lucide-react';
 import { Badge } from '@tichu/ui/badge.tsx';
-import { buttonVariants } from '@tichu/ui/button.tsx';
+import { Button, buttonVariants } from '@tichu/ui/button.tsx';
 
 import { teamsQueryOptions } from '@/features/teams/hooks/team-queries.hook.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { useTournaments } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
+import { useNoticeStore, type Notice } from '@/shared/stores/notice.store.ts';
 import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 
 /**
@@ -35,6 +38,8 @@ export function Dashboard() {
                     {t('dashboard.create')}
                 </Link>
             </div>
+
+            <DashboardNotice />
 
             {tournamentsQuery.isPending ? (
                 <p className="text-muted-foreground">{t('common.loading')}</p>
@@ -87,5 +92,51 @@ export function Dashboard() {
                 </ul>
             )}
         </section>
+    );
+}
+
+/**
+ * The notice a previous screen handed over, shown once. The store is cleared when the
+ * dashboard unmounts; the banner keeps its own copy, because StrictMode runs that cleanup
+ * right after mount in development and must not hide the banner.
+ */
+function DashboardNotice() {
+    const { t } = useI18n();
+    const [notice, setNotice] = useState<Notice | null>(() => useNoticeStore.getState().notice);
+    const dismissStored = useNoticeStore((state) => state.dismiss);
+
+    useEffect(() => () => dismissStored(), [dismissStored]);
+
+    if (!notice) return null;
+
+    const dismiss = () => {
+        setNotice(null);
+        dismissStored();
+    };
+
+    return (
+        <div
+            role="status"
+            className="flex items-center justify-between gap-3 rounded-md bg-muted px-3 py-2 text-sm"
+        >
+            <span>{fillPlaceholders(t(notice.key), notice.values)}</span>
+            <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={t('organizers.notice.dismiss')}
+                onClick={dismiss}
+            >
+                <X className="size-4" aria-hidden="true" />
+            </Button>
+        </div>
+    );
+}
+
+/** Replaces each `{name}` in the catalog text with its value. */
+function fillPlaceholders(template: string, values: Record<string, string> = {}): string {
+    return Object.entries(values).reduce(
+        (text, [name, value]) => text.replaceAll(`{${name}}`, value),
+        template,
     );
 }

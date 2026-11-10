@@ -124,7 +124,11 @@ export function AccessLinkDialog({ tournamentId, team, onClose }: AccessLinkDial
                             <div className="flex items-center gap-4">
                                 <QRCodeSVG
                                     value={revealed.link}
-                                    size={128}
+                                    // The 4-module quiet zone keeps the code scannable on
+                                    // a dark background.
+                                    size={160}
+                                    marginSize={4}
+                                    className="rounded-md"
                                     role="img"
                                     aria-label={t('teams.accessLink.qr')}
                                 />

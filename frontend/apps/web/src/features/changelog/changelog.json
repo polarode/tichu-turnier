@@ -221,5 +221,14 @@
                 "text": "More room for team names in the rounds overview"
             }
         ]
+    },
+    {
+        "date": "2026-11-10",
+        "changes": [
+            {
+                "type": "fix",
+                "text": "Access link QR codes scan reliably in dark mode"
+            }
+        ]
     }
 ]

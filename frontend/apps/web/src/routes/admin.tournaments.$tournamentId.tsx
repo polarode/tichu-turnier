@@ -256,6 +256,8 @@ function TournamentDetailBody() {
                                 key={roundsViewKey}
                                 tournamentId={tournament.id}
                                 teams={teams}
+                                tournamentStatus={tournament.status}
+                                bonuses={tournament.settings}
                             />
                         ) : activeTab === 'standings' ? (
                             <StandingsSection tournamentId={tournament.id} final={isFinal} />

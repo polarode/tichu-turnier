@@ -512,6 +512,30 @@ describe('/team confirmation panel', () => {
         ]);
     });
 
+    it('marks only the game the organizer corrected in its tile foot', async () => {
+        const corrected: RecordedGame = {
+            ...game(1),
+            correction: {
+                correctedBy: 'Organizer',
+                correctedAt: new Date('2026-11-09T18:30:00Z'),
+            },
+        };
+        const { panel } = await renderPanel(seatedTable(), [corrected, game(2)]);
+
+        const tiles = gameTiles(within(panel).getByRole('list', { name: 'Spiele' }));
+        expect(tiles[0]).toEqual([
+            'Spiel 1',
+            'Team Alpha, Gewinner 60 +2 Siegpunkte',
+            'Team Beta 40',
+            'Vom Veranstalter korrigiert',
+        ]);
+        expect(tiles[1]).toEqual([
+            'Spiel 2',
+            'Team Alpha, Gewinner 60 +2 Siegpunkte',
+            'Team Beta 40',
+        ]);
+    });
+
     it('confirms through the dialog with the versions the team saw', async () => {
         const user = userEvent.setup();
         const games = [game(1, 3), game(2), game(3), game(4, 2)];

@@ -196,6 +196,7 @@ export const en = {
     'rounds.game': 'Game',
     'rounds.game.beschiss': 'Beschiss',
     'rounds.game.doubleWin': 'Double win',
+    'rounds.game.corrected': 'Corrected by the organizer',
     'rounds.game.missing': 'missing',
     'rounds.games.caption': 'Games',
     'rounds.victoryPoints': 'Victory Points',
@@ -464,6 +465,17 @@ export const en = {
     'scoring.tournamentLocked': 'The tournament is over — the games can no longer be changed.',
     'scoring.changedElsewhere': 'The other team changed this game.',
     'scoring.changedElsewhere.load': 'Load their version',
+    'correction.confirm.title': 'Correct a confirmed game?',
+    'correction.confirm.description':
+        'Every team at the table has already confirmed game {game}. The correction is recorded. Rounds already drawn keep their pairings.',
+    'correction.confirm.action': 'Continue',
+    'correction.editor.title': 'Correct game {game} – {table}',
+    'correction.editor.description':
+        'The correction is recorded. Rounds already drawn keep their pairings.',
+    'correction.editor.close': 'Close',
+    'correction.game.label': 'Correct game {game}',
+    'correction.changedElsewhere': 'This game was changed in the meantime.',
+    'correction.changedElsewhere.load': 'Load the newer version',
 } as const satisfies Record<string, string>;
 
 /** Union of every user-facing string the app can render. */

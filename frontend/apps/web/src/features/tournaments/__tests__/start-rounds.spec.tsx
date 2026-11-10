@@ -10,6 +10,7 @@ import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { standingsQueryKey } from '@/shared/constants/query-keys.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
@@ -494,5 +495,310 @@ describe('rounds section', () => {
                 .map((tab) => tab.textContent),
         ).toEqual(['Teams (2)', 'Organisatoren']);
         expect(screen.getByText('Alpha 1 & Alpha 2')).toBeInTheDocument();
+    });
+});
+
+describe('game correction', () => {
+    const COMPLETED = { status: TableStatus.COMPLETED, confirmedTeamIds: ['team-a', 'team-b'] };
+
+    /** Game 2 as the teams entered it: Alpha's card points 60 (finishing 1st and 3rd), Beta's 40. */
+    function enteredGame2(): RecordedGame {
+        return gameWithFacts(60, 40);
+    }
+
+    /** Game 2 after the organizer corrected Alpha's card points to 65. */
+    function correctedGame2(): RecordedGame {
+        return { ...gameWithFacts(65, 35), version: 2 };
+    }
+
+    function gameWithFacts(alphaPoints: number, betaPoints: number): RecordedGame {
+        const player = (playerId: string, position: number) => ({
+            playerId,
+            position,
+            call: 'NONE' as const,
+            bombs: 0,
+            tichuSuccess: false,
+        });
+        return {
+            gameNumber: 2,
+            version: 1,
+            beschiss: false,
+            correction: null,
+            teams: [
+                {
+                    teamId: 'team-b',
+                    baseScore: betaPoints,
+                    players: [player('team-b-p1', 2), player('team-b-p2', 4)],
+                },
+                {
+                    teamId: 'team-a',
+                    baseScore: alphaPoints,
+                    players: [player('team-a-p1', 1), player('team-a-p2', 3)],
+                },
+            ],
+            outcome: {
+                tichuSuccesses: [],
+                doubleWinTeam: null,
+                teamPoints: { 'team-a': alphaPoints, 'team-b': betaPoints },
+                victoryPoints: { 'team-a': 2, 'team-b': 0 },
+            },
+        };
+    }
+
+    /** The completed table with [game2] in place of the blank game 2. */
+    function completedWith(game2: RecordedGame) {
+        return table(
+            1,
+            'team-a',
+            'team-b',
+            allGames().map((recorded) => (recorded.gameNumber === 2 ? game2 : recorded)),
+            COMPLETED,
+        );
+    }
+
+    it('makes each game of a completed table a button in an active tournament', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [table(1, 'team-a', 'team-b', allGames(), COMPLETED)]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+
+        expect(
+            within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }),
+        ).toBeInTheDocument();
+    });
+
+    it('asks whether to correct the confirmed game, warning that drawn rounds keep their pairings', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [table(1, 'team-a', 'team-b', allGames(), COMPLETED)]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+        await userEvent.click(within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }));
+
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Bestätigtes Spiel korrigieren?',
+        });
+        expect(
+            within(dialog).getByText(/Bereits ausgeloste Runden behalten ihre Paarungen/),
+        ).toBeInTheDocument();
+    });
+
+    it('closes the confirmation on cancel without sending a correction', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [table(1, 'team-a', 'team-b', allGames(), COMPLETED)]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+        await userEvent.click(within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }));
+        const dialog = await screen.findByRole('dialog', {
+            name: 'Bestätigtes Spiel korrigieren?',
+        });
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Abbrechen' }));
+
+        await waitFor(() =>
+            expect(
+                screen.queryByRole('dialog', { name: 'Bestätigtes Spiel korrigieren?' }),
+            ).not.toBeInTheDocument(),
+        );
+        expect(tournaments.correctGame).not.toHaveBeenCalled();
+    });
+
+    it('opens the game editor prefilled with the game as entered once the correction is confirmed', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([round(1, [completedWith(enteredGame2())])]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+        await userEvent.click(within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Weiter' }));
+
+        const editor = await screen.findByRole('dialog', {
+            name: 'Spiel 2 korrigieren – Tisch A',
+        });
+        // Alpha's card points as the teams entered them, and the game is saved as an update.
+        expect(within(editor).getByRole('slider', { name: 'Punkte – Alpha' })).toHaveValue('60');
+        expect(within(editor).getByRole('button', { name: 'Spiel aktualisieren' })).toBeEnabled();
+    });
+
+    it('saves the correction at the table, closes the editor and refreshes the rounds and standings', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds
+            .mockResolvedValueOnce([round(1, [completedWith(enteredGame2())])])
+            .mockResolvedValue([round(1, [completedWith(correctedGame2())])]);
+        tournaments.correctGame.mockResolvedValue(correctedGame2());
+        const { queryClient } = renderApp('/admin/tournaments/t-1');
+        // Standings sit in the cache, as after a visit to the Rangliste tab.
+        queryClient.setQueryData(standingsQueryKey('t-1'), []);
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+        await userEvent.click(within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Weiter' }));
+        const editor = await screen.findByRole('dialog', {
+            name: 'Spiel 2 korrigieren – Tisch A',
+        });
+        await userEvent.click(within(editor).getByRole('button', { name: '5 Punkte mehr' }));
+        await userEvent.click(within(editor).getByRole('button', { name: 'Spiel aktualisieren' }));
+
+        // The table ref and the game's facts, with the version it was read with.
+        expect(tournaments.correctGame).toHaveBeenCalledWith(
+            { tournamentId: 't-1', roundNumber: 1, tableNumber: 1 },
+            {
+                gameNumber: 2,
+                beschiss: false,
+                version: 1,
+                teams: [
+                    {
+                        teamId: 'team-a',
+                        baseScore: 65,
+                        players: [
+                            { playerId: 'team-a-p1', position: 1, call: 'NONE', bombs: 0 },
+                            { playerId: 'team-a-p2', position: 3, call: 'NONE', bombs: 0 },
+                        ],
+                    },
+                    {
+                        teamId: 'team-b',
+                        baseScore: 35,
+                        players: [
+                            { playerId: 'team-b-p1', position: 2, call: 'NONE', bombs: 0 },
+                            { playerId: 'team-b-p2', position: 4, call: 'NONE', bombs: 0 },
+                        ],
+                    },
+                ],
+            },
+        );
+        await waitFor(() =>
+            expect(
+                screen.queryByRole('dialog', { name: 'Spiel 2 korrigieren – Tisch A' }),
+            ).not.toBeInTheDocument(),
+        );
+        // The rounds show the corrected game, and the standings are marked stale.
+        await waitFor(() =>
+            expect(
+                gameTiles(within(section).getByRole('list', { name: 'Spiele – Tisch A' }))[1],
+            ).toEqual(['Spiel 2', 'Alpha, Gewinner 65 +2 Siegpunkte', 'Beta 35']),
+        );
+        expect(queryClient.getQueryState(standingsQueryKey('t-1'))?.isInvalidated).toBe(true);
+    });
+
+    it('marks the corrected game in its tile foot, the entered games unmarked', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                completedWith({
+                    ...correctedGame2(),
+                    correction: {
+                        correctedBy: 'Organizer',
+                        correctedAt: new Date('2026-11-09T18:30:00Z'),
+                    },
+                }),
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(gameTiles(games)[1]).toEqual([
+            'Spiel 2',
+            'Alpha, Gewinner 65 +2 Siegpunkte',
+            'Beta 35',
+            'Vom Veranstalter korrigiert',
+        ]);
+        expect(within(games).getAllByText('Vom Veranstalter korrigiert')).toHaveLength(1);
+    });
+
+    it('keeps the games of playing and confirming tables plain text', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                table(1, 'team-a', 'team-b', allGames()),
+                table(2, 'team-b', 'team-a', allGames(), {
+                    status: TableStatus.CONFIRMING,
+                    confirmedTeamIds: ['team-b'],
+                }),
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+        await userEvent.click(within(section).getByRole('button', { name: /^Tisch B/ }));
+
+        for (const tableName of ['Tisch A', 'Tisch B']) {
+            const games = within(section).getByRole('list', { name: `Spiele – ${tableName}` });
+            expect(within(games).getByText('Spiel 2')).toBeInTheDocument();
+            expect(
+                within(games).queryByRole('button', { name: 'Spiel 2 korrigieren' }),
+            ).not.toBeInTheDocument();
+        }
+    });
+
+    it('keeps the editor open with the localized error when the save is rejected', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([round(1, [completedWith(enteredGame2())])]);
+        tournaments.correctGame.mockRejectedValue(
+            new ApiError({
+                code: 'GAME_CONCURRENT_MODIFICATION',
+                status: 409,
+                field: null,
+                message: 'changed',
+            }),
+        );
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+        await userEvent.click(within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Weiter' }));
+        const editor = await screen.findByRole('dialog', {
+            name: 'Spiel 2 korrigieren – Tisch A',
+        });
+        await userEvent.click(within(editor).getByRole('button', { name: 'Spiel aktualisieren' }));
+
+        expect(
+            await within(editor).findByText(/wurde zwischenzeitlich geändert/),
+        ).toBeInTheDocument();
+        expect(within(editor).getByRole('button', { name: 'Spiel neu laden' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('dialog', { name: 'Spiel 2 korrigieren – Tisch A' }),
+        ).toBeInTheDocument();
+    });
+
+    it('keeps the games plain once the tournament is published', async () => {
+        tournaments.get.mockResolvedValue(tournament('PUBLISHED'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [table(1, 'team-a', 'team-b', allGames(), COMPLETED)]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(await within(section).findByRole('button', { name: /^Tisch A/ }));
+
+        expect(within(section).getByText('Spiel 2')).toBeInTheDocument();
+        expect(
+            within(section).queryByRole('button', { name: 'Spiel 2 korrigieren' }),
+        ).not.toBeInTheDocument();
     });
 });

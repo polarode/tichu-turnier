@@ -7,20 +7,33 @@ import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 import { isCompleted } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Team } from '@/domain/team.domain.ts';
-import { GameResults } from '@/features/scoring/components/game-results.component.tsx';
+import type { ScoringBonuses } from '@/domain/tournament.domain.ts';
+import {
+    GameResults,
+    type GameTileAction,
+} from '@/features/scoring/components/game-results.component.tsx';
 import { TABLE_STATUS_LABEL_KEYS, tableHeading } from '@/features/scoring/labels.ts';
+import { correctionTable } from '@/features/tournaments/correction-table.mapper.ts';
+import { GameCorrectionDialog } from '@/features/tournaments/components/game-correction-dialog.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { TeamDot } from '@/shared/components/team-dot.component.tsx';
+import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
+import { fillPlaceholders } from '@/shared/i18n/fill-placeholders.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { type I18n, useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
+import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 interface RoundsSectionProps {
     tournamentId: string;
     /** Team names for the id → name resolution of the table assignments. */
     teams: readonly Team[];
+    /** Decides whether a completed table's games can be corrected (ADR 0010). */
+    tournamentStatus: TournamentStatus;
+    /** The tournament's bonus settings, which the correction's live totals need. */
+    bonuses: ScoringBonuses;
 }
 
 /**
@@ -33,11 +46,22 @@ interface RoundsSectionProps {
  * names resolve from the teams query; a team that has since disappeared falls
  * back to its raw id so the pairing stays legible.
  */
-export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
+export function RoundsSection({
+    tournamentId,
+    teams,
+    tournamentStatus,
+    bonuses,
+}: RoundsSectionProps) {
     const { t } = useI18n();
     const roundsQuery = useRounds(tournamentId);
     // null = follow the latest round; a number pins the admin's own choice.
     const [pinnedRound, setPinnedRound] = useState<number | null>(null);
+    // A completed table's games are correctable while the tournament is running or finished (ADR 0010).
+    const correctable =
+        tournamentStatus === TournamentStatus.ACTIVE ||
+        tournamentStatus === TournamentStatus.COMPLETED;
+    // The game correction in progress (ADR 0010): the organizer confirms it, then edits the game.
+    const [correction, setCorrection] = useState<CorrectionTarget | null>(null);
 
     const body = (() => {
         if (roundsQuery.isPending) return <LoadingIndicator />;
@@ -56,6 +80,19 @@ export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
         const latest = rounds[rounds.length - 1]!;
         const round = rounds.find((r) => r.number === pinnedRound) ?? latest;
         const teamName = (id: string) => teams.find((team) => team.id === id)?.name ?? id;
+        // The correction's table and game as the latest rounds show them; absent once gone.
+        const correctedTable =
+            correction && findTable(rounds, correction.roundNumber, correction.tableNumber);
+        const correctedTeamTable =
+            correction && correctedTable
+                ? correctionTable({
+                      tournamentId,
+                      roundNumber: correction.roundNumber,
+                      table: correctedTable,
+                      teams,
+                      bonuses,
+                  })
+                : undefined;
 
         return (
             <>
@@ -93,7 +130,48 @@ export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
                     round={round}
                     teamName={teamName}
                     panelled={rounds.length > 1}
+                    onCorrectGame={
+                        correctable
+                            ? (tableNumber, gameNumber) =>
+                                  setCorrection({
+                                      stage: 'confirm',
+                                      roundNumber: round.number,
+                                      tableNumber,
+                                      gameNumber,
+                                  })
+                            : undefined
+                    }
                 />
+                {correction?.stage === 'edit' && correctedTable && correctedTeamTable ? (
+                    <GameCorrectionDialog
+                        table={correctedTeamTable}
+                        gameNumber={correction.gameNumber}
+                        game={correctedTable.games.find(
+                            (game) => game.gameNumber === correction.gameNumber,
+                        )}
+                        onReload={async () =>
+                            findTable(
+                                (await roundsQuery.refetch()).data ?? [],
+                                correction.roundNumber,
+                                correction.tableNumber,
+                            )?.games.find((game) => game.gameNumber === correction.gameNumber)
+                        }
+                        onClose={() => setCorrection(null)}
+                    />
+                ) : null}
+                {correction?.stage === 'confirm' ? (
+                    <ConfirmDialog
+                        titleKey="correction.confirm.title"
+                        description={fillPlaceholders(t('correction.confirm.description'), {
+                            game: String(correction.gameNumber),
+                        })}
+                        confirmLabelKey="correction.confirm.action"
+                        destructive={false}
+                        disabled={false}
+                        onConfirm={() => setCorrection({ ...correction, stage: 'edit' })}
+                        onCancel={() => setCorrection(null)}
+                    />
+                ) : null}
             </>
         );
     })();
@@ -105,6 +183,25 @@ export function RoundsSection({ tournamentId, teams }: RoundsSectionProps) {
     );
 }
 
+/** A game correction in progress: the organizer confirms it, then edits the game (ADR 0010). */
+interface CorrectionTarget {
+    stage: 'confirm' | 'edit';
+    roundNumber: number;
+    tableNumber: number;
+    gameNumber: number;
+}
+
+/** The table [tableNumber] of round [roundNumber], while the rounds still list it. */
+function findTable(
+    rounds: readonly Round[],
+    roundNumber: number,
+    tableNumber: number,
+): TableOverview | undefined {
+    return rounds
+        .find((r) => r.number === roundNumber)
+        ?.tables.find((table) => table.tableNumber === tableNumber);
+}
+
 function isRoundComplete(round: Round): boolean {
     return round.tables.every((table) => isCompleted(table.confirmation));
 }
@@ -114,10 +211,13 @@ function RoundView({
     round,
     teamName,
     panelled,
+    onCorrectGame,
 }: {
     round: Round;
     teamName: (id: string) => string;
     panelled: boolean;
+    /** Set when the tournament allows corrections: a game of a completed table is then a button. */
+    onCorrectGame?: (tableNumber: number, gameNumber: number) => void;
 }) {
     const { t } = useI18n();
     const content = (
@@ -125,7 +225,15 @@ function RoundView({
             <h2 className="font-medium">{`${t('rounds.round')} ${round.number}`}</h2>
             <ul className="flex flex-col divide-y divide-border">
                 {round.tables.map((table) => (
-                    <TableRow key={table.tableNumber} table={table} teamName={teamName} />
+                    <TableRow
+                        key={table.tableNumber}
+                        table={table}
+                        teamName={teamName}
+                        onCorrectGame={
+                            onCorrectGame &&
+                            ((gameNumber) => onCorrectGame(table.tableNumber, gameNumber))
+                        }
+                    />
                 ))}
             </ul>
         </div>
@@ -146,12 +254,30 @@ function RoundView({
  * carries a "Trio" badge. The chip shows how far the table is (S6c, #107): the
  * entry progress while Playing, then the status with the confirmed count.
  */
-function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: string) => string }) {
+function TableRow({
+    table,
+    teamName,
+    onCorrectGame,
+}: {
+    table: TableOverview;
+    teamName: (id: string) => string;
+    /** Makes the games clickable; only a completed table's games can be corrected (ADR 0010). */
+    onCorrectGame?: (gameNumber: number) => void;
+}) {
     const { t } = useI18n();
     const [open, setOpen] = useState(false);
     const gamesId = useId();
     const { confirmedTeamIds } = table.confirmation;
     const chip = tableChip(table, t);
+    const gameAction: GameTileAction | undefined =
+        onCorrectGame && isCompleted(table.confirmation)
+            ? {
+                  kind: 'button',
+                  onSelect: onCorrectGame,
+                  label: (gameNumber) =>
+                      fillPlaceholders(t('correction.game.label'), { game: String(gameNumber) }),
+              }
+            : undefined;
 
     return (
         <li className="flex flex-col gap-1 py-2 text-sm">
@@ -206,6 +332,7 @@ function TableRow({ table, teamName }: { table: TableOverview; teamName: (id: st
                     teams={table.teamIds.map((id) => ({ id, name: teamName(id) }))}
                     schedule={table.schedule}
                     games={table.games}
+                    gameAction={gameAction}
                 />
             </div>
         </li>

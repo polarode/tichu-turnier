@@ -16,6 +16,7 @@ import {
 } from '@/domain/game.domain.ts';
 import { GameEntryForm } from '@/features/scoring/components/game-entry-form.component.tsx';
 import {
+    useRecordGame,
     useReloadCurrentTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
@@ -64,6 +65,7 @@ export function ScoringPage({
 }) {
     const { t } = useI18n();
     const reloadCurrentTable = useReloadCurrentTable();
+    const recordGame = useRecordGame(table);
     const gamesQuery = useTableGames(table);
     // Null until the games load: the default is the linked game, else the first game not yet entered.
     const [picked, setPicked] = useState<number | null>(null);
@@ -183,6 +185,7 @@ export function ScoringPage({
                     table={table}
                     matchup={matchup}
                     gameNumber={selected}
+                    save={recordGame.mutateAsync}
                     existingGame={existingGame}
                     onReload={async () =>
                         (await gamesQuery.refetch()).data?.find(

@@ -232,6 +232,10 @@
             {
                 "type": "feature",
                 "text": "Teams can tap a game in their table overview to enter or edit it"
+            },
+            {
+                "type": "feature",
+                "text": "Correct a game after every team at the table has confirmed it"
             }
         ]
     }

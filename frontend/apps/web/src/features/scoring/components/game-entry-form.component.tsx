@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@tichu/ui/popover.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
 import {
+    type GameWriteInput,
     isFrozen,
     type Matchup,
     type RecordedGame,
@@ -30,7 +31,6 @@ import {
     type PlayerSlot,
 } from '@/features/scoring/game-form.model.ts';
 import { gameFormSchema, type GameFormValues } from '@/features/scoring/scoring-schemas.ts';
-import { useRecordGame } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
@@ -67,6 +67,11 @@ interface GameEntryFormProps {
     matchup: Matchup;
     gameNumber: number;
     /**
+     * Writes the game and resolves with the stored version: the team's create or
+     * update, or an organizer's correction (ADR 0010). Rejections surface as ApiError.
+     */
+    save: (input: GameWriteInput) => Promise<RecordedGame>;
+    /**
      * The stored game for this slot as the server last returned it (polled);
      * absent while nobody entered it. The form keeps the version it loaded, so a
      * newer one arriving mid-edit never overwrites unsaved input.
@@ -89,6 +94,11 @@ interface GameEntryFormProps {
      * server-side, so the form renders read-only from the start.
      */
     tournamentLocked?: boolean;
+    /**
+     * An organizer's correction of a completed table (ADR 0010). The table's freeze
+     * does not apply: the correction is the one write a completed table accepts.
+     */
+    correcting?: boolean;
 }
 
 /**
@@ -114,15 +124,16 @@ export function GameEntryForm({
     table,
     matchup,
     gameNumber,
+    save,
     existingGame,
     onReload,
     onSubmitStart,
     onSaved,
     onFrozen,
     tournamentLocked = false,
+    correcting = false,
 }: GameEntryFormProps) {
     const { t } = useI18n();
-    const recordGame = useRecordGame(table);
 
     // The stored version the form shows and saves against (null-version create when absent).
     const [loaded, setLoaded] = useState<RecordedGame | undefined>(existingGame);
@@ -167,7 +178,7 @@ export function GameEntryForm({
 
     // A frozen table is read-only on arrival; a GAME_CONFIRMED rejection latches
     // the same read-only mode when the table freezes mid-edit.
-    const frozen = isFrozen(table.confirmation);
+    const frozen = !correcting && isFrozen(table.confirmation);
     const confirmed = form.formState.errors.root?.type === 'confirmed';
     const readOnly = frozen || confirmed || tournamentLocked;
 
@@ -235,7 +246,7 @@ export function GameEntryForm({
         const input = toWriteInput(values, matchup, gameNumber, loaded?.version ?? null);
         onSubmitStart?.();
         try {
-            const recorded = await recordGame.mutateAsync(input);
+            const recorded = await save(input);
             // The saved game is the new baseline, so its own refetch is no change from elsewhere.
             load(recorded);
             onSaved?.(loaded ? 'updated' : 'created');
@@ -276,7 +287,7 @@ export function GameEntryForm({
 
     const rootError = form.formState.errors.root;
     const positionsError = form.formState.errors.positions?.message;
-    const pending = form.formState.isSubmitting || recordGame.isPending;
+    const pending = form.formState.isSubmitting;
 
     return (
         <form
@@ -287,9 +298,16 @@ export function GameEntryForm({
         >
             {newer && !readOnly ? (
                 <div className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                    <p>{t('scoring.changedElsewhere')}</p>
+                    {/* At a completed table the other writer can only be another organizer. */}
+                    <p>
+                        {t(correcting ? 'correction.changedElsewhere' : 'scoring.changedElsewhere')}
+                    </p>
                     <Button type="button" variant="outline" size="sm" onClick={() => load(newer)}>
-                        {t('scoring.changedElsewhere.load')}
+                        {t(
+                            correcting
+                                ? 'correction.changedElsewhere.load'
+                                : 'scoring.changedElsewhere.load',
+                        )}
                     </Button>
                 </div>
             ) : null}

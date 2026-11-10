@@ -16,10 +16,18 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 type ResultTeam = { id: string; name: string };
 
 /**
- * What a game tile does when clicked, beyond showing its contents. Only the link
- * to the scoring screen (opened on that game) exists so far.
+ * What a game tile does when clicked, beyond showing its contents: a link to the
+ * scoring screen (the team panel while the table is playing), or a button that hands
+ * the game number to its caller (the organizer's correction on a completed table,
+ * ADR 0010). The button's [label] is its accessible name, already localized.
  */
-export type GameTileAction = { kind: 'link'; to: '/team/score' };
+export type GameTileAction =
+    | { kind: 'link'; to: '/team/score' }
+    | {
+          kind: 'button';
+          onSelect: (gameNumber: number) => void;
+          label: (gameNumber: number) => string;
+      };
 
 interface GameResultsProps {
     /** Already-localized accessible name of the list of games. */
@@ -39,11 +47,14 @@ interface GameResultsProps {
  * Victory Points over the games entered so far on top, then one tile per game
  * with its two teams, their Tichu Points and the Victory Points the game earned
  * them. The winner's trophy takes the place of its colour dot; Beschiss and
- * double-win markers sit at the tile's foot, and a game not entered yet is a
- * dashed tile reading "missing". At the trio table each tile lists only the two
- * teams playing it. Tiles go two across, four (trio: three) once the container
- * is wide enough. With a [gameAction] (the team's panel while the table is
- * playing) the whole tile is clickable, its title being the link.
+ * double-win markers sit at the tile's foot, as does a neutral "corrected by the
+ * organizer" marker on a game an organizer corrected (ADR 0010). A game not
+ * entered yet is a dashed tile reading "missing". At the trio table each tile
+ * lists only the two teams playing it. Tiles go two across, four (trio: three)
+ * once the container is wide enough. With a [gameAction] the whole tile is
+ * clickable, its title being the control: the team panel's link to the scoring
+ * screen while the table is playing, or the organizer's correction button on a
+ * completed table.
  */
 export function GameResults({ caption, teams, schedule, games, gameAction }: GameResultsProps) {
     const byNumber = new Map(games.map((game) => [game.gameNumber, game]));
@@ -214,6 +225,16 @@ function GameTile({
                     >
                         {title}
                     </Link>
+                ) : action?.kind === 'button' ? (
+                    // Like the link, the button's box is stretched over the whole tile.
+                    <button
+                        type="button"
+                        aria-label={action.label(scheduled.gameNumber)}
+                        onClick={() => action.onSelect(scheduled.gameNumber)}
+                        className="cursor-pointer font-medium outline-none after:absolute after:inset-0"
+                    >
+                        {title}
+                    </button>
                 ) : (
                     <span className="font-medium">{title}</span>
                 )}
@@ -266,13 +287,16 @@ function GameTile({
                     );
                 })}
             </ul>
-            {game && (game.beschiss || game.outcome.doubleWinTeam !== null) ? (
+            {game && (game.beschiss || game.outcome.doubleWinTeam !== null || game.correction) ? (
                 <p className="flex flex-wrap gap-1">
                     {game.beschiss ? (
                         <Badge variant="warning">{t('rounds.game.beschiss')}</Badge>
                     ) : null}
                     {game.outcome.doubleWinTeam !== null ? (
                         <Badge variant="secondary">{t('rounds.game.doubleWin')}</Badge>
+                    ) : null}
+                    {game.correction ? (
+                        <Badge variant="outline">{t('rounds.game.corrected')}</Badge>
                     ) : null}
                 </p>
             ) : null}

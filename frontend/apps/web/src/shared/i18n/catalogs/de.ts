@@ -206,6 +206,7 @@ export const de: Catalog = {
     'rounds.game': 'Spiel',
     'rounds.game.beschiss': 'Beschiss',
     'rounds.game.doubleWin': 'Doppelsieg',
+    'rounds.game.corrected': 'Vom Veranstalter korrigiert',
     'rounds.game.missing': 'fehlt',
     'rounds.games.caption': 'Spiele',
     'rounds.victoryPoints': 'Siegpunkte',
@@ -477,4 +478,15 @@ export const de: Catalog = {
         'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',
     'scoring.changedElsewhere': 'Das andere Team hat dieses Spiel geändert.',
     'scoring.changedElsewhere.load': 'Deren Version laden',
+    'correction.confirm.title': 'Bestätigtes Spiel korrigieren?',
+    'correction.confirm.description':
+        'Alle Teams am Tisch haben Spiel {game} bereits bestätigt. Die Korrektur wird vermerkt. Bereits ausgeloste Runden behalten ihre Paarungen.',
+    'correction.confirm.action': 'Weiter',
+    'correction.editor.title': 'Spiel {game} korrigieren – {table}',
+    'correction.editor.description':
+        'Die Korrektur wird vermerkt. Bereits ausgeloste Runden behalten ihre Paarungen.',
+    'correction.editor.close': 'Schließen',
+    'correction.game.label': 'Spiel {game} korrigieren',
+    'correction.changedElsewhere': 'Dieses Spiel wurde inzwischen anderweitig geändert.',
+    'correction.changedElsewhere.load': 'Neuere Version laden',
 };

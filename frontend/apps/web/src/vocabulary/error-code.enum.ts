@@ -81,6 +81,10 @@ export const ERROR_CODES = [
     'TABLE_INCOMPLETE',
     /** Retracting on a completed table; its confirmations are final. */
     'TABLE_COMPLETED',
+
+    // --- Corrections (ADR 0010) ---
+    /** Correcting a game before every team confirmed its table. */
+    'TABLE_NOT_COMPLETED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

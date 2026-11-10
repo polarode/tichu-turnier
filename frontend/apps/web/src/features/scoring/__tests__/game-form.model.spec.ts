@@ -416,6 +416,7 @@ describe('fromRecordedGame', () => {
                     ],
                 },
             ],
+            correction: null,
             outcome: {
                 tichuSuccesses: ['a1'],
                 doubleWinTeam: null,
@@ -483,6 +484,7 @@ describe('fromRecordedGame', () => {
                     ],
                 },
             ],
+            correction: null,
             outcome: {
                 tichuSuccesses: ['a1'],
                 doubleWinTeam: null,

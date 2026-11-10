@@ -64,6 +64,7 @@ const dto: RoundDto = {
                             ],
                         },
                     ],
+                    correction: null,
                     outcome: {
                         tichuSuccesses: ['a1'],
                         doubleWinTeam: null,

@@ -403,6 +403,7 @@ function game(
                 ],
             },
         ],
+        correction: null,
         outcome: {
             tichuSuccesses: [],
             doubleWinTeam: null,
@@ -493,6 +494,7 @@ describe('/team confirmation panel', () => {
     it('marks the double-win team as winner even when a failed call levels the points', async () => {
         const levelled: RecordedGame = {
             ...game(1),
+            correction: null,
             outcome: {
                 tichuSuccesses: [],
                 doubleWinTeam: 'team-1',

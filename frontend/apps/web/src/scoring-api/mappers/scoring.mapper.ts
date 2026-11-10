@@ -76,6 +76,12 @@ export function recordedGameDtoToDomain(dto: RecordedGameDto): RecordedGame {
         beschiss: dto.beschiss,
         teams: mapPair(dto.teams, recordedTeamDtoToDomain),
         outcome: outcomeDtoToDomain(dto.outcome),
+        correction: dto.correction
+            ? {
+                  correctedBy: dto.correction.correctedBy,
+                  correctedAt: new Date(dto.correction.correctedAt),
+              }
+            : null,
     };
 }
 

@@ -13,6 +13,11 @@ import {
     startedTournamentDtoSchema,
 } from '@/tournament-api/dtos/round.dto.ts';
 import { standingsDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
+import { recordedGameDtoSchema } from '@/scoring-api/dtos/scoring.dto.ts';
+import {
+    gameWriteInputToDto,
+    recordedGameDtoToDomain,
+} from '@/scoring-api/mappers/scoring.mapper.ts';
 import type {
     PublicVisibilityRequestDto,
     TotalRoundsRequestDto,
@@ -38,6 +43,7 @@ import type {
     TournamentWriteInput,
 } from '@/domain/tournament.domain.ts';
 import type { Round } from '@/domain/round.domain.ts';
+import type { GameWriteInput, RecordedGame, TableRef } from '@/domain/game.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
 /**
@@ -89,6 +95,19 @@ async function rounds(id: string): Promise<Round[]> {
 async function startNextRound(id: string): Promise<Round> {
     const { data } = await apiClient.post<unknown>(`/api/tournaments/${id}/rounds`);
     return roundDtoToDomain(roundDtoSchema.parse(data));
+}
+
+/**
+ * Organizer correction of a game at a completed table (ADR 0010): `PUT …/games/{gameNumber}`
+ * with the team game body, carrying the version it was read with. Returns the recorded game.
+ */
+async function correctGame(table: TableRef, request: GameWriteInput): Promise<RecordedGame> {
+    const { tournamentId, roundNumber, tableNumber } = table;
+    const { data } = await apiClient.put<unknown>(
+        `/api/tournaments/${tournamentId}/rounds/${roundNumber}/tables/${tableNumber}/games/${request.gameNumber}`,
+        gameWriteInputToDto(request),
+    );
+    return recordedGameDtoToDomain(recordedGameDtoSchema.parse(data));
 }
 
 /** The admin-only standings, in the server's order (ranks and ties computed there). */
@@ -165,6 +184,7 @@ export const TournamentRepository = {
     remove,
     start,
     rounds,
+    correctGame,
     standings,
     setTotalRounds,
     setPublicVisibility,

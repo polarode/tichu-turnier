@@ -119,6 +119,7 @@ function game(
             { teamId: 'team-b', baseScore: 0, players: [player('b1'), player('b2')] },
             { teamId: 'team-a', baseScore: 0, players: [player('a1'), player('a2')] },
         ],
+        correction: null,
         outcome: {
             tichuSuccesses: [],
             doubleWinTeam: options.doubleWinTeam ?? null,
@@ -338,6 +339,7 @@ describe('rounds section', () => {
                     players: game(2, { a: 0, b: 0 }).teams[1].players,
                 },
             ],
+            correction: null,
             outcome: {
                 tichuSuccesses: [],
                 doubleWinTeam: null,

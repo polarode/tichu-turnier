@@ -103,6 +103,7 @@ function recordedGame(overrides: Partial<RecordedGame> = {}): RecordedGame {
                 ],
             },
         ],
+        correction: null,
         outcome: {
             tichuSuccesses: ['a1'],
             doubleWinTeam: null,

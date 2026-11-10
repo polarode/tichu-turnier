@@ -94,6 +94,7 @@ const gameDto: RecordedGameDto = {
         teamPoints: { 'team-a': 155, 'team-b': 45 },
         victoryPoints: { 'team-a': 2, 'team-b': 0 },
     },
+    correction: null,
 };
 
 describe('teamTableDtoToDomain', () => {
@@ -154,6 +155,22 @@ describe('recordedGameDtoToDomain', () => {
         });
         expect(game.outcome.teamPoints).toEqual({ 'team-a': 155, 'team-b': 45 });
         expect(game.outcome.victoryPoints['team-a']).toBe(2);
+    });
+
+    it('maps an uncorrected game to a null correction', () => {
+        expect(recordedGameDtoToDomain(gameDto).correction).toBeNull();
+    });
+
+    it('maps an organizer correction to who corrected it and when (the ISO instant as a Date)', () => {
+        const game = recordedGameDtoToDomain({
+            ...gameDto,
+            correction: { correctedBy: 'admin-7', correctedAt: '2026-11-10T18:30:00Z' },
+        });
+
+        expect(game.correction).toEqual({
+            correctedBy: 'admin-7',
+            correctedAt: new Date('2026-11-10T18:30:00.000Z'),
+        });
     });
 });
 

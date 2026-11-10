@@ -49,6 +49,7 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     GAME_NOT_FOUND: 'error.gameNotFound',
     TABLE_INCOMPLETE: 'error.tableIncomplete',
     TABLE_COMPLETED: 'error.tableCompleted',
+    TABLE_NOT_COMPLETED: 'error.tableNotCompleted',
 };
 
 /** The catalog key for a backend error code; never returns a missing key. */

@@ -144,6 +144,14 @@ export interface RecordedGame {
     beschiss: boolean;
     teams: [RecordedTeam, RecordedTeam];
     outcome: GameOutcome;
+    /** Set when an organizer corrected the game at a completed table (ADR 0010); null otherwise. */
+    correction: GameCorrection | null;
+}
+
+/** The audit stamp of an organizer correction: who corrected the game and when. */
+export interface GameCorrection {
+    correctedBy: string;
+    correctedAt: Date;
 }
 
 export interface RecordedTeam {

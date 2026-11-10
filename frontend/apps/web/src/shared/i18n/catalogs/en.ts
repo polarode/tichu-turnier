@@ -366,6 +366,8 @@ export const en = {
     'error.gameNotFound': 'This game has not been entered yet.',
     'error.tableIncomplete': 'All games must be entered before confirming.',
     'error.tableCompleted': 'This table is completed; confirmations are final.',
+    'error.tableNotCompleted':
+        'A game can only be corrected once every team has confirmed the table.',
 
     'teamOverview.tournament': 'Tournament',
     'teamOverview.teamName': 'Team',

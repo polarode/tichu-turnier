@@ -78,13 +78,24 @@ const gameOutcomeDtoSchema = z.object({
     victoryPoints: z.record(z.string(), z.number()),
 });
 
-/** The server-authoritative game, returned by POST/PUT and the games list. */
+/** The organizer correction stamp (ADR 0010): who corrected the game and the ISO instant. */
+const gameCorrectionDtoSchema = z.object({
+    correctedBy: z.string(),
+    correctedAt: z.string(),
+});
+
+/**
+ * The server-authoritative game, returned by POST/PUT, the games list, the admin rounds
+ * read and the correction PUT. `correction` is always present on the wire, null when the
+ * game was never corrected.
+ */
 export const recordedGameDtoSchema = z.object({
     gameNumber: z.number(),
     version: z.number(),
     beschiss: z.boolean(),
     teams: z.tuple([recordedTeamDtoSchema, recordedTeamDtoSchema]),
     outcome: gameOutcomeDtoSchema,
+    correction: gameCorrectionDtoSchema.nullable(),
 });
 
 export const recordedGameListDtoSchema = z.array(recordedGameDtoSchema);

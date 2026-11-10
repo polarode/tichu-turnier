@@ -377,6 +377,8 @@ export const de: Catalog = {
     'error.gameNotFound': 'Dieses Spiel wurde noch nicht eingetragen.',
     'error.tableIncomplete': 'Erst wenn alle Spiele eingetragen sind, kann bestätigt werden.',
     'error.tableCompleted': 'Dieser Tisch ist abgeschlossen; die Bestätigungen sind endgültig.',
+    'error.tableNotCompleted':
+        'Ein Spiel kann erst korrigiert werden, wenn alle Teams den Tisch bestätigt haben.',
 
     'teamOverview.tournament': 'Turnier',
     'teamOverview.teamName': 'Team',

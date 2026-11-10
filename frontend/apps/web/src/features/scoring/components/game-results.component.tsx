@@ -17,7 +17,7 @@ type ResultTeam = { id: string; name: string };
 
 /**
  * What a game tile does when clicked, beyond showing its contents: a link to the
- * scoring screen (the team panel while the table is playing), or a button that hands
+ * scoring screen (the team panel, for entry or to view the game read-only), or a button that hands
  * the game number to its caller (the organizer's correction on a completed table,
  * ADR 0010). The button's [label] is its accessible name, already localized.
  */
@@ -53,8 +53,7 @@ interface GameResultsProps {
  * lists only the two teams playing it. Tiles go two across, four (trio: three)
  * once the container is wide enough. With a [gameAction] the whole tile is
  * clickable, its title being the control: the team panel's link to the scoring
- * screen while the table is playing, or the organizer's correction button on a
- * completed table.
+ * screen, or the organizer's correction button on a completed table.
  */
 export function GameResults({ caption, teams, schedule, games, gameAction }: GameResultsProps) {
     const byNumber = new Map(games.map((game) => [game.gameNumber, game]));

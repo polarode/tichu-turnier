@@ -178,7 +178,7 @@ describe('/team/score', () => {
         );
     });
 
-    it('renders the table, matchup, roster and a game selector', async () => {
+    it('renders the table, matchup, roster and the game, without a game selector', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);
 
@@ -188,9 +188,11 @@ describe('/team/score', () => {
         expect(
             screen.getByRole('heading', { level: 1, name: 'Tisch 1 · Runde 1' }),
         ).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'Spiel 1' })).toBeInTheDocument();
         expect(screen.getByText('Alice')).toBeInTheDocument();
         expect(screen.getByText('Ben')).toBeInTheDocument();
-        expect(screen.getAllByRole('tab')).toHaveLength(4);
+        // The overview's game tiles pick the game; the screen has no selector of its own.
+        expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     });
 
     it('submits raw facts for a normal game and records a create', async () => {
@@ -226,15 +228,14 @@ describe('/team/score', () => {
         });
     });
 
-    it('confirms a saved game in a status line and clears it on game switch', async () => {
+    it('leads back to the team overview once a new game is saved', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);
         scoring.create.mockResolvedValue(recordedGame());
         const user = userEvent.setup();
 
-        renderApp('/team/score');
+        const { router } = renderApp('/team/score');
         await screen.findByText('Team Alpha gegen Team Beta');
-        expect(screen.queryByText(/gespeichert\./)).not.toBeInTheDocument();
 
         const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
         await user.click(finishButtons[0]!);
@@ -243,27 +244,20 @@ describe('/team/score', () => {
         await user.click(finishButtons[3]!);
         await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
 
-        // The message sits in a polite live region, so screen readers announce it.
-        expect(await screen.findByText('Spiel 1 gespeichert.')).toHaveAttribute('role', 'status');
-
-        await user.click(screen.getByRole('tab', { name: 'Spiel 2' }));
-        expect(screen.queryByText('Spiel 1 gespeichert.')).not.toBeInTheDocument();
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
     });
 
-    it('confirms an updated game', async () => {
+    it('leads back to the team overview once an edit is saved', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([recordedGame()]);
-        scoring.update.mockResolvedValue({ ...recordedGame(), version: 2 });
+        scoring.update.mockResolvedValue(recordedGame({ version: 3 }));
         const user = userEvent.setup();
 
-        renderApp('/team/score');
-        await screen.findByText('Team Alpha gegen Team Beta');
-        // The page opens on the first unentered game; pick the entered game 1.
-        await user.click(screen.getAllByRole('tab')[0]!);
-
+        const { router } = renderApp('/team/score?game=1');
         await user.click(await screen.findByRole('button', { name: 'Spiel aktualisieren' }));
 
-        expect(await screen.findByText('Spiel 1 aktualisiert.')).toHaveAttribute('role', 'status');
+        await waitFor(() => expect(scoring.update).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team'));
     });
 
     it('disables the base-score slider on a double win (positions 1+2 same team)', async () => {
@@ -309,34 +303,6 @@ describe('/team/score', () => {
         // The pill writes a negative base with a typographic minus.
         const alpha = screen.getByRole('group', { name: 'Team Alpha' });
         expect(within(alpha).getByText('\u221225')).toBeInTheDocument();
-    });
-
-    it('moves between games with the arrow keys (tabs pattern)', async () => {
-        scoring.currentTable.mockResolvedValue(table());
-        scoring.games.mockResolvedValue([]);
-        const user = userEvent.setup();
-
-        renderApp('/team/score');
-        await screen.findByText('Team Alpha gegen Team Beta');
-
-        const tabs = screen.getAllByRole('tab');
-        expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
-        expect(tabs[1]).toHaveAttribute('tabindex', '-1');
-
-        tabs[0]!.focus();
-        await user.keyboard('{ArrowRight}');
-        expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveAttribute(
-            'aria-selected',
-            'true',
-        );
-        expect(screen.getByRole('tab', { name: 'Spiel 2' })).toHaveFocus();
-
-        await user.keyboard('{ArrowLeft}{ArrowLeft}');
-        expect(screen.getByRole('tab', { name: 'Spiel 4' })).toHaveAttribute(
-            'aria-selected',
-            'true',
-        );
-        expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Spiel 4');
     });
 
     it('offers grand Tichu at a bonus of 100 and totals it like a small Tichu', async () => {
@@ -514,7 +480,7 @@ describe('/team/score', () => {
             );
             scoring.games.mockResolvedValue([recordedGame()]);
 
-            renderApp('/team/score');
+            renderApp('/team/score?game=1');
 
             expect(
                 await screen.findByText(
@@ -524,7 +490,6 @@ describe('/team/score', () => {
             // Frozen: the confirm prompt gives way to the notice.
             expect(screen.queryByText('Alle Spiele sind eingetragen.')).not.toBeInTheDocument();
             // Every interactive control is disabled while frozen.
-            await userEvent.click(screen.getAllByRole('tab')[0]!);
             expect(screen.getByRole('slider')).toBeDisabled();
             expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
         });
@@ -572,9 +537,8 @@ describe('/team/score', () => {
             scoring.currentTable.mockResolvedValue(table());
             scoring.games.mockResolvedValue([recordedGame()]);
 
-            renderApp('/team/score');
+            renderApp('/team/score?game=1');
             await screen.findByText('Team Alpha gegen Team Beta');
-            await userEvent.click(screen.getAllByRole('tab')[0]!);
 
             expect(
                 await screen.findByText(
@@ -586,21 +550,28 @@ describe('/team/score', () => {
         });
     });
 
-    it('marks an entered game in the selector and preloads it for editing', async () => {
+    it('opens on the first unentered game without a game link', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([recordedGame()]);
 
         renderApp('/team/score');
-        await screen.findByText('Team Alpha gegen Team Beta');
 
-        // Game 1 is entered → its tab carries the ✓ marker; the page opens on the
-        // first unentered game (2), and selecting game 1 preloads it for editing.
-        const firstTab = screen.getAllByRole('tab')[0]!;
-        expect(within(firstTab).getByText(/✓/)).toBeInTheDocument();
-        expect(firstTab).toHaveAccessibleName('Spiel 1 eingetragen');
-        expect(screen.getAllByRole('tab')[1]).toHaveAttribute('aria-selected', 'true');
-        await userEvent.click(firstTab);
-        expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeInTheDocument();
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 2' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Spiel speichern' })).toBeInTheDocument();
+    });
+
+    it('preloads an entered game for editing', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([recordedGame()]);
+
+        renderApp('/team/score?game=1');
+
+        expect(
+            await screen.findByRole('button', { name: 'Spiel aktualisieren' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('slider')).toHaveValue('60');
     });
 
     it('surfaces a localized validation error from the server', async () => {
@@ -697,11 +668,10 @@ describe('/team/score', () => {
         );
         const user = userEvent.setup();
 
-        renderApp('/team/score');
+        renderApp('/team/score?game=1');
         await screen.findByText('Team Alpha gegen Team Beta');
 
         // Game 1 is already entered → edit mode; submitting triggers a PUT that loses the race.
-        await user.click(screen.getAllByRole('tab')[0]!);
         await user.click(screen.getByRole('button', { name: 'Spiel aktualisieren' }));
 
         expect(
@@ -735,9 +705,8 @@ describe('/team/score', () => {
             const user = userEvent.setup();
             scoring.currentTable.mockResolvedValue(table());
             scoring.games.mockResolvedValue([recordedGame()]);
-            renderApp('/team/score');
+            renderApp('/team/score?game=1');
             await screen.findByText('Team Alpha gegen Team Beta');
-            await user.click(screen.getAllByRole('tab')[0]!);
             return user;
         }
 
@@ -814,25 +783,6 @@ describe('/team/score', () => {
         });
     });
 
-    it('does not mistake its own save for a change from elsewhere while the games catch up', async () => {
-        scoring.currentTable.mockResolvedValue(table());
-        // The games read still returns version 2 after the save answered version 3.
-        scoring.games.mockResolvedValue([recordedGame()]);
-        scoring.update.mockResolvedValue(recordedGame({ version: 3 }));
-        const user = userEvent.setup();
-
-        renderApp('/team/score');
-        await screen.findByText('Team Alpha gegen Team Beta');
-        await user.click(screen.getAllByRole('tab')[0]!);
-        await user.click(screen.getByRole('button', { name: 'Spiel aktualisieren' }));
-
-        expect(await screen.findByText('Spiel 1 aktualisiert.')).toBeInTheDocument();
-        await waitFor(() => expect(scoring.games.mock.calls.length).toBeGreaterThan(1));
-        expect(
-            screen.queryByText('Das andere Team hat dieses Spiel geändert.'),
-        ).not.toBeInTheDocument();
-    });
-
     it('opens on game 1 when every game is entered', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue(
@@ -840,9 +790,10 @@ describe('/team/score', () => {
         );
 
         renderApp('/team/score');
-        await screen.findByText('Team Alpha gegen Team Beta');
 
-        expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true');
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 1' }),
+        ).toBeInTheDocument();
     });
 
     it('opens on the game named in the link even when earlier games are not entered', async () => {
@@ -850,10 +801,10 @@ describe('/team/score', () => {
         scoring.games.mockResolvedValue([]);
 
         renderApp('/team/score?game=3');
-        await screen.findByText('Team Alpha gegen Team Beta');
 
-        expect(screen.getAllByRole('tab')[2]).toHaveAttribute('aria-selected', 'true');
-        expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'false');
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 3' }),
+        ).toBeInTheDocument();
     });
 
     it.each(['9', 'abc'])(
@@ -863,9 +814,10 @@ describe('/team/score', () => {
             scoring.games.mockResolvedValue([]);
 
             renderApp(`/team/score?game=${game}`);
-            await screen.findByText('Team Alpha gegen Team Beta');
 
-            expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true');
+            expect(
+                await screen.findByRole('heading', { level: 2, name: 'Spiel 1' }),
+            ).toBeInTheDocument();
         },
     );
 
@@ -874,9 +826,10 @@ describe('/team/score', () => {
         scoring.games.mockResolvedValue([]);
 
         renderApp('/team/score');
-        await screen.findByText('Team Alpha gegen Team Beta');
 
-        expect(screen.queryByText(/^Spiel 1:/)).not.toBeInTheDocument();
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 1' }),
+        ).toBeInTheDocument();
         expect(screen.queryByText(/setzt.*aus/)).not.toBeInTheDocument();
     });
 
@@ -911,7 +864,7 @@ describe('/team/score', () => {
             };
         }
 
-        it('lists all three teams and six games, opening on the first unentered one with its matchup', async () => {
+        it('lists all three teams, opening on the first unentered game with its matchup', async () => {
             scoring.currentTable.mockResolvedValue(trioTable());
             scoring.games.mockResolvedValue([recordedGame({ gameNumber: 1 })]);
 
@@ -920,32 +873,41 @@ describe('/team/score', () => {
             expect(
                 await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma'),
             ).toBeInTheDocument();
-            const tabs = screen.getAllByRole('tab');
-            expect(tabs).toHaveLength(6);
-            expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
-            expect(screen.getByText('Spiel 2: Team Alpha gegen Team Gamma')).toBeInTheDocument();
+            expect(
+                screen.getByRole('heading', {
+                    level: 2,
+                    name: 'Spiel 2: Team Alpha gegen Team Gamma',
+                }),
+            ).toBeInTheDocument();
             // The form takes game 2's playing teams: Gamma's players replace Beta's.
             expect(screen.getByText('Cleo')).toBeInTheDocument();
             expect(screen.queryByText('Bob')).not.toBeInTheDocument();
         });
 
-        it('marks the games the viewing team sits out, which stay enterable', async () => {
+        it('marks a game the viewing team sits out, which stays enterable', async () => {
             scoring.currentTable.mockResolvedValue(trioTable());
             scoring.games.mockResolvedValue([]);
 
-            renderApp('/team/score');
-            await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma');
+            renderApp('/team/score?game=3');
 
-            const tabs = screen.getAllByRole('tab');
-            expect(tabs[2]).toHaveAccessibleName('Spiel 3 – Dein Team setzt aus');
-            expect(tabs[5]).toHaveAccessibleName('Spiel 6 – Dein Team setzt aus');
-            expect(tabs[1]).toHaveAccessibleName('Spiel 2');
-
-            await userEvent.click(tabs[2]!);
-
-            expect(screen.getByText('Spiel 3: Team Beta gegen Team Gamma')).toBeInTheDocument();
+            expect(
+                await screen.findByRole('heading', {
+                    level: 2,
+                    name: 'Spiel 3: Team Beta gegen Team Gamma',
+                }),
+            ).toBeInTheDocument();
             expect(screen.getByText(/Dein Team setzt dieses Spiel aus/)).toBeInTheDocument();
             expect(screen.getByRole('button', { name: 'Spiel speichern' })).toBeEnabled();
+        });
+
+        it('shows no sit-out note on a game the viewing team plays', async () => {
+            scoring.currentTable.mockResolvedValue(trioTable());
+            scoring.games.mockResolvedValue([]);
+
+            renderApp('/team/score?game=2');
+            await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma');
+
+            expect(screen.queryByText(/Dein Team setzt dieses Spiel aus/)).not.toBeInTheDocument();
         });
 
         it("submits the selected game's playing teams", async () => {
@@ -954,9 +916,8 @@ describe('/team/score', () => {
             scoring.create.mockResolvedValue(recordedGame({ gameNumber: 3 }));
             const user = userEvent.setup();
 
-            renderApp('/team/score');
+            renderApp('/team/score?game=3');
             await screen.findByText('Trio-Tisch: Team Alpha, Team Beta, Team Gamma');
-            await user.click(screen.getAllByRole('tab')[2]!);
 
             // Slot order: Bob(0), Ben(1), Cleo(2), Carl(3).
             const finishButtons = screen.getAllByRole('button', {

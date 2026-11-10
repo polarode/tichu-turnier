@@ -142,9 +142,13 @@ describe('/team', () => {
         ).toBeInTheDocument();
         const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
         expect(within(panel).getByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
-        // Read-only: no Confirm and no Retract, only the scoring link.
+        // Read-only: no Confirm and no Retract; the game tiles open each game to view.
         expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
-        expect(within(panel).getByRole('link', { name: 'Tisch ansehen' })).toBeInTheDocument();
+        await within(panel).findByRole('list', { name: 'Spiele' });
+        expect(within(panel).getByRole('link', { name: 'Spiel 1' })).toBeInTheDocument();
+        expect(
+            within(panel).queryByRole('link', { name: 'Tisch ansehen' }),
+        ).not.toBeInTheDocument();
         expect(mockedFinalRanking).not.toHaveBeenCalled();
     });
 
@@ -461,7 +465,7 @@ describe('/team confirmation panel', () => {
         expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
     });
 
-    it('links every game tile to its game on the scoring screen while the table is playing', async () => {
+    it('links every game tile to its game on the scoring screen', async () => {
         const user = userEvent.setup();
         const { panel, router } = await renderPanel(seatedTable(), [game(1), game(3)]);
         const tiles = within(panel).getByRole('list', { name: 'Spiele' });
@@ -476,19 +480,27 @@ describe('/team confirmation panel', () => {
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));
         expect(router.state.location.search).toEqual({ game: 2 });
-        expect(await screen.findByText('Team Alpha gegen Team Beta')).toBeInTheDocument();
-        expect(screen.getAllByRole('tab')[1]).toHaveAttribute('aria-selected', 'true');
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 2' }),
+        ).toBeInTheDocument();
     });
 
-    it('keeps the game tiles static once the table is frozen', async () => {
-        const { panel } = await renderPanel(
+    it('opens a game read-only from its tile once the table is frozen', async () => {
+        const user = userEvent.setup();
+        const { panel, router } = await renderPanel(
             seatedTable({ confirmation: { status: 'CONFIRMING', confirmedTeamIds: ['team-2'] } }),
             allGames(),
         );
+        // Nothing is left to enter, so the tiles are the only way in.
+        expect(
+            within(panel).queryByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).not.toBeInTheDocument();
 
         const tiles = within(panel).getByRole('list', { name: 'Spiele' });
-        expect(within(tiles).queryAllByRole('link')).toHaveLength(0);
-        expect(gameTiles(tiles)[1]![0]).toBe('Spiel 2');
+        await user.click(within(tiles).getByRole('link', { name: 'Spiel 2' }));
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));
+        expect(await screen.findByRole('slider')).toBeDisabled();
     });
 
     it('marks the double-win team as winner even when a failed call levels the points', async () => {

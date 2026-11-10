@@ -83,10 +83,8 @@ interface GameEntryFormProps {
      * GAME_CONCURRENT_MODIFICATION (the game changed underneath us).
      */
     onReload?: () => Promise<RecordedGame | undefined>;
-    /** Invoked when a save starts, so a previous confirmation can be cleared. */
-    onSubmitStart?: () => void;
-    /** Invoked after the server accepted the write: `created` for a new game, `updated` for an edit. */
-    onSaved?: (kind: 'created' | 'updated') => void;
+    /** Invoked after the server accepted the write. */
+    onSaved?: () => void;
     /** Invoked when a write is rejected because the table froze, so the table state can reload. */
     onFrozen?: () => void;
     /**
@@ -127,7 +125,6 @@ export function GameEntryForm({
     save,
     existingGame,
     onReload,
-    onSubmitStart,
     onSaved,
     onFrozen,
     tournamentLocked = false,
@@ -244,12 +241,11 @@ export function GameEntryForm({
 
     const submit = form.handleSubmit(async (values) => {
         const input = toWriteInput(values, matchup, gameNumber, loaded?.version ?? null);
-        onSubmitStart?.();
         try {
             const recorded = await save(input);
             // The saved game is the new baseline, so its own refetch is no change from elsewhere.
             load(recorded);
-            onSaved?.(loaded ? 'updated' : 'created');
+            onSaved?.();
         } catch (error) {
             if (error instanceof ApiError && error.code === 'GAME_CONFIRMED') {
                 // The table froze mid-edit: latch read-only and reload the table

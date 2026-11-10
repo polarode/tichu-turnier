@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
-import { CircleCheck, Info, Pause } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { CircleCheck, Info } from 'lucide-react';
 import { buttonVariants } from '@tichu/ui/button.tsx';
-import { cn } from '@tichu/ui/lib/utils.ts';
-import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import {
     isCompleted,
@@ -27,23 +25,21 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
- * The team scoring screen (S5c, #101; trio tables #110): a selector of the table's
- * games (4, or 6 at a trio table, from the server schedule) with their entered /
- * not-entered state, and the entry grid for the selected game's matchup. Games may
- * be entered in any order; the screen opens on the first one not yet entered. At a
- * trio table the games [viewerTeamId] sits out are marked but stay enterable.
- * Editing an entered game loads it (with its version). A frozen table (someone
- * confirmed, ADR 0006) renders every game read-only with an explanation of who
- * confirmed and how to edit again. A back link leads to the team overview, and
- * once every game is entered on an open table a prompt points there to confirm.
- * Once the tournament is no longer ACTIVE (`tournamentStatus`, S7c, #116) the
- * whole screen is read-only and the confirm prompt gives way to a notice; an
- * absent status (overview unavailable) leaves the screen editable, as before.
- * The table state and games follow the team's live stream while `live` (the
- * tournament is not yet published), with `connected` shown as a Live badge. A
- * successful save is confirmed in a status line below the form until the next
- * save or game switch. A `?game=` link ([initialGame]) opens that game instead,
- * when it is on the schedule.
+ * The team scoring screen (S5c, #101; trio tables #110): the entry grid for one
+ * game's matchup. The team overview's game tiles pick the game: a `?game=` link
+ * ([initialGame]) opens that game when it is on the schedule, otherwise the screen
+ * opens on the first game not yet entered. At a trio table a game [viewerTeamId]
+ * sits out is marked but stays enterable. Editing an entered game loads it (with
+ * its version). A successful save leads back to the overview, where the next tile
+ * is one tap away. A frozen table (someone confirmed, ADR 0006) renders the game
+ * read-only with an explanation of who confirmed and how to edit again. A back
+ * link leads to the team overview, and once every game is entered on an open
+ * table a prompt points there to confirm. Once the tournament is no longer ACTIVE
+ * (`tournamentStatus`, S7c, #116) the screen is read-only and the confirm prompt
+ * gives way to a notice; an absent status (overview unavailable) leaves the screen
+ * editable, as before. The table state and games follow the team's live stream
+ * while `live` (the tournament is not yet published), with `connected` shown as a
+ * Live badge.
  */
 export function ScoringPage({
     table,
@@ -64,16 +60,12 @@ export function ScoringPage({
     connected?: boolean;
 }) {
     const { t } = useI18n();
+    const navigate = useNavigate();
     const reloadCurrentTable = useReloadCurrentTable();
     const recordGame = useRecordGame(table);
     const gamesQuery = useTableGames(table);
-    // Null until the games load: the default is the linked game, else the first game not yet entered.
-    const [picked, setPicked] = useState<number | null>(null);
-    // Lives here, not in the form: a successful save bumps the game's version,
-    // which remounts the form and would drop any state it held.
-    const [saved, setSaved] = useState<{ gameNumber: number; kind: 'created' | 'updated' } | null>(
-        null,
-    );
+    // Null until the games load: the linked game, else the first game not yet entered.
+    const [pinned, setPinned] = useState<number | null>(null);
 
     if (gamesQuery.isLoading) return <LoadingIndicator />;
 
@@ -83,10 +75,10 @@ export function ScoringPage({
     const linked =
         initialGame !== undefined && gameNumbers.includes(initialGame) ? initialGame : undefined;
     const selected =
-        picked ?? linked ?? gameNumbers.find((n) => !byNumber.has(n)) ?? gameNumbers[0] ?? 1;
+        pinned ?? linked ?? gameNumbers.find((n) => !byNumber.has(n)) ?? gameNumbers[0] ?? 1;
     // Pin the opening game once the games are in, so a poll that fills it does
     // not move the viewer to another game mid-entry.
-    if (picked === null && gamesQuery.isSuccess) setPicked(selected);
+    if (pinned === null && gamesQuery.isSuccess) setPinned(selected);
     const existingGame = byNumber.get(selected);
     const matchup = matchupOf(table, selected);
     // Confirming happens on the overview, so point there once nothing is left to enter.
@@ -126,53 +118,13 @@ export function ScoringPage({
                 </p>
             ) : null}
 
-            <TabList
-                id="game"
-                label={t('scoring.selector.label')}
-                size="touch"
-                value={String(selected)}
-                onValueChange={(value) => {
-                    setPicked(Number(value));
-                    setSaved(null);
-                }}
-                items={gameNumbers.map((n) => ({
-                    value: String(n),
-                    done: byNumber.has(n),
-                    label: (
-                        <>
-                            {/* Phones show just the number; the word stays for screen readers. */}
-                            <span className="sr-only sm:not-sr-only">
-                                {t('scoring.game.label')}
-                            </span>{' '}
-                            {n}
-                            {viewerTeamId !== undefined && sitsOut(table, viewerTeamId, n) ? (
-                                <>
-                                    {' '}
-                                    <Pause
-                                        aria-hidden="true"
-                                        className="inline size-3 text-muted-foreground"
-                                    />
-                                    <span className="sr-only">{`– ${t('scoring.game.sitsOut')}`}</span>
-                                </>
-                            ) : null}
-                            {byNumber.has(n) ? (
-                                <>
-                                    {' '}
-                                    <span aria-hidden="true">✓</span>{' '}
-                                    <span className="sr-only">{t('scoring.game.entered')}</span>
-                                </>
-                            ) : null}
-                        </>
-                    ),
-                }))}
-            />
-
-            <TabPanel id="game" value={String(selected)} className="flex flex-col gap-3">
-                {table.trio ? (
-                    <p className="text-sm font-medium">
-                        {`${t('scoring.game.label')} ${selected}: ${matchup[0].teamName}${versus}${matchup[1].teamName}`}
-                    </p>
-                ) : null}
+            <div className="flex flex-col gap-3">
+                {/* At the trio table the matchup changes from game to game, so it is named too. */}
+                <h2 className="font-semibold">
+                    {table.trio
+                        ? `${t('scoring.game.label')} ${selected}: ${matchup[0].teamName}${versus}${matchup[1].teamName}`
+                        : `${t('scoring.game.label')} ${selected}`}
+                </h2>
                 {sittingOut ? (
                     <p className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
                         <Info aria-hidden="true" className="size-4 shrink-0" />
@@ -180,8 +132,6 @@ export function ScoringPage({
                     </p>
                 ) : null}
                 <GameEntryForm
-                    // Remount on game switch only: a newer version is merged by the form itself.
-                    key={selected}
                     table={table}
                     matchup={matchup}
                     gameNumber={selected}
@@ -192,12 +142,11 @@ export function ScoringPage({
                             (game) => game.gameNumber === selected,
                         )
                     }
-                    onSubmitStart={() => setSaved(null)}
-                    onSaved={(kind) => setSaved({ gameNumber: selected, kind })}
+                    onSaved={() => void navigate({ to: '/team' })}
                     onFrozen={() => void reloadCurrentTable()}
                     tournamentLocked={tournamentLocked}
                 />
-            </TabPanel>
+            </div>
 
             {allEntered ? (
                 <div className="flex flex-col gap-3 rounded-md bg-success-soft px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
@@ -213,26 +162,6 @@ export function ScoringPage({
                     </Link>
                 </div>
             ) : null}
-
-            {/* Always mounted so screen readers announce the text when it appears. */}
-            <p
-                role="status"
-                className={cn(
-                    'flex min-h-5 items-center justify-center gap-2 rounded-md text-sm font-medium',
-                    saved && 'bg-success-soft px-3 py-2 text-success',
-                )}
-            >
-                {saved ? (
-                    <>
-                        <CircleCheck aria-hidden="true" className="size-4" />
-                        {`${t('scoring.game.label')} ${saved.gameNumber} ${t(
-                            saved.kind === 'created'
-                                ? 'scoring.saved.created'
-                                : 'scoring.saved.updated',
-                        )}`}
-                    </>
-                ) : null}
-            </p>
         </section>
     );
 }

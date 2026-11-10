@@ -115,7 +115,7 @@ describe('/team/score live stream', () => {
         renderApp('/team/score', { initialLocale: 'en' });
         const source = await openedSource();
         // The table is on screen once its games are in too; the baseline is taken after the mount fetches.
-        await screen.findAllByRole('tab');
+        await screen.findByRole('heading', { level: 2, name: 'Game 1' });
         const before = currentTable.mock.calls.length;
 
         act(() =>

@@ -231,7 +231,11 @@
             },
             {
                 "type": "feature",
-                "text": "Teams can tap a game in their table overview to enter or edit it"
+                "text": "Teams can tap a game in their table overview to enter, edit or view it"
+            },
+            {
+                "type": "improvement",
+                "text": "After saving a game, teams return to their table overview and pick the next game there; the game buttons above the entry form are gone"
             },
             {
                 "type": "feature",

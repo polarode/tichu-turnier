@@ -87,9 +87,10 @@ export function ScoringLink({
 
 /**
  * A read-only summary of the table's games, its status with who confirmed, and
- * the one control the state allows. While the table is playing, each game tile
- * links to that game on the scoring screen; frozen or read-only, the tiles are
- * static.
+ * the one control the state allows. Each game tile links to that game on the
+ * scoring screen, which is read-only once the table froze or the tournament
+ * ended. While the table is open and a game is missing, "Enter results" opens
+ * the first one not yet entered.
  * - Playing, or Confirming by another team: Confirm, disabled with an "x of n
  *   games entered" hint until every game is in, behind a dialog. Confirming by
  *   another team also shows that the games are frozen.
@@ -164,18 +165,13 @@ function ConfirmationPanel({
                     teams={table.teams.map((team) => ({ id: team.teamId, name: team.teamName }))}
                     schedule={table.schedule}
                     games={games}
-                    // Only while the games can still change: a tile opens its game for entry.
-                    gameAction={
-                        readOnly || isFrozen(table.confirmation)
-                            ? undefined
-                            : { kind: 'link', to: '/team/score' }
-                    }
+                    // A tile opens its game, for entry or (frozen, read-only) to view its details.
+                    gameAction={{ kind: 'link', to: '/team/score' }}
                 />
             ) : null}
-            <ScoringLink
-                primary={!readOnly && !allEntered && !isFrozen(table.confirmation)}
-                readOnly={readOnly}
-            />
+            {readOnly || allEntered || isFrozen(table.confirmation) ? null : (
+                <ScoringLink primary />
+            )}
 
             <p>
                 {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}

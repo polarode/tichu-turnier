@@ -4,8 +4,6 @@ import tichu.application.api.AuthenticatedTeam
 import tichu.application.api.GameWriteRequest
 import tichu.application.api.RecordGame
 import tichu.application.api.RecordedGame
-import tichu.domain.Game
-import tichu.domain.GameKey
 import tichu.domain.GameRepository
 import tichu.domain.RoundRepository
 import tichu.domain.Table
@@ -20,7 +18,6 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
 import tichu.vocabulary.GameConfirmedException
-import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.GameNotFoundException
 import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
@@ -79,12 +76,7 @@ class RecordGameCommand(
     ): RecordedGame {
         requireVersionOnUpdate(create, request)
 
-        val round = roundRepository.findByTournamentAndNumber(tournamentId, roundNumber)
-            ?: throw GameNotFoundException(
-                "Round $roundNumber of tournament ${tournamentId.value} not found",
-            )
-        val table = round.table(tableNumber)
-            ?: throw GameNotFoundException("Table $tableNumber of round ${round.number} not found")
+        val (round, table) = findTable(roundRepository, tournamentId, roundNumber, tableNumber)
         table.requireSeated(principal.teamId)
         requireGameNumber(request.gameNumber, table)
 
@@ -97,28 +89,15 @@ class RecordGameCommand(
         }
         requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
 
-        val teamResults = toTeamResults(request)
-        requirePlayingTeams(teamRepository, tournamentId, teamResults, table.playingTeams(request.gameNumber))
-
-        val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
-        val baseGame = Game.record(key, teamResults, request.beschiss, tournament.settings)
+        val baseGame = validatedGame(teamRepository, tournament, round, table, request)
 
         val recorded = if (create) {
             gameRepository.create(baseGame)
         } else {
-            // Existence first, so a missing game answers 404 — the stale-version
-            // race answers 409 from the conditional update below.
-            gameRepository.find(key)
-                ?: throw GameNotFoundException(
-                "Game ${request.gameNumber} at table ${table.id.value} of round ${round.number} not found",
-            )
-            gameRepository.updateWithVersion(key, request.version!!) {
+            updateGame(gameRepository, baseGame.key, request.version!!) {
                 // Keep an organizer's correction stamp; only the facts change.
                 baseGame.copy(id = it.id, version = it.version, correction = it.correction)
             }
-                ?: throw GameConcurrentModificationException(
-                    "Game ${request.gameNumber} was modified concurrently; reload and retry",
-                )
         }
 
         tournamentEvents.publish(TournamentEvent(TournamentEventType.GAME_RECORDED, tournamentId, round.id, table.id))

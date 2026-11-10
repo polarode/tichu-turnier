@@ -80,6 +80,8 @@ open class JpaGameRepository(
             baseScoreTeam1 = updated.baseScoreTeam1,
             baseScoreTeam2 = updated.baseScoreTeam2,
             beschiss = updated.beschiss,
+            correctedBy = updated.correction?.adminUserId?.value,
+            correctedAt = updated.correction?.correctedAt,
         )
         if (rows == 0) return null // stale version — first commit wins
 
@@ -101,6 +103,8 @@ open class JpaGameRepository(
             baseScoreTeam2 = updated.baseScoreTeam2,
             beschiss = updated.beschiss,
             version = expectedVersion + 1,
+            correctedBy = updated.correction?.adminUserId?.value,
+            correctedAt = updated.correction?.correctedAt,
         ).toDomain(participants)
     }
 

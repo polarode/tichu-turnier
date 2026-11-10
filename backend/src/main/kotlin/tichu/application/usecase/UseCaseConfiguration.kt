@@ -7,6 +7,7 @@ import tichu.application.api.AuthenticateTeamSession
 import tichu.application.api.BootstrapOwner
 import tichu.application.api.CheckPublicTournamentVisible
 import tichu.application.api.ConfirmTable
+import tichu.application.api.CorrectGame
 import tichu.application.api.CreateInvite
 import tichu.application.api.CreateTeam
 import tichu.application.api.CreateTournament
@@ -229,6 +230,22 @@ class UseCaseConfiguration(
         RecordGameCommand(
             tournamentRepository, roundRepository, teamRepository, gameRepository, confirmationRepository,
             tournamentEvents,
+        )
+
+    @Bean
+    fun correctGame(
+        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
+        roundRepository: RoundRepository,
+        teamRepository: TeamRepository,
+        gameRepository: GameRepository,
+        confirmationRepository: TableConfirmationRepository,
+        clock: Clock,
+        tournamentEvents: TournamentEvents,
+    ): CorrectGame =
+        CorrectGameCommand(
+            tournamentRepository, tournamentAccess, roundRepository, teamRepository, gameRepository,
+            confirmationRepository, clock, tournamentEvents,
         )
 
     @Bean

@@ -201,6 +201,13 @@ the last confirmation returns to Playing), **Completed** (every team seated at t
 table confirmed; final, no retraction). A round is complete when all its tables are.
 _Avoid_: locked, done
 
+**Correction**:
+An organizer's change to a game at a Completed table, as a last resort (ADR 0010).
+It records who corrected the game and when, and is shown on the game. Not possible
+before completion (teams fix their own games then) or once the tournament is
+published.
+_Avoid_: override, admin edit
+
 ### Scoring
 
 **Beschiss**:

@@ -28,6 +28,8 @@ data class Game(
     /** Optimistic-locking counter: starts at 1 on create, increments on update. */
     val version: Int,
     val participants: List<GameParticipant>,
+    /** Set when an organizer corrected this game at a completed table; null otherwise. */
+    val correction: GameCorrection? = null,
 ) {
     init {
         require(team1 != team2) { "The two playing teams of a game must be distinct" }

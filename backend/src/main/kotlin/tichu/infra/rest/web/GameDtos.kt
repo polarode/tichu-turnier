@@ -5,6 +5,7 @@ import tichu.application.api.RecordedGame
 import tichu.application.api.RecordedPlayer
 import tichu.application.api.RecordedTeam
 import tichu.application.api.TeamResultInput
+import tichu.domain.GameCorrection
 import tichu.domain.GameOutcome
 import tichu.domain.PlayerId
 import tichu.domain.TichuCall
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import java.time.Instant
 
 /**
  * Wire format of the scoring endpoints (#100). The DTO mirrors the team-grouped
@@ -86,6 +88,8 @@ data class RecordedGameDto(
     val beschiss: Boolean,
     val teams: List<RecordedTeamDto>,
     val outcome: GameOutcomeDto,
+    /** Set when an organizer corrected this game at a completed table; null otherwise. */
+    val correction: GameCorrectionDto?,
 ) {
     companion object {
         fun from(recorded: RecordedGame): RecordedGameDto = RecordedGameDto(
@@ -94,6 +98,20 @@ data class RecordedGameDto(
             beschiss = recorded.beschiss,
             teams = recorded.teams.map(RecordedTeamDto::from),
             outcome = GameOutcomeDto.from(recorded.outcome),
+            correction = recorded.correction?.let(GameCorrectionDto::from),
+        )
+    }
+}
+
+/** The organizer's correction stamp: the correcting admin's user id and the instant. */
+data class GameCorrectionDto(
+    val correctedBy: String,
+    val correctedAt: Instant,
+) {
+    companion object {
+        fun from(correction: GameCorrection): GameCorrectionDto = GameCorrectionDto(
+            correctedBy = correction.adminUserId.value,
+            correctedAt = correction.correctedAt,
         )
     }
 }

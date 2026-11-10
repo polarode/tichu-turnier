@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 /**
  * Spring Data repositories for [GameEntity] / [GameParticipantEntity]. They are
@@ -51,7 +52,8 @@ interface SpringDataGameParticipantRepository : JpaRepository<GameParticipantEnt
         UPDATE GameEntity g
         SET g.team1Id = :team1Id, g.team2Id = :team2Id,
             g.baseScoreTeam1 = :baseScoreTeam1, g.baseScoreTeam2 = :baseScoreTeam2,
-            g.beschiss = :beschiss, g.version = g.version + 1
+            g.beschiss = :beschiss, g.version = g.version + 1,
+            g.correctedBy = :correctedBy, g.correctedAt = :correctedAt
         WHERE g.tournamentId = :tournamentId
           AND g.roundNumber = :roundNumber
           AND g.tableNumber = :tableNumber
@@ -70,5 +72,7 @@ interface SpringDataGameParticipantRepository : JpaRepository<GameParticipantEnt
         @Param("baseScoreTeam1") baseScoreTeam1: Int,
         @Param("baseScoreTeam2") baseScoreTeam2: Int,
         @Param("beschiss") beschiss: Boolean,
+        @Param("correctedBy") correctedBy: String?,
+        @Param("correctedAt") correctedAt: Instant?,
     ): Int
 }

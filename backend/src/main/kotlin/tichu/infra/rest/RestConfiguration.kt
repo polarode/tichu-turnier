@@ -4,6 +4,7 @@ import tichu.application.api.AddCoOrganizer
 import tichu.application.api.ApproveAdmin
 import tichu.application.api.CheckPublicTournamentVisible
 import tichu.application.api.ConfirmTable
+import tichu.application.api.CorrectGame
 import tichu.application.api.CreateInvite
 import tichu.application.api.CreateTeam
 import tichu.application.api.CreateTournament
@@ -52,6 +53,7 @@ import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
 import tichu.infra.rest.web.FinalRankingController
 import tichu.infra.rest.web.GameController
+import tichu.infra.rest.web.GameCorrectionController
 import tichu.infra.rest.web.PublicTournamentController
 import tichu.infra.rest.web.PublicTournamentEventsController
 import tichu.infra.rest.web.InviteController
@@ -181,6 +183,10 @@ class RestConfiguration(
 
     @Bean
     fun gameController(recordGame: RecordGame): GameController = GameController(recordGame)
+
+    @Bean
+    fun gameCorrectionController(correctGame: CorrectGame): GameCorrectionController =
+        GameCorrectionController(correctGame)
 
     @Bean
     fun teamScoringController(getTeamScoring: GetTeamScoring): TeamScoringController =

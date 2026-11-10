@@ -1,6 +1,7 @@
 package tichu.application.api
 
 import tichu.domain.Game
+import tichu.domain.GameCorrection
 import tichu.domain.GameOutcome
 import tichu.domain.PlayerId
 import tichu.domain.TichuCall
@@ -45,6 +46,8 @@ data class RecordedGame(
     val beschiss: Boolean,
     val teams: List<RecordedTeam>,
     val outcome: GameOutcome,
+    /** Set when an organizer corrected the game at a completed table; null otherwise. */
+    val correction: GameCorrection?,
 ) {
     companion object {
         /**
@@ -68,6 +71,7 @@ data class RecordedGame(
                     )
                 },
                 outcome = outcome,
+                correction = game.correction,
             )
         }
     }

@@ -7,15 +7,12 @@ import tichu.application.api.RecordedGame
 import tichu.domain.Game
 import tichu.domain.GameKey
 import tichu.domain.GameRepository
-import tichu.domain.PlayerResult
 import tichu.domain.RoundRepository
 import tichu.domain.Table
 import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableConfirmations
 import tichu.domain.TableKey
-import tichu.domain.TeamId
 import tichu.domain.TeamRepository
-import tichu.domain.TeamResult
 import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
 import tichu.domain.TournamentEvents
@@ -25,8 +22,6 @@ import tichu.domain.TournamentStatus
 import tichu.vocabulary.GameConfirmedException
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.GameNotFoundException
-import tichu.vocabulary.GameValidationException
-import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
 
@@ -103,7 +98,7 @@ class RecordGameCommand(
         requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
 
         val teamResults = toTeamResults(request)
-        requirePlayingTeams(tournamentId, teamResults, table.playingTeams(request.gameNumber))
+        requirePlayingTeams(teamRepository, tournamentId, teamResults, table.playingTeams(request.gameNumber))
 
         val key = GameKey(tournamentId, round.number, table.id.value, request.gameNumber)
         val baseGame = Game.record(key, teamResults, request.beschiss, tournament.settings)
@@ -118,7 +113,8 @@ class RecordGameCommand(
                 "Game ${request.gameNumber} at table ${table.id.value} of round ${round.number} not found",
             )
             gameRepository.updateWithVersion(key, request.version!!) {
-                baseGame.copy(id = it.id, version = it.version)
+                // Keep an organizer's correction stamp; only the facts change.
+                baseGame.copy(id = it.id, version = it.version, correction = it.correction)
             }
                 ?: throw GameConcurrentModificationException(
                     "Game ${request.gameNumber} was modified concurrently; reload and retry",
@@ -128,21 +124,6 @@ class RecordGameCommand(
         tournamentEvents.publish(TournamentEvent(TournamentEventType.GAME_RECORDED, tournamentId, round.id, table.id))
 
         return RecordedGame.of(recorded, tournament.settings)
-    }
-
-    private fun requireVersionOnUpdate(create: Boolean, request: GameWriteRequest) {
-        if (create && request.version != null) {
-            throw InvalidFieldException("version", "Version is only sent when editing an existing game")
-        }
-        if (!create && request.version == null) {
-            throw InvalidFieldException("version", "Editing a game requires the version it was read with")
-        }
-    }
-
-    private fun requireGameNumber(gameNumber: Int, table: Table) {
-        if (gameNumber !in 1..table.gameCount) {
-            throw InvalidFieldException("gameNumber", "Game number must be between 1 and ${table.gameCount}")
-        }
     }
 
     /**
@@ -159,43 +140,4 @@ class RecordGameCommand(
             )
         }
     }
-
-
-    private fun requirePlayingTeams(
-        tournamentId: TournamentId,
-        teamResults: List<TeamResult>,
-        playingTeams: List<TeamId>,
-    ) {
-        if (teamResults.size != 2) {
-            throw GameValidationException("teams", "A game has exactly 2 playing teams, got ${teamResults.size}")
-        }
-        if (teamResults.map { it.teamId }.toSet() != playingTeams.toSet()) {
-            throw GameValidationException(
-                "teams",
-                "The submitted teams must be the table's playing teams ${playingTeams.map { it.value }}",
-            )
-        }
-        // The participants must be exactly the playing teams' players: each
-        // submitted player has to belong to the team it is grouped under.
-        for (team in teamResults) {
-            val roster = teamRepository.findById(team.teamId, tournamentId)
-                ?: throw GameValidationException("teams", "Team ${team.teamId.value} is unknown in this tournament")
-            val rosterIds = roster.players.map { it.id }.toSet()
-            if (team.players.any { it.playerId !in rosterIds }) {
-                throw GameValidationException(
-                    "players",
-                    "All participants must be players of team ${team.teamId.value}",
-                )
-            }
-        }
-    }
-
-    private fun toTeamResults(request: GameWriteRequest): List<TeamResult> =
-        request.teams.map { team ->
-            TeamResult(
-                teamId = team.teamId,
-                baseScore = team.baseScore,
-                players = team.players.map { PlayerResult(it.playerId, it.position, it.call, it.bombs) },
-            )
-        }
 }

@@ -41,7 +41,8 @@ consumes that derived fact. S5's per-round `rounds.locked` boolean is dropped.
 - Teams see the frozen state as soon as anyone at their table confirms. The UI
   must explain it ("waiting for the other team(s)", retract to edit).
 - A team that never confirms blocks its table, and so the round. There is no admin
-  override in S6. That is a known follow-up.
+  override in S6. That is a known follow-up. (ADR 0010 later lets an organizer
+  correct a game, but only at a Completed table.)
 - Game edits, confirm and retract on one table must be serialized, because a
   confirm racing an edit would otherwise confirm a stale game.
 - A confirm carries the game versions it confirmed, so it never covers a game

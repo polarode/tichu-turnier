@@ -113,6 +113,9 @@ enum class ErrorCode {
     /** A completed table is final; its confirmations can no longer be retracted (#105). */
     TABLE_COMPLETED,
 
+    /** A game can only be corrected by an organizer once its table is completed (ADR 0010). */
+    TABLE_NOT_COMPLETED,
+
     /**
      * The email named as a new co-organizer matches no active admin. Unknown, pending and
      * disabled accounts share this one code and message, so the caller cannot probe accounts (#131).
@@ -423,6 +426,13 @@ class TableIncompleteException(message: String) : ApiException(ErrorCode.TABLE_I
 
 /** Thrown when a team retracts its confirmation of a completed table (#105). Mapped to HTTP 409. */
 class TableCompletedException(message: String) : ApiException(ErrorCode.TABLE_COMPLETED, message)
+
+/**
+ * Thrown when an organizer corrects a game at a table that is not yet completed: only
+ * a completed table, whose games are final, may be corrected (ADR 0010).
+ * Mapped to HTTP 409.
+ */
+class TableNotCompletedException(message: String) : ApiException(ErrorCode.TABLE_NOT_COMPLETED, message)
 
 /**
  * Thrown when a co-organizer is added by an email that matches no active admin account.

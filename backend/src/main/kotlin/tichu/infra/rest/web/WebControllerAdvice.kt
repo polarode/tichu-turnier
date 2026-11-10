@@ -30,6 +30,7 @@ import tichu.vocabulary.TotalRoundsBelowRoundCountException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
+import tichu.vocabulary.TableNotCompletedException
 import tichu.vocabulary.TeamAccessException
 import tichu.vocabulary.TeamAccessLinkConflictException
 import tichu.vocabulary.TeamLimitReachedException
@@ -278,6 +279,11 @@ class WebControllerAdvice {
     /** Retracting on a completed (final) table: 409. */
     @ExceptionHandler(TableCompletedException::class)
     fun handleTableCompleted(ex: TableCompletedException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** An organizer corrects a game before its table is completed: 409. */
+    @ExceptionHandler(TableNotCompletedException::class)
+    fun handleTableNotCompleted(ex: TableNotCompletedException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
     private fun anchoredConflict(ex: ApiException, field: String): ProblemDetail {

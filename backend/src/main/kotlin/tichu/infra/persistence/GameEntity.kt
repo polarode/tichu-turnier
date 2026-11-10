@@ -1,6 +1,8 @@
 package tichu.infra.persistence
 
+import tichu.domain.AdminUserId
 import tichu.domain.Game
+import tichu.domain.GameCorrection
 import tichu.domain.GameParticipant
 import tichu.domain.PlayerId
 import tichu.domain.TeamId
@@ -12,6 +14,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.Instant
 
 /**
  * Persistence model for [Game]. Lives in the infra layer — the domain entity
@@ -47,6 +50,11 @@ class GameEntity(
     /** Optimistic-locking counter; incremented on every successful update. */
     @Column(name = "version", nullable = false)
     val version: Int,
+    /** The correcting organizer's admin id; null unless corrected (V23 keeps it paired with [correctedAt]). */
+    @Column(name = "corrected_by", nullable = true)
+    val correctedBy: String? = null,
+    @Column(name = "corrected_at", nullable = true)
+    val correctedAt: Instant? = null,
 ) {
     fun toDomain(participants: List<GameParticipantEntity>): Game = Game(
         id = id,
@@ -63,6 +71,7 @@ class GameEntity(
         participants = participants
             .sortedBy { it.id }
             .map { it.toDomain() },
+        correction = correctedBy?.let { by -> correctedAt?.let { at -> GameCorrection(AdminUserId(by), at) } },
     )
 
     companion object {
@@ -78,6 +87,8 @@ class GameEntity(
             baseScoreTeam2 = game.baseScoreTeam2,
             beschiss = game.beschiss,
             version = version,
+            correctedBy = game.correction?.adminUserId?.value,
+            correctedAt = game.correction?.correctedAt,
         )
     }
 }

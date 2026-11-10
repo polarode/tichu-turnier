@@ -844,6 +844,30 @@ describe('/team/score', () => {
         expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true');
     });
 
+    it('opens on the game named in the link even when earlier games are not entered', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+
+        renderApp('/team/score?game=3');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        expect(screen.getAllByRole('tab')[2]).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it.each(['9', 'abc'])(
+        'falls back to the first unentered game for an invalid game link (%s)',
+        async (game) => {
+            scoring.currentTable.mockResolvedValue(table());
+            scoring.games.mockResolvedValue([]);
+
+            renderApp(`/team/score?game=${game}`);
+            await screen.findByText('Team Alpha gegen Team Beta');
+
+            expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true');
+        },
+    );
+
     it('shows no per-game matchup line at a normal table', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);

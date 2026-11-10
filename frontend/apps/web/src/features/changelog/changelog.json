@@ -228,6 +228,10 @@
             {
                 "type": "fix",
                 "text": "Access link QR codes scan reliably in dark mode"
+            },
+            {
+                "type": "feature",
+                "text": "Teams can tap a game in their table overview to enter or edit it"
             }
         ]
     }

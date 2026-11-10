@@ -41,16 +41,20 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
  * The table state and games follow the team's live stream while `live` (the
  * tournament is not yet published), with `connected` shown as a Live badge. A
  * successful save is confirmed in a status line below the form until the next
- * save or game switch.
+ * save or game switch. A `?game=` link ([initialGame]) opens that game instead,
+ * when it is on the schedule.
  */
 export function ScoringPage({
     table,
+    initialGame,
     viewerTeamId,
     tournamentStatus,
     live = false,
     connected = false,
 }: {
     table: TeamTable;
+    /** Game to open on instead of the first unentered one; ignored unless on the schedule. */
+    initialGame?: number;
     viewerTeamId?: string;
     tournamentStatus?: TournamentStatus;
     /** Whether the live stream applies; only then is the connection state shown. */
@@ -61,7 +65,7 @@ export function ScoringPage({
     const { t } = useI18n();
     const reloadCurrentTable = useReloadCurrentTable();
     const gamesQuery = useTableGames(table);
-    // Null until the games load: the default is the first game not yet entered.
+    // Null until the games load: the default is the linked game, else the first game not yet entered.
     const [picked, setPicked] = useState<number | null>(null);
     // Lives here, not in the form: a successful save bumps the game's version,
     // which remounts the form and would drop any state it held.
@@ -74,7 +78,10 @@ export function ScoringPage({
     const games = gamesQuery.data ?? [];
     const byNumber = new Map<number, RecordedGame>(games.map((g) => [g.gameNumber, g]));
     const gameNumbers = table.schedule.map((game) => game.gameNumber);
-    const selected = picked ?? gameNumbers.find((n) => !byNumber.has(n)) ?? gameNumbers[0] ?? 1;
+    const linked =
+        initialGame !== undefined && gameNumbers.includes(initialGame) ? initialGame : undefined;
+    const selected =
+        picked ?? linked ?? gameNumbers.find((n) => !byNumber.has(n)) ?? gameNumbers[0] ?? 1;
     // Pin the opening game once the games are in, so a poll that fills it does
     // not move the viewer to another game mid-entry.
     if (picked === null && gamesQuery.isSuccess) setPicked(selected);
@@ -115,7 +122,7 @@ export function ScoringPage({
                 <p className="rounded-md bg-muted px-3 py-2 text-sm">
                     {t('scoring.tournamentLocked')}
                 </p>
-            ) : null }
+            ) : null}
 
             <TabList
                 id="game"

@@ -14,6 +14,11 @@ import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { PagePlaceholder } from '@/shared/components/page-placeholder.component.tsx';
 
+interface TeamScoreSearch {
+    /** Game to open on (`/team/score?game=3`); ignored unless it is on the table's schedule. */
+    game?: number;
+}
+
 /**
  * The team scoring route (S5c, #101). Parented to the root (a `team_` segment,
  * like `/team/login`) rather than nested under the leaf `/team` overview route,
@@ -40,6 +45,15 @@ export const Route = createFileRoute('/team_/score')({
             // A 404 (not seated yet) is handled by the component, not a redirect.
         }
     },
+    // A `?game=` link opens that game; keep only a positive whole number, as a number or
+    // numeric text. The key stays explicit: the router merges the result over the raw
+    // search, so an omitted key would let an invalid ?game= through.
+    validateSearch: (search: Record<string, unknown>): TeamScoreSearch => {
+        const game = typeof search.game === 'string' ? Number(search.game) : search.game;
+        return {
+            game: typeof game === 'number' && Number.isInteger(game) && game > 0 ? game : undefined,
+        };
+    },
     pendingMs: 1,
     pendingComponent: LoadingIndicator,
     component: ScoringRoute,
@@ -48,6 +62,7 @@ export const Route = createFileRoute('/team_/score')({
 function ScoringRoute() {
     const query = useQuery(teamCurrentTableQueryOptions);
     const overview = useQuery(teamOverviewQueryOptions);
+    const { game } = Route.useSearch();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -75,6 +90,7 @@ function ScoringRoute() {
     return (
         <ScoringPage
             table={query.data}
+            initialGame={game}
             viewerTeamId={overview.data?.teamId}
             tournamentStatus={overview.data?.tournamentStatus}
             live={live}

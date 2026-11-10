@@ -87,7 +87,9 @@ export function ScoringLink({
 
 /**
  * A read-only summary of the table's games, its status with who confirmed, and
- * the one control the state allows:
+ * the one control the state allows. While the table is playing, each game tile
+ * links to that game on the scoring screen; frozen or read-only, the tiles are
+ * static.
  * - Playing, or Confirming by another team: Confirm, disabled with an "x of n
  *   games entered" hint until every game is in, behind a dialog. Confirming by
  *   another team also shows that the games are frozen.
@@ -162,6 +164,12 @@ function ConfirmationPanel({
                     teams={table.teams.map((team) => ({ id: team.teamId, name: team.teamName }))}
                     schedule={table.schedule}
                     games={games}
+                    // Only while the games can still change: a tile opens its game for entry.
+                    gameAction={
+                        readOnly || isFrozen(table.confirmation)
+                            ? undefined
+                            : { kind: 'link', to: '/team/score' }
+                    }
                 />
             ) : null}
             <ScoringLink

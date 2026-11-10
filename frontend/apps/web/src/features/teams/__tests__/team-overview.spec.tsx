@@ -460,6 +460,36 @@ describe('/team confirmation panel', () => {
         expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
     });
 
+    it('links every game tile to its game on the scoring screen while the table is playing', async () => {
+        const user = userEvent.setup();
+        const { panel, router } = await renderPanel(seatedTable(), [game(1), game(3)]);
+        const tiles = within(panel).getByRole('list', { name: 'Spiele' });
+
+        expect(
+            within(tiles)
+                .getAllByRole('link')
+                .map((link) => link.textContent),
+        ).toEqual(['Spiel 1', 'Spiel 2', 'Spiel 3', 'Spiel 4']);
+
+        await user.click(within(tiles).getByRole('link', { name: 'Spiel 2' }));
+
+        await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));
+        expect(router.state.location.search).toEqual({ game: 2 });
+        expect(await screen.findByText('Team Alpha gegen Team Beta')).toBeInTheDocument();
+        expect(screen.getAllByRole('tab')[1]).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('keeps the game tiles static once the table is frozen', async () => {
+        const { panel } = await renderPanel(
+            seatedTable({ confirmation: { status: 'CONFIRMING', confirmedTeamIds: ['team-2'] } }),
+            allGames(),
+        );
+
+        const tiles = within(panel).getByRole('list', { name: 'Spiele' });
+        expect(within(tiles).queryAllByRole('link')).toHaveLength(0);
+        expect(gameTiles(tiles)[1]![0]).toBe('Spiel 2');
+    });
+
     it('marks the double-win team as winner even when a failed call levels the points', async () => {
         const levelled: RecordedGame = {
             ...game(1),

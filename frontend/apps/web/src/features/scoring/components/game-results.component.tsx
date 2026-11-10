@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
@@ -14,6 +15,12 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 type ResultTeam = { id: string; name: string };
 
+/**
+ * What a game tile does when clicked, beyond showing its contents. Only the link
+ * to the scoring screen (opened on that game) exists so far.
+ */
+export type GameTileAction = { kind: 'link'; to: '/team/score' };
+
 interface GameResultsProps {
     /** Already-localized accessible name of the list of games. */
     caption: string;
@@ -23,6 +30,8 @@ interface GameResultsProps {
     schedule: readonly ScheduledGame[];
     /** The games entered so far. */
     games: readonly RecordedGame[];
+    /** Makes every tile clickable; omitted, the tiles stay static. */
+    gameAction?: GameTileAction;
 }
 
 /**
@@ -33,9 +42,10 @@ interface GameResultsProps {
  * double-win markers sit at the tile's foot, and a game not entered yet is a
  * dashed tile reading "missing". At the trio table each tile lists only the two
  * teams playing it. Tiles go two across, four (trio: three) once the container
- * is wide enough.
+ * is wide enough. With a [gameAction] (the team's panel while the table is
+ * playing) the whole tile is clickable, its title being the link.
  */
-export function GameResults({ caption, teams, schedule, games }: GameResultsProps) {
+export function GameResults({ caption, teams, schedule, games, gameAction }: GameResultsProps) {
     const byNumber = new Map(games.map((game) => [game.gameNumber, game]));
 
     return (
@@ -54,6 +64,7 @@ export function GameResults({ caption, teams, schedule, games }: GameResultsProp
                         teams={teams}
                         scheduled={scheduled}
                         game={byNumber.get(scheduled.gameNumber)}
+                        action={gameAction}
                     />
                 ))}
             </ol>
@@ -154,10 +165,12 @@ function GameTile({
     teams,
     scheduled,
     game,
+    action,
 }: {
     teams: readonly ResultTeam[];
     scheduled: ScheduledGame;
     game?: RecordedGame;
+    action?: GameTileAction;
 }) {
     const { t } = useI18n();
     const rows = scheduled.teamIds.map((id) => ({
@@ -179,16 +192,31 @@ function GameTile({
             : first.points > second.points
               ? first.id
               : second.id);
+    const title = `${t('rounds.game')} ${scheduled.gameNumber}`;
 
     return (
         <li
             className={cn(
-                'flex flex-col gap-1 rounded-md border p-2',
+                'relative flex flex-col gap-1 rounded-md border p-2',
                 game ? 'border-border bg-card' : 'border-dashed border-input',
+                // The stretched link covers the tile; the ring follows its keyboard focus.
+                action &&
+                    'hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
             )}
         >
             <p className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
-                <span className="font-medium">{`${t('rounds.game')} ${scheduled.gameNumber}`}</span>
+                {action?.kind === 'link' ? (
+                    // The link's box is stretched over the whole tile (the li is relative).
+                    <Link
+                        to={action.to}
+                        search={{ game: scheduled.gameNumber }}
+                        className="cursor-pointer font-medium outline-none after:absolute after:inset-0"
+                    >
+                        {title}
+                    </Link>
+                ) : (
+                    <span className="font-medium">{title}</span>
+                )}
                 {game ? null : <span>{t('rounds.game.missing')}</span>}
             </p>
             <ul className="flex flex-col gap-1">

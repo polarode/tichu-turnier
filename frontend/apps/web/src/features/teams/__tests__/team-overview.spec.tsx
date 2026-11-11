@@ -142,7 +142,11 @@ describe('/team', () => {
             ),
         ).toBeInTheDocument();
         const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
-        expect(await within(panel).findByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
+        await within(panel).findByRole('list', { name: 'Bestätigungen' });
+        expect(listItems(within(panel).getByRole('list', { name: 'Bestätigungen' }))).toEqual([
+            'Team Alpha, bestätigt',
+            'Team Beta, ausstehend',
+        ]);
         // Read-only: no Confirm and no Retract; the game tiles open each game to view.
         expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
         await within(panel).findByRole('list', { name: 'Spiele' });
@@ -463,10 +467,13 @@ describe('/team confirmation panel', () => {
         ).not.toBeInTheDocument();
     });
 
-    it('shows the status and an enabled Confirm once every game is entered', async () => {
+    it('shows who confirmed and an enabled Confirm once every game is entered', async () => {
         const { panel } = await renderPanel(seatedTable(), allGames());
 
-        expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
+        expect(listItems(within(panel).getByRole('list', { name: 'Bestätigungen' }))).toEqual([
+            'Team Alpha, ausstehend',
+            'Team Beta, ausstehend',
+        ]);
         expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeEnabled();
     });
 
@@ -613,10 +620,10 @@ describe('/team confirmation panel', () => {
         );
         mockedRetract.mockResolvedValue({ status: 'PLAYING', confirmedTeamIds: [] });
 
-        expect(
-            within(panel).getByText('Status: Bestätigung läuft · 1 von 2 bestätigt'),
-        ).toBeInTheDocument();
-        expect(within(panel).getByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
+        expect(listItems(within(panel).getByRole('list', { name: 'Bestätigungen' }))).toEqual([
+            'Team Alpha, bestätigt',
+            'Team Beta, ausstehend',
+        ]);
         expect(within(panel).getByText('Warten auf das andere Team.')).toBeInTheDocument();
         expect(
             within(panel).queryByRole('button', { name: 'Alle Spiele bestätigen' }),
@@ -634,7 +641,10 @@ describe('/team confirmation panel', () => {
             allGames(),
         );
 
-        expect(within(panel).getByText('Bestätigt von: Team Beta')).toBeInTheDocument();
+        expect(listItems(within(panel).getByRole('list', { name: 'Bestätigungen' }))).toEqual([
+            'Team Alpha, ausstehend',
+            'Team Beta, bestätigt',
+        ]);
         expect(
             within(panel).getByText(
                 'Die Spiele sind eingefroren. Prüfe sie und bestätige ebenfalls.',
@@ -654,20 +664,23 @@ describe('/team confirmation panel', () => {
             allGames(),
         );
 
-        expect(
-            within(panel).getByText('Status: Abgeschlossen · 2 von 2 bestätigt'),
-        ).toBeInTheDocument();
+        expect(listItems(within(panel).getByRole('list', { name: 'Bestätigungen' }))).toEqual([
+            'Team Alpha, bestätigt',
+            'Team Beta, bestätigt',
+        ]);
         expect(within(panel).getByText('Die Spiele sind endgültig.')).toBeInTheDocument();
         expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
     });
 
-    it('counts confirmations out of three at a trio table and marks the games the team sits out', async () => {
+    it('lists the confirmations of all three teams at a trio table and marks the games the team sits out', async () => {
         const trioGames = trioTable().schedule.map((s) => game(s.gameNumber, 1, s.teamIds));
         const { panel } = await renderPanel(trioTable(['team-2']), trioGames);
 
-        expect(
-            within(panel).getByText('Status: Bestätigung läuft · 1 von 3 bestätigt'),
-        ).toBeInTheDocument();
+        expect(listItems(within(panel).getByRole('list', { name: 'Bestätigungen' }))).toEqual([
+            'Team Alpha, ausstehend',
+            'Team Beta, bestätigt',
+            'Team Gamma, ausstehend',
+        ]);
         // Each tile lists only the two teams playing it; the viewer (Team Alpha)
         // sits out games 3 and 6.
         const games = within(panel).getByRole('list', { name: 'Spiele' });

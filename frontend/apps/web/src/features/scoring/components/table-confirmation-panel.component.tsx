@@ -1,14 +1,10 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { Check, Circle } from 'lucide-react';
 import { Button, buttonVariants } from '@tichu/ui/button.tsx';
+import { cn } from '@tichu/ui/lib/utils.ts';
 
-import {
-    isCompleted,
-    isFrozen,
-    type RecordedGame,
-    teamNameOf,
-    type TeamTable,
-} from '@/domain/game.domain.ts';
+import { isCompleted, isFrozen, type RecordedGame, type TeamTable } from '@/domain/game.domain.ts';
 import { GameResults } from '@/features/scoring/components/game-results.component.tsx';
 import {
     useConfirmTable,
@@ -16,14 +12,11 @@ import {
     useRetractTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
-import {
-    confirmedCountLabel,
-    TABLE_STATUS_LABEL_KEYS,
-    tableHeading,
-} from '@/features/scoring/labels.ts';
+import { tableHeading } from '@/features/scoring/labels.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
+import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
@@ -86,7 +79,7 @@ export function ScoringLink({
 }
 
 /**
- * A read-only summary of the table's games, its status with who confirmed, and
+ * A read-only summary of the table's games, which teams confirmed so far, and
  * the one control the state allows. Each game tile links to that game on the
  * scoring screen (for entry, or read-only once the table froze or the
  * tournament ended), so the panel needs no separate entry link. Until every
@@ -128,7 +121,6 @@ function ConfirmationPanel({
         games !== undefined && table.schedule.every((game) => byNumber.has(game.gameNumber));
     const viewerConfirmed = confirmedTeamIds.includes(viewerTeamId);
 
-    const teamName = (teamId: string) => teamNameOf(table, teamId);
     const heading = `${t('rounds.round')} ${table.roundNumber} · ${tableHeading(table.tableNumber, t)}`;
 
     function explain(cause: unknown) {
@@ -174,16 +166,7 @@ function ConfirmationPanel({
             {/* The tiles show which games are still open; the confirmation step
                 only appears once every game is in. */}
             {allEntered ? (
-                <>
-                    <p>
-                        {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}
-                    </p>
-                    {confirmedTeamIds.length > 0 ? (
-                        <p className="text-muted-foreground">
-                            {`${t('confirmation.confirmedBy')}: ${confirmedTeamIds.map(teamName).join(', ')}`}
-                        </p>
-                    ) : null}
-                </>
+                <ConfirmationStatus table={table} confirmedTeamIds={confirmedTeamIds} />
             ) : null}
 
             <FormAlert message={error} />
@@ -237,5 +220,54 @@ function ConfirmationPanel({
                 />
             ) : null}
         </section>
+    );
+}
+
+/**
+ * Who confirmed the table so far: one pill per seated team in its seat colour,
+ * a check once it confirmed, a dashed outline and an empty circle while it has
+ * not. The state is spelled out for screen readers.
+ */
+function ConfirmationStatus({
+    table,
+    confirmedTeamIds,
+}: {
+    table: TeamTable;
+    confirmedTeamIds: readonly string[];
+}) {
+    const { t } = useI18n();
+    const labelId = useId();
+    return (
+        <div className="flex flex-col gap-1">
+            <span id={labelId} className="text-xs text-muted-foreground">
+                {t('confirmation.list.label')}
+            </span>
+            <ul aria-labelledby={labelId} className="flex flex-wrap gap-2">
+                {table.teams.map((team, seat) => {
+                    const confirmed = confirmedTeamIds.includes(team.teamId);
+                    const Icon = confirmed ? Check : Circle;
+                    return (
+                        <li
+                            key={team.teamId}
+                            className={cn(
+                                'flex min-w-0 items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium',
+                                confirmed
+                                    ? cn('border-transparent', seatTone(seat).chip)
+                                    : 'border-dashed border-input text-muted-foreground',
+                            )}
+                        >
+                            <Icon
+                                aria-hidden="true"
+                                className={cn('size-4 shrink-0', !confirmed && 'size-3.5')}
+                            />
+                            <span className="truncate">{team.teamName}</span>
+                            <span className="sr-only">
+                                {`, ${t(confirmed ? 'confirmation.teamConfirmed' : 'confirmation.teamPending')}`}
+                            </span>
+                        </li>
+                    );
+                })}
+            </ul>
+        </div>
     );
 }

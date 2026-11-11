@@ -269,6 +269,10 @@
             {
                 "type": "improvement",
                 "text": "In the rounds view, the games of a confirmed table are labelled \"Correct\", so it is clear they can be opened to correct them"
+            },
+            {
+                "type": "improvement",
+                "text": "Once all games are entered, the team page shows each team at the table with a check mark when it has confirmed, instead of a status line"
             }
         ]
     }

@@ -391,6 +391,8 @@ export const en = {
     'confirmation.count.of': 'of',
     'confirmation.count.confirmed': 'confirmed',
     'confirmation.teamConfirmed': 'confirmed',
+    'confirmation.teamPending': 'pending',
+    'confirmation.list.label': 'Confirmations',
     'confirmation.confirmedBy': 'Confirmed by',
     'confirmation.confirm': 'Confirm all games',
     'confirmation.dialog.title': 'Confirm all games?',

@@ -402,6 +402,8 @@ export const de: Catalog = {
     'confirmation.count.of': 'von',
     'confirmation.count.confirmed': 'bestätigt',
     'confirmation.teamConfirmed': 'bestätigt',
+    'confirmation.teamPending': 'ausstehend',
+    'confirmation.list.label': 'Bestätigungen',
     'confirmation.confirmedBy': 'Bestätigt von',
     'confirmation.confirm': 'Alle Spiele bestätigen',
     'confirmation.dialog.title': 'Alle Spiele bestätigen?',

@@ -1,12 +1,28 @@
 /**
  * Team identity colours per seat at a table (A, B, C): each seated team keeps its
  * colour in every game it plays, so at a trio table game 3 (B vs C) reads Star vs
- * Pagoda. Literal class names so Tailwind picks them up.
+ * Pagoda. Literal class names so Tailwind picks them up; `fill` is the raw colour
+ * for inline styles such as the base-score slider's split track.
  */
 const SEAT_TONES = [
-    { dot: 'bg-team-1', text: 'text-team-1', chip: 'bg-team-1-soft text-team-1' },
-    { dot: 'bg-team-2', text: 'text-team-2', chip: 'bg-team-2-soft text-team-2' },
-    { dot: 'bg-team-3', text: 'text-team-3', chip: 'bg-team-3-soft text-team-3' },
+    {
+        dot: 'bg-team-1',
+        text: 'text-team-1',
+        chip: 'bg-team-1-soft text-team-1',
+        fill: 'var(--color-team-1)',
+    },
+    {
+        dot: 'bg-team-2',
+        text: 'text-team-2',
+        chip: 'bg-team-2-soft text-team-2',
+        fill: 'var(--color-team-2)',
+    },
+    {
+        dot: 'bg-team-3',
+        text: 'text-team-3',
+        chip: 'bg-team-3-soft text-team-3',
+        fill: 'var(--color-team-3)',
+    },
 ] as const;
 
 export type SeatTone = (typeof SEAT_TONES)[number];

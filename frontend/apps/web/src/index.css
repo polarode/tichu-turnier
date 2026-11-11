@@ -9,3 +9,62 @@ body {
     background-color: var(--color-background);
     color: var(--color-foreground);
 }
+
+/* The base-score slider as a tug of war: the track left of the thumb takes team 1's
+   colour, the rest team 2's, so the thumb marks where the 100 card points split.
+   The caller sets --split (thumb position) and --split-left/--split-right (colours). */
+.score-split {
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+.score-split:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+.score-split:focus-visible {
+    outline: none;
+}
+.score-split::-webkit-slider-runnable-track {
+    height: 0.625rem;
+    border-radius: 9999px;
+    background: linear-gradient(
+        to right,
+        var(--split-left) var(--split),
+        var(--split-right) var(--split)
+    );
+}
+.score-split::-moz-range-track {
+    height: 0.625rem;
+    border-radius: 9999px;
+    background: linear-gradient(
+        to right,
+        var(--split-left) var(--split),
+        var(--split-right) var(--split)
+    );
+}
+.score-split::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-top: -0.5625rem;
+    border-radius: 9999px;
+    border: 3px solid var(--color-foreground);
+    background: var(--color-background);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+.score-split::-moz-range-thumb {
+    width: 1.75rem;
+    height: 1.75rem;
+    box-sizing: border-box;
+    border-radius: 9999px;
+    border: 3px solid var(--color-foreground);
+    background: var(--color-background);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+.score-split:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px var(--color-ring);
+}
+.score-split:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 3px var(--color-ring);
+}

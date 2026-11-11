@@ -631,7 +631,7 @@ describe('game correction', () => {
             name: 'Spiel 2 korrigieren – Tisch A',
         });
         // Alpha's card points as the teams entered them, and the game is saved as an update.
-        expect(within(editor).getByRole('slider', { name: 'Punkte – Alpha' })).toHaveValue('60');
+        expect(within(editor).getByRole('slider', { name: 'Punkte' })).toHaveValue('60');
         expect(within(editor).getByRole('button', { name: 'Spiel aktualisieren' })).toBeEnabled();
     });
 

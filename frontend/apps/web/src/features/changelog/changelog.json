@@ -242,5 +242,14 @@
                 "text": "Correct a game after every team at the table has confirmed it"
             }
         ]
+    },
+    {
+        "date": "2026-11-11",
+        "changes": [
+            {
+                "type": "improvement",
+                "text": "When entering a game, both teams' card points now show right above the points slider, and the slider is coloured in the two team colours"
+            }
+        ]
     }
 ]

@@ -452,6 +452,7 @@ export const de: Catalog = {
     'scoring.baseScore.label': 'Punkte',
     'scoring.baseScore.decrease': '5 Punkte weniger',
     'scoring.baseScore.increase': '5 Punkte mehr',
+    'scoring.baseScore.valueText': '{team0} {points0}, {team1} {points1}',
     'scoring.winner': 'Gewinner',
     'scoring.beschiss.label': 'Beschiss',
     'scoring.save.create': 'Spiel speichern',

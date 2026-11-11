@@ -440,6 +440,7 @@ export const en = {
     'scoring.baseScore.label': 'Base score',
     'scoring.baseScore.decrease': '5 points less',
     'scoring.baseScore.increase': '5 points more',
+    'scoring.baseScore.valueText': '{team0} {points0}, {team1} {points1}',
     'scoring.winner': 'Winner',
     'scoring.beschiss.label': 'Beschiss',
     'scoring.save.create': 'Save game',

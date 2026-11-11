@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { CircleHelp, Minus, Plus, X } from 'lucide-react';
 import { Button } from '@tichu/ui/button.tsx';
@@ -486,9 +486,45 @@ export function GameEntryForm({
             ) : null}
 
             <div className="flex flex-col gap-1">
-                <label htmlFor="base-score" className="text-sm font-medium">
-                    {t('scoring.baseScore.label')} – {matchup[0].teamName}
-                </label>
+                {/* A scoreboard right above the slider: each team's card points in its seat
+                    colour on the side of the track that is theirs, the label centred between
+                    them. The slider's aria-valuetext announces the same split, so the team
+                    cells are hidden from assistive tech. */}
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+                    {([0, 1] as const).map((team) => (
+                        <div
+                            key={team}
+                            aria-hidden="true"
+                            className={cn(
+                                'flex min-w-0 items-center gap-2',
+                                team === 1 && 'order-last flex-row-reverse',
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    'truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                                    tones[team].chip,
+                                )}
+                            >
+                                {matchup[team].teamName}
+                            </span>
+                            <span
+                                className={cn(
+                                    'shrink-0 text-2xl font-bold tabular-nums',
+                                    tones[team].text,
+                                )}
+                            >
+                                {formatPoints(points[team].base)}
+                            </span>
+                        </div>
+                    ))}
+                    <label
+                        htmlFor="base-score"
+                        className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                    >
+                        {t('scoring.baseScore.label')}
+                    </label>
+                </div>
                 {/* ±5 steppers: dragging a 30-step slider precisely is fiddly on a phone. */}
                 <div className="flex items-center gap-2">
                     <Button
@@ -510,7 +546,20 @@ export function GameEntryForm({
                         step={BASE_SCORE_STEP}
                         value={state.baseScoreTeam0}
                         disabled={baseScoreLocked}
-                        className="h-11 min-w-0 flex-1 accent-primary"
+                        aria-valuetext={fillPlaceholders(t('scoring.baseScore.valueText'), {
+                            team0: matchup[0].teamName,
+                            points0: formatPoints(points[0].base),
+                            team1: matchup[1].teamName,
+                            points1: formatPoints(points[1].base),
+                        })}
+                        className="score-split h-11 min-w-0 flex-1"
+                        style={
+                            {
+                                '--split': `${((state.baseScoreTeam0 - BASE_SCORE_MIN) / (BASE_SCORE_MAX - BASE_SCORE_MIN)) * 100}%`,
+                                '--split-left': tones[0].fill,
+                                '--split-right': tones[1].fill,
+                            } as CSSProperties
+                        }
                         onChange={(e) => form.setValue('baseScoreTeam0', Number(e.target.value))}
                     />
                     <Button

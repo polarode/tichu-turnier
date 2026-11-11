@@ -292,6 +292,13 @@ describe('/team/score', () => {
 
         await user.click(screen.getByRole('button', { name: '5 Punkte mehr' }));
         expect(slider).toHaveValue('55');
+        // The slider announces both teams' share of the card points.
+        expect(slider).toHaveAttribute('aria-valuetext', 'Team Alpha 55, Team Beta 45');
+        // The scoreboard above the slider shows the same split next to Beta's pill.
+        expect(screen.getAllByText('45')).toHaveLength(2);
+        expect(
+            within(screen.getByRole('group', { name: 'Team Beta' })).getByText('45'),
+        ).toBeInTheDocument();
 
         const less = screen.getByRole('button', { name: '5 Punkte weniger' });
         for (let i = 0; i < 20; i++) {

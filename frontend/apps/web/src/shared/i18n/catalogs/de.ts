@@ -144,6 +144,11 @@ export const de: Catalog = {
     'ownerConsole.invites.empty': 'Noch keine Einladungen.',
     'ownerConsole.invites.expires': 'Läuft ab',
 
+    'ownerConsole.tournaments.title': 'Turniere',
+    'ownerConsole.tournaments.description':
+        'Alle Turniere der Plattform, gruppiert nach ihrem Hauptorganisator.',
+    'ownerConsole.tournaments.empty': 'Noch keine Turniere.',
+
     'ownerConsole.status.pending': 'Offen',
     'ownerConsole.status.active': 'Aktiv',
     'ownerConsole.status.disabled': 'Deaktiviert',

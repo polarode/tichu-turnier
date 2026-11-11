@@ -141,6 +141,11 @@ export const en = {
     'ownerConsole.invites.empty': 'No invites issued yet.',
     'ownerConsole.invites.expires': 'Expires',
 
+    'ownerConsole.tournaments.title': 'Tournaments',
+    'ownerConsole.tournaments.description':
+        'Every tournament on the platform, grouped by its lead organizer.',
+    'ownerConsole.tournaments.empty': 'No tournaments yet.',
+
     'ownerConsole.status.pending': 'Pending',
     'ownerConsole.status.active': 'Active',
     'ownerConsole.status.disabled': 'Disabled',

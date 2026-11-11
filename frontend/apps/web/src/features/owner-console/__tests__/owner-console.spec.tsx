@@ -1,11 +1,13 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminRepository } from '@/admin-api/admin.repository.ts';
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import type { AdminAccount, IssuedInvite } from '@/domain/admin-account.domain.ts';
+import type { Tournament } from '@/domain/tournament.domain.ts';
 import type { AdminRole, AdminStatus } from '@/vocabulary/admin.enum.ts';
+import { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
 
 vi.mock('@/auth-api/auth.repository.ts', () => ({
@@ -27,6 +29,7 @@ vi.mock('@/admin-api/admin.repository.ts', () => ({
         listInvites: vi.fn(),
         createInvite: vi.fn(),
         revokeInvite: vi.fn(),
+        listAllTournaments: vi.fn(),
     },
 }));
 
@@ -35,6 +38,27 @@ const adminRepo = vi.mocked(AdminRepository);
 
 const owner = { id: 'owner-1', email: 'owner@example.com', role: 'OWNER' as const };
 const plainAdmin = { id: 'admin-1', email: 'organizer@example.com', role: 'ADMIN' as const };
+
+function tournament(
+    id: string,
+    name: string,
+    leadOrganizerEmail: string,
+    status: Tournament['status'] = 'SETUP',
+): Tournament {
+    return {
+        id,
+        name,
+        description: '',
+        maxTeams: 16,
+        settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
+        status,
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+        publicVisibility: false,
+        organizerRole: OrganizerRole.LEAD,
+        leadOrganizerEmail,
+        updatedAt: new Date('2026-01-01T00:00:00Z'),
+    };
+}
 
 function account({
     id,
@@ -65,6 +89,45 @@ describe('owner console', () => {
         vi.resetAllMocks();
         adminRepo.listInvites.mockResolvedValue([]);
         adminRepo.listAccounts.mockResolvedValue([]);
+        adminRepo.listAllTournaments.mockResolvedValue([]);
+    });
+
+    it('lists every tournament under its creator, creators sorted by email', async () => {
+        auth.refresh.mockResolvedValue(owner);
+        adminRepo.listAllTournaments.mockResolvedValue([
+            tournament('t-1', 'Spring Cup', 'b@example.com'),
+            tournament('t-2', 'Autumn Cup', 'a@example.com', 'ACTIVE'),
+            tournament('t-3', 'Winter Cup', 'a@example.com'),
+        ]);
+
+        renderApp('/admin/console');
+
+        const section = (await screen.findByRole('heading', { name: 'Turniere' })).closest(
+            'section',
+        );
+        expect(section).not.toBeNull();
+        const creators = within(section!)
+            .getAllByRole('heading', { level: 3 })
+            .map((heading) => heading.textContent);
+        expect(creators).toEqual(['a@example.com', 'b@example.com']);
+
+        const [firstGroup, secondGroup] = within(section!).getAllByRole('list');
+        expect(
+            within(firstGroup!)
+                .getAllByRole('link')
+                .map((link) => link.textContent),
+        ).toEqual(['Autumn Cup', 'Winter Cup']);
+        expect(within(firstGroup!).getByRole('link', { name: 'Autumn Cup' })).toHaveAttribute(
+            'href',
+            '/admin/tournaments/t-2',
+        );
+        const autumnRow = screen.getByRole('link', { name: 'Autumn Cup' }).closest('li');
+        expect(within(autumnRow!).getByText('Läuft')).toBeInTheDocument();
+
+        expect(within(secondGroup!).getByRole('link', { name: 'Spring Cup' })).toHaveAttribute(
+            'href',
+            '/admin/tournaments/t-1',
+        );
     });
 
     it('opens the console from the avatar menu for owners', async () => {
@@ -187,5 +250,6 @@ describe('owner console', () => {
         expect(screen.queryByRole('menuitem', { name: 'Owner-Konsole' })).not.toBeInTheDocument();
         expect(adminRepo.listAccounts).not.toHaveBeenCalled();
         expect(adminRepo.listInvites).not.toHaveBeenCalled();
+        expect(adminRepo.listAllTournaments).not.toHaveBeenCalled();
     });
 });

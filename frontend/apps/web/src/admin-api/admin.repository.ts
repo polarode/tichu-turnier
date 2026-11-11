@@ -11,7 +11,10 @@ import {
     issuedInviteDtoSchema,
     type CreateInviteRequestDto,
 } from '@/admin-api/dtos/admin.dto.ts';
+import { tournamentDtoToDomain } from '@/tournament-api/mappers/tournament.mapper.ts';
+import { tournamentListDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 import type { AdminAccount, AdminInvite, IssuedInvite } from '@/domain/admin-account.domain.ts';
+import type { Tournament } from '@/domain/tournament.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
 /**
@@ -59,6 +62,12 @@ async function revokeInvite(id: string): Promise<AdminInvite> {
     return inviteDtoToDomain(inviteDtoSchema.parse(data));
 }
 
+/** Every tournament on the platform, newest first, for the owner's cross-creator view. */
+async function listAllTournaments(): Promise<Tournament[]> {
+    const { data } = await apiClient.get<unknown>('/api/admins/tournaments');
+    return tournamentListDtoSchema.parse(data).map(tournamentDtoToDomain);
+}
+
 export const AdminRepository = {
     listAccounts,
     approve,
@@ -68,4 +77,5 @@ export const AdminRepository = {
     listInvites,
     createInvite,
     revokeInvite,
+    listAllTournaments,
 };

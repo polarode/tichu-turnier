@@ -14,6 +14,7 @@ export const QueryKeys = {
     PUBLIC_STATISTICS: 'public-statistics',
     ADMIN_ACCOUNTS: 'admin-accounts',
     ADMIN_INVITES: 'admin-invites',
+    ADMIN_TOURNAMENTS: 'admin-tournaments',
     TEAM_ME: 'team-me',
     TEAM_CURRENT_TABLE: 'team-current-table',
     TEAM_GAMES: 'team-games',
@@ -80,6 +81,9 @@ export const adminAccountsQueryKey = () => [QueryKeys.ADMIN_ACCOUNTS] as const;
 
 /** Key for the owner console's invite list. */
 export const adminInvitesQueryKey = () => [QueryKeys.ADMIN_INVITES] as const;
+
+/** Key for the owner console's list of every tournament on the platform. */
+export const adminTournamentsQueryKey = () => [QueryKeys.ADMIN_TOURNAMENTS] as const;
 
 /** Key for the team session's own overview (`GET /api/team/me`). */
 export const teamOverviewQueryKey = () => [QueryKeys.TEAM_ME] as const;

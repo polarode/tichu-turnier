@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { AdminRepository } from '@/admin-api/admin.repository.ts';
-import { adminAccountsQueryKey, adminInvitesQueryKey } from '@/shared/constants/query-keys.ts';
+import {
+    adminAccountsQueryKey,
+    adminInvitesQueryKey,
+    adminTournamentsQueryKey,
+} from '@/shared/constants/query-keys.ts';
 
 /**
  * TanStack Query hooks for the owner console. Components call these; they never touch
@@ -55,6 +59,14 @@ export function useInvites(enabled = true) {
     return useQuery({
         queryKey: adminInvitesQueryKey(),
         queryFn: () => AdminRepository.listInvites(),
+        enabled,
+    });
+}
+
+export function useAllTournaments(enabled = true) {
+    return useQuery({
+        queryKey: adminTournamentsQueryKey(),
+        queryFn: () => AdminRepository.listAllTournaments(),
         enabled,
     });
 }

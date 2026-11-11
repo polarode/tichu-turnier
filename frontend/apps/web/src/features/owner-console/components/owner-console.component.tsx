@@ -1,9 +1,11 @@
 import { AdminAccounts } from '@/features/owner-console/components/admin-accounts.component.tsx';
+import { AllTournaments } from '@/features/owner-console/components/all-tournaments.component.tsx';
 import { Invites } from '@/features/owner-console/components/invites.component.tsx';
 import { OwnerConsoleForbidden } from '@/features/owner-console/components/owner-console-forbidden.component.tsx';
 import { PendingRequests } from '@/features/owner-console/components/pending-requests.component.tsx';
 import {
     useAdminAccounts,
+    useAllTournaments,
     useInvites,
 } from '@/features/owner-console/hooks/owner-console-queries.hook.ts';
 import { useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
@@ -29,9 +31,14 @@ export function OwnerConsole() {
 
     const accountsQuery = useAdminAccounts(isOwner);
     const invitesQuery = useInvites(isOwner);
+    const tournamentsQuery = useAllTournaments(isOwner);
 
     if (!isOwner) return <OwnerConsoleForbidden />;
-    if (isForbidden(accountsQuery.error) || isForbidden(invitesQuery.error)) {
+    if (
+        isForbidden(accountsQuery.error) ||
+        isForbidden(invitesQuery.error) ||
+        isForbidden(tournamentsQuery.error)
+    ) {
         return <OwnerConsoleForbidden />;
     }
 
@@ -64,6 +71,16 @@ export function OwnerConsole() {
                 </p>
             ) : (
                 <Invites invites={invitesQuery.data ?? []} />
+            )}
+
+            {tournamentsQuery.isPending ? (
+                <p className="text-muted-foreground">{t('common.loading')}</p>
+            ) : tournamentsQuery.isError ? (
+                <p role="alert" className="text-sm text-destructive">
+                    {t('ownerConsole.error')}
+                </p>
+            ) : (
+                <AllTournaments tournaments={tournamentsQuery.data ?? []} />
             )}
         </section>
     );

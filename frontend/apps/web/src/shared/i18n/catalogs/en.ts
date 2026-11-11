@@ -202,6 +202,7 @@ export const en = {
     'rounds.game.action.enter': 'Enter',
     'rounds.game.action.edit': 'Edit',
     'rounds.game.action.view': 'View',
+    'rounds.game.action.correct': 'Correct',
     'rounds.games.caption': 'Games',
     'rounds.victoryPoints': 'Victory Points',
     'rounds.victoryPoints.leader': 'leads',

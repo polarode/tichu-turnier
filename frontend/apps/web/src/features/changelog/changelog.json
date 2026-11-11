@@ -265,6 +265,10 @@
             {
                 "type": "improvement",
                 "text": "On the team page, each game tile now says what tapping it does (enter, edit or view), and the next game to enter is highlighted"
+            },
+            {
+                "type": "improvement",
+                "text": "In the rounds view, the games of a confirmed table are labelled \"Correct\", so it is clear they can be opened to correct them"
             }
         ]
     }

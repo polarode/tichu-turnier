@@ -55,8 +55,8 @@ interface GameResultsProps {
  * lists only the two teams playing it. Tiles go two across, four (trio: three)
  * once the container is wide enough. With a [gameAction] the whole tile is
  * clickable, its title being the control: the team panel's link to the scoring
- * screen, or the organizer's correction button on a completed table. The team
- * panel's tiles end in a footer naming what a tap does (enter, edit, view), and
+ * screen, or the organizer's correction button on a completed table. A clickable
+ * tile ends in a footer naming what a tap does (enter, edit, view, correct), and
  * while games can still be entered the first missing one is ringed as next up.
  */
 export function GameResults({ caption, teams, schedule, games, gameAction }: GameResultsProps) {
@@ -182,14 +182,15 @@ function GameTile({
               ? first.id
               : second.id);
     const title = `${t('rounds.game')} ${scheduled.gameNumber}`;
-    const footerLabel =
-        action?.kind !== 'link'
-            ? undefined
-            : action.readOnly
-              ? t('rounds.game.action.view')
-              : game
-                ? t('rounds.game.action.edit')
-                : t('rounds.game.action.enter');
+    const footerLabel = !action
+        ? undefined
+        : action.kind === 'button'
+          ? t('rounds.game.action.correct')
+          : action.readOnly
+            ? t('rounds.game.action.view')
+            : game
+              ? t('rounds.game.action.edit')
+              : t('rounds.game.action.enter');
 
     return (
         <li

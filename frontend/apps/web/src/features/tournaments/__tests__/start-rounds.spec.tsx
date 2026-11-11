@@ -570,6 +570,9 @@ describe('game correction', () => {
         expect(
             within(section).getByRole('button', { name: 'Spiel 2 korrigieren' }),
         ).toBeInTheDocument();
+        // Each tile's footer says a tap corrects the game.
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(within(games).getAllByText('Korrigieren')).toHaveLength(4);
     });
 
     it('asks whether to correct the confirmed game, warning that drawn rounds keep their pairings', async () => {
@@ -750,6 +753,7 @@ describe('game correction', () => {
             expect(
                 within(games).queryByRole('button', { name: 'Spiel 2 korrigieren' }),
             ).not.toBeInTheDocument();
+            expect(within(games).queryByText('Korrigieren')).not.toBeInTheDocument();
         }
     });
 
@@ -800,5 +804,7 @@ describe('game correction', () => {
         expect(
             within(section).queryByRole('button', { name: 'Spiel 2 korrigieren' }),
         ).not.toBeInTheDocument();
+        // Corrections are over, so no footer suggests them.
+        expect(within(section).queryByText('Korrigieren')).not.toBeInTheDocument();
     });
 });

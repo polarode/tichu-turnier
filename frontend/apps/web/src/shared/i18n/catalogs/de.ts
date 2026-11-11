@@ -212,6 +212,7 @@ export const de: Catalog = {
     'rounds.game.action.enter': 'Eintragen',
     'rounds.game.action.edit': 'Bearbeiten',
     'rounds.game.action.view': 'Ansehen',
+    'rounds.game.action.correct': 'Korrigieren',
     'rounds.games.caption': 'Spiele',
     'rounds.victoryPoints': 'Siegpunkte',
     'rounds.victoryPoints.leader': 'führt',

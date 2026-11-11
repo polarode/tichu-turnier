@@ -45,8 +45,12 @@ import tichu.vocabulary.ResultsNotPublishedException
 import tichu.vocabulary.TournamentNotCompletedException
 import tichu.vocabulary.TotalRoundsReachedException
 import tichu.vocabulary.UnauthenticatedException
+import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
+import org.springframework.http.ResponseEntity
+import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.http.converter.HttpMessageNotReadableException
 import tools.jackson.databind.exc.InvalidNullException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -68,8 +72,25 @@ class WebControllerAdvice {
 
     /** No route matched: JSON ProblemDetail, never HTML. */
     @ExceptionHandler(NoResourceFoundException::class)
-    fun handleNoResourceFound(ex: NoResourceFoundException): ProblemDetail =
-        problem(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, "No resource at this path.")
+    fun handleNoResourceFound(ex: NoResourceFoundException, request: HttpServletRequest): ProblemDetail {
+        logProbe("Not found", request)
+        return problem(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, "No resource at this path.")
+    }
+
+    /**
+     * Wrong method for the path, almost always a scanner POSTing to another product's
+     * endpoint (the SPA resource handler only serves GET/HEAD). Answers exactly like
+     * Spring's default 405 (Allow header included) but logs who poked where (see [logProbe]),
+     * which the default warning leaves out.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
+    fun handleMethodNotSupported(
+        ex: HttpRequestMethodNotSupportedException,
+        request: HttpServletRequest,
+    ): ResponseEntity<ProblemDetail> {
+        logProbe("Rejected", request)
+        return ResponseEntity.status(ex.statusCode).headers(ex.headers).body(ex.body)
+    }
 
     @ExceptionHandler(InvalidInputException::class)
     fun handleInvalidInput(ex: InvalidInputException): ProblemDetail =
@@ -340,7 +361,27 @@ class WebControllerAdvice {
     }
 
     private companion object {
+        private val log = LoggerFactory.getLogger(WebControllerAdvice::class.java)
         private val missingCreatorProperty = Regex("Missing required creator property '(\\w+)'")
+
+        /** Caps client-supplied text; control characters never get this far (StrictHttpFirewall). */
+        private const val MAX_LOGGED_LENGTH = 300
+    }
+
+    /**
+     * One line per request nothing serves, so scanner traffic shows its target, source and
+     * client. The source IP is what [sourceIpOf] resolves behind the proxy.
+     */
+    private fun logProbe(outcome: String, request: HttpServletRequest) {
+        val target = request.requestURI + (request.queryString?.let { "?$it" } ?: "")
+        log.warn(
+            "{} {} {} from {} (user agent \"{}\")",
+            outcome,
+            request.method,
+            target.take(MAX_LOGGED_LENGTH),
+            sourceIpOf(request),
+            request.getHeader("User-Agent")?.take(MAX_LOGGED_LENGTH),
+        )
     }
 
     /** Every field-anchored response funnels through here. */

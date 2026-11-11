@@ -4,7 +4,6 @@ import { Button, buttonVariants } from '@tichu/ui/button.tsx';
 
 import {
     isCompleted,
-    isFrozen,
     type RecordedGame,
     teamNameOf,
     type TeamTable,
@@ -59,9 +58,9 @@ export function TableConfirmationPanel({
 }
 
 /**
- * The entry point to the scoring screen. "Enter results": the primary action until
- * every game is in, then it yields to Confirm. Read-only (S7c, #116) it reads
- * "View table" instead and is never primary.
+ * The entry point to the scoring screen where no game tiles offer one: while the
+ * team is not seated yet, and beside the Final Ranking. Read-only (S7c, #116) it
+ * reads "View table" instead and is never primary.
  */
 export function ScoringLink({
     primary,
@@ -88,12 +87,12 @@ export function ScoringLink({
 /**
  * A read-only summary of the table's games, its status with who confirmed, and
  * the one control the state allows. Each game tile links to that game on the
- * scoring screen, which is read-only once the table froze or the tournament
- * ended. While the table is open and a game is missing, "Enter results" opens
- * the first one not yet entered.
- * - Playing, or Confirming by another team: Confirm, disabled with an "x of n
- *   games entered" hint until every game is in, behind a dialog. Confirming by
- *   another team also shows that the games are frozen.
+ * scoring screen (for entry, or read-only once the table froze or the
+ * tournament ended), so the panel needs no separate entry link. Until every
+ * game is entered the tiles are all it shows: status and controls follow once
+ * the table is complete (a team can only confirm a complete table).
+ * - Playing, or Confirming by another team: Confirm, behind a dialog.
+ *   Confirming by another team also shows that the games are frozen.
  * - Confirming by this team: the waiting note and Retract (no dialog).
  * - Completed: final, no controls.
  * - Read-only (the tournament is no longer ACTIVE, S7c): the summary only; the
@@ -124,14 +123,12 @@ function ConfirmationPanel({
     const byNumber = new Map<number, RecordedGame>(
         (games ?? []).map((game) => [game.gameNumber, game]),
     );
-    const gameCount = table.schedule.length;
     const allEntered =
         games !== undefined && table.schedule.every((game) => byNumber.has(game.gameNumber));
     const viewerConfirmed = confirmedTeamIds.includes(viewerTeamId);
 
     const teamName = (teamId: string) => teamNameOf(table, teamId);
     const heading = `${t('rounds.round')} ${table.roundNumber} · ${tableHeading(table.tableNumber, t)}`;
-    const outOf = ` ${t('confirmation.count.of')} `;
 
     function explain(cause: unknown) {
         setError(
@@ -169,22 +166,24 @@ function ConfirmationPanel({
                     gameAction={{ kind: 'link', to: '/team/score' }}
                 />
             ) : null}
-            {readOnly || allEntered || isFrozen(table.confirmation) ? null : (
-                <ScoringLink primary />
-            )}
-
-            <p>
-                {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}
-            </p>
-            {confirmedTeamIds.length > 0 ? (
-                <p className="text-muted-foreground">
-                    {`${t('confirmation.confirmedBy')}: ${confirmedTeamIds.map(teamName).join(', ')}`}
-                </p>
+            {/* The tiles show which games are still open; the confirmation step
+                only appears once every game is in. */}
+            {allEntered ? (
+                <>
+                    <p>
+                        {`${t('confirmation.status.label')}: ${t(TABLE_STATUS_LABEL_KEYS[status])} · ${confirmedCountLabel(table.confirmation, table.teams.length, t)}`}
+                    </p>
+                    {confirmedTeamIds.length > 0 ? (
+                        <p className="text-muted-foreground">
+                            {`${t('confirmation.confirmedBy')}: ${confirmedTeamIds.map(teamName).join(', ')}`}
+                        </p>
+                    ) : null}
+                </>
             ) : null}
 
             <FormAlert message={error} />
 
-            {isCompleted(table.confirmation) ? (
+            {!allEntered ? null : isCompleted(table.confirmation) ? (
                 <p className="text-muted-foreground">{t('confirmation.final')}</p>
             ) : readOnly ? null : viewerConfirmed ? (
                 <>
@@ -213,16 +212,11 @@ function ConfirmationPanel({
                     <Button
                         size="touch"
                         className="w-full sm:w-auto sm:self-start"
-                        disabled={!allEntered || confirm.isPending}
+                        disabled={confirm.isPending}
                         onClick={() => setDialogOpen(true)}
                     >
                         {t('confirmation.confirm')}
                     </Button>
-                    {games && !allEntered ? (
-                        <p className="text-muted-foreground">
-                            {`${byNumber.size}${outOf}${gameCount} ${t('confirmation.gamesEntered')}`}
-                        </p>
-                    ) : null}
                 </>
             )}
 

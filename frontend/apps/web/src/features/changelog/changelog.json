@@ -257,6 +257,10 @@
             {
                 "type": "improvement",
                 "text": "The team page now uses the full screen width on laptops and desktops instead of a narrow phone-sized column"
+            },
+            {
+                "type": "improvement",
+                "text": "The team page is tidier: while games are still open it shows only the game tiles, and the confirmation status and button appear once every game is entered. The separate \"Enter results\" button is gone, since each game tile opens its game"
             }
         ]
     }

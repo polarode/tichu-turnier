@@ -132,6 +132,7 @@ describe('/team', () => {
         mockedCurrentTable.mockResolvedValue(
             seatedTable({ confirmation: { status: 'CONFIRMING', confirmedTeamIds: ['team-1'] } }),
         );
+        mockedGames.mockResolvedValue(allGames());
 
         renderApp('/team');
 
@@ -141,7 +142,7 @@ describe('/team', () => {
             ),
         ).toBeInTheDocument();
         const panel = await screen.findByRole('region', { name: 'Runde 1 · Tisch B' });
-        expect(within(panel).getByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
+        expect(await within(panel).findByText('Bestätigt von: Team Alpha')).toBeInTheDocument();
         // Read-only: no Confirm and no Retract; the game tiles open each game to view.
         expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
         await within(panel).findByRole('list', { name: 'Spiele' });
@@ -209,9 +210,9 @@ describe('/team', () => {
         expect(mockedFinalRanking).toHaveBeenCalledTimes(1);
     });
 
-    it('links to the scoring screen, which loads the team’s current table', async () => {
+    it('opens the scoring screen from a game tile, which loads the team’s current table', async () => {
         mockedMe.mockResolvedValue(overview);
-        // The link sits in the current table's panel; the scoring route resolves
+        // The tiles sit in the current table's panel; the scoring route resolves
         // the seat itself (a 404 there would show the not-seated placeholder).
         mockedCurrentTable.mockResolvedValue({
             tournamentId: 't-1',
@@ -247,7 +248,7 @@ describe('/team', () => {
 
         const { router } = renderApp('/team');
 
-        await userEvent.click(await screen.findByRole('link', { name: 'Ergebnisse eintragen' }));
+        await userEvent.click(await screen.findByRole('link', { name: 'Spiel 1' }));
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));
         expect(await screen.findByText('Team Alpha gegen Team Beta')).toBeInTheDocument();
@@ -439,7 +440,7 @@ describe('/team confirmation panel', () => {
         mockedRetract.mockReset();
     });
 
-    it('summarizes entered and missing games and keeps Confirm disabled with a hint until all are in', async () => {
+    it('shows only the game tiles while games are missing: no status, no Confirm, no entry link', async () => {
         const { panel } = await renderPanel(seatedTable(), [game(1), game(3)]);
 
         expect(gameTiles(within(panel).getByRole('list', { name: 'Spiele' }))).toEqual([
@@ -452,17 +453,20 @@ describe('/team confirmation panel', () => {
             'Team Alpha, führt 4',
             'Team Beta 0',
         ]);
-        expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
+        // The missing tiles say what is open; the confirmation step waits for all games.
+        expect(within(panel).queryByText(/^Status:/)).not.toBeInTheDocument();
+        expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
+        // Each tile opens its game, so there is no separate entry link.
         expect(
-            within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' }),
-        ).toBeDisabled();
-        expect(within(panel).getByText('2 von 4 Spielen eingetragen')).toBeInTheDocument();
-        // The scoring link sits inside the round's box, the only one on the page.
-        expect(within(panel).getByRole('link', { name: 'Ergebnisse eintragen' })).toHaveAttribute(
-            'href',
-            '/team/score',
-        );
-        expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
+            screen.queryByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).not.toBeInTheDocument();
+    });
+
+    it('shows the status and an enabled Confirm once every game is entered', async () => {
+        const { panel } = await renderPanel(seatedTable(), allGames());
+
+        expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
+        expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeEnabled();
     });
 
     it('names no leader while the teams are level on Victory Points', async () => {

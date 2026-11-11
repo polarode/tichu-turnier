@@ -387,7 +387,6 @@ export const en = {
     'confirmation.count.confirmed': 'confirmed',
     'confirmation.teamConfirmed': 'confirmed',
     'confirmation.confirmedBy': 'Confirmed by',
-    'confirmation.gamesEntered': 'games entered',
     'confirmation.confirm': 'Confirm all games',
     'confirmation.dialog.title': 'Confirm all games?',
     'confirmation.dialog.description':

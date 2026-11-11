@@ -230,7 +230,8 @@ describe('rounds section', () => {
         expect(await within(section).findByText('Runde 1')).toBeInTheDocument();
         expect(within(section).getByText('Tisch A')).toBeInTheDocument();
         const tableRow = within(section).getByText(
-            (_, element) => element?.textContent === 'Tisch A: Alpha vs Beta',
+            (_, element) =>
+                element?.textContent === 'Tisch A: Alpha, ausstehend vs Beta, ausstehend',
         );
         expect(tableRow).toBeInTheDocument();
     });
@@ -255,7 +256,9 @@ describe('rounds section', () => {
         expect(
             within(section).queryByRole('list', { name: 'Spiele – Tisch A' }),
         ).not.toBeInTheDocument();
-        const toggle = within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta/ });
+        const toggle = within(section).getByRole('button', {
+            name: /^Tisch A.*Alpha.*vs Beta/,
+        });
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
         await userEvent.click(toggle);
         expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -312,10 +315,10 @@ describe('rounds section', () => {
         expect(within(confirming).queryByText(/eingetragen/)).not.toBeInTheDocument();
         expect(within(completed).getByText('Abgeschlossen')).toBeInTheDocument();
 
-        // A ✓ follows each team that confirmed.
-        expect(playing).toHaveTextContent('Tisch A: Alpha vs Beta');
-        expect(confirming).toHaveTextContent('Tisch B: Gamma ✓ bestätigt vs Delta');
-        expect(completed).toHaveTextContent('Tisch C: Epsilon ✓ bestätigt vs Zeta ✓ bestätigt');
+        // Each team's pill says whether it confirmed.
+        expect(playing).toHaveTextContent('Tisch A: Alpha, ausstehend vs Beta, ausstehend');
+        expect(confirming).toHaveTextContent('Tisch B: Gamma, bestätigt vs Delta, ausstehend');
+        expect(completed).toHaveTextContent('Tisch C: Epsilon, bestätigt vs Zeta, bestätigt');
     });
 
     it('shows a trio table with its badge, three team columns and six games', async () => {
@@ -374,7 +377,9 @@ describe('rounds section', () => {
         expect(await within(section).findByText('1/6 eingetragen')).toBeInTheDocument();
         expect(within(section).getByText('Trio')).toBeInTheDocument();
         await userEvent.click(
-            within(section).getByRole('button', { name: /Tisch A.*Alpha vs Beta vs Gamma/ }),
+            within(section).getByRole('button', {
+                name: /^Tisch A.*Alpha.*vs Beta.*vs Gamma/,
+            }),
         );
 
         // Six tiles, each with only the two teams playing it. Only game 2 (Alpha vs

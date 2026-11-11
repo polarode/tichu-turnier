@@ -17,9 +17,8 @@ import { correctionTable } from '@/features/tournaments/correction-table.mapper.
 import { GameCorrectionDialog } from '@/features/tournaments/components/game-correction-dialog.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
-import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
-import { seatTone } from '@/shared/constants/seat-tones.ts';
+import { ConfirmationPill } from '@/shared/components/confirmation-pill.component.tsx';
 import { fillPlaceholders } from '@/shared/i18n/fill-placeholders.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { type I18n, useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -292,23 +291,22 @@ function TableRow({
                     aria-hidden="true"
                     className={cn('size-4 shrink-0 transition-transform', open && 'rotate-90')}
                 />
-                <span className="min-w-0 flex-1">
-                    <span className="font-medium">{tableHeading(table.tableNumber, t)}</span>
-                    {': '}
+                {/* Each team as its confirmation pill; "vs" stays for screen readers. */}
+                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+                    <span>
+                        <span className="font-medium">{tableHeading(table.tableNumber, t)}</span>:
+                    </span>{' '}
                     {table.teamIds.map((teamId, seat) => (
                         <Fragment key={teamId}>
-                            {seat > 0 ? ` ${t('rounds.versus')} ` : null}
-                            <TeamDot tone={seatTone(seat).dot} />
-                            {teamName(teamId)}
-                            {confirmedTeamIds.includes(teamId) ? (
-                                <>
-                                    {' '}
-                                    <span aria-hidden="true">✓</span>{' '}
-                                    <span className="sr-only">
-                                        {t('confirmation.teamConfirmed')}
-                                    </span>
-                                </>
+                            {seat > 0 ? (
+                                <span className="sr-only">{` ${t('rounds.versus')} `}</span>
                             ) : null}
+                            <ConfirmationPill
+                                name={teamName(teamId)}
+                                seat={seat}
+                                confirmed={confirmedTeamIds.includes(teamId)}
+                                size="sm"
+                            />
                         </Fragment>
                     ))}
                 </span>

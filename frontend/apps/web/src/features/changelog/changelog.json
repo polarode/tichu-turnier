@@ -273,6 +273,10 @@
             {
                 "type": "improvement",
                 "text": "Once all games are entered, the team page shows each team at the table with a check mark when it has confirmed, instead of a status line"
+            },
+            {
+                "type": "improvement",
+                "text": "The rounds view shows each team at a table as a coloured pill with a check mark once it has confirmed, like the team page"
             }
         ]
     }

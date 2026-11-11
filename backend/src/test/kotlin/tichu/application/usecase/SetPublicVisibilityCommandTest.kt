@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.Tournament
 import tichu.domain.TournamentEvent
@@ -33,7 +34,7 @@ class SetPublicVisibilityCommandTest {
 
     private val tournamentRepository = InMemoryTournamentRepository()
     private val visibilityEvents = RecordingTournamentEvents()
-    private val command = SetPublicVisibilityCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), clock, visibilityEvents)
+    private val command = SetPublicVisibilityCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), clock, visibilityEvents)
 
     private fun tournament(
         status: TournamentStatus,

@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.application.api.AuthenticatedTeam
 import tichu.application.api.CorrectGame
 import tichu.application.api.GameWriteRequest
@@ -93,7 +94,7 @@ class CorrectGameCommandTest {
 
     private val correctGame: CorrectGame = CorrectGameCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository, coOrganizerRepository),
+        TournamentAccess(tournamentRepository, coOrganizerRepository, InMemoryAdminUserRepository()),
         roundRepository,
         teamRepository,
         gameRepository,

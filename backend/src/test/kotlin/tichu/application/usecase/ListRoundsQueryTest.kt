@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.Game
 import tichu.domain.GameKey
@@ -50,7 +51,7 @@ class ListRoundsQueryTest {
     private val gameRepository = InMemoryGameRepository()
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
-    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), roundRepository, gameRepository, confirmationRepository)
+    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), roundRepository, gameRepository, confirmationRepository)
 
     @BeforeEach
     fun setUp() {

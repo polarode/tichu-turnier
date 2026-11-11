@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.application.api.TeamWriteRequest
 import tichu.domain.AdminUserId
 import tichu.domain.IdGenerator
@@ -50,11 +51,11 @@ class TeamUseCasesTest {
 
     private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-01-01T12:00:00Z"), java.time.ZoneOffset.UTC)
     private val createTournament = CreateTournamentCommand(tournamentRepository, idGenerator, clock)
-    private val createTeam = CreateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
-    private val listTeams = ListTeamsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository)
-    private val getTeam = GetTeamQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository)
-    private val updateTeam = UpdateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository)
-    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository)
+    private val createTeam = CreateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
+    private val listTeams = ListTeamsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository)
+    private val getTeam = GetTeamQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository)
+    private val updateTeam = UpdateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository)
+    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, teamTokenRepository)
 
     private fun createTournament(name: String, asAdmin: AdminUserId = owner, maxTeams: Int = 16) =
         createTournament.create(

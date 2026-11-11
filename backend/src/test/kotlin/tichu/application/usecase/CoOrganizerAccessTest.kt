@@ -58,19 +58,19 @@ class CoOrganizerAccessTest {
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val adminUserRepository = InMemoryAdminUserRepository()
-    private val getTournament = GetTournamentQuery(TournamentAccess(tournamentRepository, coOrganizerRepository), adminUserRepository)
+    private val getTournament = GetTournamentQuery(TournamentAccess(tournamentRepository, coOrganizerRepository, adminUserRepository), adminUserRepository)
     private val updateTournament = UpdateTournamentCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository, coOrganizerRepository),
+        TournamentAccess(tournamentRepository, coOrganizerRepository, adminUserRepository),
         teamRepository,
         clock,
     )
     private val deleteTournament = DeleteTournamentCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository, coOrganizerRepository),
+        TournamentAccess(tournamentRepository, coOrganizerRepository, adminUserRepository),
     )
     private val listRounds = ListRoundsQuery(
-        TournamentAccess(tournamentRepository, coOrganizerRepository),
+        TournamentAccess(tournamentRepository, coOrganizerRepository, adminUserRepository),
         roundRepository,
         gameRepository,
         confirmationRepository,

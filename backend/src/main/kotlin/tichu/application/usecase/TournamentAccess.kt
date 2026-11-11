@@ -1,7 +1,9 @@
 package tichu.application.usecase
 
 import tichu.application.api.OrganizerRole
+import tichu.domain.AdminRole
 import tichu.domain.AdminUserId
+import tichu.domain.AdminUserRepository
 import tichu.domain.CoOrganizerRepository
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
@@ -19,10 +21,14 @@ import tichu.vocabulary.NotFoundException
  * co-organizers. Verbs that any organizer may run use [organizedOrThrow]. Lead-only
  * verbs (deleting the tournament, managing its co-organizers) use [ledOrThrow]. Shared
  * so every verb (edit, delete, start, …) cannot drift apart.
+ *
+ * The platform owner (an active [AdminRole.OWNER]) acts as lead organizer on every
+ * tournament, so [roleOf] resolves it to [OrganizerRole.LEAD] everywhere.
  */
 class TournamentAccess(
     private val tournamentRepository: TournamentRepository,
     private val coOrganizerRepository: CoOrganizerRepository,
+    private val adminUserRepository: AdminUserRepository,
 ) {
 
     /**
@@ -47,12 +53,20 @@ class TournamentAccess(
 
     /**
      * [admin]'s role on [tournament]: [OrganizerRole.LEAD] for the lead organizer (the
-     * `ownerId`), [OrganizerRole.CO] for a co-organizer, null for anyone else.
+     * `ownerId`) and for an active platform owner, [OrganizerRole.CO] for a co-organizer,
+     * null for anyone else.
      */
     fun roleOf(tournament: Tournament, admin: AdminUserId): OrganizerRole? = when {
         tournament.isOwnedBy(admin) -> OrganizerRole.LEAD
+        isActiveOwner(admin) -> OrganizerRole.LEAD
         coOrganizerRepository.isCoOrganizer(tournament.id, admin) -> OrganizerRole.CO
         else -> null
+    }
+
+    /** Same rule as session authentication: an owner counts only while its account is active. */
+    private fun isActiveOwner(admin: AdminUserId): Boolean {
+        val user = adminUserRepository.findById(admin) ?: return false
+        return user.role == AdminRole.OWNER && user.isActive()
     }
 
     /**

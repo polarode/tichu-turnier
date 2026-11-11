@@ -59,12 +59,12 @@ class TournamentUseCasesTest {
         save(admin(AdminUserId("admin-intruder"), "intruder@example.com"))
     }
     private val listTournaments = ListTournamentsQuery(repository, InMemoryCoOrganizerRepository(), adminUserRepository)
-    private val getTournament = GetTournamentQuery(TournamentAccess(repository, InMemoryCoOrganizerRepository()), adminUserRepository)
-    private val updateTournament = UpdateTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()), teamRepository, laterClock)
-    private val deleteTournament = DeleteTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository()))
+    private val getTournament = GetTournamentQuery(TournamentAccess(repository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), adminUserRepository)
+    private val updateTournament = UpdateTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, laterClock)
+    private val deleteTournament = DeleteTournamentCommand(repository, TournamentAccess(repository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()))
     private val teamTokenRepository = InMemoryTeamTokenRepository()
     private val sessionTokens = RecordingSessionTokens()
-    private val createTeam = CreateTeamCommand(TournamentAccess(repository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
+    private val createTeam = CreateTeamCommand(TournamentAccess(repository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, fixedClock)
 
     private fun create(name: String = "Spring Classic", asAdmin: AdminUserId = owner) =
         createTournament.create(

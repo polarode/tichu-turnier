@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.GameKey
 import tichu.domain.IdGenerator
@@ -60,7 +61,7 @@ class StartNextRoundCommandTest {
     private val startEvents = RecordingTournamentEvents()
     private val command = StartNextRoundCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         teamRepository,
         roundRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),

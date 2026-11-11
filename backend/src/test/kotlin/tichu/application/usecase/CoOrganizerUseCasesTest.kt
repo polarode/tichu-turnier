@@ -56,7 +56,7 @@ class CoOrganizerUseCasesTest {
     private val adminUserRepository = InMemoryAdminUserRepository()
     private val events = RecordingTournamentEvents()
 
-    private fun tournamentAccess() = TournamentAccess(tournamentRepository, coOrganizerRepository)
+    private fun tournamentAccess() = TournamentAccess(tournamentRepository, coOrganizerRepository, adminUserRepository)
     private val listOrganizers get() = ListOrganizersQuery(tournamentAccess(), coOrganizerRepository, adminUserRepository)
     private val addCoOrganizer get() =
         AddCoOrganizerCommand(tournamentAccess(), coOrganizerRepository, adminUserRepository, clock, events)
@@ -227,11 +227,13 @@ class CoOrganizerUseCasesTest {
     }
 
     @Test
-    fun `the platform owner neither reads nor lists a tournament they do not organize`() {
-        // The platform Owner role grants no access to other admins' tournaments.
+    fun `the platform owner reads a tournament it does not organize as its lead but does not list it`() {
+        // The platform Owner acts as lead organizer on every tournament, while its own
+        // dashboard list stays "tournaments I lead or co-organize".
         adminUserRepository.save(admin(platformOwner, "platform-owner@example.com", AdminStatus.ACTIVE, AdminRole.OWNER))
 
-        assertFailsWith<NotFoundException> { getTournament.get(tournamentA, platformOwner) }
+        val read = getTournament.get(tournamentA, platformOwner)
+        assertEquals(OrganizerRole.LEAD, read.role, "the owner reads the tournament with the lead role")
         assertTrue(listTournaments.list(platformOwner).isEmpty())
     }
 

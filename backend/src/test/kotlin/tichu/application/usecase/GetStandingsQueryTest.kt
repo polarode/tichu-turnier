@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.Game
 import tichu.domain.GameKey
@@ -55,7 +56,7 @@ class GetStandingsQueryTest {
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
     private val query = GetStandingsQuery(
-        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         teamRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
     )

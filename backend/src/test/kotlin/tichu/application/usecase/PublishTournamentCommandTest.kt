@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.Tournament
 import tichu.domain.TournamentEvent
@@ -34,7 +35,7 @@ class PublishTournamentCommandTest {
     private val clock = MutableClock(now)
 
     private val publishEvents = RecordingTournamentEvents()
-    private val command = PublishTournamentCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), clock, publishEvents)
+    private val command = PublishTournamentCommand(tournamentRepository, TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), clock, publishEvents)
 
     private fun tournament(status: TournamentStatus) =
         tournamentRepository.save(

@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.GameKey
 import tichu.domain.Pairing
@@ -56,7 +57,7 @@ class FinishTournamentCommandTest {
 
     private val command = FinishTournamentCommand(
         tournamentRepository,
-        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()),
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
         clock,
         finishEvents,

@@ -1,5 +1,6 @@
 package tichu.application.usecase
 
+import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.application.api.TeamWriteRequest
 import tichu.application.api.AuthenticatedTeam
 import tichu.domain.AdminUserId
@@ -53,8 +54,8 @@ class TeamAccessUseCasesTest {
         get() = clock.now
 
     private val createTeam =
-        CreateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
-    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository)
+        CreateTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, teamTokenRepository, sessionTokens, idGenerator, clock)
+    private val deleteTeam = DeleteTeamCommand(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, teamTokenRepository)
     private val teamSessionIssuer = TeamSessionIssuer(teamSessionRepository, sessionTokens, idGenerator, Duration.ofHours(12))
     private val exchangeTeamAccess = ExchangeTeamAccessCommand(
         teamTokenRepository, teamRepository, tournamentRepository, sessionTokens, teamSessionIssuer,
@@ -62,7 +63,7 @@ class TeamAccessUseCasesTest {
     )
     private val getOwnTeam = GetOwnTeamQuery(teamRepository, tournamentRepository)
     private val accessLinks = ManageTeamAccessLinkCommand(
-        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository()), teamRepository, teamTokenRepository, teamSessionRepository, sessionTokens, clock,
+        TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), teamRepository, teamTokenRepository, teamSessionRepository, sessionTokens, clock,
     )
 
     private fun createTournament(name: String, status: TournamentStatus = TournamentStatus.SETUP): TournamentId {

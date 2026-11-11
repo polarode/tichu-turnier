@@ -36,7 +36,8 @@ _Avoid_: user
 **Owner**:
 The single admin with the owner role, who provisions other admins by approving
 registration requests or issuing admin invites. Exists from configuration, never
-created through the app.
+created through the app. The Owner acts as Lead Organizer on every tournament, including
+those it does not lead.
 _Avoid_: superadmin, root
 
 **Admin Invite**:

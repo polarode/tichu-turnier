@@ -231,15 +231,15 @@
             },
             {
                 "type": "feature",
-                "text": "Teams can tap a game in their table overview to enter, edit or view it"
+                "text": "Teams open a game by tapping its tile in their table overview"
             },
             {
                 "type": "improvement",
-                "text": "After saving a game, teams return to their table overview and pick the next game there; the game buttons above the entry form are gone"
+                "text": "Back to the table overview after saving a game"
             },
             {
                 "type": "feature",
-                "text": "Correct a game after every team at the table has confirmed it"
+                "text": "Organizers can correct games after a table is confirmed"
             }
         ]
     },
@@ -248,59 +248,35 @@
         "changes": [
             {
                 "type": "improvement",
-                "text": "When entering a game, both teams' card points now show right above the points slider, and the slider is coloured in the two team colours"
+                "text": "Score slider shows both teams' points"
             },
             {
                 "type": "improvement",
-                "text": "Every table now shows the Victory Points as team-coloured tiles, as trio tables already did, and the leading team's tile is outlined"
+                "text": "Clearer team page with guided game tiles"
             },
             {
                 "type": "improvement",
-                "text": "The team page now uses the full screen width on laptops and desktops instead of a narrow phone-sized column"
+                "text": "Victory Points per team as coloured tiles, the leader outlined"
             },
             {
                 "type": "improvement",
-                "text": "The team page is tidier: while games are still open it shows only the game tiles, and the confirmation status and button appear once every game is entered. The separate \"Enter results\" button is gone, since each game tile opens its game"
+                "text": "Coloured pills show which teams have confirmed a table"
             },
             {
                 "type": "improvement",
-                "text": "On the team page, each game tile now says what tapping it does (enter, edit or view), and the next game to enter is highlighted"
+                "text": "Games of a confirmed table marked as correctable"
             },
             {
                 "type": "improvement",
-                "text": "In the rounds view, the games of a confirmed table are labelled \"Correct\", so it is clear they can be opened to correct them"
+                "text": "Victory Points chart moved to the Standings tab"
             },
             {
                 "type": "improvement",
-                "text": "Once all games are entered, the team page shows each team at the table with a check mark when it has confirmed, instead of a status line"
+                "text": "Public round tables show the Victory Points split as a bar"
             },
             {
                 "type": "improvement",
-                "text": "The rounds view shows each team at a table as a coloured pill with a check mark once it has confirmed, like the team page"
-            },
-            {
-                "type": "improvement",
-                "text": "The \"Open tables\" count next to the next-round and finish buttons is gone; the progress bar above already shows how many tables are done"
-            },
-            {
-                "type": "improvement",
-                "text": "The chart of each team's Victory Points per round now sits under the ranking on the Standings tab, as on the public page, instead of on the Statistics tab"
-            },
-            {
-                "type": "improvement",
-                "text": "On the public page, each table of a round shows its teams side by side with a bar in the team colours; once results are published, the bar shows how the Victory Points were split"
-            },
-            {
-                "type": "improvement",
-                "text": "Team colours are easier to tell apart for colour-blind players: the two teams at a table are now green and blue, and red is only used for the third team at a trio table"
-            },
-            {
-                "type": "improvement",
-                "text": "Team colours, the coloured stripe at the top and the active menu underline are stronger in dark mode"
-            },
-            {
-                "type": "improvement",
-                "text": "The lines of the Victory Points chart are easier to tell apart for colour-blind viewers"
+                "text": "Colour-blind friendly colours, stronger in dark mode"
             }
         ]
     }

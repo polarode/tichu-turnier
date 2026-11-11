@@ -231,7 +231,9 @@ function GameTile({
                 {next ? (
                     <Badge>{t('rounds.game.next')}</Badge>
                 ) : game ? null : (
-                    <span>{t('rounds.game.missing')}</span>
+                    // A footer already says what to do and is hidden from screen readers,
+                    // so "missing" is announced only.
+                    <span className={cn(footerLabel && 'sr-only')}>{t('rounds.game.missing')}</span>
                 )}
             </p>
             <ul className="flex flex-col gap-1">

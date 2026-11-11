@@ -467,6 +467,17 @@ describe('/team confirmation panel', () => {
         ).not.toBeInTheDocument();
     });
 
+    it('announces a missing tile as "fehlt" without showing it, its footer already says what to do', async () => {
+        const { panel } = await renderPanel(seatedTable(), [game(1), game(3)]);
+
+        const tiles = within(within(panel).getByRole('list', { name: 'Spiele' })).getAllByRole(
+            'listitem',
+        );
+        const tile = tiles.find((item) => item.textContent?.startsWith('Spiel 4'))!;
+        // The footer is hidden from screen readers, so "fehlt" stays for them only.
+        expect(within(tile).getByText('fehlt')).toHaveClass('sr-only');
+    });
+
     it('shows who confirmed and an enabled Confirm once every game is entered', async () => {
         const { panel } = await renderPanel(seatedTable(), allGames());
 

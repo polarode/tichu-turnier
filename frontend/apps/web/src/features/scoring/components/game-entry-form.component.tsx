@@ -43,6 +43,16 @@ const BASE_SCORE_MIN = -25;
 const BASE_SCORE_MAX = 125;
 const BASE_SCORE_STEP = 5;
 
+/**
+ * Where each team's name and points sit in the scoreboard's phone grid (four columns):
+ * each name spans half the first row, including its half above the centred label;
+ * the points take the outer columns of the second row, around the label.
+ */
+const PHONE_SCOREBOARD = [
+    { name: 'col-start-1 col-end-3 justify-self-start', points: 'col-start-1 justify-self-start' },
+    { name: 'col-start-3 col-end-5 justify-self-end', points: 'col-start-4 justify-self-end' },
+] as const;
+
 /** A points figure with a typographic minus when negative: `50`, `−25`. */
 function formatPoints(points: number): string {
     return points < 0 ? `\u2212${Math.abs(points)}` : `${points}`;
@@ -488,29 +498,37 @@ export function GameEntryForm({
             <div className="flex flex-col gap-1">
                 {/* A scoreboard right above the slider: each team's card points in its seat
                     colour on the side of the track that is theirs, the label centred between
-                    them. The slider's aria-valuetext announces the same split, so the team
-                    cells are hidden from assistive tech. */}
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+                    them. On phones the team names get a row of their own above the points, each
+                    across half the width, so they are not squeezed beside the numbers; from sm:
+                    up everything sits in one row. The slider's aria-valuetext announces the same split, so the team cells
+                    are hidden from assistive tech. */}
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
                     {([0, 1] as const).map((team) => (
+                        // On phones the wrapper is display: contents, so each part carries aria-hidden itself.
                         <div
                             key={team}
-                            aria-hidden="true"
                             className={cn(
-                                'flex min-w-0 items-center gap-2',
-                                team === 1 && 'order-last flex-row-reverse',
+                                'contents sm:flex sm:min-w-0 sm:items-center sm:gap-2',
+                                team === 1 && 'sm:order-last sm:flex-row-reverse',
                             )}
                         >
                             <span
+                                aria-hidden="true"
                                 className={cn(
-                                    'truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                                    'min-w-0 max-w-full truncate rounded-full px-2.5 py-0.5 text-sm font-semibold',
+                                    'row-start-1',
+                                    PHONE_SCOREBOARD[team].name,
                                     tones[team].chip,
                                 )}
                             >
                                 {matchup[team].teamName}
                             </span>
                             <span
+                                aria-hidden="true"
                                 className={cn(
                                     'shrink-0 text-2xl font-bold tabular-nums',
+                                    'row-start-2',
+                                    PHONE_SCOREBOARD[team].points,
                                     tones[team].text,
                                 )}
                             >
@@ -520,7 +538,7 @@ export function GameEntryForm({
                     ))}
                     <label
                         htmlFor="base-score"
-                        className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                        className="col-start-2 col-end-4 row-start-2 justify-self-center text-xs font-medium tracking-wide text-muted-foreground uppercase sm:col-auto sm:row-auto"
                     >
                         {t('scoring.baseScore.label')}
                     </label>

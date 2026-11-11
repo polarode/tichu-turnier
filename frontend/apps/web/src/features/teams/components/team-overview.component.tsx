@@ -59,7 +59,7 @@ export function TeamOverview({
     }
 
     return (
-        <section className="flex w-full max-w-md flex-col gap-4">
+        <section className="flex w-full flex-col gap-4">
             {/* A compact identity card: the hierarchy (tournament, team, players)
                 carries the meaning visually; the labels stay for screen readers.
                 The team name doubles as the page heading. */}

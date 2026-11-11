@@ -253,6 +253,10 @@
             {
                 "type": "improvement",
                 "text": "Every table now shows the Victory Points as team-coloured tiles, as trio tables already did, and the leading team's tile is outlined"
+            },
+            {
+                "type": "improvement",
+                "text": "The team page now uses the full screen width on laptops and desktops instead of a narrow phone-sized column"
             }
         ]
     }

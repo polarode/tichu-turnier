@@ -1,6 +1,8 @@
 import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
+import { useStatistics } from '@/features/statistics/hooks/statistics-queries.hook.ts';
 import { useStandings } from '@/features/tournaments/hooks/standings-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
+import { TeamTrendPanel } from '@/shared/components/team-trend-panel.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
@@ -14,12 +16,14 @@ interface StandingsSectionProps {
  * The admin's Standings tab (glossary: Standings). Renders the server's order and
  * ranks verbatim — tied teams show the same rank — and computes nothing itself, so
  * it cannot drift from the backend. Until any table is completed every team would
- * sit at zero, so a note stands in for that table of zeros.
+ * sit at zero, so a note stands in for that table of zeros. Below the table the Team
+ * Trend follows the Victory Points round by round, as on the public ranking.
  */
 export function StandingsSection({ tournamentId, final = false }: StandingsSectionProps) {
     const { t } = useI18n();
     const title = t(final ? 'standings.finalTitle' : 'standings.title');
     const standingsQuery = useStandings(tournamentId);
+    const statisticsQuery = useStatistics(tournamentId);
 
     const body = (() => {
         if (standingsQuery.isPending) return <LoadingIndicator />;
@@ -34,7 +38,12 @@ export function StandingsSection({ tournamentId, final = false }: StandingsSecti
         if (entries.every((entry) => entry.gamesPlayed === 0)) {
             return <p className="text-sm text-muted-foreground">{t('standings.empty')}</p>;
         }
-        return <StandingsTable entries={entries} caption={title} />;
+        return (
+            <>
+                <StandingsTable entries={entries} caption={title} />
+                <TeamTrendPanel query={statisticsQuery} />
+            </>
+        );
     })();
 
     return (

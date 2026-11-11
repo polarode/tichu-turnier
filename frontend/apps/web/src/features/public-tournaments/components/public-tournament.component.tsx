@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import type { UseQueryResult } from '@tanstack/react-query';
 import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
-import type { TournamentStatistics } from '@/domain/statistics.domain.ts';
 import type { PublicRound, PublicTable, PublicTableTotals } from '@/domain/tournament.domain.ts';
 import {
     usePublicStatistics,
@@ -18,10 +16,9 @@ import { isNotFound } from '@/shared/api/api-error.ts';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { StatisticsPanel } from '@/shared/components/statistics-panel.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
-import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
 import { TeamDot } from '@/shared/components/team-dot.component.tsx';
-import { TeamTrend } from '@/shared/components/team-trend.component.tsx';
+import { TeamTrendPanel } from '@/shared/components/team-trend-panel.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -126,7 +123,7 @@ function PublicTournamentBody({ tournamentId, tab, onTabChange }: PublicTourname
                                 aria-label={t('statistics.title')}
                                 className="flex flex-col gap-3"
                             >
-                                <StatisticsPanel query={statisticsQuery} withTrend={false} />
+                                <StatisticsPanel query={statisticsQuery} />
                             </section>
                         ) : tab === 'rounds' ? (
                             rounds
@@ -135,7 +132,7 @@ function PublicTournamentBody({ tournamentId, tab, onTabChange }: PublicTourname
                                 {tournament.finalRanking ? (
                                     <FinalRankingSection entries={tournament.finalRanking} />
                                 ) : null}
-                                <PublicTrend query={statisticsQuery} />
+                                <TeamTrendPanel query={statisticsQuery} />
                             </>
                         )}
                     </TabPanel>
@@ -157,21 +154,6 @@ function FinalRankingSection({ entries }: { entries: StandingsEntry[] }) {
             <StandingsTable entries={entries} caption={title} />
         </section>
     );
-}
-
-/** The Team Trend under the Final Ranking, with the statistics read's loading and error states. */
-function PublicTrend({ query }: { query: UseQueryResult<TournamentStatistics> }) {
-    const { t } = useI18n();
-
-    if (query.isPending) return <LoadingIndicator />;
-    if (query.isError) {
-        return (
-            <p role="alert" className="text-sm text-destructive">
-                {localizedErrorMessage(query.error, t)}
-            </p>
-        );
-    }
-    return <TeamTrend trends={query.data.trends} />;
 }
 
 /**

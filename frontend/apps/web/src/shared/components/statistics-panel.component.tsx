@@ -9,8 +9,6 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 interface StatisticsPanelProps {
     /** The statistics read of the caller's audience (organizer or spectator). */
     query: UseQueryResult<TournamentStatistics>;
-    /** Passed on to [StatisticsView]: whether the Team Trend closes the view. */
-    withTrend?: boolean;
 }
 
 /**
@@ -18,7 +16,7 @@ interface StatisticsPanelProps {
  * [StatisticsView]. Each surface owns its query and its surrounding section; this is the
  * part they all share.
  */
-export function StatisticsPanel({ query, withTrend }: StatisticsPanelProps) {
+export function StatisticsPanel({ query }: StatisticsPanelProps) {
     const { t } = useI18n();
 
     if (query.isPending) return <LoadingIndicator />;
@@ -29,5 +27,5 @@ export function StatisticsPanel({ query, withTrend }: StatisticsPanelProps) {
             </p>
         );
     }
-    return <StatisticsView statistics={query.data} withTrend={withTrend} />;
+    return <StatisticsView statistics={query.data} />;
 }

@@ -120,8 +120,8 @@ describe('statistics tab', () => {
         renderApp('/admin/tournaments/t-1?tab=statistics');
 
         const statisticsTable = await screen.findByRole('table', { name: 'Statistiken' });
-        // Directly under the page's h1, like the other tabs' headings.
-        expect(screen.getByRole('heading', { level: 2, name: 'Verlauf' })).toBeInTheDocument();
+        // The Team Trend sits with the ranking on the standings tab, not here.
+        expect(screen.queryByRole('heading', { name: 'Verlauf' })).not.toBeInTheDocument();
         expect(statistics.organizer).toHaveBeenCalledWith('t-1');
         expect(bodyRows(statisticsTable)[0]).toEqual([
             'Badgers',

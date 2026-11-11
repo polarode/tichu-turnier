@@ -11,6 +11,9 @@ import type { TableConfirmation } from '@/domain/game.domain.ts';
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import { statisticsDtoSchema } from '@/statistics-api/dtos/statistics.dto.ts';
+import { statisticsDtoToDomain } from '@/statistics-api/mappers/statistics.mapper.ts';
+import { StatisticsRepository } from '@/statistics-api/statistics.repository.ts';
 import { TeamRepository } from '@/team-api/team.repository.ts';
 import { standingsDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
 import { standingsEntryDtoToDomain } from '@/tournament-api/mappers/standings.mapper.ts';
@@ -37,7 +40,12 @@ vi.mock('@/team-api/team.repository.ts', () => ({
     },
 }));
 
+vi.mock('@/statistics-api/statistics.repository.ts', () => ({
+    StatisticsRepository: { organizer: vi.fn(), publicStatistics: vi.fn() },
+}));
+
 const auth = vi.mocked(AuthRepository);
+const statistics = vi.mocked(StatisticsRepository);
 const tournaments = vi.mocked(TournamentRepository);
 const teams = vi.mocked(TeamRepository);
 
@@ -49,6 +57,14 @@ const teams = vi.mocked(TeamRepository);
 const fixture = JSON.parse(
     readFileSync(
         resolve(__dirname, '../../../../../../../contract-fixtures/standings.json'),
+        'utf8',
+    ),
+) as { response: unknown };
+
+/** The statistics contract fixture, for the Team Trend under the ranking. */
+const statisticsFixture = JSON.parse(
+    readFileSync(
+        resolve(__dirname, '../../../../../../../contract-fixtures/statistics.json'),
         'utf8',
     ),
 ) as { response: unknown };
@@ -106,6 +122,9 @@ beforeEach(() => {
     auth.refresh.mockResolvedValue({ id: 'admin-1', email: '[EMAIL]', role: 'ADMIN' });
     teams.list.mockResolvedValue([]);
     tournaments.standings.mockResolvedValue([]);
+    statistics.organizer.mockImplementation(async () =>
+        statisticsDtoToDomain(statisticsDtoSchema.parse(statisticsFixture.response)),
+    );
 });
 
 describe('standings tab', () => {
@@ -142,6 +161,12 @@ describe('standings tab', () => {
             ['Owls', '2', '4', '200'],
             ['Wolves', '5', '0', '120'],
         ]);
+        // The Team Trend follows the ranking, as on the public ranking tab.
+        const trendHeading = await screen.findByRole('heading', { level: 2, name: 'Verlauf' });
+        expect(
+            standings.compareDocumentPosition(trendHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(statistics.organizer).toHaveBeenCalledWith('t-1');
     });
 
     it('shows a note instead of a table of zeros until the first table is completed', async () => {

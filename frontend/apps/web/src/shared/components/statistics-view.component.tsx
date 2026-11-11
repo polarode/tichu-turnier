@@ -22,15 +22,12 @@ import {
     STATISTICS_COLUMN_IDS,
     type StatisticsColumn,
 } from '@/shared/constants/statistics-columns.ts';
-import { TeamTrend } from '@/shared/components/team-trend.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
 import { useStatisticsColumnsStore } from '@/shared/stores/statistics-columns.store.ts';
 
 interface StatisticsViewProps {
     statistics: TournamentStatistics;
-    /** Whether the Team Trend closes the view; the public page shows it with the ranking instead. */
-    withTrend?: boolean;
 }
 
 /** The catalog key of each Highlight metric's label. */
@@ -139,15 +136,15 @@ function deviceDefaultColumns(): readonly StatisticsColumn[] {
 }
 
 /**
- * The statistics of one tournament (glossary: Statistics): the Highlights, the per-team
- * table and (unless [withTrend] is off) the Team Trend. It renders the statistics it is given and fetches nothing, so
+ * The statistics of one tournament (glossary: Statistics): the Highlights and the per-team
+ * table; the Team Trend sits with the ranking instead. It renders the statistics it is given and fetches nothing, so
  * the organizer's and the public tab share one markup; only the viewer's column choice
  * comes from the statistics-columns store. Figures are per team only, never per player.
  */
-export function StatisticsView({ statistics, withTrend = true }: StatisticsViewProps) {
+export function StatisticsView({ statistics }: StatisticsViewProps) {
     const { t, locale } = useI18n();
     const highlightsId = useId();
-    const { teams, trends } = statistics;
+    const { teams } = statistics;
     const highlights = [...statistics.highlights].sort(
         (a, b) => HIGHLIGHT_ORDER.indexOf(a.metric) - HIGHLIGHT_ORDER.indexOf(b.metric),
     );
@@ -250,8 +247,6 @@ export function StatisticsView({ statistics, withTrend = true }: StatisticsViewP
                     />
                 </div>
             </div>
-
-            {withTrend ? <TeamTrend trends={trends} /> : null}
         </div>
     );
 }

@@ -281,6 +281,10 @@
             {
                 "type": "improvement",
                 "text": "The \"Open tables\" count next to the next-round and finish buttons is gone; the progress bar above already shows how many tables are done"
+            },
+            {
+                "type": "improvement",
+                "text": "The chart of each team's Victory Points per round now sits under the ranking on the Standings tab, as on the public page, instead of on the Statistics tab"
             }
         ]
     }

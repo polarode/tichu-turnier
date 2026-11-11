@@ -9,6 +9,7 @@ import type { TournamentStatistics } from '@/domain/statistics.domain.ts';
 import { statisticsDtoSchema } from '@/statistics-api/dtos/statistics.dto.ts';
 import { statisticsDtoToDomain } from '@/statistics-api/mappers/statistics.mapper.ts';
 import { StatisticsView } from '@/shared/components/statistics-view.component.tsx';
+import { TeamTrend } from '@/shared/components/team-trend.component.tsx';
 import {
     STATISTICS_COLUMNS_STORAGE_KEY,
     useStatisticsColumnsStore,
@@ -178,8 +179,14 @@ describe('StatisticsView', () => {
         expect(wolves?.[6]).toBe('—');
     });
 
-    it('gives screen readers the cumulative Victory Points per round in a table', () => {
+    it('leaves the Team Trend to the ranking', () => {
         renderWithProviders(<StatisticsView statistics={statistics} />);
+
+        expect(screen.queryByRole('heading', { name: 'Verlauf' })).not.toBeInTheDocument();
+    });
+
+    it('gives screen readers the cumulative Victory Points per round in a table', () => {
+        renderWithProviders(<TeamTrend trends={statistics.trends} />);
 
         const trend = screen.getByRole('table', { name: 'Kumulierte Siegpunkte je Runde' });
         expect(columnHeaders(trend)).toEqual([
@@ -200,13 +207,7 @@ describe('StatisticsView', () => {
 
     it('shows an empty state instead of the trend chart before any round is completed', () => {
         renderWithProviders(
-            <StatisticsView
-                statistics={{
-                    ...statistics,
-                    highlights: [],
-                    trends: statistics.trends.map((trend) => ({ ...trend, points: [] })),
-                }}
-            />,
+            <TeamTrend trends={statistics.trends.map((trend) => ({ ...trend, points: [] }))} />,
         );
 
         expect(
@@ -215,6 +216,11 @@ describe('StatisticsView', () => {
         expect(
             screen.queryByRole('table', { name: 'Kumulierte Siegpunkte je Runde' }),
         ).not.toBeInTheDocument();
+    });
+
+    it('leaves out the highlights before any round is completed', () => {
+        renderWithProviders(<StatisticsView statistics={{ ...statistics, highlights: [] }} />);
+
         expect(screen.queryByText('Bestwerte')).not.toBeInTheDocument();
     });
 

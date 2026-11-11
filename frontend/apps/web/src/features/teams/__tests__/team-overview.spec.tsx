@@ -449,7 +449,7 @@ describe('/team confirmation panel', () => {
             ['Spiel 4 fehlt', 'Team Alpha', 'Team Beta'],
         ]);
         expect(listItems(within(panel).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
-            'Team Alpha 4',
+            'Team Alpha, führt 4',
             'Team Beta 0',
         ]);
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
@@ -463,6 +463,19 @@ describe('/team confirmation panel', () => {
             '/team/score',
         );
         expect(screen.getAllByRole('link', { name: 'Ergebnisse eintragen' })).toHaveLength(1);
+    });
+
+    it('names no leader while the teams are level on Victory Points', async () => {
+        // Alpha wins game 1, Beta game 2: 2 : 2.
+        const { panel } = await renderPanel(seatedTable(), [
+            game(1),
+            game(2, 1, ['team-2', 'team-1']),
+        ]);
+
+        expect(listItems(within(panel).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
+            'Team Alpha 2',
+            'Team Beta 2',
+        ]);
     });
 
     it('links every game tile to its game on the scoring screen', async () => {
@@ -649,7 +662,7 @@ describe('/team confirmation panel', () => {
         ]);
         // Each team's Victory Points over the four games it played.
         expect(listItems(within(panel).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
-            'Team Alpha 8',
+            'Team Alpha, führt 8',
             'Team Beta 4',
             'Team Gamma 0',
         ]);

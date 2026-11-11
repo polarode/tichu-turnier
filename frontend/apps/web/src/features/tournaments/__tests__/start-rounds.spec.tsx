@@ -271,7 +271,7 @@ describe('rounds section', () => {
         // Victory Points over the entered games: Alpha won game 1 (2), Beta game 2 with a double win (3).
         expect(listItems(within(section).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
             'Alpha 2',
-            'Beta 3',
+            'Beta, führt 3',
         ]);
         expect(within(section).queryByText('Trio')).not.toBeInTheDocument();
     });

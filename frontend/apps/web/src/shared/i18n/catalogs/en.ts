@@ -200,6 +200,7 @@ export const en = {
     'rounds.game.missing': 'missing',
     'rounds.games.caption': 'Games',
     'rounds.victoryPoints': 'Victory Points',
+    'rounds.victoryPoints.leader': 'leads',
     'rounds.trio': 'Trio',
     'standings.title': 'Standings',
     'standings.finalTitle': 'Final Ranking',

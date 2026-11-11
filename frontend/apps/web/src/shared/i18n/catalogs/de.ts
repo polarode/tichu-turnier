@@ -210,6 +210,7 @@ export const de: Catalog = {
     'rounds.game.missing': 'fehlt',
     'rounds.games.caption': 'Spiele',
     'rounds.victoryPoints': 'Siegpunkte',
+    'rounds.victoryPoints.leader': 'führt',
     'rounds.trio': 'Trio',
     'standings.title': 'Rangliste',
     'standings.finalTitle': 'Endrangliste',

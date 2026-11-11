@@ -249,6 +249,10 @@
             {
                 "type": "improvement",
                 "text": "When entering a game, both teams' card points now show right above the points slider, and the slider is coloured in the two team colours"
+            },
+            {
+                "type": "improvement",
+                "text": "Every table now shows the Victory Points as team-coloured tiles, as trio tables already did, and the leading team's tile is outlined"
             }
         ]
     }

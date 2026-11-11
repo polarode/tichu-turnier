@@ -83,77 +83,42 @@ export function GameResults({ caption, teams, schedule, games, gameAction }: Gam
 }
 
 /**
- * Each team's Victory Points, the leader emphasised: "Alpha 5 : 2 Beta" for two
- * teams, one box per team in its seat colour at the trio table.
+ * Each team's Victory Points, one tile per team in its seat colour. A sole leader's
+ * tile is ringed in its colour and announced as leading; a tie at the top, or a
+ * table with no points yet, has no leader.
  */
 function VictoryPointStandings({ teams, games }: Pick<GameResultsProps, 'teams' | 'games'>) {
     const { t } = useI18n();
     const points = teams.map((team) => totalVictoryPoints(games, team.id));
     const best = Math.max(...points);
+    const leader =
+        best > 0 && points.filter((p) => p === best).length === 1 ? points.indexOf(best) : -1;
     const labelId = useId();
-
-    if (teams.length === 2) {
-        return (
-            <div className="flex flex-col items-center gap-0.5">
-                <ul
-                    aria-labelledby={labelId}
-                    className="grid w-full grid-cols-2 items-center gap-2"
-                >
-                    {teams.map((team, seat) => (
-                        <li
-                            key={team.id}
-                            // The second team mirrors the first, so the two scores meet in the middle.
-                            className={cn(
-                                'flex min-w-0 items-center justify-end gap-2',
-                                seat === 1 && 'flex-row-reverse',
-                            )}
-                        >
-                            <span className="min-w-0 truncate font-medium">
-                                {seat === 0 ? <TeamDot tone={seatTone(seat).dot} /> : null}
-                                {team.name}
-                                {seat === 1 ? (
-                                    <TeamDot tone={cn('mr-0 ml-1', seatTone(seat).dot)} />
-                                ) : null}
-                            </span>
-                            <span
-                                className={cn(
-                                    'text-2xl font-semibold tabular-nums',
-                                    points[seat] !== best && 'text-muted-foreground',
-                                )}
-                            >
-                                {points[seat]}
-                            </span>
-                            {seat === 0 ? (
-                                <span aria-hidden="true" className="text-2xl text-muted-foreground">
-                                    :
-                                </span>
-                            ) : null}
-                        </li>
-                    ))}
-                </ul>
-                <span id={labelId} className="text-xs text-muted-foreground">
-                    {t('rounds.victoryPoints')}
-                </span>
-            </div>
-        );
-    }
 
     return (
         <div className="flex flex-col gap-1">
             <span id={labelId} className="text-xs text-muted-foreground">
                 {t('rounds.victoryPoints')}
             </span>
-            <ul aria-labelledby={labelId} className="grid grid-cols-3 gap-2">
+            <ul
+                aria-labelledby={labelId}
+                className={cn('grid gap-2', teams.length > 2 ? 'grid-cols-3' : 'grid-cols-2')}
+            >
                 {teams.map((team, seat) => (
                     <li
                         key={team.id}
                         className={cn(
                             'flex min-w-0 flex-col items-center rounded-md px-2 py-1',
                             seatTone(seat).chip,
+                            // The chip's text is the team colour, so the ring takes it too.
+                            seat === leader && 'ring-2 ring-current',
                         )}
                     >
                         <span className="w-full truncate text-center text-xs font-medium">
                             {team.name}
+                            {seat === leader ? (
+                                <span className="sr-only">{`, ${t('rounds.victoryPoints.leader')}`}</span>
+                            ) : null}
                         </span>
                         <span
                             className={cn(

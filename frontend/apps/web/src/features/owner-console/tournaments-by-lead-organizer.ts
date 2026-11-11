@@ -1,6 +1,6 @@
 import type { Tournament } from '@/domain/tournament.domain.ts';
 
-export interface TournamentsByCreator {
+export interface TournamentsByLeadOrganizer {
     email: string;
     tournaments: Tournament[];
 }
@@ -9,7 +9,9 @@ export interface TournamentsByCreator {
  * Groups tournaments under their lead organizer's email. Groups are sorted alphabetically
  * by email; tournaments keep the server's order (newest first) inside each group.
  */
-export function groupTournamentsByCreator(tournaments: Tournament[]): TournamentsByCreator[] {
+export function groupTournamentsByLeadOrganizer(
+    tournaments: Tournament[],
+): TournamentsByLeadOrganizer[] {
     const groups = new Map<string, Tournament[]>();
     for (const tournament of tournaments) {
         const group = groups.get(tournament.leadOrganizerEmail);

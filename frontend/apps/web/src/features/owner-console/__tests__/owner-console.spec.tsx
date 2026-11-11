@@ -92,7 +92,7 @@ describe('owner console', () => {
         adminRepo.listAllTournaments.mockResolvedValue([]);
     });
 
-    it('lists every tournament under its creator, creators sorted by email', async () => {
+    it('lists every tournament under its lead organizer, lead organizers sorted by email', async () => {
         auth.refresh.mockResolvedValue(owner);
         adminRepo.listAllTournaments.mockResolvedValue([
             tournament('t-1', 'Spring Cup', 'b@example.com'),
@@ -106,10 +106,10 @@ describe('owner console', () => {
             'section',
         );
         expect(section).not.toBeNull();
-        const creators = within(section!)
+        const leadOrganizers = within(section!)
             .getAllByRole('heading', { level: 3 })
             .map((heading) => heading.textContent);
-        expect(creators).toEqual(['a@example.com', 'b@example.com']);
+        expect(leadOrganizers).toEqual(['a@example.com', 'b@example.com']);
 
         const [firstGroup, secondGroup] = within(section!).getAllByRole('list');
         expect(

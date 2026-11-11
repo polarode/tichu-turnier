@@ -22,7 +22,7 @@ interface TournamentRepository {
 
     /**
      * Every tournament, unscoped. Reserved for the platform Owner's console, which lists
-     * all tournaments with their creators; never use it for a list shown to an ordinary
+     * all tournaments with their lead organizers; never use it for a list shown to an ordinary
      * admin. The order is not defined here; the caller sorts.
      */
     fun findAll(): List<Tournament>

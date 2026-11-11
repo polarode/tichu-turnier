@@ -9,8 +9,8 @@ import tichu.domain.TournamentRepository
 
 /**
  * The owner's console list: every tournament on the platform, newest first, each with its
- * creator's email. The owner is lead organizer on all of them, so every row carries
- * [OrganizerRole.LEAD] directly; [TournamentAccess.roleOf] would resolve the same role.
+ * lead organizer's email. Every row carries [OrganizerRole.LEAD], the role the owner holds
+ * on every tournament (see [TournamentAccess.roleOf]).
  */
 class ListAllTournamentsQuery(
     private val tournamentRepository: TournamentRepository,

@@ -28,6 +28,9 @@ data class AdminUser(
 ) {
     /** Only an [AdminStatus.ACTIVE] account may log in or authenticate a session. */
     fun isActive(): Boolean = status == AdminStatus.ACTIVE
+
+    /** The platform owner: an [AdminRole.OWNER] whose account is still [AdminStatus.ACTIVE]. */
+    fun isActiveOwner(): Boolean = role == AdminRole.OWNER && isActive()
 }
 
 /** A typed id keeps domain signatures explicit and avoids passing bare strings around. */

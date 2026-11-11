@@ -62,7 +62,7 @@ async function revokeInvite(id: string): Promise<AdminInvite> {
     return inviteDtoToDomain(inviteDtoSchema.parse(data));
 }
 
-/** Every tournament on the platform, newest first, for the owner's cross-creator view. */
+/** Every tournament on the platform, newest first, for the owner's cross-lead-organizer view. */
 async function listAllTournaments(): Promise<Tournament[]> {
     const { data } = await apiClient.get<unknown>('/api/admins/tournaments');
     return tournamentListDtoSchema.parse(data).map(tournamentDtoToDomain);

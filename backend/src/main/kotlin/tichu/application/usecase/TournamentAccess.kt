@@ -58,15 +58,9 @@ class TournamentAccess(
      */
     fun roleOf(tournament: Tournament, admin: AdminUserId): OrganizerRole? = when {
         tournament.isOwnedBy(admin) -> OrganizerRole.LEAD
-        isActiveOwner(admin) -> OrganizerRole.LEAD
+        adminUserRepository.findById(admin)?.isActiveOwner() == true -> OrganizerRole.LEAD
         coOrganizerRepository.isCoOrganizer(tournament.id, admin) -> OrganizerRole.CO
         else -> null
-    }
-
-    /** Same rule as session authentication: an owner counts only while its account is active. */
-    private fun isActiveOwner(admin: AdminUserId): Boolean {
-        val user = adminUserRepository.findById(admin) ?: return false
-        return user.role == AdminRole.OWNER && user.isActive()
     }
 
     /**

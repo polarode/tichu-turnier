@@ -27,8 +27,8 @@ import java.util.UUID
 
 /**
  * Seam: the owner's all-tournaments listing (`GET /api/admins/tournaments`). The platform
- * Owner sees every tournament with its creator's email as the lead organizer and the LEAD
- * role; a normal admin is refused with 403 FORBIDDEN.
+ * Owner sees every tournament with its lead organizer's email and the LEAD role; a normal
+ * admin is refused with 403 FORBIDDEN.
  */
 @SpringBootTest(classes = [tichu.main.Application::class])
 class OwnerTournamentsIntegrationTest(
@@ -43,7 +43,7 @@ class OwnerTournamentsIntegrationTest(
         .build()
 
     @Test
-    fun `the owner lists every tournament with each creator's email as the lead organizer`() {
+    fun `the owner lists every tournament with each lead organizer's email`() {
         val firstEmail = uniqueEmail("first")
         val first = loginNewAdmin(firstEmail)
         val firstId = createTournament(first, "First Cup")

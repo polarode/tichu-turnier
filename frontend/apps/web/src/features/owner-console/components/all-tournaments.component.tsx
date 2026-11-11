@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import type { Tournament } from '@/domain/tournament.domain.ts';
 import { ConsoleRow } from '@/features/owner-console/components/console-row.component.tsx';
 import { ConsoleSection } from '@/features/owner-console/components/console-section.component.tsx';
-import { groupTournamentsByCreator } from '@/features/owner-console/tournaments-by-creator.ts';
+import { groupTournamentsByLeadOrganizer } from '@/features/owner-console/tournaments-by-lead-organizer.ts';
 import { TournamentStatusBadge } from '@/features/tournaments/components/tournament-status-badge.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
@@ -13,7 +13,7 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
  */
 export function AllTournaments({ tournaments }: { tournaments: Tournament[] }) {
     const { t } = useI18n();
-    const groups = groupTournamentsByCreator(tournaments);
+    const groups = groupTournamentsByLeadOrganizer(tournaments);
 
     return (
         <ConsoleSection

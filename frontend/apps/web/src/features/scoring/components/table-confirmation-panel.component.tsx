@@ -11,7 +11,7 @@ import {
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
 import { tableHeading } from '@/features/scoring/labels.ts';
-import { ApiError } from '@/shared/api/api-error.ts';
+import { ApiError, isNotFound } from '@/shared/api/api-error.ts';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { ConfirmationPill } from '@/shared/components/confirmation-pill.component.tsx';
 import { FormAlert } from '@/shared/components/form-alert.component.tsx';
@@ -22,9 +22,11 @@ import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 /**
  * The team overview's confirmation panel (S6b, #106; ADR 0006) for the team's
  * current table, holding the entry point to the scoring screen. Nothing shows
- * while the table loads (so the link does not jump into the panel); when the
- * team is not seated (current table 404s) only the entry point shows, and the
- * scoring screen explains the rest.
+ * while the table loads (so the link does not jump into the panel). When the
+ * team is not seated (current table 404s) no panel shows either: a muted note
+ * says the table appears once the team is seated, and there is no scoring link,
+ * since the scoring screen would only say the same. Any other failure (500,
+ * network) keeps the scoring link as the entry point.
  *
  * [readOnly] (S7c, #116) is set once the tournament is no longer ACTIVE: the
  * panel keeps its summary and the scoring link (the screen is read-only there),
@@ -37,9 +39,16 @@ export function TableConfirmationPanel({
     viewerTeamId: string;
     readOnly?: boolean;
 }) {
+    const { t } = useI18n();
     const tableQuery = useCurrentTable();
     if (tableQuery.isPending) return null;
-    if (!tableQuery.data) return <ScoringLink primary={!readOnly} readOnly={readOnly} />;
+    if (!tableQuery.data) {
+        return isNotFound(tableQuery.error) ? (
+            <p className="text-sm text-muted-foreground">{t('teamOverview.notSeated')}</p>
+        ) : (
+            <ScoringLink primary={!readOnly} readOnly={readOnly} />
+        );
+    }
     return (
         <ConfirmationPanel
             table={tableQuery.data}
@@ -50,9 +59,10 @@ export function TableConfirmationPanel({
 }
 
 /**
- * The entry point to the scoring screen where no game tiles offer one: while the
- * team is not seated yet, and beside the Final Ranking. Read-only (S7c, #116) it
- * reads "View table" instead and is never primary.
+ * The entry point to the scoring screen where no game tiles offer one: beside the
+ * Final Ranking, and when the current table failed for a reason other than the
+ * team not being seated (a not-seated team gets the note instead). Read-only
+ * (S7c, #116) it reads "View table" instead and is never primary.
  */
 export function ScoringLink({
     primary,

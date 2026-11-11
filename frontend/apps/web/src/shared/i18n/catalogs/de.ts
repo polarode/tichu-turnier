@@ -391,6 +391,8 @@ export const de: Catalog = {
     'teamOverview.players': 'Spieler',
     'teamOverview.scheduleNote': 'Der Spielplan erscheint, sobald das Turnier gestartet ist.',
     'teamOverview.scoringLink': 'Ergebnisse eintragen',
+    'teamOverview.notSeated':
+        'Dein Tisch erscheint hier, sobald dein Team einem Tisch zugeteilt ist.',
     'teamOverview.completedNote':
         'Turnier beendet – die Ergebnisse werden bei der Siegerehrung bekanntgegeben.',
     'confirmation.games.label': 'Spiele',

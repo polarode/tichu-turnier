@@ -79,12 +79,11 @@ export function TeamOverview({
                 </dd>
             </dl>
             {/* Exactly one of: the schedule note (setup), the confirmation panel
-                with its scoring link (started; read-only once no longer active),
-                or the Final Ranking (published). The team's own table stays
-                reachable through the scoring link in every started state. While
-                the team is not seated the panel shrinks to the scoring link; the
-                scoring screen still guards itself (401 → login, not seated →
-                placeholder). */}
+                whose game tiles open the scoring screen (started; read-only once
+                no longer active), or the Final Ranking with a link to view the
+                table (published). While the team is not seated the panel shows
+                only a note (no scoring link); the scoring screen still guards
+                itself (401 → login, not seated → placeholder). */}
             {overview.tournamentStatus === TournamentStatus.SETUP ? (
                 <p className="text-sm text-muted-foreground">{t('teamOverview.scheduleNote')}</p>
             ) : published ? (

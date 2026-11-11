@@ -380,6 +380,7 @@ export const en = {
     'teamOverview.players': 'Players',
     'teamOverview.scheduleNote': 'The match schedule appears once the tournament starts.',
     'teamOverview.scoringLink': 'Enter results',
+    'teamOverview.notSeated': 'Your table appears here once your team is seated at a table.',
     'teamOverview.completedNote':
         'Tournament finished — the results are announced at the ceremony.',
     'confirmation.games.label': 'Games',

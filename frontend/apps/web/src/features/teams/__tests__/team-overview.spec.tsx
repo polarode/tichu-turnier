@@ -740,7 +740,7 @@ describe('/team confirmation panel', () => {
         await waitFor(() => expect(mockedGames.mock.calls.length).toBeGreaterThan(fetchesBefore));
     });
 
-    it('hides the panel but keeps the scoring link when the team is not seated yet', async () => {
+    it('hides the panel and shows a note instead of the scoring link when the team is not seated yet', async () => {
         mockedMe.mockResolvedValue(overview);
         mockedCurrentTable.mockRejectedValue(
             new ApiError({ code: 'NOT_FOUND', status: 404, field: null, message: 'not seated' }),
@@ -749,8 +749,32 @@ describe('/team confirmation panel', () => {
         renderApp('/team');
 
         expect(
+            await screen.findByText(
+                'Dein Tisch erscheint hier, sobald dein Team einem Tisch zugeteilt ist.',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: /Runde/ })).not.toBeInTheDocument();
+    });
+
+    it('keeps the scoring link and hides the note when the current table fails with a server error', async () => {
+        mockedMe.mockResolvedValue(overview);
+        mockedCurrentTable.mockRejectedValue(
+            new ApiError({ code: 'UNKNOWN', status: 500, field: null, message: 'boom' }),
+        );
+
+        renderApp('/team');
+
+        expect(
             await screen.findByRole('link', { name: 'Ergebnisse eintragen' }),
         ).toBeInTheDocument();
+        expect(
+            screen.queryByText(
+                'Dein Tisch erscheint hier, sobald dein Team einem Tisch zugeteilt ist.',
+            ),
+        ).not.toBeInTheDocument();
         expect(screen.queryByRole('region', { name: /Runde/ })).not.toBeInTheDocument();
     });
 

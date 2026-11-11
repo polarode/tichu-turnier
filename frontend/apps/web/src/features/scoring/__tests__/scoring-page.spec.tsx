@@ -279,6 +279,36 @@ describe('/team/score', () => {
         await waitFor(() => expect(screen.getByRole('slider')).toBeDisabled());
     });
 
+    it('centres the base-score slider on a double win and restores the entered value when undone', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+
+        await user.click(screen.getByRole('button', { name: '5 Punkte mehr' }));
+        await user.click(screen.getByRole('button', { name: '5 Punkte mehr' }));
+        expect(screen.getByRole('slider')).toHaveValue('60');
+
+        // Alice (1) then Anna (2): both on team 0 → double win.
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!); // Alice → 1
+        await user.click(finishButtons[1]!); // Anna → 2
+
+        // Disabled and shown at the midpoint of −25..125, while the entered 60 stays in the form.
+        await waitFor(() => expect(screen.getByRole('slider')).toBeDisabled());
+        expect(screen.getByRole('slider')).toHaveValue('50');
+
+        // Undoing the double win brings back the value entered before it.
+        await user.click(
+            screen.getByRole('button', { name: 'Platzierung zurücksetzen – Alice: 1.' }),
+        );
+
+        await waitFor(() => expect(screen.getByRole('slider')).toBeEnabled());
+        expect(screen.getByRole('slider')).toHaveValue('60');
+    });
+
     it('steps the base score by 5 with the plus/minus buttons and clamps at the range ends', async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);

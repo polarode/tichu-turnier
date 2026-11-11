@@ -236,6 +236,9 @@ export function GameEntryForm({
 
     // The slider is moot on a double win (base fixed at 0 : 0) and in read-only mode.
     const baseScoreLocked = readOnly || dw !== null;
+    // On a double win the thumb sits in the middle of the range and the track splits
+    // evenly. Display only: the entered value stays in the form for when the win is undone.
+    const sliderValue = dw === null ? state.baseScoreTeam0 : (BASE_SCORE_MIN + BASE_SCORE_MAX) / 2;
 
     function stepBaseScore(delta: number) {
         const next = Math.min(
@@ -562,7 +565,7 @@ export function GameEntryForm({
                         min={BASE_SCORE_MIN}
                         max={BASE_SCORE_MAX}
                         step={BASE_SCORE_STEP}
-                        value={state.baseScoreTeam0}
+                        value={sliderValue}
                         disabled={baseScoreLocked}
                         aria-valuetext={fillPlaceholders(t('scoring.baseScore.valueText'), {
                             team0: matchup[0].teamName,
@@ -573,7 +576,7 @@ export function GameEntryForm({
                         className="score-split h-11 min-w-0 flex-1"
                         style={
                             {
-                                '--split': `${((state.baseScoreTeam0 - BASE_SCORE_MIN) / (BASE_SCORE_MAX - BASE_SCORE_MIN)) * 100}%`,
+                                '--split': `${((sliderValue - BASE_SCORE_MIN) / (BASE_SCORE_MAX - BASE_SCORE_MIN)) * 100}%`,
                                 '--split-left': tones[0].fill,
                                 '--split-right': tones[1].fill,
                             } as CSSProperties

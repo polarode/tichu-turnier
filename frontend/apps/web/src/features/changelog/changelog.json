@@ -277,6 +277,10 @@
             {
                 "type": "improvement",
                 "text": "Colour-blind friendly colours, stronger in dark mode"
+            },
+            {
+                "type": "fix",
+                "text": "Score slider centred on a double win"
             }
         ]
     }

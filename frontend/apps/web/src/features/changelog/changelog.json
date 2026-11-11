@@ -285,6 +285,10 @@
             {
                 "type": "improvement",
                 "text": "The chart of each team's Victory Points per round now sits under the ranking on the Standings tab, as on the public page, instead of on the Statistics tab"
+            },
+            {
+                "type": "improvement",
+                "text": "On the public page, each table of a round shows its teams side by side with a bar in the team colours; once results are published, the bar shows how the Victory Points were split"
             }
         ]
     }

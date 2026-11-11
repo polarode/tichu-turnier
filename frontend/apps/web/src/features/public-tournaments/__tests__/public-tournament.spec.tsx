@@ -278,13 +278,14 @@ describe('public tournament page', () => {
 
         const round2 = screen.getByRole('region', { name: 'Round 2' });
         const falcons = within(tableItem(round2, 'Table A')).getByText('Falcons').closest('li')!;
-        expect(falcons).toHaveTextContent('8 VP 240 TP');
+        // Each team carries its Table Totals: its VP beside its name, its TP under its players.
+        expect(falcons).toHaveTextContent(/^8 VP Falcons.*240 TP$/);
 
         await user.click(screen.getByRole('tab', { name: 'Round 1' }));
 
         const round1 = screen.getByRole('region', { name: 'Round 1' });
         const wolves = within(tableItem(round1, 'Table B')).getByText('Wolves').closest('li')!;
-        expect(wolves).toHaveTextContent('0 VP 120 TP');
+        expect(wolves).toHaveTextContent(/^0 VP Wolves.*120 TP$/);
     });
 
     it('shows no Final Ranking before the tournament is published', async () => {

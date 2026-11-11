@@ -4,7 +4,7 @@ import { cn } from '@tichu/ui/lib/utils.ts';
 import { TabList, TabPanel } from '@tichu/ui/tabs.tsx';
 
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
-import type { PublicRound, PublicTable, PublicTableTotals } from '@/domain/tournament.domain.ts';
+import type { PublicRound, PublicTable } from '@/domain/tournament.domain.ts';
 import {
     usePublicStatistics,
     usePublicTournament,
@@ -17,7 +17,6 @@ import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { StatisticsPanel } from '@/shared/components/statistics-panel.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
-import { TeamDot } from '@/shared/components/team-dot.component.tsx';
 import { TeamTrendPanel } from '@/shared/components/team-trend-panel.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
@@ -199,7 +198,7 @@ function PublicRounds({ rounds }: { rounds: readonly PublicRound[] }) {
     );
 }
 
-/** One round's tables as a compact list: a rule above each table, two or three across when wide. */
+/** One round's tables, each as a tug of war of its teams; stacked at every width so the bars line up for comparison. */
 function PublicRoundView({ round, selected = false }: { round: PublicRound; selected?: boolean }) {
     const { t } = useI18n();
     const label = `${t('rounds.round')} ${round.number}`;
@@ -208,7 +207,7 @@ function PublicRoundView({ round, selected = false }: { round: PublicRound; sele
         <section aria-label={label} className="flex flex-col gap-1">
             {/* Picked through the selector, whose button already shows the round: heading for screen readers only. */}
             <h2 className={cn('text-lg font-medium', selected && 'sr-only')}>{label}</h2>
-            <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="flex flex-col gap-5 pt-2">
                 {round.tables.map((table) => (
                     <PublicTableItem key={table.tableNumber} table={table} />
                 ))}
@@ -217,54 +216,94 @@ function PublicRoundView({ round, selected = false }: { round: PublicRound; sele
     );
 }
 
+/**
+ * One table as a tug of war: a bar split by the teams' shares of the table's Victory
+ * Points, and right under it the teams side by side (a trio's third in the middle), each
+ * led by its Victory Points in its seat colour (the leader's in full, the others' faded),
+ * then its name, players and Tichu Points. The Victory Points sit next to the bar they
+ * size; the Tichu Points stay with their team. Before publishing (or at 0 : 0) the bar
+ * splits evenly and faded. The bar is visual only.
+ */
 function PublicTableItem({ table }: { table: PublicTable }) {
     const { t } = useI18n();
     const heading = tableHeading(table.tableNumber, t);
+    const totals = table.teams.map((team) => team.totals);
+    const published = totals.every((total) => total !== undefined);
+    const victoryPoints = totals.map((total) => total?.victoryPoints ?? 0);
+    const sum = victoryPoints.reduce((acc, vp) => acc + vp, 0);
+    const best = Math.max(...victoryPoints);
+    // A sole leader keeps its colour in full; a tie or a table without results has none.
+    const leader =
+        published && victoryPoints.filter((vp) => vp === best).length === 1
+            ? victoryPoints.indexOf(best)
+            : -1;
+    const last = table.teams.length - 1;
+    // The first team aligns left, the last right, a trio's middle team centred.
+    const align = (seat: number) =>
+        seat === 0
+            ? 'items-start'
+            : seat === last
+              ? 'items-end text-right'
+              : 'items-center text-center';
 
     return (
-        <li className="flex flex-col gap-2 border-t border-border py-3">
+        <li className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-muted-foreground">{heading}</h3>
+                <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    {heading}
+                </h3>
                 {table.trio ? <Badge variant="secondary">{t('rounds.trio')}</Badge> : null}
             </div>
-            <ul className="flex flex-col gap-1.5">
+            <div aria-hidden="true" className="flex h-3 overflow-hidden rounded-full bg-muted">
                 {table.teams.map((team, seat) => (
-                    <li key={team.id} className="flex items-baseline justify-between gap-3">
-                        <span className="flex min-w-0 flex-col">
-                            <span className="font-medium">
-                                <TeamDot tone={seatTone(seat).dot} />
-                                {team.name}
-                            </span>
-                            <span className="pl-3 text-xs text-muted-foreground">
-                                {team.players.map((player) => player.name).join(' · ')}
-                            </span>
+                    <span
+                        key={team.id}
+                        className={cn(
+                            'h-full transition-[width]',
+                            seatTone(seat).dot,
+                            !(published && sum > 0) && 'opacity-30',
+                            seat > 0 && 'border-l-2 border-card',
+                        )}
+                        style={{
+                            width: `${published && sum > 0 ? ((victoryPoints[seat] ?? 0) / sum) * 100 : 100 / table.teams.length}%`,
+                        }}
+                    />
+                ))}
+            </div>
+            <ul className="flex items-start justify-between gap-3">
+                {table.teams.map((team, seat) => (
+                    <li key={team.id} className={cn('flex min-w-0 flex-col', align(seat))}>
+                        <span className="flex max-w-full items-baseline gap-1.5">
+                            {team.totals ? (
+                                <span
+                                    className={cn(
+                                        'shrink-0 text-xl font-bold tabular-nums',
+                                        seatTone(seat).text,
+                                        leader !== -1 && seat !== leader && 'opacity-60',
+                                    )}
+                                >
+                                    {team.totals.victoryPoints}{' '}
+                                    <abbr
+                                        title={t('standings.victoryPoints.long')}
+                                        className="text-xs font-medium no-underline"
+                                    >
+                                        {t('standings.victoryPoints')}
+                                    </abbr>
+                                </span>
+                            ) : null}{' '}
+                            <span className="truncate text-sm font-semibold">{team.name}</span>
                         </span>
-                        {team.totals ? <TableTotalsLabel totals={team.totals} /> : null}
+                        <span className="max-w-full truncate text-xs text-muted-foreground">
+                            {team.players.map((player) => player.name).join(' · ')}
+                        </span>
+                        {team.totals ? (
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                                {`${team.totals.tichuPoints} ${t('standings.tichuPoints')}`}
+                            </span>
+                        ) : null}
                     </li>
                 ))}
             </ul>
         </li>
-    );
-}
-
-/** A team's Table Totals at this table, as the summed VP and TP of its games. */
-function TableTotalsLabel({ totals }: { totals: PublicTableTotals }) {
-    const { t } = useI18n();
-
-    return (
-        <span className="flex shrink-0 gap-3 text-sm tabular-nums">
-            <span>
-                {totals.victoryPoints}{' '}
-                <abbr title={t('standings.victoryPoints.long')} className="no-underline">
-                    {t('standings.victoryPoints')}
-                </abbr>
-            </span>{' '}
-            <span>
-                {totals.tichuPoints}{' '}
-                <abbr title={t('standings.tichuPoints.long')} className="no-underline">
-                    {t('standings.tichuPoints')}
-                </abbr>
-            </span>
-        </span>
     );
 }

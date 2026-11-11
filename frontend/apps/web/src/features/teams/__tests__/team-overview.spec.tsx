@@ -445,7 +445,8 @@ describe('/team confirmation panel', () => {
 
         expect(gameTiles(within(panel).getByRole('list', { name: 'Spiele' }))).toEqual([
             ['Spiel 1', 'Team Alpha, Gewinner 60 +2 Siegpunkte', 'Team Beta 40'],
-            ['Spiel 2 fehlt', 'Team Alpha', 'Team Beta'],
+            // The first missing game is up next; later ones just read as missing.
+            ['Spiel 2 Als Nächstes', 'Team Alpha', 'Team Beta'],
             ['Spiel 3', 'Team Alpha, Gewinner 60 +2 Siegpunkte', 'Team Beta 40'],
             ['Spiel 4 fehlt', 'Team Alpha', 'Team Beta'],
         ]);
@@ -467,6 +468,19 @@ describe('/team confirmation panel', () => {
 
         expect(within(panel).getByText('Status: Spielen · 0 von 2 bestätigt')).toBeInTheDocument();
         expect(within(panel).getByRole('button', { name: 'Alle Spiele bestätigen' })).toBeEnabled();
+    });
+
+    it('names on each tile what a tap does: enter a missing game, edit an entered one', async () => {
+        const { panel } = await renderPanel(seatedTable(), [game(1), game(3)]);
+
+        const tiles = within(within(panel).getByRole('list', { name: 'Spiele' })).getAllByRole(
+            'listitem',
+        );
+        const tile = (n: number) =>
+            tiles.find((item) => item.textContent?.startsWith(`Spiel ${n}`))!;
+        expect(within(tile(1)).getByText('Bearbeiten')).toBeInTheDocument();
+        expect(within(tile(2)).getByText('Eintragen')).toBeInTheDocument();
+        expect(within(tile(4)).getByText('Eintragen')).toBeInTheDocument();
     });
 
     it('names no leader while the teams are level on Victory Points', async () => {
@@ -514,6 +528,9 @@ describe('/team confirmation panel', () => {
         ).not.toBeInTheDocument();
 
         const tiles = within(panel).getByRole('list', { name: 'Spiele' });
+        // Frozen, every tile only views its game.
+        expect(within(tiles).getAllByText('Ansehen')).toHaveLength(4);
+        expect(within(tiles).queryByText('Bearbeiten')).not.toBeInTheDocument();
         await user.click(within(tiles).getByRole('link', { name: 'Spiel 2' }));
 
         await waitFor(() => expect(router.state.location.pathname).toBe('/team/score'));

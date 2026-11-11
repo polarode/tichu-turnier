@@ -8,9 +8,11 @@ import { within } from '@testing-library/react';
  */
 export function gameTiles(list: HTMLElement): string[][] {
     return directItems(list).map((tile) =>
-        Array.from(tile.children).flatMap((part) =>
-            part.tagName === 'UL' ? directItems(part).map(announced) : [announced(part)],
-        ),
+        Array.from(tile.children)
+            .filter((part) => part.getAttribute('aria-hidden') !== 'true')
+            .flatMap((part) =>
+                part.tagName === 'UL' ? directItems(part).map(announced) : [announced(part)],
+            ),
     );
 }
 

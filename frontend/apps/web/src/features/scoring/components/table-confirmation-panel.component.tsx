@@ -4,6 +4,7 @@ import { Button, buttonVariants } from '@tichu/ui/button.tsx';
 
 import {
     isCompleted,
+    isFrozen,
     type RecordedGame,
     teamNameOf,
     type TeamTable,
@@ -163,7 +164,11 @@ function ConfirmationPanel({
                     schedule={table.schedule}
                     games={games}
                     // A tile opens its game, for entry or (frozen, read-only) to view its details.
-                    gameAction={{ kind: 'link', to: '/team/score' }}
+                    gameAction={{
+                        kind: 'link',
+                        to: '/team/score',
+                        readOnly: readOnly || isFrozen(table.confirmation),
+                    }}
                 />
             ) : null}
             {/* The tiles show which games are still open; the confirmation step

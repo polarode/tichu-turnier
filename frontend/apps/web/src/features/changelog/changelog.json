@@ -261,6 +261,10 @@
             {
                 "type": "improvement",
                 "text": "The team page is tidier: while games are still open it shows only the game tiles, and the confirmation status and button appear once every game is entered. The separate \"Enter results\" button is gone, since each game tile opens its game"
+            },
+            {
+                "type": "improvement",
+                "text": "On the team page, each game tile now says what tapping it does (enter, edit or view), and the next game to enter is highlighted"
             }
         ]
     }

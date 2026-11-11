@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { Link } from '@tanstack/react-router';
+import { ChevronRight } from 'lucide-react';
 import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
@@ -20,9 +21,10 @@ type ResultTeam = { id: string; name: string };
  * scoring screen (the team panel, for entry or to view the game read-only), or a button that hands
  * the game number to its caller (the organizer's correction on a completed table,
  * ADR 0010). The button's [label] is its accessible name, already localized.
+ * A [readOnly] link only views its game (the table froze or the tournament ended).
  */
 export type GameTileAction =
-    | { kind: 'link'; to: '/team/score' }
+    | { kind: 'link'; to: '/team/score'; readOnly: boolean }
     | {
           kind: 'button';
           onSelect: (gameNumber: number) => void;
@@ -53,10 +55,18 @@ interface GameResultsProps {
  * lists only the two teams playing it. Tiles go two across, four (trio: three)
  * once the container is wide enough. With a [gameAction] the whole tile is
  * clickable, its title being the control: the team panel's link to the scoring
- * screen, or the organizer's correction button on a completed table.
+ * screen, or the organizer's correction button on a completed table. The team
+ * panel's tiles end in a footer naming what a tap does (enter, edit, view), and
+ * while games can still be entered the first missing one is ringed as next up.
  */
 export function GameResults({ caption, teams, schedule, games, gameAction }: GameResultsProps) {
     const byNumber = new Map(games.map((game) => [game.gameNumber, game]));
+    // The next game to enter: the first missing one, at a trio table too (even one
+    // the viewing team sits out). Nothing is next once the links only view.
+    const nextGame =
+        gameAction?.kind === 'link' && !gameAction.readOnly
+            ? schedule.find((scheduled) => !byNumber.has(scheduled.gameNumber))?.gameNumber
+            : undefined;
 
     return (
         <div className="@container flex flex-col gap-3">
@@ -75,6 +85,7 @@ export function GameResults({ caption, teams, schedule, games, gameAction }: Gam
                         scheduled={scheduled}
                         game={byNumber.get(scheduled.gameNumber)}
                         action={gameAction}
+                        next={scheduled.gameNumber === nextGame}
                     />
                 ))}
             </ol>
@@ -141,11 +152,14 @@ function GameTile({
     scheduled,
     game,
     action,
+    next,
 }: {
     teams: readonly ResultTeam[];
     scheduled: ScheduledGame;
     game?: RecordedGame;
     action?: GameTileAction;
+    /** The next game to enter: ringed, badged, and its footer filled. */
+    next: boolean;
 }) {
     const { t } = useI18n();
     const rows = scheduled.teamIds.map((id) => ({
@@ -168,6 +182,14 @@ function GameTile({
               ? first.id
               : second.id);
     const title = `${t('rounds.game')} ${scheduled.gameNumber}`;
+    const footerLabel =
+        action?.kind !== 'link'
+            ? undefined
+            : action.readOnly
+              ? t('rounds.game.action.view')
+              : game
+                ? t('rounds.game.action.edit')
+                : t('rounds.game.action.enter');
 
     return (
         <li
@@ -177,6 +199,9 @@ function GameTile({
                 // The stretched link covers the tile; the ring follows its keyboard focus.
                 action &&
                     'hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
+                // The footer runs flush to the tile's edges and bottom.
+                footerLabel && 'overflow-hidden pb-0',
+                next && 'border-solid border-primary ring-2 ring-primary/30',
             )}
         >
             <p className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
@@ -202,7 +227,11 @@ function GameTile({
                 ) : (
                     <span className="font-medium">{title}</span>
                 )}
-                {game ? null : <span>{t('rounds.game.missing')}</span>}
+                {next ? (
+                    <Badge>{t('rounds.game.next')}</Badge>
+                ) : game ? null : (
+                    <span>{t('rounds.game.missing')}</span>
+                )}
             </p>
             <ul className="flex flex-col gap-1">
                 {rows.map((row) => {
@@ -263,6 +292,23 @@ function GameTile({
                         <Badge variant="outline">{t('rounds.game.corrected')}</Badge>
                     ) : null}
                 </p>
+            ) : null}
+            {/* What a tap does, for sighted users; the tile's link already says it opens. */}
+            {footerLabel ? (
+                <span
+                    aria-hidden="true"
+                    className={cn(
+                        '-mx-2 mt-auto flex items-center justify-between border-t px-2 py-1.5 text-xs font-medium',
+                        next
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : game
+                              ? 'border-border bg-muted/60'
+                              : 'border-dashed border-input',
+                    )}
+                >
+                    {footerLabel}
+                    <ChevronRight className="size-4" />
+                </span>
             ) : null}
         </li>
     );

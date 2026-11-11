@@ -24,6 +24,7 @@ import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
 import tichu.application.api.ListAdmins
+import tichu.application.api.ListAllTournaments
 import tichu.application.api.ListOrganizers
 import tichu.application.api.ListInvites
 import tichu.application.api.ListPublicTournaments
@@ -288,6 +289,12 @@ class UseCaseConfiguration(
         coOrganizerRepository: CoOrganizerRepository,
         adminUserRepository: AdminUserRepository,
     ): ListTournaments = ListTournamentsQuery(repository, coOrganizerRepository, adminUserRepository)
+
+    @Bean
+    fun listAllTournaments(
+        tournamentRepository: TournamentRepository,
+        adminUserRepository: AdminUserRepository,
+    ): ListAllTournaments = ListAllTournamentsQuery(tournamentRepository, adminUserRepository)
 
     @Bean
     fun getTournament(tournamentAccess: TournamentAccess, adminUserRepository: AdminUserRepository): GetTournament =

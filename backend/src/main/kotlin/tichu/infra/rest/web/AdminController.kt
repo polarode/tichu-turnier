@@ -4,6 +4,7 @@ import tichu.application.api.ApproveAdmin
 import tichu.application.api.AuthenticatedAdmin
 import tichu.application.api.DisableAdmin
 import tichu.application.api.ListAdmins
+import tichu.application.api.ListAllTournaments
 import tichu.application.api.ReactivateAdmin
 import tichu.application.api.RejectAdmin
 import tichu.domain.AdminUserId
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admins")
 class AdminController(
     private val listAdmins: ListAdmins,
+    private val listAllTournaments: ListAllTournaments,
     private val approveAdmin: ApproveAdmin,
     private val rejectAdmin: RejectAdmin,
     private val disableAdmin: DisableAdmin,
@@ -42,6 +44,12 @@ class AdminController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): List<AdminAccountResponse> =
         listAdmins.list(principal, status).map(AdminAccountResponse::from)
+
+    @GetMapping("/tournaments")
+    fun listAllTournaments(
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): List<TournamentResponse> =
+        listAllTournaments.listAll(principal).map(TournamentResponse::from)
 
     @PostMapping("/{id}/approve")
     fun approve(

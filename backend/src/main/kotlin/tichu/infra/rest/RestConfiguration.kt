@@ -21,6 +21,7 @@ import tichu.application.api.GetTeam
 import tichu.application.api.GetTeamScoring
 import tichu.application.api.GetTournament
 import tichu.application.api.ListAdmins
+import tichu.application.api.ListAllTournaments
 import tichu.application.api.ListOrganizers
 import tichu.application.api.ListInvites
 import tichu.application.api.ListTeams
@@ -221,12 +222,13 @@ class RestConfiguration(
     @Bean
     fun adminController(
         listAdmins: ListAdmins,
+        listAllTournaments: ListAllTournaments,
         approveAdmin: ApproveAdmin,
         rejectAdmin: RejectAdmin,
         disableAdmin: DisableAdmin,
         reactivateAdmin: ReactivateAdmin,
     ): AdminController =
-        AdminController(listAdmins, approveAdmin, rejectAdmin, disableAdmin, reactivateAdmin)
+        AdminController(listAdmins, listAllTournaments, approveAdmin, rejectAdmin, disableAdmin, reactivateAdmin)
 
     @Bean
     fun inviteController(

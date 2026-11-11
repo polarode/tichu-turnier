@@ -34,6 +34,9 @@ open class JpaTournamentRepository(
     override fun findAllByOwner(owner: AdminUserId): List<Tournament> =
         springDataTournamentRepository.findAllByOwnerId(owner.value).map { it.toDomain() }
 
+    override fun findAll(): List<Tournament> =
+        springDataTournamentRepository.findAll().map { it.toDomain() }
+
     /** The SQL form of [Tournament.isVisibleToSpectators], so the public home stays one indexed query. */
     override fun findAllPublic(): List<Tournament> =
         springDataTournamentRepository

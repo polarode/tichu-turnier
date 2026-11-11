@@ -28,6 +28,8 @@ class InMemoryTournamentRepository : TournamentRepository {
     override fun findAllByOwner(owner: AdminUserId): List<Tournament> =
         store.values.filter { it.isOwnedBy(owner) }
 
+    override fun findAll(): List<Tournament> = store.values.toList()
+
     override fun findAllPublic(): List<Tournament> =
         store.values.filter { it.isVisibleToSpectators() }
 

@@ -254,7 +254,6 @@ export const en = {
     'progress.nextRound.action': 'Start next round',
     'progress.nextRound.confirmDescription':
         'Pairs are drawn from the current standings. Teams see their new table right away.',
-    'progress.nextRound.openTables': 'Tables still open:',
     'progress.finish.action': 'Finish tournament',
     'progress.finish.confirmDescription':
         'Finishing fixes the Final Ranking. Only the organizer sees it until the results are published.',

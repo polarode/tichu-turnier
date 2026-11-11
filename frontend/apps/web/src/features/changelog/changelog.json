@@ -277,6 +277,10 @@
             {
                 "type": "improvement",
                 "text": "The rounds view shows each team at a table as a coloured pill with a check mark once it has confirmed, like the team page"
+            },
+            {
+                "type": "improvement",
+                "text": "The \"Open tables\" count next to the next-round and finish buttons is gone; the progress bar above already shows how many tables are done"
             }
         ]
     }

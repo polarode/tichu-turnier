@@ -264,7 +264,6 @@ export const de: Catalog = {
     'progress.nextRound.action': 'Nächste Runde starten',
     'progress.nextRound.confirmDescription':
         'Die Paarungen werden aus der aktuellen Rangliste ausgelost. Die Teams sehen ihren neuen Tisch sofort.',
-    'progress.nextRound.openTables': 'Noch offene Tische:',
     'progress.finish.action': 'Turnier abschließen',
     'progress.finish.confirmDescription':
         'Mit dem Abschluss wird die Endrangliste festgelegt. Bis zur Veröffentlichung sieht sie nur der Organisator.',

@@ -34,9 +34,9 @@ type Confirmation = 'nextRound' | 'finish' | 'publish';
  * cannot go below the rounds already drawn nor above the maximum. Once finished the
  * card is read-only apart from the lifecycle action.
  *
- * The next round starts from here, after a confirmation: disabled with the count of
- * open tables while the current round is incomplete. In the last round the same slot
- * finishes the tournament (fixing the Final Ranking, S7c), under the same open-tables
+ * The next round starts from here, after a confirmation: disabled while the current
+ * round is incomplete (the progress bar shows how many tables are done). In the
+ * last round the same slot finishes the tournament (fixing the Final Ranking, S7c), under the same open-tables
  * rule. Once COMPLETED the organizer publishes the results to the teams; PUBLISHED
  * only notes that they are out.
  */
@@ -67,13 +67,6 @@ export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCar
         finishTournament.mutate(undefined, { onSettled: () => setConfirming(null) });
     const publish = () =>
         publishTournament.mutate(undefined, { onSettled: () => setConfirming(null) });
-
-    const openTablesHint =
-        openTables > 0 ? (
-            <span className="text-sm text-muted-foreground tabular-nums">
-                {`${t('progress.nextRound.openTables')} ${openTables}`}
-            </span>
-        ) : null;
 
     return (
         <section
@@ -146,7 +139,6 @@ export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCar
                         >
                             {t('progress.finish.action')}
                         </Button>
-                        {openTablesHint}
                     </div>
                 ) : (
                     <div className="flex flex-wrap items-center gap-3">
@@ -157,7 +149,6 @@ export function ProgressCard({ tournament, rounds, onRoundStarted }: ProgressCar
                         >
                             {t('progress.nextRound.action')}
                         </Button>
-                        {openTablesHint}
                     </div>
                 )
             ) : null}

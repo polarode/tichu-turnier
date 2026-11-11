@@ -328,7 +328,7 @@ describe('next round action', () => {
         expect(await screen.findByRole('heading', { name: 'Runde 3' })).toBeInTheDocument();
     });
 
-    it('is disabled with the number of open tables while the round is incomplete', async () => {
+    it('is disabled while the round is incomplete, the progress bar showing how many are done', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         tournaments.rounds.mockResolvedValue(rounds(2, 3, 2));
         renderApp('/admin/tournaments/t-1');
@@ -337,7 +337,8 @@ describe('next round action', () => {
         expect(
             await within(card).findByRole('button', { name: 'Nächste Runde starten' }),
         ).toBeDisabled();
-        expect(card).toHaveTextContent('Noch offene Tische: 1');
+        expect(card).toHaveTextContent('2/3 Tische abgeschlossen');
+        expect(card).not.toHaveTextContent('Noch offene Tische');
     });
 
     it('is not offered once the tournament is finished', async () => {

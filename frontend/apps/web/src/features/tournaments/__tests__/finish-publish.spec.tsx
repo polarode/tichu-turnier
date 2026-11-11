@@ -95,7 +95,7 @@ async function progressCard() {
 }
 
 describe('finish action in the last round', () => {
-    it('is disabled with the number of open tables while a table is still open', async () => {
+    it('is disabled while a table is still open, the progress bar showing how many are done', async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE', 2));
         tournaments.rounds.mockResolvedValue(rounds(2, 3, 2));
         renderApp('/admin/tournaments/t-1');
@@ -104,7 +104,8 @@ describe('finish action in the last round', () => {
         expect(
             await within(card).findByRole('button', { name: 'Turnier abschließen' }),
         ).toBeDisabled();
-        expect(card).toHaveTextContent('Noch offene Tische: 1');
+        expect(card).toHaveTextContent('2/3 Tische abgeschlossen');
+        expect(card).not.toHaveTextContent('Noch offene Tische');
     });
 
     it('finishes the tournament after confirmation', async () => {

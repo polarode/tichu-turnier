@@ -1,7 +1,7 @@
 /**
  * Team identity colours per seat at a table (A, B, C): each seated team keeps its
- * colour in every game it plays, so at a trio table game 3 (B vs C) reads Star vs
- * Pagoda. Literal class names so Tailwind picks them up; `fill` is the raw colour
+ * colour in every game it plays, so at a trio table game 3 (B vs C) reads Pagoda vs
+ * Star. Literal class names so Tailwind picks them up; `fill` is the raw colour
  * for inline styles such as the base-score slider's split track.
  */
 const SEAT_TONES = [

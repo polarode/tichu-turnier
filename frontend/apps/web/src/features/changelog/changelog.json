@@ -289,6 +289,18 @@
             {
                 "type": "improvement",
                 "text": "On the public page, each table of a round shows its teams side by side with a bar in the team colours; once results are published, the bar shows how the Victory Points were split"
+            },
+            {
+                "type": "improvement",
+                "text": "Team colours are easier to tell apart for colour-blind players: the two teams at a table are now green and blue, and red is only used for the third team at a trio table"
+            },
+            {
+                "type": "improvement",
+                "text": "Team colours, the coloured stripe at the top and the active menu underline are stronger in dark mode"
+            },
+            {
+                "type": "improvement",
+                "text": "The lines of the Victory Points chart are easier to tell apart for colour-blind viewers"
             }
         ]
     }

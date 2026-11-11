@@ -275,7 +275,7 @@ export function GameEntryForm({
         GRAND: t('scoring.call.grand'),
     };
 
-    // Each team keeps its seat colour across games (A Jade, B Star, C Pagoda).
+    // Each team keeps its seat colour across games (A Jade, B Pagoda, C Star).
     const tones = [
         seatTone(seatOf(table, matchup[0].teamId)),
         seatTone(seatOf(table, matchup[1].teamId)),

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { type QueryKey, useQueryClient } from '@tanstack/react-query';
+import { focusManager, type QueryKey, useQueryClient } from '@tanstack/react-query';
 
 import { SseClient, type SseSubscription } from '@/shared/sse/sse-client.ts';
 
@@ -18,6 +18,11 @@ export interface LiveStreamOptions {
  * Follows a live event stream while `enabled`: each event refetches the queries it makes
  * stale (see `subscriptions`), and every (re)connect refetches `keysOnConnect`, so events
  * missed while offline are caught up. Returns whether the stream is connected.
+ *
+ * The stream only stays open while the page is visible, by TanStack's `focusManager`: a
+ * phone asleep or an app in the background closes it, and coming back reopens it at once,
+ * without waiting out the reconnect backoff. A connection the device dropped silently in
+ * its sleep, still looking open, is replaced the same way.
  *
  * The stream is opened per `url` and `enabled` only. `subscriptions` and `keysOnConnect`
  * are read at connect time, so callers may pass fresh arrays on every render without
@@ -51,8 +56,14 @@ export function useLiveStream({
                 }
             },
         });
-        client.connect();
+        const followVisibility = () => {
+            if (focusManager.isFocused()) client.connect();
+            else client.disconnect();
+        };
+        followVisibility();
+        const unsubscribe = focusManager.subscribe(followVisibility);
         return () => {
+            unsubscribe();
             client.disconnect();
             setConnected(false);
         };

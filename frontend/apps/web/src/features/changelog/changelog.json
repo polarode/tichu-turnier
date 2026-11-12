@@ -298,6 +298,10 @@
             {
                 "type": "fix",
                 "text": "Tichu calls no longer count as failed before anyone has finished first"
+            },
+            {
+                "type": "fix",
+                "text": "Live updates resume right away when a phone wakes up"
             }
         ]
     }

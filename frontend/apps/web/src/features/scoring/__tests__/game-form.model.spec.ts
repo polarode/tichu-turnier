@@ -208,6 +208,20 @@ describe('teamPoints', () => {
         ]);
     });
 
+    it('leaves Tichu calls out until someone has finished first', () => {
+        const state: GameFormState = {
+            positions: [null, 2, null, null],
+            calls: ['SMALL', 'NONE', 'GRAND', 'NONE'],
+            bombs: [0, 0, 0, 0],
+            baseScoreTeam0: 50,
+            beschiss: false,
+        };
+        expect(teamPoints(state, normalBonuses)).toEqual([
+            { base: 50, bonuses: [], bonus: 0, total: 50 },
+            { base: 50, bonuses: [], bonus: 0, total: 50 },
+        ]);
+    });
+
     it('nets a failed grand Tichu against the double-win bonus to 0 for the double-win team', () => {
         const state: GameFormState = {
             positions: [null, null, 1, 2],

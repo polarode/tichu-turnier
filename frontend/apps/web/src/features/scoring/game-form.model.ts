@@ -110,7 +110,9 @@ export interface TeamPoints {
 
 /**
  * The per-team display points with their bonus sources, for [team0, team1]. Tichu
- * calls come first in slot order, then the double-win bonus. Display-only — never
+ * calls come first in slot order, then the double-win bonus. A call only counts once
+ * someone has finished first, as until then it has neither succeeded nor failed.
+ * Display-only — never
  * submitted; the server recomputes (ADR 0004).
  */
 export function teamPoints(
@@ -127,7 +129,8 @@ export function teamPoints(
             total: 0,
         },
     ];
-    for (const slot of PLAYER_SLOTS) {
+    const callers = state.positions.includes(1) ? PLAYER_SLOTS : [];
+    for (const slot of callers) {
         const team = teamOfSlot(slot);
         const call = state.calls[slot];
         const success = state.positions[slot] === 1;

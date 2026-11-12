@@ -294,6 +294,10 @@
             {
                 "type": "improvement",
                 "text": "Team boxes on the score entry page tinted in the team colour"
+            },
+            {
+                "type": "fix",
+                "text": "Tichu calls no longer count as failed before anyone has finished first"
             }
         ]
     }

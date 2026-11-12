@@ -100,7 +100,7 @@ describe('owner console', () => {
             tournament('t-3', 'Winter Cup', 'a@example.com'),
         ]);
 
-        renderApp('/admin/console');
+        renderApp('/owner?tab=tournaments');
 
         const section = (await screen.findByRole('heading', { name: 'Turniere' })).closest(
             'section',
@@ -130,17 +130,65 @@ describe('owner console', () => {
         );
     });
 
-    it('opens the console from the avatar menu for owners', async () => {
+    it('splits the console into tabs, accounts first, and keeps the open tab in the URL', async () => {
         auth.refresh.mockResolvedValue(owner);
-        adminRepo.listAccounts.mockResolvedValue([]);
+        const { router } = renderApp('/owner');
+
+        const accountsTab = await screen.findByRole('tab', { name: 'Konten' });
+        expect(accountsTab).toHaveAttribute('aria-selected', 'true');
+        expect(await screen.findByRole('heading', { name: 'Offene Anfragen' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Admins' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Einladungen' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Turniere' })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('tab', { name: 'Turniere' }));
+
+        expect(await screen.findByRole('heading', { name: 'Turniere' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Offene Anfragen' })).not.toBeInTheDocument();
+        await vi.waitFor(() =>
+            expect(router.state.location.search).toEqual({ tab: 'tournaments' }),
+        );
+    });
+
+    it('counts pending requests on the accounts tab, even while another tab is open', async () => {
+        auth.refresh.mockResolvedValue(owner);
+        adminRepo.listAccounts.mockResolvedValue([
+            account({ id: 'p-1', email: 'one@example.com', status: 'PENDING' }),
+            account({ id: 'p-2', email: 'two@example.com', status: 'PENDING' }),
+        ]);
+
+        renderApp('/owner?tab=invites');
+
+        expect(
+            await screen.findByRole('tab', { name: /^Konten\s*,\s*2 offene Anfragen$/ }),
+        ).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('opens the console from its own Owner tab in the main navigation', async () => {
+        auth.refresh.mockResolvedValue(owner);
         const { router } = renderApp('/public');
+        const nav = await screen.findByRole('navigation', { name: 'Hauptnavigation' });
 
-        await userEvent.click(await screen.findByRole('button', { name: 'Konto' }));
-        await userEvent.click(screen.getByRole('menuitem', { name: 'Owner-Konsole' }));
+        await userEvent.click(await within(nav).findByRole('link', { name: 'Owner' }));
+        // The owner's area leads the navigation, right before admin.
+        expect(
+            within(nav)
+                .getAllByRole('link')
+                .map((link) => link.textContent),
+        ).toEqual(['Owner', 'Verwaltung', 'Team', 'Öffentlich']);
 
-        await vi.waitFor(() => expect(router.state.location.pathname).toBe('/admin/console'));
-        expect(screen.queryByRole('menu', { name: 'Konto' })).not.toBeInTheDocument();
+        await vi.waitFor(() => expect(router.state.location.pathname).toBe('/owner'));
         expect(await screen.findByRole('heading', { name: 'Owner-Konsole' })).toBeInTheDocument();
+        expect(within(nav).getByRole('link', { name: 'Owner' })).toHaveAttribute(
+            'aria-current',
+            'page',
+        );
+        expect(within(nav).getByRole('link', { name: 'Verwaltung' })).not.toHaveAttribute(
+            'aria-current',
+        );
+        // The console no longer doubles as an avatar menu entry.
+        await userEvent.click(screen.getByRole('button', { name: 'Konto' }));
+        expect(screen.queryByRole('menuitem', { name: 'Owner-Konsole' })).not.toBeInTheDocument();
     });
 
     it('approves a pending request and moves the account into the admin list', async () => {
@@ -154,14 +202,10 @@ describe('owner console', () => {
         adminRepo.listAccounts.mockResolvedValueOnce([pending]).mockResolvedValue([active]);
         adminRepo.approve.mockResolvedValue(active);
 
-        renderApp('/admin/console');
+        renderApp('/owner');
 
         // Owners reach the console; the pending request is listed.
         expect(await screen.findByText('newbie@example.com')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute(
-            'href',
-            '/admin',
-        );
 
         await userEvent.click(screen.getByRole('button', { name: 'Freigeben' }));
 
@@ -181,7 +225,7 @@ describe('owner console', () => {
         adminRepo.listAccounts.mockResolvedValueOnce([pending]).mockResolvedValue([]);
         adminRepo.reject.mockResolvedValue(undefined);
 
-        renderApp('/admin/console');
+        renderApp('/owner');
 
         await userEvent.click(await screen.findByRole('button', { name: 'Ablehnen' }));
 
@@ -204,8 +248,9 @@ describe('owner console', () => {
         };
         adminRepo.createInvite.mockResolvedValue(issued);
 
-        renderApp('/admin/console');
+        renderApp('/owner');
 
+        await userEvent.click(await screen.findByRole('tab', { name: 'Einladungen' }));
         await userEvent.type(await screen.findByLabelText('Name'), 'Ada Lovelace');
         await userEvent.click(screen.getByRole('button', { name: 'Einladung erstellen' }));
 
@@ -226,7 +271,7 @@ describe('owner console', () => {
         adminRepo.listAccounts.mockResolvedValueOnce([active]).mockResolvedValue([disabled]);
         adminRepo.disable.mockResolvedValue(disabled);
 
-        renderApp('/admin/console');
+        renderApp('/owner');
 
         await userEvent.click(await screen.findByRole('button', { name: 'Deaktivieren' }));
 
@@ -237,17 +282,13 @@ describe('owner console', () => {
     it('shows non-owners the localized forbidden state and never calls the owner API', async () => {
         auth.refresh.mockResolvedValue(plainAdmin);
 
-        renderApp('/admin/console');
+        renderApp('/owner');
 
         expect(await screen.findByRole('heading', { name: 'Nicht verfügbar' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Zu meinen Turnieren' })).toHaveAttribute(
-            'href',
-            '/admin',
-        );
-        // Only owners get the console entry in the avatar menu.
-        await userEvent.click(screen.getByRole('button', { name: 'Konto' }));
-        expect(screen.getByRole('menu', { name: 'Konto' })).toBeInTheDocument();
-        expect(screen.queryByRole('menuitem', { name: 'Owner-Konsole' })).not.toBeInTheDocument();
+        // Only owners get the Owner tab in the main navigation; the admin tab leads back.
+        const nav = await screen.findByRole('navigation', { name: 'Hauptnavigation' });
+        expect(await within(nav).findByRole('link', { name: 'Verwaltung' })).toBeInTheDocument();
+        expect(within(nav).queryByRole('link', { name: 'Owner' })).not.toBeInTheDocument();
         expect(adminRepo.listAccounts).not.toHaveBeenCalled();
         expect(adminRepo.listInvites).not.toHaveBeenCalled();
         expect(adminRepo.listAllTournaments).not.toHaveBeenCalled();

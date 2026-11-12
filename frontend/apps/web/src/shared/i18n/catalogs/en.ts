@@ -11,6 +11,7 @@ export const en = {
     'nav.primary': 'Main navigation',
     'nav.admin': 'Admin',
     'nav.team': 'Team',
+    'nav.owner': 'Owner',
     'nav.public': 'Public',
     'nav.login': 'Login',
 
@@ -108,9 +109,13 @@ export const en = {
     'admin.title': 'Admin area',
     'admin.description': 'Create and manage tournaments, teams and rounds.',
 
-    'ownerConsole.link': 'Owner console',
     'ownerConsole.title': 'Owner console',
     'ownerConsole.description': 'Approve organizers, manage admins and issue invites.',
+    'ownerConsole.tabs.label': 'Owner console sections',
+    'ownerConsole.tabs.accounts': 'Accounts',
+    'ownerConsole.tabs.invites': 'Invites',
+    'ownerConsole.tabs.tournaments': 'Tournaments',
+    'ownerConsole.tabs.pendingCount': '{count} pending requests',
     'ownerConsole.error': 'The owner console could not be loaded.',
     'ownerConsole.forbidden.title': 'Not available',
     'ownerConsole.forbidden.description': 'This area is only available to platform owners.',

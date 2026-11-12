@@ -4,8 +4,8 @@ import { useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 /**
- * Frame for every guarded admin screen. Who is signed in, the owner console
- * entry (owners only) and the logout action all live in the shell's avatar menu.
+ * Frame for every guarded admin screen. Who is signed in and the logout action
+ * live in the shell's avatar menu.
  */
 export function AdminLayout() {
     const { t } = useI18n();

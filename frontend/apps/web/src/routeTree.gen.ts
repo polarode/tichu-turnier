@@ -12,13 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as OwnerRouteImport } from './routes/owner'
 import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
 import { Route as PublicRouteImport } from './routes/public'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminChangelogRouteImport } from './routes/admin.changelog'
-import { Route as AdminConsoleRouteImport } from './routes/admin.console'
 import { Route as TeamLoginRouteImport } from './routes/team_.login'
 import { Route as TeamScoreRouteImport } from './routes/team_.score'
 import { Route as AdminTournamentsTournamentIdRouteImport } from './routes/admin.tournaments.$tournamentId'
@@ -39,6 +39,11 @@ const AdminRoute = AdminRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnerRoute = OwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PendingApprovalRoute = PendingApprovalRouteImport.update({
@@ -69,11 +74,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminChangelogRoute = AdminChangelogRouteImport.update({
   id: '/changelog',
   path: '/changelog',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminConsoleRoute = AdminConsoleRouteImport.update({
-  id: '/console',
-  path: '/console',
   getParentRoute: () => AdminRoute,
 } as any)
 const TeamLoginRoute = TeamLoginRouteImport.update({
@@ -114,12 +114,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/owner': typeof OwnerRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
   '/admin/changelog': typeof AdminChangelogRoute
-  '/admin/console': typeof AdminConsoleRoute
   '/team/login': typeof TeamLoginRoute
   '/team/score': typeof TeamScoreRoute
   '/admin/': typeof AdminIndexRoute
@@ -131,12 +131,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/owner': typeof OwnerRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
   '/admin/changelog': typeof AdminChangelogRoute
-  '/admin/console': typeof AdminConsoleRoute
   '/team/login': typeof TeamLoginRoute
   '/team/score': typeof TeamScoreRoute
   '/admin': typeof AdminIndexRoute
@@ -150,12 +150,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/owner': typeof OwnerRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/public': typeof PublicRoute
   '/register': typeof RegisterRoute
   '/team': typeof TeamRoute
   '/admin/changelog': typeof AdminChangelogRoute
-  '/admin/console': typeof AdminConsoleRoute
   '/team_/login': typeof TeamLoginRoute
   '/team_/score': typeof TeamScoreRoute
   '/admin/': typeof AdminIndexRoute
@@ -170,12 +170,12 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/owner'
     | '/pending-approval'
     | '/public'
     | '/register'
     | '/team'
     | '/admin/changelog'
-    | '/admin/console'
     | '/team/login'
     | '/team/score'
     | '/admin/'
@@ -187,12 +187,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/owner'
     | '/pending-approval'
     | '/public'
     | '/register'
     | '/team'
     | '/admin/changelog'
-    | '/admin/console'
     | '/team/login'
     | '/team/score'
     | '/admin'
@@ -205,12 +205,12 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/owner'
     | '/pending-approval'
     | '/public'
     | '/register'
     | '/team'
     | '/admin/changelog'
-    | '/admin/console'
     | '/team_/login'
     | '/team_/score'
     | '/admin/'
@@ -224,6 +224,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OwnerRoute: typeof OwnerRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   PublicRoute: typeof PublicRoute
   RegisterRoute: typeof RegisterRoute
@@ -254,6 +255,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner': {
+      id: '/owner'
+      path: '/owner'
+      fullPath: '/owner'
+      preLoaderRoute: typeof OwnerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pending-approval': {
@@ -296,13 +304,6 @@ declare module '@tanstack/react-router' {
       path: '/changelog'
       fullPath: '/admin/changelog'
       preLoaderRoute: typeof AdminChangelogRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/console': {
-      id: '/admin/console'
-      path: '/console'
-      fullPath: '/admin/console'
-      preLoaderRoute: typeof AdminConsoleRouteImport
       parentRoute: typeof AdminRoute
     }
     '/team_/login': {
@@ -352,7 +353,6 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminChangelogRoute: typeof AdminChangelogRoute
-  AdminConsoleRoute: typeof AdminConsoleRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminTournamentsTournamentIdRoute: typeof AdminTournamentsTournamentIdRoute
   AdminTournamentsNewRoute: typeof AdminTournamentsNewRoute
@@ -361,7 +361,6 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminChangelogRoute: AdminChangelogRoute,
-  AdminConsoleRoute: AdminConsoleRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminTournamentsTournamentIdRoute: AdminTournamentsTournamentIdRoute,
   AdminTournamentsNewRoute: AdminTournamentsNewRoute,
@@ -374,6 +373,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
+  OwnerRoute: OwnerRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   PublicRoute: PublicRoute,
   RegisterRoute: RegisterRoute,

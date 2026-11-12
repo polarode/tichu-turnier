@@ -8,6 +8,7 @@ export const de: Catalog = {
     'nav.primary': 'Hauptnavigation',
     'nav.admin': 'Verwaltung',
     'nav.team': 'Team',
+    'nav.owner': 'Owner',
     'nav.public': 'Öffentlich',
     'nav.login': 'Anmelden',
 
@@ -109,10 +110,14 @@ export const de: Catalog = {
     'admin.title': 'Verwaltungsbereich',
     'admin.description': 'Turniere, Teams und Runden anlegen und verwalten.',
 
-    'ownerConsole.link': 'Owner-Konsole',
     'ownerConsole.title': 'Owner-Konsole',
     'ownerConsole.description':
         'Organisatoren freigeben, Admins verwalten und Einladungen ausstellen.',
+    'ownerConsole.tabs.label': 'Bereiche der Owner-Konsole',
+    'ownerConsole.tabs.accounts': 'Konten',
+    'ownerConsole.tabs.invites': 'Einladungen',
+    'ownerConsole.tabs.tournaments': 'Turniere',
+    'ownerConsole.tabs.pendingCount': '{count} offene Anfragen',
     'ownerConsole.error': 'Die Owner-Konsole konnte nicht geladen werden.',
     'ownerConsole.forbidden.title': 'Nicht verfügbar',
     'ownerConsole.forbidden.description': 'Dieser Bereich ist nur für Plattform-Owner verfügbar.',

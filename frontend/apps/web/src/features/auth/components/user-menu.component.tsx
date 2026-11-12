@@ -1,18 +1,17 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { LogOut, ScrollText, ShieldCheck } from 'lucide-react';
+import { LogOut, ScrollText } from 'lucide-react';
 
 import { useLogoutAdmin, useSession } from '@/features/auth/hooks/auth-queries.hook.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { useHeaderPopover } from '@/shared/hooks/use-header-popover.hook.ts';
-import { AdminRole } from '@/vocabulary/admin.enum.ts';
 
 const MENU_ITEM_CLASS =
     'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-50';
 
 /**
  * Avatar in the top-right corner, shown only while a session exists. Clicking it
- * opens a menu with the signed-in email, the owner console entry (platform owners
- * only), the changelog entry (every admin) and the logout action. It resolves the
+ * opens a menu with the signed-in email, the changelog entry (every admin) and the
+ * logout action; the owner console has its own tab in the main navigation. It resolves the
  * session itself (sharing the admin guard's cache entry), so it also appears when
  * a signed-in admin opens a public or team page first; logout clears the entry
  * and the avatar disappears with it.
@@ -59,17 +58,6 @@ export function UserMenu() {
                         <div className="text-xs text-muted-foreground">{t('auth.signedInAs')}</div>
                         <div className="truncate font-medium text-foreground">{admin.email}</div>
                     </div>
-                    {admin.role === AdminRole.OWNER ? (
-                        <Link
-                            to="/admin/console"
-                            role="menuitem"
-                            onClick={() => close(false)}
-                            className={MENU_ITEM_CLASS}
-                        >
-                            <ShieldCheck aria-hidden="true" className="size-4" />
-                            {t('ownerConsole.link')}
-                        </Link>
-                    ) : null}
                     <Link
                         to="/admin/changelog"
                         role="menuitem"

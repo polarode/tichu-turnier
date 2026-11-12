@@ -30,6 +30,12 @@ import {
     withSlot,
     type PlayerSlot,
 } from '@/features/scoring/game-form.model.ts';
+import {
+    clearGameDraft,
+    gameDraftKey,
+    readGameDraft,
+    storeGameDraft,
+} from '@/features/scoring/game-draft.ts';
 import { gameFormSchema, type GameFormValues } from '@/features/scoring/scoring-schemas.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
@@ -107,6 +113,11 @@ interface GameEntryFormProps {
      * does not apply: the correction is the one write a completed table accepts.
      */
     correcting?: boolean;
+    /**
+     * The games are loaded, so the stored version a draft started from can be checked. Until
+     * then (or when they failed) the form opens on an empty fallback and must leave drafts alone.
+     */
+    draftsReady?: boolean;
 }
 
 /**
@@ -139,6 +150,7 @@ export function GameEntryForm({
     onFrozen,
     tournamentLocked = false,
     correcting = false,
+    draftsReady = false,
 }: GameEntryFormProps) {
     const { t } = useI18n();
 
@@ -147,15 +159,29 @@ export function GameEntryForm({
     const valuesOf = (game: RecordedGame | undefined) =>
         game ? fromRecordedGame(game, matchup) : emptyFormState();
 
+    // Drafts live only on the team score page: not in the correction dialog, and not for a
+    // table or tournament that no longer accepts writes.
+    const draftable =
+        draftsReady && !correcting && !isFrozen(table.confirmation) && !tournamentLocked;
+    const draftKey = gameDraftKey(table, gameNumber);
+    // Read once at mount; a draft restores only when it started from the version now stored.
+    const [draft] = useState(() => {
+        if (!draftable) return null;
+        const stored = readGameDraft(draftKey);
+        return stored?.baseVersion === (existingGame?.version ?? null) ? stored : null;
+    });
+    const [restored, setRestored] = useState(draft !== null);
+
     const form = useForm<GameFormValues>({
         resolver: zodResolver(gameFormSchema(t)),
-        defaultValues: valuesOf(existingGame),
+        defaultValues: draft?.values ?? valuesOf(existingGame),
     });
 
     const state: GameFormValues = form.watch();
     // Compared by value, not `formState.isDirty`: the grid writes through setValue,
     // which leaves react-hook-form's dirty tracking untouched.
-    const dirty = JSON.stringify(state) !== JSON.stringify(valuesOf(loaded));
+    const serializedState = JSON.stringify(state);
+    const dirty = serializedState !== JSON.stringify(valuesOf(loaded));
     // A stored version newer than the loaded one. Strictly newer: right after a save
     // the cached games still hold the older version until their refetch lands.
     const newer =
@@ -164,6 +190,18 @@ export function GameEntryForm({
     function load(game: RecordedGame) {
         form.reset(fromRecordedGame(game, matchup));
         setLoaded(game);
+        setRestored(false);
+    }
+
+    /**
+     * Drops a restored draft: the form goes back to the stored game (the newer one when it
+     * changed meanwhile, else the loaded one or empty) and the draft is gone.
+     */
+    function discardDraft() {
+        if (newer) load(newer);
+        else form.reset(valuesOf(loaded));
+        setRestored(false);
+        clearGameDraft(draftKey);
     }
 
     async function reload() {
@@ -188,6 +226,17 @@ export function GameEntryForm({
     const frozen = !correcting && isFrozen(table.confirmation);
     const confirmed = form.formState.errors.root?.type === 'confirmed';
     const readOnly = frozen || confirmed || tournamentLocked;
+
+    // Save as you go: the draft mirrors the entry while it differs from the loaded game, and
+    // is dropped once the entry matches it again (after a save or a load of the stored game).
+    const loadedVersion = loaded?.version ?? null;
+    useEffect(() => {
+        if (!draftable || readOnly) return;
+        if (dirty)
+            storeGameDraft(draftKey, { baseVersion: loadedVersion, values: form.getValues() });
+        else clearGameDraft(draftKey);
+        // `serializedState` stands in for the values: the effect writes on each change, not each render.
+    }, [draftable, readOnly, dirty, draftKey, serializedState, form, loadedVersion]);
 
     const players = PLAYER_SLOTS.map((slot) => {
         const team = matchup[teamOfSlot(slot)];
@@ -299,6 +348,7 @@ export function GameEntryForm({
         const input = toWriteInput(values, matchup, gameNumber, loaded?.version ?? null);
         try {
             const recorded = await save(input);
+            clearGameDraft(draftKey);
             // The saved game is the new baseline, so its own refetch is no change from elsewhere.
             load(recorded);
             onSaved?.();
@@ -348,6 +398,15 @@ export function GameEntryForm({
             className="flex flex-col gap-4"
             aria-label={t('scoring.form.title')}
         >
+            {restored && !readOnly ? (
+                <div className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <p role="status">{t('scoring.draft.restored')}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={discardDraft}>
+                        {t('scoring.draft.discard')}
+                    </Button>
+                </div>
+            ) : null}
+
             {newer && !readOnly ? (
                 <div className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                     {/* At a completed table the other writer can only be another organizer. */}

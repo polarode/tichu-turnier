@@ -478,6 +478,8 @@ export const en = {
     'scoring.tournamentLocked': 'The tournament is over — the games can no longer be changed.',
     'scoring.changedElsewhere': 'The other team changed this game.',
     'scoring.changedElsewhere.load': 'Load their version',
+    'scoring.draft.restored': 'Unsaved entry restored.',
+    'scoring.draft.discard': 'Discard',
     'correction.confirm.title': 'Correct a confirmed game?',
     'correction.confirm.description':
         'Every team at the table has already confirmed game {game}. The correction is recorded. Rounds already drawn keep their pairings.',

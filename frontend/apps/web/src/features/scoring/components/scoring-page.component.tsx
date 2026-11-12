@@ -132,7 +132,10 @@ export function ScoringPage({
                         {t('scoring.sitOut.note')}
                     </p>
                 ) : null}
+                {/* A fresh form per game, and once the games have loaded after a failure, so it
+                    reads the right game's draft at mount. */}
                 <GameEntryForm
+                    key={`${selected}:${gamesQuery.isSuccess}`}
                     table={table}
                     matchup={matchup}
                     gameNumber={selected}
@@ -146,6 +149,7 @@ export function ScoringPage({
                     onSaved={() => void navigate({ to: '/team' })}
                     onFrozen={() => void reloadCurrentTable()}
                     tournamentLocked={tournamentLocked}
+                    draftsReady={gamesQuery.isSuccess}
                 />
             </div>
 

@@ -302,6 +302,10 @@
             {
                 "type": "fix",
                 "text": "Live updates resume right away when a phone wakes up or its network returns"
+            },
+            {
+                "type": "feature",
+                "text": "A half-entered game is kept on the phone and restored after a reload, with an option to discard it"
             }
         ]
     }

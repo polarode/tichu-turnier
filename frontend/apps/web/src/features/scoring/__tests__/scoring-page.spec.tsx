@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
@@ -116,12 +116,17 @@ function recordedGame(overrides: Partial<RecordedGame> = {}): RecordedGame {
 
 describe('/team/score', () => {
     beforeEach(() => {
+        localStorage.clear();
         scoring.currentTable.mockReset();
         scoring.games.mockReset();
         scoring.create.mockReset();
         scoring.update.mockReset();
         teamAuth.me.mockReset();
         teamAuth.me.mockResolvedValue(teamOverview);
+    });
+
+    afterEach(() => {
+        localStorage.clear();
     });
 
     it('redirects to /team/login when the current-table load answers 403 (admin cookie, no team session)', async () => {
@@ -990,5 +995,171 @@ describe('/team/score', () => {
             'href',
             '/team',
         );
+    });
+
+    it('restores an unsaved game entry after a reload, with a note', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        const { unmount } = renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
+        await user.click(screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ })[0]!);
+
+        unmount();
+        renderApp('/team/score');
+
+        expect(
+            await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Platzierung zurücksetzen – Alice: 1.' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent(
+            'Ungespeicherte Eingabe wiederhergestellt.',
+        );
+    });
+
+    it('clears the draft once the game is saved, so a reload shows the saved game without a note', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        scoring.create.mockResolvedValue(recordedGame());
+        const user = userEvent.setup();
+
+        const { unmount } = renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+        const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
+        await user.click(finishButtons[0]!);
+        await user.click(finishButtons[2]!);
+        await user.click(finishButtons[1]!);
+        await user.click(finishButtons[3]!);
+        await user.click(screen.getByRole('button', { name: 'Spiel speichern' }));
+        await waitFor(() => expect(scoring.create).toHaveBeenCalledTimes(1));
+
+        scoring.games.mockResolvedValue([recordedGame()]);
+        unmount();
+        renderApp('/team/score?game=1');
+
+        expect(
+            await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeInTheDocument();
+        expect(
+            screen.queryByText('Ungespeicherte Eingabe wiederhergestellt.'),
+        ).not.toBeInTheDocument();
+    });
+
+    it('discards a restored draft and keeps it gone after a reload', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([]);
+        const user = userEvent.setup();
+
+        const first = renderApp('/team/score');
+        await screen.findByText('Team Alpha gegen Team Beta');
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
+        await user.click(screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ })[0]!);
+        first.unmount();
+
+        renderApp('/team/score');
+        const note = await screen.findByText('Ungespeicherte Eingabe wiederhergestellt.');
+        await user.click(within(note.parentElement!).getByRole('button', { name: 'Verwerfen' }));
+
+        expect(
+            screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Nächste Platzierung setzen – Alice' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText('Ungespeicherte Eingabe wiederhergestellt.'),
+        ).not.toBeInTheDocument();
+
+        const second = renderApp('/team/score');
+        await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: keine' });
+        expect(
+            screen.getByRole('button', { name: 'Nächste Platzierung setzen – Alice' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByText('Ungespeicherte Eingabe wiederhergestellt.'),
+        ).not.toBeInTheDocument();
+        second.unmount();
+    });
+
+    it('drops a draft that a newer saved game overtook', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([recordedGame({ version: 1 })]);
+        const user = userEvent.setup();
+
+        const first = renderApp('/team/score?game=1');
+        await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' });
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }));
+        first.unmount();
+
+        // Another team saved game 1 again meanwhile: its call for Alice is none.
+        scoring.games.mockResolvedValue([
+            recordedGame({
+                version: 2,
+                teams: [
+                    {
+                        ...recordedGame().teams[0]!,
+                        players: [
+                            {
+                                playerId: 'a1',
+                                position: 1,
+                                call: 'NONE',
+                                bombs: 0,
+                                tichuSuccess: false,
+                            },
+                            {
+                                playerId: 'a2',
+                                position: 3,
+                                call: 'NONE',
+                                bombs: 0,
+                                tichuSuccess: false,
+                            },
+                        ],
+                    },
+                    recordedGame().teams[1]!,
+                ],
+            }),
+        ]);
+        const second = renderApp('/team/score?game=1');
+
+        expect(
+            await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: keine' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Tichu-Ansage – Alice: Großes' }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText('Ungespeicherte Eingabe wiederhergestellt.'),
+        ).not.toBeInTheDocument();
+        second.unmount();
+    });
+
+    it('keeps a draft while the games cannot be loaded', async () => {
+        scoring.currentTable.mockResolvedValue(table());
+        scoring.games.mockResolvedValue([recordedGame({ version: 1 })]);
+        const user = userEvent.setup();
+
+        const first = renderApp('/team/score?game=1');
+        await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' });
+        await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: Tichu' }));
+        first.unmount();
+
+        // The games fail once: the form opens on the empty fallback and must leave the draft alone,
+        // then restore it once the games load on the same page (a refetch on focus or a live event).
+        scoring.games.mockRejectedValueOnce(new Error('offline'));
+        const second = renderApp('/team/score?game=1');
+        await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: keine' });
+
+        await act(() => second.queryClient.invalidateQueries());
+
+        expect(
+            await screen.findByRole('button', { name: 'Tichu-Ansage – Alice: Großes' }),
+        ).toBeInTheDocument();
+        expect(screen.getByText('Ungespeicherte Eingabe wiederhergestellt.')).toBeInTheDocument();
+        second.unmount();
     });
 });

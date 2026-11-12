@@ -492,6 +492,8 @@ export const de: Catalog = {
         'Das Turnier ist beendet – die Spiele können nicht mehr geändert werden.',
     'scoring.changedElsewhere': 'Das andere Team hat dieses Spiel geändert.',
     'scoring.changedElsewhere.load': 'Deren Version laden',
+    'scoring.draft.restored': 'Ungespeicherte Eingabe wiederhergestellt.',
+    'scoring.draft.discard': 'Verwerfen',
     'correction.confirm.title': 'Bestätigtes Spiel korrigieren?',
     'correction.confirm.description':
         'Alle Teams am Tisch haben Spiel {game} bereits bestätigt. Die Korrektur wird vermerkt. Bereits ausgeloste Runden behalten ihre Paarungen.',

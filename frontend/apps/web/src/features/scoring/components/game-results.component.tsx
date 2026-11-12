@@ -73,8 +73,10 @@ export function GameResults({ caption, teams, schedule, games, gameAction }: Gam
             <VictoryPointStandings teams={teams} games={games} />
             <ol
                 aria-label={caption}
+                // Phones get a little more room around and inside the tiles; from @lg up
+                // (four tiles a row) the denser spacing returns.
                 className={cn(
-                    'grid grid-cols-2 gap-2',
+                    'grid grid-cols-2 gap-3 @lg:gap-2',
                     teams.length > 2 ? '@md:grid-cols-3' : '@lg:grid-cols-4',
                 )}
             >
@@ -195,13 +197,13 @@ function GameTile({
     return (
         <li
             className={cn(
-                'relative flex flex-col gap-1 rounded-md border p-2',
+                'relative flex flex-col gap-1.5 rounded-md border p-3 @lg:gap-1 @lg:p-2',
                 game ? 'border-border bg-card' : 'border-dashed border-input',
                 // The stretched link covers the tile; the ring follows its keyboard focus.
                 action &&
                     'hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
                 // The footer runs flush to the tile's edges and bottom.
-                footerLabel && 'overflow-hidden pb-0',
+                footerLabel && 'overflow-hidden pb-0 @lg:pb-0',
                 next && 'border-solid border-primary ring-2 ring-primary/30',
             )}
         >
@@ -236,7 +238,7 @@ function GameTile({
                     <span className={cn(footerLabel && 'sr-only')}>{t('rounds.game.missing')}</span>
                 )}
             </p>
-            <ul className="flex flex-col gap-1">
+            <ul className="flex flex-col gap-1.5 @lg:gap-1">
                 {rows.map((row) => {
                     const won = row.id === winner;
                     return (
@@ -301,7 +303,7 @@ function GameTile({
                 <span
                     aria-hidden="true"
                     className={cn(
-                        '-mx-2 mt-auto flex items-center justify-between border-t px-2 py-1.5 text-xs font-medium',
+                        '-mx-3 mt-auto flex items-center justify-between border-t px-3 py-2 text-xs font-medium @lg:-mx-2 @lg:px-2 @lg:py-1.5',
                         next
                             ? 'border-primary bg-primary text-primary-foreground'
                             : game

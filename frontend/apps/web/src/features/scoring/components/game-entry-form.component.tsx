@@ -217,6 +217,49 @@ export function GameEntryForm({
         return fillPlaceholders(t('scoring.bonus.explain'), { team: matchup[team].teamName });
     }
 
+    /**
+     * A team's signed bonus sum plus a (?) button that opens the breakdown of each source,
+     * in the team's [tone] slightly faded; nothing without bonus sources.
+     */
+    function bonusSuffix(team: 0 | 1, tone: string) {
+        if (points[team].bonuses.length === 0) return null;
+        return (
+            <>
+                <span className={cn(tone, 'opacity-80')}>
+                    {` ${formatSigned(points[team].bonus)}`}
+                </span>
+                <Popover>
+                    <PopoverTrigger
+                        aria-label={bonusLabel(team)}
+                        className={cn(
+                            "relative -my-1 ml-0.5 inline-flex size-6 items-center justify-center rounded-full align-middle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none after:absolute after:-inset-2.5 after:content-['']",
+                            tone,
+                            'opacity-80 hover:opacity-100',
+                        )}
+                    >
+                        <CircleHelp aria-hidden="true" className="size-3.5" />
+                    </PopoverTrigger>
+                    <PopoverContent
+                        aria-label={bonusLabel(team)}
+                        align="end"
+                        className="w-auto max-w-64 p-3 text-sm"
+                    >
+                        <ul className="flex flex-col gap-1">
+                            {points[team].bonuses.map((source, index) => (
+                                <li key={index} className="flex justify-between gap-4">
+                                    <span>{describeBonus(source)}</span>
+                                    <span className="font-semibold tabular-nums">
+                                        {formatSigned(source.points)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </PopoverContent>
+                </Popover>
+            </>
+        );
+    }
+
     function assignFinish(slot: PlayerSlot) {
         const pos = nextFinishPosition(state.positions);
         if (pos === null) return;
@@ -323,9 +366,8 @@ export function GameEntryForm({
 
             {/* One group per team. Phones stack each player's name above three equal
                 44px controls; from `sm` up name and controls share one row. The team's
-                card points sit in a pill on the box's top border, opposite its name. When
-                the team has bonus sources, the pill adds their signed sum in muted type and
-                a (?) button that opens the breakdown of each source. Once the result is
+                total points sit in a pill on the box's top border, opposite its name; the
+                scoreboard by the slider breaks them down into card and bonus points. Once the result is
                 complete, the pill ends with the team's victory points (`· 2 SP`, with an
                 sr-only "Siegpunkte"). */}
             {([0, 1] as const).map((team) => (
@@ -352,41 +394,7 @@ export function GameEntryForm({
                                 <span className="sr-only">{`${t('scoring.winner')}: `}</span>
                             </>
                         ) : null}
-                        {formatPoints(points[team].base)}
-                        {points[team].bonuses.length > 0 ? (
-                            <>
-                                <span className="text-muted-foreground">
-                                    {` ${formatSigned(points[team].bonus)}`}
-                                </span>
-                                <Popover>
-                                    <PopoverTrigger
-                                        aria-label={bonusLabel(team)}
-                                        className="relative -my-1 ml-0.5 inline-flex size-6 items-center justify-center rounded-full align-middle text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none after:absolute after:-inset-2.5 after:content-['']"
-                                    >
-                                        <CircleHelp aria-hidden="true" className="size-3.5" />
-                                    </PopoverTrigger>
-                                    <PopoverContent
-                                        aria-label={bonusLabel(team)}
-                                        align="end"
-                                        className="w-auto max-w-64 p-3 text-sm"
-                                    >
-                                        <ul className="flex flex-col gap-1">
-                                            {points[team].bonuses.map((source, index) => (
-                                                <li
-                                                    key={index}
-                                                    className="flex justify-between gap-4"
-                                                >
-                                                    <span>{describeBonus(source)}</span>
-                                                    <span className="font-semibold tabular-nums">
-                                                        {formatSigned(source.points)}
-                                                    </span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </PopoverContent>
-                                </Popover>
-                            </>
-                        ) : null}
+                        {formatPoints(points[team].total)}
                         {vp !== null ? (
                             <>
                                 <span aria-hidden="true" className="text-muted-foreground">
@@ -503,8 +511,10 @@ export function GameEntryForm({
                     colour on the side of the track that is theirs, the label centred between
                     them. On phones the team names get a row of their own above the points, each
                     across half the width, so they are not squeezed beside the numbers; from sm:
-                    up everything sits in one row. The slider's aria-valuetext announces the same split, so the team cells
-                    are hidden from assistive tech. */}
+                    up everything sits in one row. With bonus sources the points carry their
+                    signed sum and a (?) button that opens the breakdown of each source. The
+                    slider's aria-valuetext announces the card-point split, so the names and card
+                    points are hidden from assistive tech; the bonus parts are not. */}
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
                     {([0, 1] as const).map((team) => (
                         // On phones the wrapper is display: contents, so each part carries aria-hidden itself.
@@ -527,15 +537,24 @@ export function GameEntryForm({
                                 {matchup[team].teamName}
                             </span>
                             <span
-                                aria-hidden="true"
                                 className={cn(
-                                    'shrink-0 text-2xl font-bold tabular-nums',
+                                    'shrink-0 whitespace-nowrap',
                                     'row-start-2',
                                     PHONE_SCOREBOARD[team].points,
-                                    tones[team].text,
                                 )}
                             >
-                                {formatPoints(points[team].base)}
+                                <span
+                                    aria-hidden="true"
+                                    className={cn(
+                                        'text-2xl font-bold tabular-nums',
+                                        tones[team].text,
+                                    )}
+                                >
+                                    {formatPoints(points[team].base)}
+                                </span>
+                                <span className="text-lg font-semibold">
+                                    {bonusSuffix(team, tones[team].text)}
+                                </span>
                             </span>
                         </div>
                     ))}

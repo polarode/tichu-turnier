@@ -283,5 +283,14 @@
                 "text": "Score slider centred on a double win"
             }
         ]
+    },
+    {
+        "date": "2026-11-12",
+        "changes": [
+            {
+                "type": "improvement",
+                "text": "Bonus points shown by the score slider"
+            }
+        ]
     }
 ]

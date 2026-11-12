@@ -363,9 +363,10 @@ describe('/team/score', () => {
         await user.click(finishButtons[1]!); // Anna → 3
         await user.click(finishButtons[3]!); // Ben → 4
 
-        // Alice's grand Tichu succeeded: base 50 + 100.
+        // Alice's grand Tichu succeeded: base 50 + 100, broken down by the slider.
         const alpha = screen.getByRole('group', { name: 'Team Alpha' });
-        expect(within(alpha).getByText('+100')).toBeInTheDocument();
+        expect(alpha).toHaveTextContent('150');
+        expect(screen.getByText('+100')).toBeInTheDocument();
         // Alpha is ahead, so its points carry the winner mark.
         expect(within(alpha).getByText('Gewinner:')).toBeInTheDocument();
         const beta = screen.getByRole('group', { name: 'Team Beta' });
@@ -388,9 +389,10 @@ describe('/team/score', () => {
         await user.click(finishButtons[0]!); // Alice → 1
         await user.click(finishButtons[1]!); // Anna → 2
 
-        // Team Alpha's double win: base 0 + 100.
+        // Team Alpha's double win: base 0 + 100, broken down by the slider.
         const alpha = screen.getByRole('group', { name: 'Team Alpha' });
-        expect(within(alpha).getByText('+100')).toBeInTheDocument();
+        expect(alpha).toHaveTextContent('100');
+        expect(screen.getByText('+100')).toBeInTheDocument();
     });
 
     it("shows each team's victory points once the result is complete", async () => {
@@ -442,7 +444,7 @@ describe('/team/score', () => {
         ).toBeInTheDocument();
     });
 
-    it("shows a team's bonus points in its pill and lists them on demand", async () => {
+    it("totals a team's points in its pill and breaks the bonus down by the slider", async () => {
         scoring.currentTable.mockResolvedValue(table());
         scoring.games.mockResolvedValue([]);
         const user = userEvent.setup();
@@ -454,18 +456,19 @@ describe('/team/score', () => {
         const beta = screen.getByRole('group', { name: 'Team Beta' });
         expect(within(beta).getByText('50')).toBeInTheDocument();
         expect(
-            within(beta).queryByRole('button', { name: 'Bonuspunkte – Team Beta' }),
+            screen.queryByRole('button', { name: 'Bonuspunkte – Team Beta' }),
         ).not.toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Tichu-Ansage – Alice: keine' }));
         const finishButtons = screen.getAllByRole('button', { name: /Nächste Platzierung setzen/ });
         await user.click(finishButtons[0]!); // Alice → 1
 
-        // Alice's small Tichu succeeded: the pill shows the bonus next to the base score.
+        // Alice's small Tichu succeeded: the pill shows the total, the scoreboard the bonus.
         const alpha = screen.getByRole('group', { name: 'Team Alpha' });
-        expect(within(alpha).getByText('+100')).toBeInTheDocument();
+        expect(within(alpha).getByText('150')).toBeInTheDocument();
+        expect(screen.getByText('+100')).toBeInTheDocument();
 
-        await user.click(within(alpha).getByRole('button', { name: 'Bonuspunkte – Team Alpha' }));
+        await user.click(screen.getByRole('button', { name: 'Bonuspunkte – Team Alpha' }));
         const dialog = await screen.findByRole('dialog');
         expect(within(dialog).getByText('Tichu Alice: geschafft')).toBeInTheDocument();
         expect(within(dialog).getByText('+100')).toBeInTheDocument();
@@ -486,9 +489,8 @@ describe('/team/score', () => {
         await user.click(finishButtons[0]!); // Alice → 1
         await user.click(finishButtons[1]!); // Anna → 2
 
-        const alpha = screen.getByRole('group', { name: 'Team Alpha' });
-        expect(within(alpha).getByText('+0')).toBeInTheDocument();
-        await user.click(within(alpha).getByRole('button', { name: 'Bonuspunkte – Team Alpha' }));
+        expect(screen.getByText('+0')).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'Bonuspunkte – Team Alpha' }));
         const dialog = await screen.findByRole('dialog');
         expect(within(dialog).getByText('−200')).toBeInTheDocument();
     });

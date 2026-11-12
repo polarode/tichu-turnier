@@ -364,7 +364,7 @@ export function GameEntryForm({
                 </div>
             ) : null}
 
-            {/* One group per team. Phones stack each player's name above three equal
+            {/* One group per team, its box tinted with a hint of the team colour. Phones stack each player's name above three equal
                 44px controls; from `sm` up name and controls share one row. The team's
                 total points sit in a pill on the box's top border, opposite its name; the
                 scoreboard by the slider breaks them down into card and bonus points. Once the result is
@@ -373,7 +373,10 @@ export function GameEntryForm({
             {([0, 1] as const).map((team) => (
                 <fieldset
                     key={team}
-                    className="relative flex flex-col gap-3 rounded-md border border-border bg-card p-3"
+                    className={cn(
+                        'relative flex flex-col gap-3 rounded-md border p-3',
+                        tones[team].tile,
+                    )}
                 >
                     <legend
                         className={cn(

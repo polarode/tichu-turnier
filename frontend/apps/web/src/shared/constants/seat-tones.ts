@@ -1,26 +1,30 @@
 /**
  * Team identity colours per seat at a table (A, B, C): each seated team keeps its
  * colour in every game it plays, so at a trio table game 3 (B vs C) reads Pagoda vs
- * Star. Literal class names so Tailwind picks them up; `fill` is the raw colour
- * for inline styles such as the base-score slider's split track.
+ * Star. Literal class names so Tailwind picks them up; `tile` is a faint hint of the
+ * colour for a team's box, and `fill` is the raw colour for inline styles such as the
+ * base-score slider's split track.
  */
 const SEAT_TONES = [
     {
         dot: 'bg-team-1',
         text: 'text-team-1',
         chip: 'bg-team-1-soft text-team-1',
+        tile: 'border-team-1/40 bg-team-1-soft/50',
         fill: 'var(--color-team-1)',
     },
     {
         dot: 'bg-team-2',
         text: 'text-team-2',
         chip: 'bg-team-2-soft text-team-2',
+        tile: 'border-team-2/40 bg-team-2-soft/50',
         fill: 'var(--color-team-2)',
     },
     {
         dot: 'bg-team-3',
         text: 'text-team-3',
         chip: 'bg-team-3-soft text-team-3',
+        tile: 'border-team-3/40 bg-team-3-soft/50',
         fill: 'var(--color-team-3)',
     },
 ] as const;

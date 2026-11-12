@@ -290,6 +290,10 @@
             {
                 "type": "improvement",
                 "text": "Bonus points shown by the score slider"
+            },
+            {
+                "type": "improvement",
+                "text": "Team boxes on the score entry page tinted in the team colour"
             }
         ]
     }

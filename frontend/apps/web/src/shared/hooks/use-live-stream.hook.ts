@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { focusManager, type QueryKey, useQueryClient } from '@tanstack/react-query';
+import { focusManager, onlineManager, type QueryKey, useQueryClient } from '@tanstack/react-query';
 
 import { SseClient, type SseSubscription } from '@/shared/sse/sse-client.ts';
 
@@ -19,10 +19,11 @@ export interface LiveStreamOptions {
  * stale (see `subscriptions`), and every (re)connect refetches `keysOnConnect`, so events
  * missed while offline are caught up. Returns whether the stream is connected.
  *
- * The stream only stays open while the page is visible, by TanStack's `focusManager`: a
- * phone asleep or an app in the background closes it, and coming back reopens it at once,
- * without waiting out the reconnect backoff. A connection the device dropped silently in
- * its sleep, still looking open, is replaced the same way.
+ * The stream only stays open while the page is visible and the device online, by TanStack's
+ * `focusManager` and `onlineManager`: a phone asleep, an app in the background or a lost
+ * network closes it, and coming back reopens it at once, without waiting out the reconnect
+ * backoff. A connection the device dropped silently in its sleep, still looking open, is
+ * replaced the same way.
  *
  * The stream is opened per `url` and `enabled` only. `subscriptions` and `keysOnConnect`
  * are read at connect time, so callers may pass fresh arrays on every render without
@@ -56,14 +57,16 @@ export function useLiveStream({
                 }
             },
         });
-        const followVisibility = () => {
-            if (focusManager.isFocused()) client.connect();
+        const followDevice = () => {
+            if (focusManager.isFocused() && onlineManager.isOnline()) client.connect();
             else client.disconnect();
         };
-        followVisibility();
-        const unsubscribe = focusManager.subscribe(followVisibility);
+        followDevice();
+        const unsubscribeFocus = focusManager.subscribe(followDevice);
+        const unsubscribeOnline = onlineManager.subscribe(followDevice);
         return () => {
-            unsubscribe();
+            unsubscribeFocus();
+            unsubscribeOnline();
             client.disconnect();
             setConnected(false);
         };

@@ -301,7 +301,7 @@
             },
             {
                 "type": "fix",
-                "text": "Live updates resume right away when a phone wakes up"
+                "text": "Live updates resume right away when a phone wakes up or its network returns"
             }
         ]
     }

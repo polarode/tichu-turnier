@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
-import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+    focusManager,
+    onlineManager,
+    QueryClient,
+    QueryClientProvider,
+} from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useLiveStream } from '@/shared/hooks/use-live-stream.hook.ts';
@@ -38,6 +43,7 @@ beforeEach(() => {
 afterEach(() => {
     // Hand focus back to the document's visibility for the next spec.
     focusManager.setFocused(undefined);
+    onlineManager.setOnline(true);
     vi.useRealTimers();
 });
 
@@ -94,5 +100,44 @@ describe('useLiveStream while the page is hidden (phone asleep, app in the backg
         act(() => focusManager.setFocused(true));
 
         expect(FakeEventSource.instances).toHaveLength(1);
+    });
+});
+
+describe('useLiveStream while the device is offline', () => {
+    it('closes the stream when the network goes and reports offline', () => {
+        const { result } = renderLiveStream();
+        const source = latestSource();
+        act(() => source.emitOpen());
+
+        act(() => onlineManager.setOnline(false));
+
+        expect(source.closed).toBe(true);
+        expect(result.current).toBe(false);
+    });
+
+    it('reopens the stream when the network returns and catches up once it opens', () => {
+        const { result, invalidate } = renderLiveStream();
+        act(() => latestSource().emitOpen());
+        act(() => onlineManager.setOnline(false));
+        invalidate.mockClear();
+
+        act(() => onlineManager.setOnline(true));
+
+        expect(FakeEventSource.instances).toHaveLength(2);
+        const reopened = latestSource();
+        act(() => reopened.emitOpen());
+        expect(result.current).toBe(true);
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ['table'] });
+    });
+
+    it('stays closed when the network returns while the page is hidden', () => {
+        renderLiveStream();
+        act(() => onlineManager.setOnline(false));
+        act(() => focusManager.setFocused(false));
+
+        act(() => onlineManager.setOnline(true));
+
+        expect(FakeEventSource.instances).toHaveLength(1);
+        expect(latestSource().closed).toBe(true);
     });
 });

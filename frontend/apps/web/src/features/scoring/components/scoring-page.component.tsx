@@ -97,18 +97,19 @@ export function ScoringPage({
     return (
         <section className="flex w-full max-w-xl flex-col gap-4">
             <BackLink to="/team" labelKey="scoring.overviewLink" />
-            {/* Which table and who plays there is all the heading needs to say. */}
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex min-w-0 flex-col gap-1">
+            {/* Which table and who plays there is all the heading needs to say. The live
+                dot follows the title, as on every page that has one. */}
+            <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-xl font-semibold sm:text-2xl">
                         {`${t('rounds.table')} ${table.tableNumber}`}
                         <span className="text-base font-normal text-muted-foreground">
                             {` · ${t('rounds.round')} ${table.roundNumber}`}
                         </span>
                     </h1>
-                    <p className="font-medium">{header}</p>
+                    {live ? <LiveBadge connected={connected} labelKeyPrefix="team.live" /> : null}
                 </div>
-                {live ? <LiveBadge connected={connected} labelKeyPrefix="team.live" /> : null}
+                <p className="font-medium">{header}</p>
             </div>
             {isFrozen(table.confirmation) ? (
                 <FrozenNotice table={table} viewerTeamId={viewerTeamId} />

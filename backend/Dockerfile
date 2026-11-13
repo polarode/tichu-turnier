@@ -6,7 +6,7 @@ COPY src ./src
 RUN gradle bootJar --no-daemon
 
 # Runtime stage: JRE only, the boot jar plus nothing else.
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 COPY --from=build /app/build/libs/app.jar app.jar
 EXPOSE 8080

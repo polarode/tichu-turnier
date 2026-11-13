@@ -27,7 +27,7 @@ COPY --from=frontend /fe/apps/web/dist ./src/main/resources/static
 RUN gradle bootJar --no-daemon
 
 # Stage 3: JRE runtime — the boot jar plus nothing else.
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 COPY --from=backend /app/build/libs/app.jar app.jar
 EXPOSE 8080

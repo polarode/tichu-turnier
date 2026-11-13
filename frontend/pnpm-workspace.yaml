@@ -1,8 +1,8 @@
 overrides:
-  vite: 8.3.5
+  vite: 8.3.6
 
 catalog:
-  '@hookform/resolvers': 7.0.2
+  '@hookform/resolvers': 7.0.3
   '@tailwindcss/vite': 4.3.4
   '@tanstack/react-query': 5.106.1
   '@tanstack/react-router': 1.170.46
@@ -10,7 +10,7 @@ catalog:
   axios: 1.21.0
   class-variance-authority: 0.7.1
   clsx: 2.1.1
-  lucide-react: 1.68.0
+  lucide-react: 1.69.0
   radix-ui: 1.8.1
   react: 19.3.1
   react-dom: 19.3.1

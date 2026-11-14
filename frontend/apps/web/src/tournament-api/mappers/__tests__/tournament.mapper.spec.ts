@@ -14,7 +14,7 @@ const dto: TournamentDto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 },
+    settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4, shuffledTables: true },
     status: TournamentStatus.SETUP,
     publicVisibility: false,
     organizerRole: 'LEAD',
@@ -35,6 +35,7 @@ describe('tournamentDtoToDomain', () => {
             grandTichuBonus: 100,
             doubleWinBonus: 200,
             totalRounds: 4,
+            shuffledTables: true,
         });
         expect(tournament.createdAt).toBeInstanceOf(Date);
         expect(tournament.createdAt.toISOString()).toBe('2026-01-01T12:00:00.000Z');
@@ -70,11 +71,13 @@ describe('tournament settings mapping', () => {
                 grandTichuBonus: 200,
                 doubleWinBonus: 100,
                 totalRounds: 6,
+                shuffledTables: false,
             }),
         ).toEqual({
             grandTichuBonus: 200,
             doubleWinBonus: 100,
             totalRounds: 6,
+            shuffledTables: false,
         });
     });
 

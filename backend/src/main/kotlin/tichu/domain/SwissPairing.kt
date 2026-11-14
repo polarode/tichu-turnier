@@ -110,20 +110,24 @@ object SwissPairing {
      * sharing the rank at that cut-off are drawn with [random]. The rest pair by a
      * search for a rematch-free assignment (backtracking); when none exists, it
      * picks the one with the fewest rematches. Among equally good pairings the one
-     * closest to the standings order wins. Only the trio draw is random: even
-     * counts never consume [random], so they depend on the input alone.
+     * closest to the standings order wins. With [shuffledTables] (Shuffled Tables,
+     * GLOSSARY.md) the seatings are then put in a random table order, which changes
+     * only where each seating plays, never who meets whom; the trio stays last. The
+     * random source is consumed by the trio draw and, when [shuffledTables] is on, by
+     * that table shuffle. With [shuffledTables] off, only the trio draw is random:
+     * even counts never consume [random], so they depend on the input alone.
      *
      * [standings] must hold only ranked entries: a disqualified team has no rank and
      * takes no part in the draw (ADR 0011), so it is rejected rather than paired.
      */
-    fun pairNextRound(standings: Standings, history: PairingHistory, random: Random): Pairing {
+    fun pairNextRound(standings: Standings, history: PairingHistory, random: Random, shuffledTables: Boolean): Pairing {
         val entries = standings.entries
         require(entries.none { it.isDisqualified }) {
             "Only ranked standings can be paired, got a disqualified team"
         }
         val trio = if (entries.size % 2 == 1) bottomThree(entries, random) else emptyList()
         val pairs = bestPairing(entries.map { it.team.teamId } - trio.toSet(), history)
-        val seatings = pairs.map { it.toList() }
+        val seatings = pairs.map { it.toList() }.let { if (shuffledTables) it.shuffled(random) else it }
         return pairingOf(if (trio.isEmpty()) seatings else seatings + listOf(trio))
     }
 

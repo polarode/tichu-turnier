@@ -26,9 +26,14 @@ export const TOTAL_ROUNDS_DEFAULT = 4;
 export interface TournamentSettings {
     grandTichuBonus: GrandTichuBonus;
     doubleWinBonus: DoubleWinBonus;
-    /** How many rounds the tournament runs; the one setting still adjustable while ACTIVE. */
+    /** How many rounds the tournament runs; still adjustable while ACTIVE. */
     totalRounds: number;
+    /** Whether each round's pairings are seated at tables in random order (GLOSSARY.md). */
+    shuffledTables: boolean;
 }
+
+/** The settings an organizer writes through the form; the Shuffled Tables are switched on their own. */
+export type TournamentWriteSettings = Omit<TournamentSettings, 'shuffledTables'>;
 
 /** The settings that set what a game's bonuses are worth, i.e. what the live totals need. */
 export type ScoringBonuses = Pick<TournamentSettings, 'grandTichuBonus' | 'doubleWinBonus'>;
@@ -124,5 +129,5 @@ export interface TournamentWriteInput {
     name: string;
     description: string;
     maxTeams: number;
-    settings: TournamentSettings;
+    settings: TournamentWriteSettings;
 }

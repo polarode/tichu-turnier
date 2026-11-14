@@ -191,6 +191,8 @@ export const en = {
     'tournament.detail.publicVisibility.label': 'Public visibility',
     'tournament.detail.publicVisibility.hint':
         'Spectators can follow this tournament without signing in.',
+    'tournament.detail.shuffledTables.label': 'Shuffle table order',
+    'tournament.detail.shuffledTables.hint': 'Hides who is leading. The trio table stays last.',
 
     'tournament.start.action': 'Start tournament',
     'tournament.start.confirmDescription': 'Start the tournament and draw round 1?',

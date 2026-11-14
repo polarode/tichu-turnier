@@ -68,11 +68,104 @@ class TournamentRepositoryPersistenceTest(
 
         // Stored as a real JSON document, not a flattened column set.
         val rawSettings = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = 't-1'", String::class.java)
-        assertEquals("""{"totalRounds": 4, "doubleWinBonus": 200, "grandTichuBonus": 100}""", rawSettings)
+        assertEquals("""{"totalRounds": 4, "doubleWinBonus": 200, "shuffledTables": true, "grandTichuBonus": 100}""", rawSettings)
 
         // And the adapter maps it back into the domain value object.
         val freshAdapter = JpaTournamentRepository(springDataTournamentRepository)
         assertEquals(TournamentSettings(grandTichuBonus = 100), freshAdapter.findById(TournamentId("t-1"))?.settings)
+    }
+
+    @Test
+    fun `V17 turns the legacy grand tichu toggle into the matching bonus`() {
+        val legacy = mapOf("t-off" to """{"allowGrandTichu": false}""", "t-on" to """{"allowGrandTichu": true}""", "t-unset" to "{}")
+        for ((id, settings) in legacy) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Legacy', '', 16, ?::jsonb, 'SETUP', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V17__grand_tichu_bonus_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        assertEquals(TournamentSettings(grandTichuBonus = 100), tournamentRepository.findById(TournamentId("t-off"))?.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 200), tournamentRepository.findById(TournamentId("t-on"))?.settings)
+        assertEquals(TournamentSettings(grandTichuBonus = 200), tournamentRepository.findById(TournamentId("t-unset"))?.settings)
+    }
+
+    @Test
+    fun `V18 gives tournaments without total rounds the default 4 and keeps a stored value`() {
+        // Raw JSON is asserted: reading through the adapter would hide a missing key behind the domain default.
+        val stored = mapOf("t-old" to """{"grandTichuBonus": 100}""", "t-set" to """{"grandTichuBonus": 200, "totalRounds": 6}""")
+        for ((id, settings) in stored) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Stored', '', 16, ?::jsonb, 'ACTIVE', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V18__total_rounds_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)
+        assertEquals("""{"totalRounds": 4, "grandTichuBonus": 100}""", rawSettings("t-old"))
+        assertEquals("""{"totalRounds": 6, "grandTichuBonus": 200}""", rawSettings("t-set"))
+    }
+
+    @Test
+    fun `V19 gives tournaments without a double win bonus the default 200 and keeps a stored value`() {
+        // Raw JSON is asserted: reading through the adapter would hide a missing key behind the domain default.
+        val stored = mapOf(
+            "t-old" to """{"grandTichuBonus": 100, "totalRounds": 4}""",
+            "t-set" to """{"grandTichuBonus": 200, "totalRounds": 6, "doubleWinBonus": 100}""",
+        )
+        for ((id, settings) in stored) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Stored', '', 16, ?::jsonb, 'ACTIVE', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V19__double_win_bonus_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)
+        assertEquals("""{"totalRounds": 4, "doubleWinBonus": 200, "grandTichuBonus": 100}""", rawSettings("t-old"))
+        assertEquals("""{"totalRounds": 6, "doubleWinBonus": 100, "grandTichuBonus": 200}""", rawSettings("t-set"))
+    }
+
+    @Test
+    fun `V24 turns tournaments without shuffled tables off and keeps a stored value`() {
+        // Raw JSON is asserted: reading through the adapter would hide a missing key behind the domain default (true).
+        val stored = mapOf(
+            "t-old" to """{"grandTichuBonus": 100, "totalRounds": 4, "doubleWinBonus": 200}""",
+            "t-set" to """{"grandTichuBonus": 200, "totalRounds": 6, "doubleWinBonus": 100, "shuffledTables": true}""",
+        )
+        for ((id, settings) in stored) {
+            jdbcTemplate.update(
+                "INSERT INTO tournaments (id, owner_id, name, description, max_teams, settings, status, created_at, updated_at) " +
+                    "VALUES (?, ?, 'Stored', '', 16, ?::jsonb, 'ACTIVE', now(), now())",
+                id, owner.value, settings,
+            )
+        }
+
+        val migration = javaClass.getResource("/db/migration/V24__add_shuffled_tables_setting.sql")!!.readText()
+        jdbcTemplate.execute(migration)
+
+        fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)
+        assertTrue(rawSettings("t-old")!!.contains("\"shuffledTables\": false"))
+        assertEquals(false, tournamentRepository.findById(TournamentId("t-old"))?.settings?.shuffledTables)
+        assertEquals(true, tournamentRepository.findById(TournamentId("t-set"))?.settings?.shuffledTables)
+    }
+
+    @Test
+    fun `a new tournament with default settings loads with shuffled tables on`() {
+        tournamentRepository.save(tournament(id = "t-new"))
+
+        assertEquals(true, tournamentRepository.findById(TournamentId("t-new"))?.settings?.shuffledTables)
     }
 
     @Test

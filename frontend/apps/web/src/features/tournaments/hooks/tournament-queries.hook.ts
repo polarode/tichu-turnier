@@ -103,6 +103,34 @@ export function useSetPublicVisibility(id: string) {
 }
 
 /**
+ * Switches the Shuffled Tables, in setup and active. Optimistic like {@link useSetPublicVisibility}:
+ * the switch shows the new value at once and rolls back when the server rejects it.
+ */
+export function useSetShuffledTables(id: string) {
+    const queryClient = useQueryClient();
+    const key = tournamentQueryKey(id);
+    return useMutation({
+        mutationFn: (shuffledTables: boolean) =>
+            TournamentRepository.setShuffledTables(id, shuffledTables),
+        onMutate: async (shuffledTables) => {
+            await queryClient.cancelQueries({ queryKey: key });
+            const previous = queryClient.getQueryData<Tournament>(key);
+            if (previous) {
+                queryClient.setQueryData<Tournament>(key, {
+                    ...previous,
+                    settings: { ...previous.settings, shuffledTables },
+                });
+            }
+            return { previous };
+        },
+        onError: (_error, _shuffledTables, context) => {
+            if (context?.previous) queryClient.setQueryData(key, context.previous);
+        },
+        onSuccess: (tournament) => queryClient.setQueryData(key, tournament),
+    });
+}
+
+/**
  * Finishes the tournament after its last round. The returned tournament replaces the
  * cached one at once; the list (which covers the detail) and the standings refetch.
  */

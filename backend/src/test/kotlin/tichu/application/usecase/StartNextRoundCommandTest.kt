@@ -63,20 +63,28 @@ class StartNextRoundCommandTest {
     }
 
     private val startEvents = RecordingTournamentEvents()
-    private val command = StartNextRoundCommand(
+    private fun commandWith(random: Random) = StartNextRoundCommand(
         tournamentRepository,
         TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         teamRepository,
         roundRepository,
         PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
         idGenerator,
-        Random(7),
+        random,
         startEvents,
     )
+    private val command = commandWith(Random(7))
 
-    private fun tournament(status: TournamentStatus = TournamentStatus.ACTIVE, totalRounds: Int = 4) =
+    private fun tournament(
+        status: TournamentStatus = TournamentStatus.ACTIVE,
+        totalRounds: Int = 4,
+        shuffledTables: Boolean = false,
+    ) =
         tournamentRepository.save(
-            Tournament(tournamentId, owner, "Spring Classic", "", 16, TournamentSettings(totalRounds = totalRounds), status, now, now),
+            Tournament(
+                tournamentId, owner, "Spring Classic", "", 16,
+                TournamentSettings(totalRounds = totalRounds, shuffledTables = shuffledTables), status, now, now,
+            ),
         )
 
     private fun teams(vararg ids: String) = ids.forEach { teamRepository.save(teamOf(tournamentId, it)) }
@@ -249,6 +257,27 @@ class StartNextRoundCommandTest {
         // Adjacent a-b and c-d are round-1 rematches and a-c a round-2 one: a-d, b-c is the only clean pairing.
         assertEquals(
             listOf(listOf(TeamId("a"), TeamId("d")), listOf(TeamId("b"), TeamId("c"))),
+            next.pairing.tables.map { it.seatedTeams },
+        )
+    }
+
+    @Test
+    fun `with shuffled tables on, the drawn round seats the same matchups out of standings order`() {
+        tournament(shuffledTables = true)
+        teams("a", "b", "c", "d")
+        round(1, listOf("a", "b"), listOf("c", "d"))
+        play(1, 1, base = 70)
+        play(1, 2, base = 60)
+
+        val next = commandWith(Random(1)).start(tournamentId, owner)
+
+        // Same standings as the even round above (a-c, d-b in standings order); Random(1) seats d-b first.
+        assertEquals(
+            listOf(listOf(TeamId("a"), TeamId("c")), listOf(TeamId("d"), TeamId("b"))).toSet(),
+            next.pairing.tables.map { it.seatedTeams }.toSet(),
+        )
+        assertEquals(
+            listOf(listOf(TeamId("d"), TeamId("b")), listOf(TeamId("a"), TeamId("c"))),
             next.pairing.tables.map { it.seatedTeams },
         )
     }

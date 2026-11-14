@@ -20,6 +20,7 @@ import {
 } from '@/scoring-api/mappers/scoring.mapper.ts';
 import type {
     PublicVisibilityRequestDto,
+    ShuffledTablesRequestDto,
     TotalRoundsRequestDto,
 } from '@/tournament-api/dtos/tournament.dto.ts';
 import {
@@ -130,6 +131,13 @@ async function setPublicVisibility(id: string, publicVisibility: boolean): Promi
     return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
 }
 
+/** Switches Shuffled Tables on or off (setup and active only); returns the updated tournament. */
+async function setShuffledTables(id: string, shuffledTables: boolean): Promise<Tournament> {
+    const body: ShuffledTablesRequestDto = { shuffledTables };
+    const { data } = await apiClient.put<unknown>(`/api/tournaments/${id}/shuffled-tables`, body);
+    return tournamentDtoToDomain(tournamentDtoSchema.parse(data));
+}
+
 /** The anonymous home-page list of publicly visible tournaments (public facts only). */
 async function listPublicTournaments(): Promise<PublicTournament[]> {
     const { data } = await apiClient.get<unknown>('/api/public/tournaments');
@@ -188,6 +196,7 @@ export const TournamentRepository = {
     standings,
     setTotalRounds,
     setPublicVisibility,
+    setShuffledTables,
     listPublicTournaments,
     getPublicTournament,
     startNextRound,

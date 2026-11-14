@@ -201,6 +201,9 @@ export const de: Catalog = {
     'tournament.detail.publicVisibility.label': 'Öffentliche Sichtbarkeit',
     'tournament.detail.publicVisibility.hint':
         'Zuschauer können dieses Turnier ohne Anmeldung verfolgen.',
+    'tournament.detail.shuffledTables.label': 'Tische zufällig verteilen',
+    'tournament.detail.shuffledTables.hint':
+        'Verbirgt, wer führt. Der Trio-Tisch bleibt der letzte.',
 
     'tournament.start.action': 'Turnier starten',
     'tournament.start.confirmDescription': 'Turnier starten und Runde 1 auslosen?',

@@ -31,6 +31,8 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
         [TournamentEventType.TOURNAMENT_FINISHED]: [tournament, rounds, standings],
         // Only the tournament's own fields change.
         [TournamentEventType.TOTAL_ROUNDS_CHANGED]: [tournament],
+        // Only the tournament's own settings change; the seating applies from the next round drawn.
+        [TournamentEventType.SHUFFLED_TABLES_CHANGED]: [tournament],
         [TournamentEventType.RESULTS_PUBLISHED]: [tournament],
         // Remove, leave and add change the organizer list; the tournament is refetched too so
         // a removed admin's tournament query hits not-found and the page can send them away.

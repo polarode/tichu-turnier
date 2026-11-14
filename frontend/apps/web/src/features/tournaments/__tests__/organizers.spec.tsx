@@ -48,7 +48,12 @@ function tournament(
         name: 'Jahresturnier',
         description: '',
         maxTeams: 16,
-        settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 },
+        settings: {
+            grandTichuBonus: 100,
+            doubleWinBonus: 200,
+            totalRounds: 4,
+            shuffledTables: true,
+        },
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility: false,

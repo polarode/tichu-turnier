@@ -68,12 +68,14 @@ data class TournamentSettingsResponse(
     val grandTichuBonus: Int,
     val doubleWinBonus: Int,
     val totalRounds: Int,
+    val shuffledTables: Boolean,
 ) {
     companion object {
         fun from(settings: TournamentSettings): TournamentSettingsResponse = TournamentSettingsResponse(
             grandTichuBonus = settings.grandTichuBonus,
             doubleWinBonus = settings.doubleWinBonus,
             totalRounds = settings.totalRounds,
+            shuffledTables = settings.shuffledTables,
         )
     }
 }
@@ -102,6 +104,11 @@ data class TournamentSettingsRequestBody(
 /** The body of `PUT /api/tournaments/{id}/total-rounds`; the range is validated by the use case. */
 data class TotalRoundsRequestBody(
     @field:NotNull val totalRounds: Int,
+)
+
+/** The body of `PUT /api/tournaments/{id}/shuffled-tables`; allowed in setup and active only. */
+data class ShuffledTablesRequestBody(
+    val shuffledTables: Boolean,
 )
 
 /** The body of `PUT /api/tournaments/{id}/public-visibility`; allowed in every status. */

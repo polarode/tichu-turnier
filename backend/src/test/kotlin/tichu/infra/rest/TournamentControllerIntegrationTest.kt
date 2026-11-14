@@ -638,6 +638,109 @@ class TournamentControllerIntegrationTest(
             .andExpect(jsonPath("$.publicVisibility").value(false))
     }
 
+    @Test
+    fun `shuffled tables are on by default and the create response says so`() {
+        val response = mockMvc.perform(
+            post("/api/tournaments")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Default Seating","maxTeams":16}"""),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.settings.shuffledTables").value(true))
+            .andReturn()
+            .response
+            .contentAsString
+        val id = objectMapper.readTree(response)["id"].asText()
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(true))
+    }
+
+    @Test
+    fun `shuffled tables can be switched off and on again during setup`() {
+        val id = createTournament("Seating Setup")
+
+        setShuffledTables(id, false)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("SETUP"))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(false))
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(false))
+
+        setShuffledTables(id, true)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.settings.shuffledTables").value(true))
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(true))
+    }
+
+    @Test
+    fun `shuffled tables can be switched while the tournament is active`() {
+        val id = createTournament("Seating Running")
+        setStatus(id, "ACTIVE")
+
+        setShuffledTables(id, false)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(false))
+    }
+
+    @Test
+    fun `shuffled tables are refused once the tournament is completed`() {
+        val id = createTournament("Seating Done")
+        setStatus(id, "COMPLETED")
+
+        setShuffledTables(id, false)
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("TOURNAMENT_NOT_EDITABLE"))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(true))
+    }
+
+    @Test
+    fun `a foreign admin cannot change another admin's shuffled tables`() {
+        val id = createTournament("Alice's seating")
+
+        setShuffledTables(id, false, otherAdminCookie)
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(true))
+    }
+
+    @Test
+    fun `updating the setup form keeps a previously switched off shuffled tables setting`() {
+        val id = createTournament("Form Keeps Seating")
+        setShuffledTables(id, false).andExpect(status().isOk)
+
+        mockMvc.perform(
+            put("/api/tournaments/$id")
+                .cookie(sessionCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validUpdateBody("Form Keeps Seating, renamed")),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.settings.shuffledTables").value(false))
+
+        mockMvc.perform(get("/api/tournaments/$id").cookie(sessionCookie))
+            .andExpect(jsonPath("$.name").value("Form Keeps Seating, renamed"))
+            .andExpect(jsonPath("$.settings.shuffledTables").value(false))
+    }
+
+    private fun setShuffledTables(
+        id: String,
+        shuffledTables: Boolean,
+        cookie: Cookie = sessionCookie,
+    ) = mockMvc.perform(
+        put("/api/tournaments/$id/shuffled-tables")
+            .cookie(cookie)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"shuffledTables":$shuffledTables}"""),
+    )
+
     private fun setPublicVisibility(
         id: String,
         publicVisibility: Boolean,

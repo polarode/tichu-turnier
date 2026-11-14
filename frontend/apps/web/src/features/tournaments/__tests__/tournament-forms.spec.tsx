@@ -53,7 +53,12 @@ const setupTournament = {
     name: 'Jahresturnier',
     description: '',
     maxTeams: 8,
-    settings: { grandTichuBonus: 100 as const, doubleWinBonus: 100 as const, totalRounds: 4 },
+    settings: {
+        grandTichuBonus: 100 as const,
+        doubleWinBonus: 100 as const,
+        totalRounds: 4,
+        shuffledTables: true,
+    },
     status: 'SETUP' as const,
     createdAt: new Date('2025-01-01T10:00:00Z'),
     publicVisibility: false,

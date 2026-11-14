@@ -35,6 +35,8 @@ const queryKeysByEvent: Record<TournamentEventType, readonly QueryKey[]> = {
     ],
     // The publish brings the status change and the Final Ranking.
     [TournamentEventType.RESULTS_PUBLISHED]: [teamOverviewQueryKey(), teamFinalRankingQueryKey()],
+    // Shuffled Tables is not shown to teams; the seating of later rounds arrives with their ROUND_STARTED.
+    [TournamentEventType.SHUFFLED_TABLES_CHANGED]: [],
     // Organizer changes are not part of the team's view; the team stream never sends them.
     [TournamentEventType.ORGANIZERS_CHANGED]: [],
     // A withdrawal changes the team's reason, its current table's forfeits and the final ranking.

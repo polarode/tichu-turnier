@@ -13,7 +13,7 @@ const dto = {
     name: 'Spring Classic',
     description: 'annual invitational',
     maxTeams: 16,
-    settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4 },
+    settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 4, shuffledTables: true },
     status: TournamentStatus.SETUP,
     createdAt: '2026-01-01T00:00:00.000Z',
     publicVisibility: false,
@@ -352,13 +352,47 @@ describe('TournamentRepository standings/total rounds', () => {
     it('sets the total rounds and returns the updated tournament', async () => {
         mock.onPut('/api/tournaments/t-1/total-rounds').reply(200, {
             ...dto,
-            settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 6 },
+            settings: {
+                grandTichuBonus: 200,
+                doubleWinBonus: 200,
+                totalRounds: 6,
+                shuffledTables: true,
+            },
         });
 
         const tournament = await TournamentRepository.setTotalRounds('t-1', 6);
 
         expect(tournament.settings.totalRounds).toBe(6);
         expect(JSON.parse(mock.history.put[0]!.data)).toEqual({ totalRounds: 6 });
+    });
+});
+
+describe('TournamentRepository shuffled tables', () => {
+    let mock: MockAdapter;
+
+    beforeEach(() => {
+        mock = new MockAdapter(apiClient);
+    });
+
+    afterEach(() => {
+        mock.restore();
+    });
+
+    it('sets the shuffled tables and returns the updated tournament', async () => {
+        mock.onPut('/api/tournaments/t-1/shuffled-tables').reply(200, {
+            ...dto,
+            settings: {
+                grandTichuBonus: 200,
+                doubleWinBonus: 200,
+                totalRounds: 4,
+                shuffledTables: false,
+            },
+        });
+
+        const tournament = await TournamentRepository.setShuffledTables('t-1', false);
+
+        expect(tournament.settings.shuffledTables).toBe(false);
+        expect(JSON.parse(mock.history.put[0]!.data)).toEqual({ shuffledTables: false });
     });
 });
 

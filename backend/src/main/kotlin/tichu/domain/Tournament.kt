@@ -75,9 +75,16 @@ data class TournamentSettings(
     val doubleWinBonus: Int = 200,
     /**
      * The Total Rounds (GLOSSARY.md): how many rounds the tournament runs, within
-     * [TOTAL_ROUNDS_RANGE]. The one setting still adjustable while ACTIVE.
+     * [TOTAL_ROUNDS_RANGE]. Set in setup through the tournament form; while ACTIVE it changes
+     * through its own endpoint, never below the rounds already drawn.
      */
     val totalRounds: Int = 4,
+    /**
+     * Shuffled Tables (GLOSSARY.md): seat each round's pairings at tables in random order
+     * instead of standings order, so spectators cannot tell the leaders by their table. The
+     * Trio Table stays last. Adjustable until the tournament is finished.
+     */
+    val shuffledTables: Boolean = true,
 ) {
     companion object {
         val GRAND_TICHU_BONUS_OPTIONS = setOf(100, 200)

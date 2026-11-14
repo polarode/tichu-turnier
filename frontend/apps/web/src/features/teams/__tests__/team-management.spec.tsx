@@ -42,7 +42,12 @@ function tournament(status: Tournament['status'], maxTeams = 2): Tournament {
         name: 'Jahresturnier',
         description: '',
         maxTeams,
-        settings: { grandTichuBonus: 100, doubleWinBonus: 200, totalRounds: 4 },
+        settings: {
+            grandTichuBonus: 100,
+            doubleWinBonus: 200,
+            totalRounds: 4,
+            shuffledTables: true,
+        },
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility: false,

@@ -52,7 +52,8 @@ class UpdateTournamentCommand(
                 name = name,
                 description = command.description.trim(),
                 maxTeams = command.maxTeams,
-                settings = command.settings,
+                // The setup form does not carry Shuffled Tables; it keeps its own endpoint's value.
+                settings = command.settings.copy(shuffledTables = tournament.settings.shuffledTables),
                 updatedAt = clock.instant(),
             ),
         )

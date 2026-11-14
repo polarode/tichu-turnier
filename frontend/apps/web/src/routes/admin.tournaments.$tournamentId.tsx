@@ -16,6 +16,7 @@ import { StartTournamentButton } from '@/features/tournaments/components/start-t
 import { useTournamentLiveStream } from '@/features/tournaments/hooks/tournament-live-stream.hook.ts';
 import {
     useSetPublicVisibility,
+    useSetShuffledTables,
     useTournament,
 } from '@/features/tournaments/hooks/tournament-queries.hook.ts';
 import { useTeams } from '@/features/teams/hooks/team-queries.hook.ts';
@@ -82,6 +83,7 @@ function TournamentDetailBody() {
     const { tournamentId } = Route.useParams();
     const tournamentQuery = useTournament(tournamentId);
     const setPublicVisibility = useSetPublicVisibility(tournamentId);
+    const setShuffledTables = useSetShuffledTables(tournamentId);
     const teamsQuery = useTeams(tournamentId);
     const { tab } = Route.useSearch();
     const navigate = Route.useNavigate();
@@ -220,6 +222,22 @@ function TournamentDetailBody() {
                         id="public-visibility"
                         checked={tournament.publicVisibility}
                         onCheckedChange={(next) => setPublicVisibility.mutate(next)}
+                    />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-col">
+                        <label htmlFor="shuffled-tables" className="text-sm font-medium">
+                            {t('tournament.detail.shuffledTables.label')}
+                        </label>
+                        <span className="text-sm text-muted-foreground">
+                            {t('tournament.detail.shuffledTables.hint')}
+                        </span>
+                    </div>
+                    <Switch
+                        id="shuffled-tables"
+                        checked={tournament.settings.shuffledTables}
+                        disabled={isFinal}
+                        onCheckedChange={(next) => setShuffledTables.mutate(next)}
                     />
                 </div>
             </div>

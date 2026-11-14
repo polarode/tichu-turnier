@@ -103,7 +103,7 @@ class NextRoundIntegrationTest(
 
     private fun tournament(status: TournamentStatus = TournamentStatus.ACTIVE, totalRounds: Int = 4) =
         tournamentRepository.save(
-            Tournament(tournamentId, ownerId, "Spring Classic", "", 16, TournamentSettings(totalRounds = totalRounds), status, now, now),
+            Tournament(tournamentId, ownerId, "Spring Classic", "", 16, TournamentSettings(totalRounds = totalRounds, shuffledTables = false), status, now, now),
         )
 
     /** Enters all four games of a round-1 table (the first team wins 70/30) and, when [confirmed], completes it. */

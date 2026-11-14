@@ -20,9 +20,13 @@ export const tournamentSettingsDtoSchema = z.object({
     grandTichuBonus: grandTichuBonusDtoSchema,
     doubleWinBonus: doubleWinBonusDtoSchema,
     totalRounds: z.number().int(),
+    shuffledTables: z.boolean(),
 });
 
 export type TournamentSettingsDto = z.infer<typeof tournamentSettingsDtoSchema>;
+
+/** The settings as the write request carries them: the Shuffled Tables are not part of it. */
+export type TournamentWriteSettingsDto = Omit<TournamentSettingsDto, 'shuffledTables'>;
 
 export const tournamentDtoSchema = z.object({
     id: z.string(),
@@ -55,10 +59,15 @@ export interface TournamentWriteRequestDto {
     name: string;
     description: string;
     maxTeams: number;
-    settings: TournamentSettingsDto;
+    settings: TournamentWriteSettingsDto;
 }
 
 /** The body of `PUT /api/tournaments/{id}/total-rounds`. */
 export interface TotalRoundsRequestDto {
     totalRounds: number;
+}
+
+/** The body of `PUT /api/tournaments/{id}/shuffled-tables`. */
+export interface ShuffledTablesRequestDto {
+    shuffledTables: boolean;
 }

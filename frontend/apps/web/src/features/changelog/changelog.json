@@ -327,6 +327,10 @@
             {
                 "type": "feature",
                 "text": "A withdrawal can be undone until the next round is drawn or the results are published"
+            },
+            {
+                "type": "feature",
+                "text": "Shuffle the table order so spectators cannot tell who is leading"
             }
         ]
     }

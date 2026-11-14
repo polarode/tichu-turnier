@@ -46,6 +46,7 @@ import tichu.application.api.GetStandings
 import tichu.application.api.GetStatistics
 import tichu.application.api.ListRounds
 import tichu.application.api.SetPublicVisibility
+import tichu.application.api.SetShuffledTables
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
@@ -102,6 +103,7 @@ class RestConfiguration(
         getStandings: GetStandings,
         getStatistics: GetStatistics,
         setTotalRounds: SetTotalRounds,
+        setShuffledTables: SetShuffledTables,
         startNextRound: StartNextRound,
         finishTournament: FinishTournament,
         publishTournament: PublishTournament,
@@ -117,6 +119,7 @@ class RestConfiguration(
         getStandings,
         getStatistics,
         setTotalRounds,
+        setShuffledTables,
         startNextRound,
         finishTournament,
         publishTournament,

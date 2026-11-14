@@ -37,7 +37,12 @@ function tournament(status: Tournament['status'], publicVisibility = false): Tou
         name: 'Jahresturnier',
         description: '',
         maxTeams: 16,
-        settings: { grandTichuBonus: 200, doubleWinBonus: 200, totalRounds: 2 },
+        settings: {
+            grandTichuBonus: 200,
+            doubleWinBonus: 200,
+            totalRounds: 2,
+            shuffledTables: true,
+        },
         status,
         createdAt: new Date('2026-01-01T00:00:00Z'),
         publicVisibility,

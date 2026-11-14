@@ -4,11 +4,13 @@ import type {
     Tournament,
     TournamentSettings,
     TournamentWriteInput,
+    TournamentWriteSettings,
 } from '@/domain/tournament.domain.ts';
 import type {
     TournamentDto,
     TournamentSettingsDto,
     TournamentWriteRequestDto,
+    TournamentWriteSettingsDto,
 } from '@/tournament-api/dtos/tournament.dto.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
@@ -33,11 +35,14 @@ export function tournamentSettingsDtoToDomain(dto: TournamentSettingsDto): Tourn
         grandTichuBonus: dto.grandTichuBonus,
         doubleWinBonus: dto.doubleWinBonus,
         totalRounds: dto.totalRounds,
+        shuffledTables: dto.shuffledTables,
     };
 }
 
-/** Domain settings → wire, used when building create/update request payloads. */
-export function tournamentSettingsToDto(settings: TournamentSettings): TournamentSettingsDto {
+/** Domain write settings → wire, used when building create/update request payloads. */
+export function tournamentSettingsToDto(
+    settings: TournamentWriteSettings,
+): TournamentWriteSettingsDto {
     return {
         grandTichuBonus: settings.grandTichuBonus,
         doubleWinBonus: settings.doubleWinBonus,

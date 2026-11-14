@@ -11,6 +11,7 @@ import tichu.application.api.GetStatistics
 import tichu.application.api.ListRounds
 import tichu.application.api.PublishTournament
 import tichu.application.api.SetPublicVisibility
+import tichu.application.api.SetShuffledTables
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
@@ -54,6 +55,7 @@ class TournamentController(
     private val getStandings: GetStandings,
     private val getStatistics: GetStatistics,
     private val setTotalRounds: SetTotalRounds,
+    private val setShuffledTables: SetShuffledTables,
     private val startNextRound: StartNextRound,
     private val finishTournament: FinishTournament,
     private val publishTournament: PublishTournament,
@@ -146,6 +148,17 @@ class TournamentController(
         @AuthenticationPrincipal principal: AuthenticatedAdmin,
     ): TournamentResponse {
         setTotalRounds.set(TournamentId(id), body.totalRounds, principal.adminUserId)
+        return viewOf(TournamentId(id), principal.adminUserId)
+    }
+
+    /** Switches Shuffled Tables on or off; allowed in setup and active, refused once finished. */
+    @PutMapping("/{id}/shuffled-tables")
+    fun shuffledTables(
+        @PathVariable id: String,
+        @Valid @RequestBody body: ShuffledTablesRequestBody,
+        @AuthenticationPrincipal principal: AuthenticatedAdmin,
+    ): TournamentResponse {
+        setShuffledTables.set(TournamentId(id), body.shuffledTables, principal.adminUserId)
         return viewOf(TournamentId(id), principal.adminUserId)
     }
 

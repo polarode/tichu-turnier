@@ -84,7 +84,7 @@ class StartNextRoundCommand(
             id = RoundId(idGenerator.newId()),
             tournamentId = tournamentId,
             number = current.round.number + 1,
-            pairing = SwissPairing.pairNextRound(activeStandings, history, random),
+            pairing = SwissPairing.pairNextRound(activeStandings, history, random, tournament.settings.shuffledTables),
         )
         val saved = roundRepository.save(round)
         tournamentEvents.publish(TournamentEvent(TournamentEventType.ROUND_STARTED, tournamentId, saved.id))

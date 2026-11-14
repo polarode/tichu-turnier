@@ -64,7 +64,8 @@ _Avoid_: draft, closed, archived
 The tournament status in which teams may be managed (added, edited, deleted) and
 settings edited. Once the tournament leaves it, both are locked — except the
 **Total Rounds**, which stay adjustable until the tournament is finished, and
-**Public Visibility**, which the organizer may switch at any time.
+**Public Visibility**, which the organizer may switch at any time, and
+**Shuffled Tables**, which stays adjustable until the tournament is finished.
 _Avoid_: preparation, draft mode
 
 **Public Visibility**:
@@ -162,6 +163,14 @@ six games follow a fixed matchup per game number (1 AB, 2 AC, 3 BC, 4 AB, 5 AC,
 the round's last table, so it can be the same physical table every round. Round 1
 seats three random teams there; from round 2 on, the bottom three in the standings.
 _Avoid_: triple table, odd table
+
+**Shuffled Tables**:
+The organizer's choice, on by default, to seat each round's pairings at tables in
+random order rather than in standings order, so spectators cannot tell the leaders
+by their table. It changes only which table a pairing plays at, never who plays
+whom, and the Trio Table stays the round's last table. A change applies from the
+next round drawn; rounds already drawn keep their tables.
+_Avoid_: random pairing, shuffled pairings, hide leaders
 
 **Matchup**:
 The two teams playing one game at a table. At a normal table every game has the

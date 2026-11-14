@@ -103,6 +103,24 @@ and it works any number of times. Its token is shown to the organizer exactly on
 it still lets the team look, but no longer act.
 _Avoid_: invite, share link, login link, token (for the whole link)
 
+**Withdrawal**:
+A team leaving a running tournament for good, either **Disqualified** (the organizer
+excluded it, e.g. for cheating) or **Voluntary** (the team chose to leave). It is not
+drawn into later rounds, and the games it already played stand; the games it still
+owed at its current table become Forfeit Games. Possible in any status after the Setup
+Phase, even once published, by any organizer. Its reason is visible to everyone, and its
+Access Link stays read-only afterwards. The organizer may undo it until the next round
+is drawn, or until publishing if no round follows; undoing removes its Forfeit Games.
+_Avoid_: ban, removal, deletion (deleting a team is a Setup Phase action)
+
+**Forfeit Game**:
+A game at a table that was never played because one of its teams withdrew mid-table,
+awarded to the remaining team at the **Forfeit Compensation** the organizer chose for
+that withdrawal: full (2 VP, 100 TP), half (1 VP, 50 TP) or none. Shown as forfeited,
+never as a played game; it counts toward Victory and Tichu Points only, not toward any
+per-game statistic.
+_Avoid_: walkover, bye, default win
+
 **Team Capacity**:
 The tournament-level maximum number of teams (`maxTeams`). Reaching it only prevents
 adding teams; editing and deleting remain possible.
@@ -167,7 +185,9 @@ _Avoid_: points (ambiguous with Tichu points)
 **Standings**:
 The teams ordered by summed Victory Points, then summed Tichu Points, over the
 games of completed tables only. Teams equal in both share a rank, and the next rank
-skips (1, 2, 2, 4); within a shared rank they are listed by name.
+skips (1, 2, 2, 4); within a shared rank they are listed by name. A disqualified
+team is listed after all others without a rank; a team that withdrew voluntarily
+keeps its rank, marked as withdrawn.
 _Avoid_: leaderboard, ranking table
 
 **Final Ranking**:
@@ -200,6 +220,8 @@ Derived from the table's confirmations: **Playing** (no team confirmed; games
 editable), **Confirming** (at least one team confirmed; games frozen, retracting
 the last confirmation returns to Playing), **Completed** (every team seated at the
 table confirmed; final, no retraction). A round is complete when all its tables are.
+A withdrawn team's confirmation is no longer needed. Undoing a Withdrawal is the one
+way back from Completed: it returns the table to Playing.
 _Avoid_: locked, done
 
 **Correction**:

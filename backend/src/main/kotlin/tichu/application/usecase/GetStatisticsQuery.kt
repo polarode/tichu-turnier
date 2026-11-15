@@ -55,7 +55,7 @@ fun buildTournamentStatistics(
     val highlights: List<Highlight> = Highlight.of(statistics, byName)
     val trends: List<TeamTrend> = TeamTrend.compute(byName, rounds, tournament.settings)
     return TournamentStatistics(
-        teams = byName.zip(statistics) { team, teamStatistics -> TeamStatisticsEntry(team.name, teamStatistics) },
+        teams = byName.zip(statistics) { team, teamStatistics -> TeamStatisticsEntry(team.name, teamStatistics, team.withdrawal?.reason) },
         highlights = highlights,
         trends = trends,
     )

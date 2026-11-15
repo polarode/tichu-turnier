@@ -34,6 +34,7 @@ describe('statisticsDtoToDomain for the shared fixture', () => {
                 destroyedTichus: 1,
                 beschissGames: 1,
                 goodHorseRatio: 79.44444444444444,
+                withdrawalReason: null,
             },
             {
                 teamId: 'team-falcons',
@@ -47,6 +48,7 @@ describe('statisticsDtoToDomain for the shared fixture', () => {
                 destroyedTichus: 0,
                 beschissGames: 1,
                 goodHorseRatio: 93.33333333333333,
+                withdrawalReason: null,
             },
             {
                 teamId: 'team-owls',
@@ -60,6 +62,7 @@ describe('statisticsDtoToDomain for the shared fixture', () => {
                 destroyedTichus: 0,
                 beschissGames: 0,
                 goodHorseRatio: 76.42857142857143,
+                withdrawalReason: null,
             },
             {
                 teamId: 'team-ravens',
@@ -73,6 +76,7 @@ describe('statisticsDtoToDomain for the shared fixture', () => {
                 destroyedTichus: 0,
                 beschissGames: 2,
                 goodHorseRatio: 78.88888888888889,
+                withdrawalReason: null,
             },
             {
                 teamId: 'team-wolves',
@@ -86,6 +90,7 @@ describe('statisticsDtoToDomain for the shared fixture', () => {
                 destroyedTichus: 0,
                 beschissGames: 0,
                 goodHorseRatio: null,
+                withdrawalReason: null,
             },
         ]);
     });
@@ -176,6 +181,30 @@ describe('statisticsDtoToDomain for the shared fixture', () => {
                 ],
             },
             { teamId: 'team-wolves', teamName: 'Wolves', points: [] },
+        ]);
+    });
+
+    it('carries the withdrawal reason of a withdrawn team and leaves a team still playing on null', () => {
+        const withdrawn = {
+            ...(statisticsFixture.response as { teams: Record<string, unknown>[] }),
+            teams: (statisticsFixture.response as { teams: Record<string, unknown>[] }).teams.map(
+                (team) =>
+                    team.teamId === 'team-owls'
+                        ? { ...team, withdrawalReason: 'DISQUALIFIED' }
+                        : team.teamId === 'team-ravens'
+                          ? { ...team, withdrawalReason: 'VOLUNTARY' }
+                          : team,
+            ),
+        };
+
+        const mapped = statisticsDtoToDomain(statisticsDtoSchema.parse(withdrawn));
+
+        expect(mapped.teams.map((team) => [team.teamName, team.withdrawalReason])).toEqual([
+            ['Badgers', null],
+            ['Falcons', null],
+            ['Owls', 'DISQUALIFIED'],
+            ['Ravens', 'VOLUNTARY'],
+            ['Wolves', null],
         ]);
     });
 

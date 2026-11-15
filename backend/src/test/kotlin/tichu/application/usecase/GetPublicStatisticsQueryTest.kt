@@ -157,8 +157,8 @@ class GetPublicStatisticsQueryTest {
         assertEquals(
             TournamentStatistics(
                 teams = listOf(
-                    TeamStatisticsEntry("Falcons", TeamStatistics(TeamId("a"), 0, 4, 0, 0.0, 0, 4, 0, 0, 130.0)),
-                    TeamStatisticsEntry("Owls", TeamStatistics(TeamId("b"), 0, 0, 0, 0.0, 0, 0, 0, 0, null)),
+                    TeamStatisticsEntry("Falcons", TeamStatistics(TeamId("a"), 0, 4, 0, 0.0, 0, 4, 0, 0, 130.0), null),
+                    TeamStatisticsEntry("Owls", TeamStatistics(TeamId("b"), 0, 0, 0, 0.0, 0, 0, 0, 0, null), null),
                 ),
                 highlights = listOf(
                     Highlight(HighlightMetric.SUCCESSFUL_TICHU, 4.0, listOf(TeamId("a"))),

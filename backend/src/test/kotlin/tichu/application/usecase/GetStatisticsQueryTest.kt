@@ -25,6 +25,9 @@ import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.domain.ForfeitCompensation
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
 import tichu.domain.TrendPoint
 import tichu.application.api.TeamStatisticsEntry
 import tichu.application.api.TournamentStatistics
@@ -42,6 +45,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 /**
  * Use-case tests for the admin's statistics read: the tournament's teams, rounds and
@@ -122,8 +126,8 @@ class GetStatisticsQueryTest {
         assertEquals(
             TournamentStatistics(
                 teams = listOf(
-                    TeamStatisticsEntry("Falcons", TeamStatistics(TeamId("a"), 0, 4, 0, 0.0, 0, 4, 0, 0, 130.0)),
-                    TeamStatisticsEntry("Owls", TeamStatistics(TeamId("b"), 0, 0, 0, 0.0, 0, 0, 0, 0, null)),
+                    TeamStatisticsEntry("Falcons", TeamStatistics(TeamId("a"), 0, 4, 0, 0.0, 0, 4, 0, 0, 130.0), null),
+                    TeamStatisticsEntry("Owls", TeamStatistics(TeamId("b"), 0, 0, 0, 0.0, 0, 0, 0, 0, null), null),
                 ),
                 highlights = listOf(
                     Highlight(HighlightMetric.SUCCESSFUL_TICHU, 4.0, listOf(TeamId("a"))),
@@ -150,6 +154,18 @@ class GetStatisticsQueryTest {
             assertEquals("Falcons", falcons.teamName, "status $status")
             assertEquals(4, falcons.statistics.successfulGrandTichu, "status $status")
         }
+    }
+
+    @Test
+    fun `a disqualified team's entry carries the withdrawal reason`() {
+        val owls = teamRepository.findById(TeamId("b"), tournamentId)!!
+        teamRepository.save(
+            owls.copy(withdrawal = Withdrawal(WithdrawalReason.DISQUALIFIED, ForfeitCompensation.NONE, 1, now, owner)),
+        )
+
+        val entries = query.get(tournamentId, owner).teams.associateBy { it.teamName }
+        assertEquals(WithdrawalReason.DISQUALIFIED, entries.getValue("Owls").withdrawalReason)
+        assertNull(entries.getValue("Falcons").withdrawalReason)
     }
 
     @Test

@@ -1,3 +1,5 @@
+import type { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
+
 /** The team statistics a Highlight can lead (mirrors the backend `HighlightMetric`). */
 export type HighlightMetric =
     | 'SUCCESSFUL_TICHU'
@@ -12,7 +14,7 @@ export type HighlightMetric =
  * One team's Team Statistics (glossary): call successes, bombs, double wins, Tichu calls made,
  * destroyed Tichus, Beschiss games and the Good Horse Ratio over the games of completed tables.
  * `bombsPerGame` is null while the team has no completed table; `goodHorseRatio` is null while
- * the team has no Victory Points.
+ * the team has no Victory Points. `withdrawalReason` is set once the team withdrew (ADR 0011).
  */
 export interface TeamStatistics {
     teamId: string;
@@ -26,6 +28,7 @@ export interface TeamStatistics {
     destroyedTichus: number;
     beschissGames: number;
     goodHorseRatio: number | null;
+    withdrawalReason: WithdrawalReason | null;
 }
 
 /** A team named by a Highlight or a Team Trend, resolved to its name so screens need no lookup. */

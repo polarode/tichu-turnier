@@ -160,6 +160,7 @@ data class TournamentStatisticsResponse(
 /**
  * One team's Team Statistics with its name; `bombsPerGame` is null when the team has no completed table yet.
  * `goodHorseRatio` is the summed Tichu Points over the summed Victory Points, null when the team has no Victory Points yet.
+ * `withdrawalReason` is `DISQUALIFIED` or `VOLUNTARY` once the team withdrew, null while it plays on.
  */
 data class TeamStatisticsResponse(
     val teamId: String,
@@ -173,6 +174,7 @@ data class TeamStatisticsResponse(
     val destroyedTichus: Int,
     val beschissGames: Int,
     val goodHorseRatio: Double?,
+    val withdrawalReason: String?,
 ) {
     companion object {
         fun from(entry: TeamStatisticsEntry): TeamStatisticsResponse = TeamStatisticsResponse(
@@ -187,6 +189,7 @@ data class TeamStatisticsResponse(
             destroyedTichus = entry.statistics.destroyedTichus,
             beschissGames = entry.statistics.beschissGames,
             goodHorseRatio = entry.statistics.goodHorseRatio,
+            withdrawalReason = entry.withdrawalReason?.name,
         )
     }
 }

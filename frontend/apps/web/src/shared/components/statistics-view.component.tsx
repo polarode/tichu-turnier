@@ -24,6 +24,7 @@ import {
 } from '@/shared/constants/statistics-columns.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import type { TranslationKey } from '@/shared/i18n/catalogs/en.ts';
+import { WithdrawalBadge } from '@/shared/components/withdrawal-badge.component.tsx';
 import { useStatisticsColumnsStore } from '@/shared/stores/statistics-columns.store.ts';
 
 interface StatisticsViewProps {
@@ -164,7 +165,17 @@ export function StatisticsView({ statistics }: StatisticsViewProps) {
         {
             id: 'team',
             header: t('statistics.team'),
-            cell: (team) => team.teamName,
+            cell: (team) => (
+                <>
+                    {team.teamName}
+                    {team.withdrawalReason ? (
+                        <WithdrawalBadge
+                            reason={team.withdrawalReason}
+                            className="ml-1.5 align-middle"
+                        />
+                    ) : null}
+                </>
+            ),
             sortValue: (team) => team.teamName,
             sortFirst: 'asc',
             rowHeader: true,

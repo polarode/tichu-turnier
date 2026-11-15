@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { WITHDRAWAL_REASONS } from '@/vocabulary/withdrawal-reason.enum.ts';
+
 /** zod schema of the statistics read (organizer, team and public share one body). */
 export const teamStatisticsDtoSchema = z.object({
     teamId: z.string(),
@@ -13,6 +15,8 @@ export const teamStatisticsDtoSchema = z.object({
     destroyedTichus: z.number().int().nonnegative(),
     beschissGames: z.number().int().nonnegative(),
     goodHorseRatio: z.number().nullable(),
+    // Why the team withdrew (ADR 0011), null while it plays on.
+    withdrawalReason: z.enum(WITHDRAWAL_REASONS).nullable(),
 });
 
 export const highlightDtoSchema = z.object({

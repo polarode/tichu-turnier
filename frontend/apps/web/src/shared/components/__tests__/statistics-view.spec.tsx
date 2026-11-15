@@ -17,6 +17,7 @@ import {
 import { installMatchMedia, type FakeMatchMedia } from '@/test-helpers/match-media.ts';
 import { renderWithProviders } from '@/test-helpers/render-with-providers.tsx';
 import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
+import { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 /**
  * The shared contract fixture: the backend asserts its API answers exactly `response`;
@@ -130,6 +131,24 @@ describe('StatisticsView', () => {
             ['Ravens', '2', '1', '1', '0', '4', '0,5', '0', '2', '78,9'],
             ['Wolves', '0', '0', '0', '0', '0', '—', '0', '0', '—'],
         ]);
+    });
+
+    it('names a withdrawn team with its reason beside the team name', () => {
+        const withdrawn: TournamentStatistics = {
+            ...statistics,
+            teams: statistics.teams.map((team) =>
+                team.teamId === 'team-owls'
+                    ? { ...team, withdrawalReason: WithdrawalReason.DISQUALIFIED }
+                    : team.teamId === 'team-ravens'
+                      ? { ...team, withdrawalReason: WithdrawalReason.VOLUNTARY }
+                      : team,
+            ),
+        };
+        renderWithProviders(<StatisticsView statistics={withdrawn} />);
+
+        expect(screen.getByText('Disqualifiziert').closest('tr')).toHaveTextContent('Owls');
+        expect(screen.getByText('Zurückgezogen').closest('tr')).toHaveTextContent('Ravens');
+        expect(screen.getAllByText(/Disqualifiziert|Zurückgezogen/)).toHaveLength(2);
     });
 
     it('orders the highlights by its own fixed order, whatever order the server sends', () => {

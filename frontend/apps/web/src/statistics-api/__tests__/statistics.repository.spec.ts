@@ -45,6 +45,7 @@ describe('StatisticsRepository', () => {
             destroyedTichus: 0,
             beschissGames: 1,
             goodHorseRatio: 93.33333333333333,
+            withdrawalReason: null,
         });
         expect(statistics.trends[1]!.points).toEqual([
             { roundNumber: 1, victoryPoints: 6 },
@@ -69,6 +70,7 @@ describe('StatisticsRepository', () => {
             destroyedTichus: 0,
             beschissGames: 0,
             goodHorseRatio: null,
+            withdrawalReason: null,
         });
     });
 

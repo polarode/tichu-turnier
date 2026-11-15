@@ -5,6 +5,7 @@ import tichu.domain.Highlight
 import tichu.domain.TeamStatistics
 import tichu.domain.TeamTrend
 import tichu.domain.TournamentId
+import tichu.domain.WithdrawalReason
 
 /** Inbound port (driving side). Controllers depend on this, never on the implementation. */
 interface GetStatistics {
@@ -24,8 +25,12 @@ data class TournamentStatistics(
     val trends: List<TeamTrend>,
 )
 
-/** One team's Team Statistics together with the team's name, which the screens show. */
+/**
+ * One team's Team Statistics together with the team's name, which the screens show.
+ * [withdrawalReason] marks a withdrawn team (ADR 0011), null while it plays on.
+ */
 data class TeamStatisticsEntry(
     val teamName: String,
     val statistics: TeamStatistics,
+    val withdrawalReason: WithdrawalReason?,
 )

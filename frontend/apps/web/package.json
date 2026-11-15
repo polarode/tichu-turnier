@@ -31,8 +31,8 @@
     },
     "devDependencies": {
         "@tanstack/react-query-devtools": "5.107.1",
-        "@tanstack/react-router-devtools": "1.167.2",
-        "@tanstack/router-plugin": "1.168.48",
+        "@tanstack/react-router-devtools": "1.167.3",
+        "@tanstack/router-plugin": "1.169.0",
         "axios-mock-adapter": "2.1.0"
     }
 }

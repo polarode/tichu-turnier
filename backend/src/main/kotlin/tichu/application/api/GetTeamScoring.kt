@@ -1,5 +1,6 @@
 package tichu.application.api
 
+import tichu.domain.ForfeitGame
 import tichu.domain.PlayerId
 import tichu.domain.ScheduledGame
 import tichu.domain.TeamId
@@ -41,7 +42,8 @@ interface GetTeamScoring {
  * what a grand Tichu call and a double win are worth
  * ([grandTichuBonus], [doubleWinBonus], so the form's live totals match the server), and the seated [teams]
  * (two, or three at the [trio] table) with their names and players — the matchup
- * label and the grid's roster — plus the [schedule] of who plays which game.
+ * label and the grid's roster — plus the [schedule] of who plays which game. [forfeits] are the
+ * table's Forfeit Games and [withdrawnTeamIds] its seated teams that withdrew (ADR 0011).
  */
 data class TeamTable(
     val tournamentId: TournamentId,
@@ -53,6 +55,8 @@ data class TeamTable(
     val teams: List<TeamTableTeam>,
     val trio: Boolean,
     val schedule: List<ScheduledGame>,
+    val forfeits: List<ForfeitGame>,
+    val withdrawnTeamIds: List<TeamId>,
 )
 
 data class TeamTableTeam(

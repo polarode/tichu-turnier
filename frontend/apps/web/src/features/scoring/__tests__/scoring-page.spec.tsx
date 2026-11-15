@@ -17,6 +17,8 @@ vi.mock('@/scoring-api/scoring.repository.ts', () => ({
         games: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+        confirm: vi.fn(),
+        retract: vi.fn(),
     },
 }));
 
@@ -33,6 +35,7 @@ const scoring = vi.mocked(ScoringRepository);
 const teamAuth = vi.mocked(TeamAuthRepository);
 
 const teamOverview = {
+    withdrawalReason: null,
     teamId: 'team-a',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
@@ -46,6 +49,8 @@ const teamOverview = {
 
 function table(overrides: Partial<TeamTable> = {}): TeamTable {
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tournamentId: 't-1',
         roundNumber: 1,
         tableNumber: 1,
@@ -1161,5 +1166,67 @@ describe('/team/score', () => {
         ).toBeInTheDocument();
         expect(screen.getByText('Ungespeicherte Eingabe wiederhergestellt.')).toBeInTheDocument();
         second.unmount();
+    });
+});
+
+describe('/team confirmation with a withdrawn opponent', () => {
+    // Team Beta withdrew after games 1 and 2: games 3 and 4 are Forfeit Games awarded to Alpha.
+    const withdrawnTable = () =>
+        table({
+            withdrawnTeamIds: ['team-b'],
+            forfeits: [3, 4].map((gameNumber) => ({
+                gameNumber,
+                withdrawnTeamId: 'team-b',
+                awardedTeamId: 'team-a',
+                victoryPoints: 2,
+                tichuPoints: 100,
+            })),
+        });
+
+    beforeEach(() => {
+        localStorage.clear();
+        scoring.currentTable.mockReset();
+        scoring.games.mockReset();
+        teamAuth.me.mockReset();
+        teamAuth.me.mockResolvedValue(teamOverview);
+    });
+
+    afterEach(() => {
+        localStorage.clear();
+    });
+
+    it('lets the remaining team confirm once its two games and the two forfeits are in', async () => {
+        scoring.currentTable.mockResolvedValue(withdrawnTable());
+        scoring.games.mockResolvedValue([1, 2].map((gameNumber) => recordedGame({ gameNumber })));
+
+        renderApp('/team');
+
+        expect(await screen.findByRole('button', { name: 'Alle Spiele bestätigen' })).toBeEnabled();
+    });
+
+    it('offers no entry for a forfeited game', async () => {
+        scoring.currentTable.mockResolvedValue(withdrawnTable());
+        scoring.games.mockResolvedValue([1, 2].map((gameNumber) => recordedGame({ gameNumber })));
+
+        renderApp('/team/score?game=3');
+
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 3' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('slider')).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Spiel speichern' })).toBeDisabled();
+    });
+
+    it('does not edit a game played against the withdrawn team', async () => {
+        scoring.currentTable.mockResolvedValue(withdrawnTable());
+        scoring.games.mockResolvedValue([1, 2].map((gameNumber) => recordedGame({ gameNumber })));
+
+        renderApp('/team/score?game=1');
+
+        expect(
+            await screen.findByRole('heading', { level: 2, name: 'Spiel 1' }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('slider')).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Spiel aktualisieren' })).toBeDisabled();
     });
 });

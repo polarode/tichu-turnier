@@ -50,7 +50,7 @@ class FinishTournamentCommand(
             )
         }
         val last = played.last()
-        if (!last.round.isComplete(last.confirmations)) {
+        if (!last.round.isComplete(last.confirmations, last.withdrawals.keys)) {
             throw RoundIncompleteException(
                 "Round ${last.round.number} of tournament ${tournamentId.value} still has tables to complete",
             )

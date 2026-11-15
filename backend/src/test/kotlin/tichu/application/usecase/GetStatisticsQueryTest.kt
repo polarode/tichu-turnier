@@ -63,7 +63,7 @@ class GetStatisticsQueryTest {
     private val query = GetStatisticsQuery(
         TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         teamRepository,
-        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
     )
 
     private fun team(id: String, name: String) = teamRepository.save(

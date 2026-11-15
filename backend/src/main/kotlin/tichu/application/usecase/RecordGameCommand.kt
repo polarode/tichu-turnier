@@ -10,6 +10,7 @@ import tichu.domain.Table
 import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableConfirmations
 import tichu.domain.TableKey
+import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
@@ -19,6 +20,7 @@ import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
 import tichu.vocabulary.GameConfirmedException
 import tichu.vocabulary.GameNotFoundException
+import tichu.vocabulary.TeamWithdrawnException
 import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
 
@@ -37,6 +39,9 @@ import org.springframework.transaction.annotation.Transactional
  * round table's lock first and is rejected once the table is frozen (ADR 0006).
  * Games are only written while the tournament is ACTIVE; the status check runs
  * before the freeze check, so a finished tournament answers TOURNAMENT_NOT_ACTIVE.
+ * A withdrawn team records nothing, and no one creates or edits a game whose matchup
+ * includes a team withdrawn in this round: its played games stand but are frozen, and
+ * its owed games are Forfeit Games (ADR 0011). Both answer TEAM_WITHDRAWN.
  * Versioning is optimistic: create assigns version 1, update carries the version
  * and the first commit wins.
  */
@@ -87,7 +92,17 @@ class RecordGameCommand(
                 "Tournament ${tournamentId.value} is ${tournament.status}; games are only recorded while it is active",
             )
         }
-        requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table)
+        val withdrawals = withdrawalsOf(teamRepository, tournamentId)
+        if (principal.teamId in withdrawals) {
+            throw TeamWithdrawnException("Team ${principal.teamId.value} withdrew; it can no longer record games")
+        }
+        val withdrawnHere = withdrawals.filterValues { it.roundNumber == round.number }.keys
+        if (table.playingTeams(request.gameNumber).any { it in withdrawnHere }) {
+            throw TeamWithdrawnException(
+                "Game ${request.gameNumber} at table ${table.id.value} includes a withdrawn team and is frozen",
+            )
+        }
+        requireNotFrozen(TableKey(tournamentId, round.number, table.id.value), table, withdrawals.keys)
 
         val baseGame = validatedGame(teamRepository, tournament, round, table, request)
 
@@ -110,9 +125,9 @@ class RecordGameCommand(
      * write once any team confirmed: games freeze at the first confirmation
      * (ADR 0006). Under the lock, no confirmation can commit before this write.
      */
-    private fun requireNotFrozen(key: TableKey, table: Table) {
+    private fun requireNotFrozen(key: TableKey, table: Table, withdrawn: Set<TeamId>) {
         roundRepository.lockTable(key)
-        val confirmations = TableConfirmations(table, confirmationRepository.findByTable(key))
+        val confirmations = TableConfirmations(table, confirmationRepository.findByTable(key), withdrawn)
         if (confirmations.isFrozen) {
             throw GameConfirmedException(
                 "Table ${table.id.value} is ${confirmations.status.name.lowercase()}; its games are frozen",

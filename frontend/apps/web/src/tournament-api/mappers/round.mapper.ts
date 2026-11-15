@@ -1,5 +1,6 @@
 import type { Round, TableOverview } from '@/domain/round.domain.ts';
 import {
+    forfeitGameDtoToDomain,
     mapSeated,
     recordedGameDtoToDomain,
     scheduledGameDtoToDomain,
@@ -17,6 +18,8 @@ export function tableOverviewDtoToDomain(dto: TableOverviewDto): TableOverview {
         gameCount: dto.gameCount,
         schedule: dto.schedule.map(scheduledGameDtoToDomain),
         games: dto.games.map(recordedGameDtoToDomain),
+        forfeits: dto.forfeits.map(forfeitGameDtoToDomain),
+        withdrawnTeamIds: [...dto.withdrawnTeamIds],
     };
 }
 

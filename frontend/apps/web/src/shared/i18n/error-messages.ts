@@ -50,6 +50,11 @@ export const ERROR_MESSAGE_KEYS: Record<ApiErrorCode, TranslationKey> = {
     TABLE_INCOMPLETE: 'error.tableIncomplete',
     TABLE_COMPLETED: 'error.tableCompleted',
     TABLE_NOT_COMPLETED: 'error.tableNotCompleted',
+    TEAM_ALREADY_WITHDRAWN: 'error.teamAlreadyWithdrawn',
+    TEAM_NOT_WITHDRAWN: 'error.teamNotWithdrawn',
+    WITHDRAWAL_FINAL: 'error.withdrawalFinal',
+    TEAM_WITHDRAWN: 'error.teamWithdrawn',
+    TOO_FEW_ACTIVE_TEAMS: 'error.tooFewActiveTeams',
 };
 
 /** The catalog key for a backend error code; never returns a missing key. */

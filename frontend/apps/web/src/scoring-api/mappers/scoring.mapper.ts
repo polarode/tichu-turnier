@@ -1,4 +1,5 @@
 import type {
+    ForfeitGame,
     GameOutcome,
     GameWriteInput,
     RecordedGame,
@@ -12,6 +13,7 @@ import type {
 } from '@/domain/game.domain.ts';
 import type {
     ConfirmRequestDto,
+    ForfeitGameDto,
     GameRequestDto,
     RecordedGameDto,
     ScheduledGameDto,
@@ -45,6 +47,18 @@ export function teamTableDtoToDomain(dto: TeamTableDto): TeamTable {
         teams: mapSeated(dto.teams, teamTableTeamDtoToDomain),
         trio: dto.trio,
         schedule: dto.schedule.map(scheduledGameDtoToDomain),
+        forfeits: dto.forfeits.map(forfeitGameDtoToDomain),
+        withdrawnTeamIds: [...dto.withdrawnTeamIds],
+    };
+}
+
+export function forfeitGameDtoToDomain(dto: ForfeitGameDto): ForfeitGame {
+    return {
+        gameNumber: dto.gameNumber,
+        withdrawnTeamId: dto.withdrawnTeamId,
+        awardedTeamId: dto.awardedTeamId,
+        victoryPoints: dto.victoryPoints,
+        tichuPoints: dto.tichuPoints,
     };
 }
 

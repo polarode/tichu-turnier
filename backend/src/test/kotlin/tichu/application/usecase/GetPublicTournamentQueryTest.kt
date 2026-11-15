@@ -42,6 +42,7 @@ class GetPublicTournamentQueryTest {
         roundRepository,
         InMemoryGameRepository(),
         InMemoryTableConfirmationRepository(),
+        teamRepository,
     )
 
     private val query = GetPublicTournamentQuery(tournamentRepository, teamRepository, playedRounds)

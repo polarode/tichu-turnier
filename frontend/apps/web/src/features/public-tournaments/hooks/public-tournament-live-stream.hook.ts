@@ -1,4 +1,7 @@
-import { publicTournamentQueryKey } from '@/shared/constants/query-keys.ts';
+import {
+    publicStatisticsQueryKey,
+    publicTournamentQueryKey,
+} from '@/shared/constants/query-keys.ts';
 import { useLiveStream } from '@/shared/hooks/use-live-stream.hook.ts';
 import { type SseSubscription } from '@/shared/sse/sse-client.ts';
 import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
@@ -7,6 +10,7 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 /**
  * The events the anonymous public stream carries. Each one changes the public pairings:
  * a new round, a finish (the status) or the publish (the Final Ranking and table totals).
+ * A withdrawal changes the standings and the statistics as well as the pairings.
  */
 function subscriptionsFor(tournamentId: string): SseSubscription[] {
     const detail = publicTournamentQueryKey(tournamentId);
@@ -14,6 +18,10 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
         { event: TournamentEventType.ROUND_STARTED, queryKeys: [detail] },
         { event: TournamentEventType.TOURNAMENT_FINISHED, queryKeys: [detail] },
         { event: TournamentEventType.RESULTS_PUBLISHED, queryKeys: [detail] },
+        {
+            event: TournamentEventType.TEAM_WITHDRAWAL_CHANGED,
+            queryKeys: [detail, publicStatisticsQueryKey(tournamentId)],
+        },
     ];
 }
 

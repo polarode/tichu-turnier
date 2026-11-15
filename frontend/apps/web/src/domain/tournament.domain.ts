@@ -1,5 +1,6 @@
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
 import type { OrganizerRole } from '@/vocabulary/organizer-role.enum.ts';
+import type { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
 import type { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
 
 /**
@@ -83,6 +84,8 @@ export interface PublicTeam {
     players: PublicPlayer[];
     /** The team's Table Totals at this table; present only once the tournament is published. */
     totals?: PublicTableTotals;
+    /** Why the team withdrew, visible to everyone (ADR 0011); null while it plays on. */
+    withdrawalReason: WithdrawalReason | null;
 }
 
 /** A table of a public round: two teams, or three at the trio table. */

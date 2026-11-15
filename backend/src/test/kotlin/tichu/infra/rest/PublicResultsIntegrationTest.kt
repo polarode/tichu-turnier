@@ -205,14 +205,14 @@ class PublicResultsIntegrationTest(
             round["tables"].forEach { table ->
                 assertKeys(table, setOf("tableNumber", "trio", "teams"), "table")
                 table["teams"].forEach { team ->
-                    assertKeys(team, setOf("id", "name", "players", "totals"), "team")
+                    assertKeys(team, setOf("id", "name", "players", "totals", "withdrawalReason"), "team")
                     team["players"].forEach { assertKeys(it, setOf("id", "name"), "player") }
                     assertKeys(team["totals"], setOf("victoryPoints", "tichuPoints"), "totals")
                 }
             }
         }
         body["finalRanking"].forEach {
-            assertKeys(it, setOf("rank", "teamId", "teamName", "gamesPlayed", "victoryPoints", "tichuPoints"), "ranking entry")
+            assertKeys(it, setOf("rank", "teamId", "teamName", "gamesPlayed", "victoryPoints", "tichuPoints", "withdrawalReason"), "ranking entry")
         }
         val raw = body.toString().lowercase()
         listOf(

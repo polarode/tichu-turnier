@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button, buttonVariants } from '@tichu/ui/button.tsx';
 
-import { isCompleted, isFrozen, type RecordedGame, type TeamTable } from '@/domain/game.domain.ts';
+import { isCompleted, isFrozen, isSettled, type TeamTable } from '@/domain/game.domain.ts';
 import { GameResults } from '@/features/scoring/components/game-results.component.tsx';
 import {
     useConfirmTable,
@@ -122,11 +122,10 @@ function ConfirmationPanel({
 
     const { status, confirmedTeamIds } = table.confirmation;
     const games = gamesQuery.data;
-    const byNumber = new Map<number, RecordedGame>(
-        (games ?? []).map((game) => [game.gameNumber, game]),
-    );
+    // A Forfeit Game (ADR 0011) is settled without a recorded game, so it counts as entered.
     const allEntered =
-        games !== undefined && table.schedule.every((game) => byNumber.has(game.gameNumber));
+        games !== undefined &&
+        table.schedule.every((game) => isSettled(game.gameNumber, games, table.forfeits));
     const viewerConfirmed = confirmedTeamIds.includes(viewerTeamId);
 
     const heading = `${t('rounds.round')} ${table.roundNumber} · ${tableHeading(table.tableNumber, t)}`;
@@ -163,6 +162,8 @@ function ConfirmationPanel({
                     teams={table.teams.map((team) => ({ id: team.teamId, name: team.teamName }))}
                     schedule={table.schedule}
                     games={games}
+                    forfeits={table.forfeits}
+                    withdrawnTeamIds={table.withdrawnTeamIds}
                     // A tile opens its game, for entry or (frozen, read-only) to view its details.
                     gameAction={{
                         kind: 'link',

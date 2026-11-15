@@ -37,6 +37,14 @@ const queryKeysByEvent: Record<TournamentEventType, readonly QueryKey[]> = {
     [TournamentEventType.RESULTS_PUBLISHED]: [teamOverviewQueryKey(), teamFinalRankingQueryKey()],
     // Organizer changes are not part of the team's view; the team stream never sends them.
     [TournamentEventType.ORGANIZERS_CHANGED]: [],
+    // A withdrawal changes the team's reason, its current table's forfeits and the final ranking.
+    // An undo also deletes the table's confirmations, so the games are refetched too.
+    [TournamentEventType.TEAM_WITHDRAWAL_CHANGED]: [
+        teamOverviewQueryKey(),
+        teamCurrentTableQueryKey(),
+        teamGamesPrefixQueryKey(),
+        teamFinalRankingQueryKey(),
+    ],
 };
 
 const TEAM_SUBSCRIPTIONS: SseSubscription[] = Object.entries(queryKeysByEvent).map(

@@ -61,7 +61,7 @@ class GetPublicStatisticsQueryTest {
     private val query = GetPublicStatisticsQuery(
         tournamentRepository,
         teamRepository,
-        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
     )
 
     private fun team(id: String, name: String) = teamRepository.save(

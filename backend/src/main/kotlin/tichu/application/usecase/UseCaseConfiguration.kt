@@ -37,6 +37,7 @@ import tichu.application.api.RejectAdmin
 import tichu.application.api.RemoveCoOrganizer
 import tichu.application.api.RevokeInvite
 import tichu.application.api.UpdateTeam
+import tichu.application.api.UndoWithdrawal
 import tichu.application.api.UpdateTournament
 import tichu.application.api.LoginAdmin
 import tichu.application.api.LogoutAdmin
@@ -49,6 +50,7 @@ import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
+import tichu.application.api.WithdrawTeam
 import tichu.domain.AdminInviteRepository
 import tichu.domain.AdminSessionRepository
 import tichu.domain.AdminUserRepository
@@ -140,7 +142,8 @@ class UseCaseConfiguration(
         roundRepository: RoundRepository,
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
-    ): PlayedRoundsReader = PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository)
+        teamRepository: TeamRepository,
+    ): PlayedRoundsReader = PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository)
 
     @Bean
     fun startNextRound(
@@ -180,7 +183,8 @@ class UseCaseConfiguration(
         roundRepository: RoundRepository,
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
-    ): ListRounds = ListRoundsQuery(tournamentAccess, roundRepository, gameRepository, confirmationRepository)
+        teamRepository: TeamRepository,
+    ): ListRounds = ListRoundsQuery(tournamentAccess, roundRepository, gameRepository, confirmationRepository, teamRepository)
 
     @Bean
     fun getStandings(
@@ -251,16 +255,44 @@ class UseCaseConfiguration(
         )
 
     @Bean
+    fun withdrawTeam(
+        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
+        roundRepository: RoundRepository,
+        teamRepository: TeamRepository,
+        clock: Clock,
+        tournamentEvents: TournamentEvents,
+    ): WithdrawTeam =
+        WithdrawTeamCommand(tournamentRepository, tournamentAccess, roundRepository, teamRepository, clock, tournamentEvents)
+
+    @Bean
+    fun undoWithdrawal(
+        tournamentRepository: TournamentRepository,
+        tournamentAccess: TournamentAccess,
+        roundRepository: RoundRepository,
+        teamRepository: TeamRepository,
+        gameRepository: GameRepository,
+        confirmationRepository: TableConfirmationRepository,
+        tournamentEvents: TournamentEvents,
+    ): UndoWithdrawal =
+        UndoWithdrawalCommand(
+            tournamentRepository, tournamentAccess, roundRepository, teamRepository, gameRepository,
+            confirmationRepository, tournamentEvents,
+        )
+
+    @Bean
     fun confirmTable(
         tournamentRepository: TournamentRepository,
         roundRepository: RoundRepository,
+        teamRepository: TeamRepository,
         gameRepository: GameRepository,
         confirmationRepository: TableConfirmationRepository,
         clock: Clock,
         tournamentEvents: TournamentEvents,
     ): ConfirmTable =
         ConfirmTableCommand(
-            roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock, tournamentEvents,
+            roundRepository, tournamentRepository, teamRepository, gameRepository, confirmationRepository, clock,
+            tournamentEvents,
         )
 
     @Bean

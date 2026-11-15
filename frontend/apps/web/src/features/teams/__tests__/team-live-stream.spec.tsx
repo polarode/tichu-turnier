@@ -36,6 +36,7 @@ const currentTable = vi.mocked(ScoringRepository.currentTable);
 const games = vi.mocked(ScoringRepository.games);
 
 const overview = {
+    withdrawalReason: null,
     teamId: 'team-1',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
@@ -49,6 +50,8 @@ const overview = {
 
 function seatedTable(): TeamTable {
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tournamentId: 't-1',
         roundNumber: 1,
         tableNumber: 2,
@@ -90,6 +93,7 @@ const finalRows = [
         gamesPlayed: 12,
         victoryPoints: 9,
         tichuPoints: 450,
+        withdrawalReason: null,
     },
     {
         rank: 2,
@@ -98,6 +102,7 @@ const finalRows = [
         gamesPlayed: 12,
         victoryPoints: 7,
         tichuPoints: 300,
+        withdrawalReason: null,
     },
 ];
 
@@ -176,6 +181,27 @@ describe('/team live stream', () => {
 
         await waitFor(() => expect(me.mock.calls.length).toBeGreaterThan(before.me));
         await waitFor(() => expect(currentTable.mock.calls.length).toBeGreaterThan(before.table));
+    });
+
+    it('refetches the overview, the current table and its games on TEAM_WITHDRAWAL_CHANGED', async () => {
+        me.mockResolvedValue(overview);
+        renderApp('/team', { initialLocale: 'en' });
+        const source = await openedSource();
+        await screen.findByText('Team Alpha');
+        await waitFor(() => expect(games).toHaveBeenCalledTimes(1));
+        const before = callCounts();
+
+        act(() =>
+            source.emit(
+                TournamentEventType.TEAM_WITHDRAWAL_CHANGED,
+                eventPayload(TournamentEventType.TEAM_WITHDRAWAL_CHANGED),
+            ),
+        );
+
+        // An undo deletes the table's confirmations, so the games are refetched too.
+        await waitFor(() => expect(me.mock.calls.length).toBeGreaterThan(before.me));
+        await waitFor(() => expect(currentTable.mock.calls.length).toBeGreaterThan(before.table));
+        await waitFor(() => expect(games.mock.calls.length).toBeGreaterThan(before.games));
     });
 
     it('refetches the overview on RESULTS_PUBLISHED and shows the Final Ranking once published, then closes the stream', async () => {

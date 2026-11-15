@@ -1,5 +1,7 @@
 package tichu.domain
 
+import tichu.testsupport.teamOf
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -45,6 +47,9 @@ class HighlightTest {
         goodHorseRatio = goodHorseRatio,
     )
 
+    /** The teams of the stats fixtures a..e, none disqualified. */
+    private val activeTeams = listOf("a", "b", "c", "d", "e").map { teamOf(TournamentId("t-1"), it) }
+
     @Test
     fun `each metric highlights every team tied for its maximum, in input order`() {
         val highlights = Highlight.of(
@@ -55,6 +60,7 @@ class HighlightTest {
                 stats("d", small = 0, grand = 0, bombs = 1, doubleWins = 0),
                 stats("e", small = 0, grand = 0, bombs = 0, doubleWins = 0),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -74,6 +80,7 @@ class HighlightTest {
                 stats("a", small = 1, bombs = 0, doubleWins = 0),
                 stats("b", small = 0, bombs = 0, doubleWins = 0),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -92,6 +99,7 @@ class HighlightTest {
                 stats("d", tichuCalls = 0, destroyedTichus = 0, beschissGames = 0),
                 stats("e", tichuCalls = 0, destroyedTichus = 1, beschissGames = 0),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -111,6 +119,7 @@ class HighlightTest {
                 stats("b", goodHorseRatio = -0.5),
                 stats("c", goodHorseRatio = 0.0),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -128,6 +137,7 @@ class HighlightTest {
                 stats("c", goodHorseRatio = -0.5),
                 stats("d", goodHorseRatio = 0.0),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -143,6 +153,7 @@ class HighlightTest {
                 stats("a", goodHorseRatio = 0.8),
                 stats("b", goodHorseRatio = 0.0),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -159,6 +170,7 @@ class HighlightTest {
                 stats("b", goodHorseRatio = 0.8),
                 stats("c", goodHorseRatio = null),
             ),
+            activeTeams,
         )
 
         assertEquals(
@@ -174,8 +186,27 @@ class HighlightTest {
                 stats("a", goodHorseRatio = null),
                 stats("b", goodHorseRatio = null),
             ),
+            activeTeams,
         )
 
         assertEquals(emptyList(), highlights)
+    }
+
+    @Test
+    fun `a disqualified team never holds a highlight, the next team does`() {
+        val tournamentId = TournamentId("t-1")
+        val disqualified = teamOf(tournamentId, "a").copy(
+            withdrawal = Withdrawal(WithdrawalReason.DISQUALIFIED, ForfeitCompensation.NONE, 1, Instant.EPOCH, AdminUserId("admin-1")),
+        )
+
+        val highlights = Highlight.of(
+            listOf(stats("a", small = 3), stats("b", small = 2), stats("c", small = 1)),
+            listOf(disqualified, teamOf(tournamentId, "b"), teamOf(tournamentId, "c")),
+        )
+
+        assertEquals(
+            listOf(Highlight(HighlightMetric.SUCCESSFUL_TICHU, 2.0, listOf(TeamId("b")))),
+            highlights,
+        )
     }
 }

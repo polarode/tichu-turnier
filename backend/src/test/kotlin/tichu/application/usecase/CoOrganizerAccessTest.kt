@@ -74,6 +74,7 @@ class CoOrganizerAccessTest {
         roundRepository,
         gameRepository,
         confirmationRepository,
+        teamRepository,
     )
 
     @BeforeEach

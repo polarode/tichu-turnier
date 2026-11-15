@@ -14,6 +14,7 @@ const teamDto = {
         { id: 'p-1', teamId: 'team-1', name: 'Alice' },
         { id: 'p-2', teamId: 'team-1', name: 'Bob' },
     ],
+    withdrawal: null,
 };
 
 const writeRequest: TeamWriteInput = {

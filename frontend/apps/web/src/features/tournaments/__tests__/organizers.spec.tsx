@@ -63,7 +63,7 @@ function team(id: string, name: string): Team {
         { id: `${id}-p1`, teamId: id, name: `${name} 1` },
         { id: `${id}-p2`, teamId: id, name: `${name} 2` },
     ];
-    return { id, tournamentId: 't-1', name, players };
+    return { withdrawal: null, id, tournamentId: 't-1', name, players };
 }
 
 function organizers(...coEmails: string[]): Organizers {

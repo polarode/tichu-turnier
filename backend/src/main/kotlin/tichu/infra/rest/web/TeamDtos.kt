@@ -70,6 +70,8 @@ data class TeamResponseDto(
     val tournamentId: String,
     val name: String,
     val players: List<PlayerResponseDto>,
+    /** The team's Withdrawal (ADR 0011); null while it plays on. */
+    val withdrawal: WithdrawalResponseDto?,
 ) {
     companion object {
         fun from(team: Team): TeamResponseDto = TeamResponseDto(
@@ -77,6 +79,7 @@ data class TeamResponseDto(
             tournamentId = team.tournamentId.value,
             name = team.name,
             players = team.players.map(PlayerResponseDto::from),
+            withdrawal = team.withdrawal?.let(WithdrawalResponseDto::from),
         )
     }
 }
@@ -93,6 +96,8 @@ data class TeamOverviewResponseDto(
     val tournamentStatus: TournamentStatus,
     val teamName: String,
     val players: List<PlayerResponseDto>,
+    /** `DISQUALIFIED` or `VOLUNTARY` once the team withdrew, so its team space turns read-only; null while it plays on. */
+    val withdrawalReason: String?,
 ) {
     companion object {
         fun from(overview: TeamOverview): TeamOverviewResponseDto = TeamOverviewResponseDto(
@@ -102,6 +107,7 @@ data class TeamOverviewResponseDto(
             tournamentStatus = overview.tournamentStatus,
             teamName = overview.team.name,
             players = overview.team.players.map(PlayerResponseDto::from),
+            withdrawalReason = overview.team.withdrawal?.reason?.name,
         )
     }
 }

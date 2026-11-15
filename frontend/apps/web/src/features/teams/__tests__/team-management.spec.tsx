@@ -57,7 +57,7 @@ function team(id: string, name: string, playerOne: string, playerTwo: string): T
         { id: `${id}-p1`, teamId: id, name: playerOne },
         { id: `${id}-p2`, teamId: id, name: playerTwo },
     ];
-    return { id, tournamentId: 't-1', name, players };
+    return { withdrawal: null, id, tournamentId: 't-1', name, players };
 }
 
 function duplicateNameError(field: string): ApiError {

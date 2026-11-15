@@ -4,7 +4,9 @@ import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
+import tichu.domain.Withdrawal
 import tichu.vocabulary.DuplicateTeamNameException
+import tichu.vocabulary.NotFoundException
 import org.postgresql.util.PSQLException
 import org.springframework.dao.DataIntegrityViolationException
 
@@ -96,6 +98,16 @@ class JpaTeamRepository(
 
     override fun delete(teamId: TeamId, tournamentId: TournamentId) {
         springDataTeamRepository.deleteByIdAndTournamentId(teamId.value, tournamentId.value)
+    }
+
+    /**
+     * Writes only the team row's withdrawal columns. Players are not deleted or re-inserted,
+     * so the game participants that reference them survive (V13 cascades on player delete).
+     */
+    override fun updateWithdrawal(teamId: TeamId, tournamentId: TournamentId, withdrawal: Withdrawal?) {
+        val team = springDataTeamRepository.findByIdAndTournamentId(teamId.value, tournamentId.value)
+            ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
+        springDataTeamRepository.save(team.withWithdrawal(withdrawal))
     }
 
     /** Loads the players of each team and reassembles the domain aggregates. */

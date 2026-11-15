@@ -13,6 +13,7 @@ import { bodyRows, columnHeaders } from '@/test-helpers/table-rows.ts';
  */
 const entries: StandingsEntry[] = [
     {
+        withdrawalReason: null,
         rank: 1,
         teamId: 'ravens',
         teamName: 'Ravens',
@@ -21,6 +22,7 @@ const entries: StandingsEntry[] = [
         tichuPoints: 250,
     },
     {
+        withdrawalReason: null,
         rank: 2,
         teamId: 'badgers',
         teamName: 'Badgers',
@@ -29,6 +31,7 @@ const entries: StandingsEntry[] = [
         tichuPoints: 200,
     },
     {
+        withdrawalReason: null,
         rank: 2,
         teamId: 'falcons',
         teamName: 'Falcons',
@@ -37,6 +40,7 @@ const entries: StandingsEntry[] = [
         tichuPoints: 200,
     },
     {
+        withdrawalReason: null,
         rank: 4,
         teamId: 'owls',
         teamName: 'Owls',
@@ -117,6 +121,66 @@ describe('StandingsTable', () => {
             'ascending',
         );
         expect(bodyRows(table)).toEqual(SERVER_ORDER);
+    });
+
+    it('keeps a disqualified team without a rank last in both rank directions', async () => {
+        const user = userEvent.setup();
+        const withCheats: StandingsEntry[] = [
+            {
+                withdrawalReason: 'DISQUALIFIED',
+                rank: null,
+                teamId: 'cheats',
+                teamName: 'Cheats',
+                gamesPlayed: 1,
+                victoryPoints: 2,
+                tichuPoints: 100,
+            },
+            ...entries.slice(0, 2),
+        ];
+        renderWithProviders(<StandingsTable entries={withCheats} caption="Rangliste" />);
+        const table = standingsTable();
+        const rankHeader = within(table).getByRole('button', { name: 'Platz' });
+
+        const teamOrder = () => bodyRows(table).map((row) => row[0]);
+
+        await user.click(rankHeader);
+        expect(teamOrder()).toEqual(['Ravens', 'Badgers', 'CheatsDisqualifiziert']);
+
+        await user.click(rankHeader);
+        expect(teamOrder()).toEqual(['Badgers', 'Ravens', 'CheatsDisqualifiziert']);
+    });
+
+    it('marks a disqualified team with no rank and a voluntarily withdrawn team with its rank', () => {
+        const withdrawn: StandingsEntry[] = [
+            {
+                withdrawalReason: 'VOLUNTARY',
+                rank: 2,
+                teamId: 'badgers',
+                teamName: 'Badgers',
+                gamesPlayed: 2,
+                victoryPoints: 4,
+                tichuPoints: 200,
+            },
+            {
+                withdrawalReason: 'DISQUALIFIED',
+                rank: null,
+                teamId: 'cheats',
+                teamName: 'Cheats',
+                gamesPlayed: 1,
+                victoryPoints: 2,
+                tichuPoints: 100,
+            },
+        ];
+        renderWithProviders(<StandingsTable entries={withdrawn} caption="Rangliste" />);
+        const table = standingsTable();
+
+        const badgers = within(table).getByRole('row', { name: /Badgers/ });
+        expect(within(badgers).getByText('Zurückgezogen')).toBeInTheDocument();
+        expect(within(badgers).getAllByRole('cell')[0]!.textContent).toBe('2');
+
+        const cheats = within(table).getByRole('row', { name: /Cheats/ });
+        expect(within(cheats).getByText('Disqualifiziert')).toBeInTheDocument();
+        expect(within(cheats).getAllByRole('cell')[0]!.textContent).not.toMatch(/\d/);
     });
 
     it('keeps the own-team row marked aria-current under a sort', async () => {

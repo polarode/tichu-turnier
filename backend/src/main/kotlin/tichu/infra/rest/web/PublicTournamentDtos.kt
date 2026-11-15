@@ -57,12 +57,14 @@ data class PublicTournamentDetailResponse(
 
 /** One line of the public Final Ranking; shared ranks repeat the number (ADR 0008, S9c). */
 data class PublicFinalRankingEntryResponse(
-    val rank: Int,
+    val rank: Int?,
     val teamId: String,
     val teamName: String,
     val gamesPlayed: Int,
     val victoryPoints: Int,
     val tichuPoints: Int,
+    /** `DISQUALIFIED` or `VOLUNTARY` for a withdrawn team, null otherwise (visible to everyone, ADR 0011). */
+    val withdrawalReason: String?,
 ) {
     companion object {
         fun from(entry: PublicFinalRankingEntry): PublicFinalRankingEntryResponse = PublicFinalRankingEntryResponse(
@@ -72,6 +74,7 @@ data class PublicFinalRankingEntryResponse(
             gamesPlayed = entry.gamesPlayed,
             victoryPoints = entry.victoryPoints,
             tichuPoints = entry.tichuPoints,
+            withdrawalReason = entry.withdrawalReason?.name,
         )
     }
 }
@@ -109,6 +112,8 @@ data class PublicTeamResponse(
     /** The team's Table Totals at this table; omitted (not null) unless published and completed. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     val totals: PublicTableTotalResponse? = null,
+    /** `DISQUALIFIED` or `VOLUNTARY` once the team withdrew, null otherwise (visible to everyone, ADR 0011). */
+    val withdrawalReason: String?,
 ) {
     companion object {
         fun from(team: PublicTeam): PublicTeamResponse = PublicTeamResponse(
@@ -116,6 +121,7 @@ data class PublicTeamResponse(
             name = team.name,
             players = team.players.map(PublicPlayerResponse::from),
             totals = team.totals?.let(PublicTableTotalResponse::from),
+            withdrawalReason = team.withdrawalReason?.name,
         )
     }
 }

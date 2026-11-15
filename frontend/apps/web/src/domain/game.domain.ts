@@ -33,6 +33,19 @@ export interface ScheduledGame {
 }
 
 /**
+ * A game that was never played because one of its teams withdrew (ADR 0011). Shown as
+ * forfeited; it counts toward Victory and Tichu Points only. [awardedTeamId] is null when
+ * nobody is awarded, and then both points are 0.
+ */
+export interface ForfeitGame {
+    gameNumber: number;
+    withdrawnTeamId: string;
+    awardedTeamId: string | null;
+    victoryPoints: number;
+    tichuPoints: number;
+}
+
+/**
  * A table's confirmation state (ADR 0006): the derived [status] and the teams
  * that confirmed, in seat order. Games are read-only unless the table is PLAYING.
  */
@@ -67,6 +80,10 @@ export interface TeamTable {
     teams: SeatedTeams<TeamTableTeam>;
     trio: boolean;
     schedule: readonly ScheduledGame[];
+    /** The table's Forfeit Games (ADR 0011); empty unless a seated team withdrew. */
+    forfeits: readonly ForfeitGame[];
+    /** The seated teams that withdrew; their games are forfeited, not played. */
+    withdrawnTeamIds: readonly string[];
 }
 
 export interface TeamTableTeam {
@@ -91,6 +108,32 @@ export function matchupOf(table: TeamTable, gameNumber: number): Matchup {
     if (!first || !second)
         throw new Error(`Game ${gameNumber} is not on table ${table.tableNumber}'s schedule`);
     return [first, second];
+}
+
+/**
+ * Whether a scheduled game is locked by a withdrawal (ADR 0011): one of its two teams
+ * withdrew, so the game is a Forfeit Game or stays read-only, and nothing is entered for it.
+ */
+export function isLockedByWithdrawal(
+    scheduled: ScheduledGame,
+    withdrawnTeamIds: readonly string[],
+): boolean {
+    return scheduled.teamIds.some((teamId) => withdrawnTeamIds.includes(teamId));
+}
+
+/**
+ * Whether game [gameNumber] is settled (ADR 0011): recorded or forfeited, so nothing is left
+ * to enter for it. A game neither recorded nor forfeited is still missing.
+ */
+export function isSettled(
+    gameNumber: number,
+    games: readonly RecordedGame[],
+    forfeits: readonly ForfeitGame[],
+): boolean {
+    return (
+        games.some((game) => game.gameNumber === gameNumber) ||
+        forfeits.some((forfeit) => forfeit.gameNumber === gameNumber)
+    );
 }
 
 /** Whether [teamId] sits out game [gameNumber] at [table] (only ever true at a trio table). */

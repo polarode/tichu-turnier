@@ -4,6 +4,7 @@ import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
 import tichu.domain.Game
 import tichu.domain.GameKey
+import tichu.domain.ForfeitCompensation
 import tichu.domain.Pairing
 import tichu.domain.Player
 import tichu.domain.PlayerId
@@ -23,6 +24,8 @@ import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
@@ -58,7 +61,7 @@ class GetStandingsQueryTest {
     private val query = GetStandingsQuery(
         TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         teamRepository,
-        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
     )
 
     private fun team(id: String, name: String) = teamRepository.save(
@@ -141,5 +144,29 @@ class GetStandingsQueryTest {
     @Test
     fun `a foreign admin cannot read another admin's standings`() {
         assertFailsWith<NotFoundException> { query.get(tournamentId, AdminUserId("admin-intruder")) }
+    }
+
+    @Test
+    fun `a withdrawn team's forfeit games add victory and tichu points to the opponent, not to gamesPlayed`() {
+        confirm("a", "b")
+        team("c", "Hawks").let { hawks ->
+            teamRepository.save(hawks.copy(withdrawal = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.FULL, 2, now, owner)))
+        }
+        team("d", "Kites")
+        roundRepository.save(
+            Round(RoundId("r-2"), tournamentId, 2, Pairing(listOf(Table(TableId(2), listOf(TeamId("c"), TeamId("d")))))),
+        )
+        confirmationRepository.add(TableKey(tournamentId, 2, 2), TeamId("d"), now)
+
+        // Hawks withdrew before playing table 2: its four games are forfeits, 2 VP and 100 TP each for Kites.
+        assertEquals(
+            listOf(
+                StandingsEntry(1, TeamTotals(TeamId("a"), "Falcons", 4, 8, 640)),
+                StandingsEntry(2, TeamTotals(TeamId("d"), "Kites", 0, 8, 400)),
+                StandingsEntry(3, TeamTotals(TeamId("b"), "Owls", 4, 0, 160)),
+                StandingsEntry(4, TeamTotals(TeamId("c"), "Hawks", 0, 0, 0, WithdrawalReason.VOLUNTARY)),
+            ),
+            query.get(tournamentId, owner).entries,
+        )
     }
 }

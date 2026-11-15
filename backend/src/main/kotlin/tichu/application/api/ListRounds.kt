@@ -1,8 +1,10 @@
 package tichu.application.api
 
 import tichu.domain.AdminUserId
+import tichu.domain.ForfeitGame
 import tichu.domain.Round
 import tichu.domain.Table
+import tichu.domain.TeamId
 import tichu.domain.TournamentId
 
 interface ListRounds {
@@ -19,9 +21,15 @@ data class RoundOverview(
     val tables: List<TableOverview>,
 )
 
-/** One table of a [RoundOverview]: the seating, its entered games (by game number) and its confirmation state. */
+/**
+ * One table of a [RoundOverview]: the seating, its entered games (by game number), its confirmation
+ * state, its Forfeit Games ([forfeits], all of them, ADR 0011) and the seated teams that withdrew
+ * ([withdrawnTeamIds], in seat order).
+ */
 data class TableOverview(
     val table: Table,
     val games: List<RecordedGame>,
     val confirmation: TableConfirmationState,
+    val forfeits: List<ForfeitGame>,
+    val withdrawnTeamIds: List<TeamId>,
 )

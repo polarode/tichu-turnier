@@ -43,6 +43,26 @@ export const tableConfirmationDtoSchema = z.object({
     confirmedTeamIds: z.array(z.string()),
 });
 
+/**
+ * One Forfeit Game (ADR 0011). `awardedTeamId` is null when nobody is awarded; the points
+ * are then 0 and 0.
+ */
+export const forfeitGameDtoSchema = z.object({
+    gameNumber: z.number(),
+    withdrawnTeamId: z.string(),
+    awardedTeamId: z.string().nullable(),
+    victoryPoints: z.number().int(),
+    tichuPoints: z.number().int(),
+});
+
+/** The withdrawn-team fields every table read carries (ADR 0011). */
+export const tableWithdrawalDtoSchema = z.object({
+    /** The table's Forfeit Games; empty unless a seated team withdrew. */
+    forfeits: z.array(forfeitGameDtoSchema),
+    /** The seated teams that withdrew. */
+    withdrawnTeamIds: z.array(z.string()),
+});
+
 /** `GET /api/team/me/current-table`. */
 export const teamTableDtoSchema = z.object({
     tournamentId: z.string(),
@@ -55,6 +75,7 @@ export const teamTableDtoSchema = z.object({
     teams: seatedSchema(teamTableTeamDtoSchema),
     trio: z.boolean(),
     schedule: z.array(scheduledGameDtoSchema),
+    ...tableWithdrawalDtoSchema.shape,
 });
 
 const recordedPlayerDtoSchema = z.object({
@@ -105,6 +126,7 @@ export type TeamTableDto = z.infer<typeof teamTableDtoSchema>;
 export type TableConfirmationDto = z.infer<typeof tableConfirmationDtoSchema>;
 export type ScheduledGameDto = z.infer<typeof scheduledGameDtoSchema>;
 export type RecordedGameDto = z.infer<typeof recordedGameDtoSchema>;
+export type ForfeitGameDto = z.infer<typeof forfeitGameDtoSchema>;
 
 /** Write payloads (sent, not parsed) — mirror the backend `GameRequestDto`. */
 export interface PlayerResultRequestDto {

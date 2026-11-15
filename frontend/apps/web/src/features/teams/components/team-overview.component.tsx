@@ -5,6 +5,7 @@ import {
     ScoringLink,
     TableConfirmationPanel,
 } from '@/features/scoring/components/table-confirmation-panel.component.tsx';
+import { WithdrawalNotice } from '@/features/teams/components/withdrawal-notice.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
@@ -23,6 +24,8 @@ import { useI18n } from '@/shared/i18n/i18n.context.tsx';
  * - PUBLISHED (S7c, #116): the Final Ranking table, with the own team's row
  *   marked, and below it the read-only scoring link, so the last table stays
  *   reachable. The ranking is only fetched once published.
+ * A withdrawn team (ADR 0011) gets a notice under the card, and its panel is
+ * read-only whatever the tournament status: no Confirm, no Retract.
  */
 export function TeamOverview({
     overview,
@@ -78,6 +81,9 @@ export function TeamOverview({
                     <span>{playerTwo?.name}</span>
                 </dd>
             </dl>
+            {overview.withdrawalReason ? (
+                <WithdrawalNotice reason={overview.withdrawalReason} />
+            ) : null}
             {/* Exactly one of: the schedule note (setup), the confirmation panel
                 whose game tiles open the scoring screen (started; read-only once
                 no longer active), or the Final Ranking with a link to view the
@@ -100,7 +106,10 @@ export function TeamOverview({
                     ) : null}
                     <TableConfirmationPanel
                         viewerTeamId={overview.teamId}
-                        readOnly={overview.tournamentStatus !== TournamentStatus.ACTIVE}
+                        readOnly={
+                            overview.tournamentStatus !== TournamentStatus.ACTIVE ||
+                            overview.withdrawalReason !== null
+                        }
                     />
                 </>
             )}

@@ -17,6 +17,8 @@ const dto: RoundDto = {
                 gameNumber,
                 teamIds: ['team-a', 'team-b'],
             })),
+            forfeits: [],
+            withdrawnTeamIds: [],
             games: [
                 {
                     gameNumber: 2,
@@ -120,6 +122,8 @@ describe('roundDtoToDomain with a trio table', () => {
                         { gameNumber: 5, teamIds: ['team-c', 'team-b'] },
                         { gameNumber: 6, teamIds: ['team-a', 'team-b'] },
                     ],
+                    forfeits: [],
+                    withdrawnTeamIds: [],
                     games: [],
                 },
             ],
@@ -130,5 +134,63 @@ describe('roundDtoToDomain with a trio table', () => {
         expect(table?.teamIds).toEqual(['team-c', 'team-a', 'team-b']);
         expect(table?.gameCount).toBe(6);
         expect(table?.schedule[2]).toEqual({ gameNumber: 3, teamIds: ['team-a', 'team-b'] });
+    });
+});
+
+describe('roundDtoToDomain with a withdrawn team', () => {
+    it('maps the forfeit games of the table and the ids of the withdrawn teams', () => {
+        const [table] = roundDtoToDomain({
+            roundNumber: 2,
+            tables: [
+                {
+                    tableNumber: 3,
+                    teamIds: ['team-a', 'team-b'],
+                    trio: false,
+                    status: 'COMPLETED',
+                    confirmedTeamIds: ['team-a'],
+                    gameCount: 4,
+                    schedule: [1, 2, 3, 4].map((gameNumber) => ({
+                        gameNumber,
+                        teamIds: ['team-a', 'team-b'],
+                    })),
+                    forfeits: [
+                        {
+                            gameNumber: 3,
+                            withdrawnTeamId: 'team-b',
+                            awardedTeamId: 'team-a',
+                            victoryPoints: 2,
+                            tichuPoints: 100,
+                        },
+                        {
+                            gameNumber: 4,
+                            withdrawnTeamId: 'team-b',
+                            awardedTeamId: null,
+                            victoryPoints: 0,
+                            tichuPoints: 0,
+                        },
+                    ],
+                    withdrawnTeamIds: ['team-b'],
+                    games: [],
+                },
+            ],
+        }).tables;
+
+        expect(table?.withdrawnTeamIds).toEqual(['team-b']);
+        expect(table?.forfeits).toEqual([
+            {
+                gameNumber: 3,
+                withdrawnTeamId: 'team-b',
+                awardedTeamId: 'team-a',
+                victoryPoints: 2,
+                tichuPoints: 100,
+            },
+            {
+                gameNumber: 4,
+                withdrawnTeamId: 'team-b',
+                awardedTeamId: null,
+                victoryPoints: 0,
+                tichuPoints: 0,
+            },
+        ]);
     });
 });

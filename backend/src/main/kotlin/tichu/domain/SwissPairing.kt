@@ -112,9 +112,15 @@ object SwissPairing {
      * picks the one with the fewest rematches. Among equally good pairings the one
      * closest to the standings order wins. Only the trio draw is random: even
      * counts never consume [random], so they depend on the input alone.
+     *
+     * [standings] must hold only ranked entries: a disqualified team has no rank and
+     * takes no part in the draw (ADR 0011), so it is rejected rather than paired.
      */
     fun pairNextRound(standings: Standings, history: PairingHistory, random: Random): Pairing {
         val entries = standings.entries
+        require(entries.none { it.isDisqualified }) {
+            "Only ranked standings can be paired, got a disqualified team"
+        }
         val trio = if (entries.size % 2 == 1) bottomThree(entries, random) else emptyList()
         val pairs = bestPairing(entries.map { it.team.teamId } - trio.toSet(), history)
         val seatings = pairs.map { it.toList() }

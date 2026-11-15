@@ -17,6 +17,7 @@ import { correctionTable } from '@/features/tournaments/correction-table.mapper.
 import { GameCorrectionDialog } from '@/features/tournaments/components/game-correction-dialog.component.tsx';
 import { useRounds } from '@/features/tournaments/hooks/start-rounds-queries.hook.ts';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
+import { WithdrawalBadge } from '@/shared/components/withdrawal-badge.component.tsx';
 import { ConfirmDialog } from '@/shared/components/confirm-dialog.component.tsx';
 import { ConfirmationPill } from '@/shared/components/confirmation-pill.component.tsx';
 import { fillPlaceholders } from '@/shared/i18n/fill-placeholders.ts';
@@ -24,6 +25,7 @@ import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { type I18n, useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 interface RoundsSectionProps {
     tournamentId: string;
@@ -127,6 +129,7 @@ export function RoundsSection({
                     // Reset the open tables when switching rounds.
                     key={round.number}
                     round={round}
+                    teams={teams}
                     teamName={teamName}
                     panelled={rounds.length > 1}
                     onCorrectGame={
@@ -208,11 +211,13 @@ function isRoundComplete(round: Round): boolean {
 /** One round's tables; inside the round selector's tab panel when there is more than one round. */
 function RoundView({
     round,
+    teams,
     teamName,
     panelled,
     onCorrectGame,
 }: {
     round: Round;
+    teams: readonly Team[];
     teamName: (id: string) => string;
     panelled: boolean;
     /** Set when the tournament allows corrections: a game of a completed table is then a button. */
@@ -227,6 +232,7 @@ function RoundView({
                     <TableRow
                         key={table.tableNumber}
                         table={table}
+                        teams={teams}
                         teamName={teamName}
                         onCorrectGame={
                             onCorrectGame &&
@@ -255,10 +261,13 @@ function RoundView({
  */
 function TableRow({
     table,
+    teams,
     teamName,
     onCorrectGame,
 }: {
     table: TableOverview;
+    /** Their withdrawal, if any, says why a seated team is marked in the header. */
+    teams: readonly Team[];
     teamName: (id: string) => string;
     /** Makes the games clickable; only a completed table's games can be corrected (ADR 0010). */
     onCorrectGame?: (gameNumber: number) => void;
@@ -307,6 +316,15 @@ function TableRow({
                                 confirmed={confirmedTeamIds.includes(teamId)}
                                 size="sm"
                             />
+                            {table.withdrawnTeamIds.includes(teamId) ? (
+                                // A team with no known reason reads as withdrawn (ADR 0011).
+                                <WithdrawalBadge
+                                    reason={
+                                        teams.find((team) => team.id === teamId)?.withdrawal
+                                            ?.reason ?? WithdrawalReason.VOLUNTARY
+                                    }
+                                />
+                            ) : null}
                         </Fragment>
                     ))}
                 </span>
@@ -330,6 +348,7 @@ function TableRow({
                     teams={table.teamIds.map((id) => ({ id, name: teamName(id) }))}
                     schedule={table.schedule}
                     games={table.games}
+                    forfeits={table.forfeits}
                     gameAction={gameAction}
                 />
             </div>

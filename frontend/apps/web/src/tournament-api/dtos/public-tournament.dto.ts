@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { standingsEntryDtoSchema } from '@/tournament-api/dtos/standings.dto.ts';
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
+import { WITHDRAWAL_REASONS } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 /**
  * zod schemas describing the public wire formats (`GET /api/public/tournaments` and
@@ -39,6 +40,8 @@ export const publicTeamDtoSchema = z.object({
             tichuPoints: z.number().int(),
         })
         .optional(),
+    /** Why the team withdrew, visible to everyone (ADR 0011); null while it plays on. */
+    withdrawalReason: z.enum(WITHDRAWAL_REASONS).nullable(),
 });
 
 export type PublicTeamDto = z.infer<typeof publicTeamDtoSchema>;

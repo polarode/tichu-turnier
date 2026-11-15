@@ -97,6 +97,8 @@ function table(tableNumber: number, confirmation: TableConfirmation): TableOverv
         teamIds: ['a', 'b'] as [string, string],
     }));
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tableNumber,
         teamIds: ['a', 'b'],
         trio: false,
@@ -174,6 +176,7 @@ describe('standings tab', () => {
         tournaments.rounds.mockResolvedValue(rounds(1, 2, 0));
         tournaments.standings.mockResolvedValue([
             {
+                withdrawalReason: null,
                 rank: 1,
                 teamId: 'a',
                 teamName: 'Alpha',
@@ -182,6 +185,7 @@ describe('standings tab', () => {
                 tichuPoints: 0,
             },
             {
+                withdrawalReason: null,
                 rank: 1,
                 teamId: 'b',
                 teamName: 'Beta',

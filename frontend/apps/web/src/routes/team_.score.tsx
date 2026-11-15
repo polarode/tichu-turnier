@@ -93,6 +93,7 @@ function ScoringRoute() {
             initialGame={game}
             viewerTeamId={overview.data?.teamId}
             tournamentStatus={overview.data?.tournamentStatus}
+            withdrawalReason={overview.data?.withdrawalReason}
             live={live}
             connected={connected}
         />

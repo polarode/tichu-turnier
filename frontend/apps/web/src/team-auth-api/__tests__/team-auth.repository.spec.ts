@@ -78,6 +78,7 @@ describe('TeamAuthRepository me', () => {
                 { id: 'p-1', teamId: 'team-1', name: 'Alice' },
                 { id: 'p-2', teamId: 'team-1', name: 'Bob' },
             ],
+            withdrawalReason: null,
         });
 
         const overview = await TeamAuthRepository.me();
@@ -92,6 +93,7 @@ describe('TeamAuthRepository me', () => {
                 { id: 'p-1', name: 'Alice' },
                 { id: 'p-2', name: 'Bob' },
             ],
+            withdrawalReason: null,
         });
     });
 

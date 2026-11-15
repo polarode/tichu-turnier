@@ -9,7 +9,8 @@ data class TrendPoint(
 /**
  * One team's Team Trend (GLOSSARY.md): its cumulative Victory Points after each
  * completed round it was seated in, in ascending round order. The running total is
- * the same per-game VP the [Standings] sum, over the games of completed tables only.
+ * the same per-game VP the [Standings] sum: the games of completed tables and their
+ * Forfeit Games (ADR 0011). A round is complete once its withdrawn teams are excused.
  */
 data class TeamTrend(
     val teamId: TeamId,
@@ -25,12 +26,9 @@ data class TeamTrend(
          */
         fun compute(teams: List<Team>, rounds: List<PlayedRound>, settings: TournamentSettings): List<TeamTrend> {
             val completedRounds = rounds
-                .filter { it.round.isComplete(it.confirmations) }
+                .filter { it.round.isComplete(it.confirmations, it.withdrawals.keys) }
                 .sortedBy { it.round.number }
-                .map { played ->
-                    val completedTables = played.completedTables.map { it.id.value }.toSet()
-                    played to played.games.filter { it.tableNumber in completedTables }.map { it.score(settings) }
-                }
+                .map { played -> played to played.completedOutcomes(settings) }
             return teams.map { team ->
                 var running = 0
                 val points = mutableListOf<TrendPoint>()

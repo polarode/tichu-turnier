@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import type { I18n } from '@/shared/i18n/i18n.context.ts';
+import { FORFEIT_COMPENSATIONS } from '@/vocabulary/forfeit-compensation.enum.ts';
+import { WITHDRAWAL_REASONS } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 /**
  * Form schema for adding and editing a team, built per locale so its messages are
@@ -27,3 +29,21 @@ export function teamFormSchema(t: I18n['t']) {
 }
 
 export type TeamFormValues = z.infer<ReturnType<typeof teamFormSchema>>;
+
+/**
+ * Form schema for withdrawing a team (ADR 0011). Both choices are required: the organizer
+ * picks the reason and the compensation explicitly, with no default that could be
+ * confirmed by accident.
+ */
+export function withdrawalFormSchema(t: I18n['t']) {
+    return z.object({
+        reason: z.enum(WITHDRAWAL_REASONS, {
+            message: t('validation.withdrawalReason.required'),
+        }),
+        compensation: z.enum(FORFEIT_COMPENSATIONS, {
+            message: t('validation.withdrawalCompensation.required'),
+        }),
+    });
+}
+
+export type WithdrawalFormValues = z.infer<ReturnType<typeof withdrawalFormSchema>>;

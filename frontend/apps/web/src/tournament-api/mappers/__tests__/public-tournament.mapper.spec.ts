@@ -37,6 +37,7 @@ const dto: PublicTournamentDetailDto = {
                     teams: [
                         {
                             id: 'team-owls',
+                            withdrawalReason: null,
                             name: 'Owls',
                             players: [
                                 { id: 'p-1', name: 'Anna' },
@@ -45,6 +46,7 @@ const dto: PublicTournamentDetailDto = {
                         },
                         {
                             id: 'team-bears',
+                            withdrawalReason: null,
                             name: 'Bears',
                             players: [
                                 { id: 'p-3', name: 'Cem' },
@@ -53,6 +55,7 @@ const dto: PublicTournamentDetailDto = {
                         },
                         {
                             id: 'team-foxes',
+                            withdrawalReason: null,
                             name: 'Foxes',
                             players: [
                                 { id: 'p-5', name: 'Eli' },
@@ -67,6 +70,7 @@ const dto: PublicTournamentDetailDto = {
                     teams: [
                         {
                             id: 'team-wolves',
+                            withdrawalReason: null,
                             name: 'Wolves',
                             players: [
                                 { id: 'p-7', name: 'Gus' },
@@ -75,6 +79,7 @@ const dto: PublicTournamentDetailDto = {
                         },
                         {
                             id: 'team-hawks',
+                            withdrawalReason: null,
                             name: 'Hawks',
                             players: [
                                 { id: 'p-9', name: 'Ivo' },
@@ -94,11 +99,13 @@ const dto: PublicTournamentDetailDto = {
                     teams: [
                         {
                             id: 'team-hawks',
+                            withdrawalReason: null,
                             name: 'Hawks',
                             players: [{ id: 'p-9', name: 'Ivo' }],
                         },
                         {
                             id: 'team-owls',
+                            withdrawalReason: null,
                             name: 'Owls',
                             players: [{ id: 'p-1', name: 'Anna' }],
                         },
@@ -153,6 +160,7 @@ describe('publicTournamentDetailDtoToDomain', () => {
                 { id: 'p-1', name: 'Anna' },
                 { id: 'p-2', name: 'Ben' },
             ],
+            withdrawalReason: null,
         });
     });
 
@@ -166,8 +174,18 @@ describe('publicTournamentDetailDtoToDomain', () => {
                     tableNumber: 1,
                     trio: false,
                     teams: [
-                        { id: 'team-hawks', name: 'Hawks', players: [{ id: 'p-9', name: 'Ivo' }] },
-                        { id: 'team-owls', name: 'Owls', players: [{ id: 'p-1', name: 'Anna' }] },
+                        {
+                            id: 'team-hawks',
+                            name: 'Hawks',
+                            players: [{ id: 'p-9', name: 'Ivo' }],
+                            withdrawalReason: null,
+                        },
+                        {
+                            id: 'team-owls',
+                            name: 'Owls',
+                            players: [{ id: 'p-1', name: 'Anna' }],
+                            withdrawalReason: null,
+                        },
                     ],
                 },
             ],
@@ -219,6 +237,54 @@ describe('publicTournamentDetailDtoToDomain for a published tournament', () => {
             'Badgers',
             'Owls',
             'Wolves',
+        ]);
+    });
+});
+
+describe('publicTournamentDetailDtoToDomain with withdrawals', () => {
+    it('maps a voluntarily withdrawn team to its reason and a team that plays on to null', () => {
+        const wire = structuredClone(publishedFixture.response) as PublicTournamentDetailDto;
+        const falcons = at(at(at(wire.rounds, 0).tables, 0).teams, 0);
+        falcons.withdrawalReason = 'VOLUNTARY';
+
+        const detail = publicTournamentDetailDtoToDomain(
+            publicTournamentDetailDtoSchema.parse(wire),
+        );
+        const [withdrawn, playingOn] = at(detail.rounds, 0).tables.flatMap((table) => table.teams);
+
+        expect(withdrawn?.name).toBe('Falcons');
+        expect(withdrawn?.withdrawalReason).toBe('VOLUNTARY');
+        expect(playingOn?.withdrawalReason).toBeNull();
+    });
+
+    it('maps the final ranking of a disqualified team to a null rank and its reason', () => {
+        const wire = structuredClone(publishedFixture.response) as PublicTournamentDetailDto;
+        wire.finalRanking = [
+            {
+                rank: null,
+                teamId: 'team-wolves',
+                teamName: 'Wolves',
+                gamesPlayed: 4,
+                victoryPoints: 0,
+                tichuPoints: 120,
+                withdrawalReason: 'DISQUALIFIED',
+            },
+        ];
+
+        const detail = publicTournamentDetailDtoToDomain(
+            publicTournamentDetailDtoSchema.parse(wire),
+        );
+
+        expect(detail.finalRanking).toEqual([
+            {
+                rank: null,
+                teamId: 'team-wolves',
+                teamName: 'Wolves',
+                gamesPlayed: 4,
+                victoryPoints: 0,
+                tichuPoints: 120,
+                withdrawalReason: 'DISQUALIFIED',
+            },
         ]);
     });
 });

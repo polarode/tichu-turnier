@@ -14,7 +14,9 @@ package tichu.domain
  * by the caller's own partner destroys nothing. [beschissGames] counts the games the
  * team played that were flagged Beschiss. [goodHorseRatio] is the summed Tichu Points
  * over the summed Victory Points of those games, unrounded, and null when the team has
- * no Victory Points (Good Horse Ratio).
+ * no Victory Points (Good Horse Ratio). Forfeit Games (ADR 0011) are never played games:
+ * they count toward the Good Horse Ratio's VP and TP only, and [bombsPerGame] divides by
+ * the games the team actually played.
  */
 data class TeamStatistics(
     val teamId: TeamId,
@@ -47,23 +49,25 @@ data class TeamStatistics(
                 val completedTables = played.completedTables.map { it.id.value }.toSet()
                 played.games.filter { it.tableNumber in completedTables && teamId in listOf(it.team1, it.team2) }
             }
+            val forfeits = rounds.flatMap { it.completedForfeits }
+                .filter { it.withdrawnTeam == teamId || it.opponent == teamId }
             val outcomes = games.map { it.score(settings) }
             val results = games.map { game -> game.teamResults.first { it.teamId == teamId } }
             val players = results.flatMap { it.players }
             val bombs = players.sumOf { it.bombs }
-            val teamPoints = outcomes.sumOf { it.teamPoints.getValue(teamId) }
-            val victoryPoints = outcomes.sumOf { it.victoryPoints.getValue(teamId) }
+            val total = rounds.flatMap { it.completedOutcomes(settings) }.totalFor(teamId)
+            val playedGames = GAMES_PER_ROUND * seatedRounds - forfeits.size
             return TeamStatistics(
                 teamId = teamId,
                 successfulSmallTichu = players.count { it.isSuccess && it.call == TichuCall.SMALL },
                 successfulGrandTichu = players.count { it.isSuccess && it.call == TichuCall.GRAND },
                 bombCount = bombs,
-                bombsPerGame = if (seatedRounds == 0) null else bombs.toDouble() / (GAMES_PER_ROUND * seatedRounds),
+                bombsPerGame = if (playedGames == 0) null else bombs.toDouble() / playedGames,
                 doubleWins = outcomes.count { it.doubleWinTeam == teamId },
                 tichuCalls = players.count { it.call != TichuCall.NONE },
                 destroyedTichus = games.sumOf { destroyedTichus(teamId, it) },
                 beschissGames = games.count { it.beschiss },
-                goodHorseRatio = if (victoryPoints == 0) null else teamPoints.toDouble() / victoryPoints,
+                goodHorseRatio = if (total.victoryPoints == 0) null else total.tichuPoints.toDouble() / total.victoryPoints,
             )
         }
 

@@ -1,6 +1,17 @@
 import type { Player } from '@/domain/player.domain.ts';
-import type { Team, TeamWriteInput } from '@/domain/team.domain.ts';
-import type { PlayerDto, TeamDto, TeamWriteRequestDto } from '@/team-api/dtos/team.dto.ts';
+import type {
+    Team,
+    TeamWithdrawal,
+    TeamWriteInput,
+    WithdrawalInput,
+} from '@/domain/team.domain.ts';
+import type {
+    PlayerDto,
+    TeamDto,
+    TeamWriteRequestDto,
+    WithdrawalDto,
+    WithdrawalRequestDto,
+} from '@/team-api/dtos/team.dto.ts';
 
 /** Pure mapping functions. Unit-tested in isolation (see `__tests__`). */
 export function playerDtoToDomain(dto: PlayerDto): Player {
@@ -17,6 +28,24 @@ export function teamDtoToDomain(dto: TeamDto): Team {
         tournamentId: dto.tournamentId,
         name: dto.name,
         players: [playerDtoToDomain(dto.players[0]), playerDtoToDomain(dto.players[1])],
+        withdrawal: dto.withdrawal ? withdrawalDtoToDomain(dto.withdrawal) : null,
+    };
+}
+
+export function withdrawalDtoToDomain(dto: WithdrawalDto): TeamWithdrawal {
+    return {
+        reason: dto.reason,
+        compensation: dto.compensation,
+        roundNumber: dto.roundNumber,
+        withdrawnAt: new Date(dto.withdrawnAt),
+    };
+}
+
+/** Domain withdrawal input → wire payload; keeps the DTO out of the hooks. */
+export function withdrawalInputToDto(input: WithdrawalInput): WithdrawalRequestDto {
+    return {
+        reason: input.reason,
+        compensation: input.compensation,
     };
 }
 

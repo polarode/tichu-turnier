@@ -47,6 +47,8 @@ const startedResponse = {
                 gameCount: 4,
                 schedule: schedule('team-a', 'team-b'),
                 games: [],
+                forfeits: [],
+                withdrawnTeamIds: [],
             },
             {
                 tableNumber: 2,
@@ -57,6 +59,8 @@ const startedResponse = {
                 gameCount: 4,
                 schedule: schedule('team-c', 'team-d'),
                 games: [],
+                forfeits: [],
+                withdrawnTeamIds: [],
             },
         ],
     },
@@ -75,6 +79,8 @@ const roundsResponse = [
                 gameCount: 4,
                 schedule: schedule('team-a', 'team-b'),
                 games: [],
+                forfeits: [],
+                withdrawnTeamIds: [],
             },
         ],
     },
@@ -183,6 +189,8 @@ describe('TournamentRepository start/rounds', () => {
                 gameCount: 4,
                 schedule: schedule('team-a', 'team-b'),
                 games: [],
+                forfeits: [],
+                withdrawnTeamIds: [],
             },
             {
                 tableNumber: 2,
@@ -192,6 +200,8 @@ describe('TournamentRepository start/rounds', () => {
                 gameCount: 4,
                 schedule: schedule('team-c', 'team-d'),
                 games: [],
+                forfeits: [],
+                withdrawnTeamIds: [],
             },
         ]);
     });
@@ -228,6 +238,8 @@ describe('TournamentRepository start/rounds', () => {
                         gameCount: 4,
                         schedule: schedule('team-a', 'team-b'),
                         games: [],
+                        forfeits: [],
+                        withdrawnTeamIds: [],
                     },
                 ],
             },
@@ -248,6 +260,8 @@ describe('TournamentRepository start/rounds', () => {
                         gameCount: 6,
                         schedule: [],
                         games: [],
+                        forfeits: [],
+                        withdrawnTeamIds: [],
                     },
                 ],
             },
@@ -283,6 +297,7 @@ describe('TournamentRepository standings/total rounds', () => {
                 gamesPlayed: 4,
                 victoryPoints: 6,
                 tichuPoints: 240,
+                withdrawalReason: null,
             },
             {
                 rank: 2,
@@ -291,6 +306,7 @@ describe('TournamentRepository standings/total rounds', () => {
                 gamesPlayed: 4,
                 victoryPoints: 2,
                 tichuPoints: 160,
+                withdrawalReason: null,
             },
         ]);
 
@@ -304,6 +320,7 @@ describe('TournamentRepository standings/total rounds', () => {
                 gamesPlayed: 4,
                 victoryPoints: 6,
                 tichuPoints: 240,
+                withdrawalReason: null,
             },
             {
                 rank: 2,
@@ -312,6 +329,7 @@ describe('TournamentRepository standings/total rounds', () => {
                 gamesPlayed: 4,
                 victoryPoints: 2,
                 tichuPoints: 160,
+                withdrawalReason: null,
             },
         ]);
     });
@@ -324,6 +342,7 @@ describe('TournamentRepository standings/total rounds', () => {
                 gamesPlayed: 4,
                 victoryPoints: 6,
                 tichuPoints: 240,
+                withdrawalReason: null,
             },
         ]);
 

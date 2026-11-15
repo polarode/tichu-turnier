@@ -10,7 +10,13 @@ data class Team(
     val tournamentId: TournamentId,
     val name: String,
     val players: List<Player>,
+    /** Set once an organizer withdrew the team (ADR 0011); null while it plays on. */
+    val withdrawal: Withdrawal? = null,
 ) {
+    /** Whether the team withdrew from the tournament; its Access Link is read-only then. */
+    val isWithdrawn: Boolean
+        get() = withdrawal != null
+
     init {
         require(players.size == 2) {
             "A team must have exactly two players, got ${players.size}"

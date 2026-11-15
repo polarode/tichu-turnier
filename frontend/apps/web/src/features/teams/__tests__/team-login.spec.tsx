@@ -25,6 +25,7 @@ const mockedExchange = vi.mocked(TeamAuthRepository.exchange);
 const mockedMe = vi.mocked(TeamAuthRepository.me);
 
 const overview = {
+    withdrawalReason: null,
     teamId: 'team-1',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',

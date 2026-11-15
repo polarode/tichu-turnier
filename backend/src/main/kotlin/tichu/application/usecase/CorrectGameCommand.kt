@@ -11,6 +11,7 @@ import tichu.domain.Table
 import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableConfirmations
 import tichu.domain.TableKey
+import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
@@ -68,7 +69,8 @@ class CorrectGameCommand(
         requireVersionOnUpdate(create = false, request)
         val (round, table) = findTable(roundRepository, tournamentId, roundNumber, tableNumber)
         requireGameNumber(request.gameNumber, table)
-        requireCompleted(TableKey(tournamentId, roundNumber, tableNumber), table)
+        val withdrawn = withdrawalsOf(teamRepository, tournamentId).keys
+        requireCompleted(TableKey(tournamentId, roundNumber, tableNumber), table, withdrawn)
 
         val baseGame = validatedGame(teamRepository, tournament, round, table, request)
         val corrected = updateGame(gameRepository, baseGame.key, request.version!!) {
@@ -89,9 +91,9 @@ class CorrectGameCommand(
      * requires the table COMPLETED: its games are final only then (ADR 0006). Under
      * the lock, no confirmation or retract can change the status mid-correction.
      */
-    private fun requireCompleted(key: TableKey, table: Table) {
+    private fun requireCompleted(key: TableKey, table: Table, withdrawn: Set<TeamId>) {
         roundRepository.lockTable(key)
-        if (!TableConfirmations(table, confirmationRepository.findByTable(key)).isCompleted) {
+        if (!TableConfirmations(table, confirmationRepository.findByTable(key), withdrawn).isCompleted) {
             throw TableNotCompletedException(
                 "Table ${table.id.value} is not completed; only a completed table's games can be corrected",
             )

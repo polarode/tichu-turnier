@@ -110,7 +110,8 @@ drawn into later rounds, and the games it already played stand; the games it sti
 owed at its current table become Forfeit Games. Possible in any status after the Setup
 Phase, even once published, by any organizer. Its reason is visible to everyone, and its
 Access Link stays read-only afterwards. The organizer may undo it until the next round
-is drawn, or until publishing if no round follows; undoing removes its Forfeit Games.
+is drawn, or until publishing if no round follows, unless that would leave a finished
+tournament's table unfinished; undoing removes its Forfeit Games.
 _Avoid_: ban, removal, deletion (deleting a team is a Setup Phase action)
 
 **Forfeit Game**:

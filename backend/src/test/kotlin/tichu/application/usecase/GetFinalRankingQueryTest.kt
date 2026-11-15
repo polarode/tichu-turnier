@@ -57,7 +57,7 @@ class GetFinalRankingQueryTest {
     private val query = GetFinalRankingQuery(
         tournamentRepository,
         teamRepository,
-        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
     )
 
     private fun team(id: String, name: String) = teamRepository.save(

@@ -39,6 +39,8 @@ const tableDto: TeamTableDto = {
     ],
     trio: false,
     schedule: [1, 2, 3, 4].map((gameNumber) => ({ gameNumber, teamIds: ['team-a', 'team-b'] })),
+    forfeits: [],
+    withdrawnTeamIds: [],
 };
 
 const trioTableDto: TeamTableDto = {
@@ -136,6 +138,35 @@ describe('teamTableDtoToDomain', () => {
         ]);
         expect(table.schedule[1]).toEqual({ gameNumber: 2, teamIds: ['team-a', 'team-c'] });
         expect(table.schedule[5]).toEqual({ gameNumber: 6, teamIds: ['team-b', 'team-c'] });
+    });
+});
+
+describe('teamTableDtoToDomain with a withdrawn team', () => {
+    it('maps the forfeit games and the withdrawn team ids of the table', () => {
+        const table = teamTableDtoToDomain({
+            ...tableDto,
+            forfeits: [
+                {
+                    gameNumber: 4,
+                    withdrawnTeamId: 'team-b',
+                    awardedTeamId: 'team-a',
+                    victoryPoints: 1,
+                    tichuPoints: 50,
+                },
+            ],
+            withdrawnTeamIds: ['team-b'],
+        });
+
+        expect(table.withdrawnTeamIds).toEqual(['team-b']);
+        expect(table.forfeits).toEqual([
+            {
+                gameNumber: 4,
+                withdrawnTeamId: 'team-b',
+                awardedTeamId: 'team-a',
+                victoryPoints: 1,
+                tichuPoints: 50,
+            },
+        ]);
     });
 });
 

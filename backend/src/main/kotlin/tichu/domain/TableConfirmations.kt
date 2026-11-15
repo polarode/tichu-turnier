@@ -10,16 +10,23 @@ enum class TableStatus { PLAYING, CONFIRMING, COMPLETED }
 /**
  * The confirmations recorded at one [table]: the raw fact (who confirmed) and
  * the [status] derived from it. Completion means "every team seated at the
- * table", so it holds for two seats and for the trio table's three alike.
+ * table and not withdrawn", so it holds for two seats and for the trio table's
+ * three alike, and for a table whose seated teams all withdrew (ADR 0011).
  */
 data class TableConfirmations(
     val table: Table,
     val confirmedTeamIds: Set<TeamId>,
+    /** Withdrawn teams: their confirmation is no longer needed (ADR 0011). */
+    val withdrawnTeamIds: Set<TeamId> = emptySet(),
 ) {
+    /** The seated teams whose confirmation the table still waits for. */
+    private val requiredTeamIds: List<TeamId>
+        get() = table.seatedTeams - withdrawnTeamIds
+
     val status: TableStatus
         get() = when {
+            requiredTeamIds.all { it in confirmedTeamIds } -> TableStatus.COMPLETED
             confirmedTeamIds.isEmpty() -> TableStatus.PLAYING
-            confirmedTeamIds.containsAll(table.seatedTeams) -> TableStatus.COMPLETED
             else -> TableStatus.CONFIRMING
         }
 

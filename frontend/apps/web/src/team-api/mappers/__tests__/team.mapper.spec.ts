@@ -6,6 +6,7 @@ import {
     teamDtoToDomain,
     teamToWriteInput,
     teamWriteInputToDto,
+    withdrawalInputToDto,
 } from '@/team-api/mappers/team.mapper.ts';
 
 const playerOne: PlayerDto = { id: 'p-1', teamId: 'team-1', name: 'Alice' };
@@ -15,6 +16,7 @@ const team: TeamDto = {
     tournamentId: 't-1',
     name: 'The Aces',
     players: [playerOne, playerTwo],
+    withdrawal: null,
 };
 
 describe('playerDtoToDomain', () => {
@@ -38,6 +40,38 @@ describe('teamDtoToDomain', () => {
             { id: 'p-1', teamId: 'team-1', name: 'Alice' },
             { id: 'p-2', teamId: 'team-1', name: 'Bob' },
         ]);
+    });
+
+    it('maps a team that plays on to a null withdrawal', () => {
+        expect(teamDtoToDomain(team).withdrawal).toBeNull();
+    });
+
+    it('maps a withdrawn team to its reason, compensation, round and instant', () => {
+        const mapped = teamDtoToDomain({
+            ...team,
+            withdrawal: {
+                reason: 'VOLUNTARY',
+                compensation: 'HALF',
+                roundNumber: 2,
+                withdrawnAt: '2026-11-14T18:30:00Z',
+            },
+        });
+
+        expect(mapped.withdrawal).toEqual({
+            reason: 'VOLUNTARY',
+            compensation: 'HALF',
+            roundNumber: 2,
+            withdrawnAt: new Date('2026-11-14T18:30:00Z'),
+        });
+    });
+});
+
+describe('withdrawalInputToDto', () => {
+    it('maps the withdrawal input to the wire payload', () => {
+        expect(withdrawalInputToDto({ reason: 'DISQUALIFIED', compensation: 'FULL' })).toEqual({
+            reason: 'DISQUALIFIED',
+            compensation: 'FULL',
+        });
     });
 });
 

@@ -7,6 +7,7 @@ import tichu.application.api.StartedTournament
 import tichu.application.api.TableConfirmationState
 import tichu.application.api.TeamStatisticsEntry
 import tichu.application.api.TournamentStatistics
+import tichu.domain.ForfeitGame
 import tichu.domain.Highlight
 import tichu.domain.HighlightMetric
 import tichu.domain.Round
@@ -14,6 +15,7 @@ import tichu.domain.ScheduledGame
 import tichu.domain.StandingsEntry
 import tichu.domain.Table
 import tichu.domain.TournamentSettings
+import tichu.domain.TeamId
 import tichu.domain.TeamTrend
 import tichu.domain.TournamentStatus
 import tichu.domain.TrendPoint
@@ -107,14 +109,18 @@ data class PublicVisibilityRequestBody(
     val publicVisibility: Boolean,
 )
 
-/** One line of the admin standings read, in standings order. */
+/**
+ * One line of the admin standings read, in standings order; the rank is null for a disqualified team.
+ * [withdrawalReason] is `DISQUALIFIED` or `VOLUNTARY` once the team withdrew, null while it plays on.
+ */
 data class StandingsEntryResponse(
-    val rank: Int,
+    val rank: Int?,
     val teamId: String,
     val teamName: String,
     val gamesPlayed: Int,
     val victoryPoints: Int,
     val tichuPoints: Int,
+    val withdrawalReason: String?,
 ) {
     companion object {
         fun from(entry: StandingsEntry): StandingsEntryResponse = StandingsEntryResponse(
@@ -124,6 +130,7 @@ data class StandingsEntryResponse(
             gamesPlayed = entry.team.gamesPlayed,
             victoryPoints = entry.team.victoryPoints,
             tichuPoints = entry.team.tichuPoints,
+            withdrawalReason = entry.team.withdrawalReason?.name,
         )
     }
 }
@@ -244,13 +251,17 @@ data class RoundResponse(
         /** A freshly created round (the start response): no games entered yet. */
         fun from(round: Round): RoundResponse = RoundResponse(
             roundNumber = round.number,
-            tables = round.pairing.tables.map { TableResponse.from(it, games = emptyList(), TableConfirmationState.of(it)) },
+            tables = round.pairing.tables.map {
+                TableResponse.from(it, games = emptyList(), TableConfirmationState.of(it), forfeits = emptyList(), withdrawnTeamIds = emptyList())
+            },
         )
 
         /** The admin's rounds read: each table with its entered games (S5d, #102). */
         fun fromOverview(overview: RoundOverview): RoundResponse = RoundResponse(
             roundNumber = overview.round.number,
-            tables = overview.tables.map { TableResponse.from(it.table, it.games, it.confirmation) },
+            tables = overview.tables.map {
+                TableResponse.from(it.table, it.games, it.confirmation, it.forfeits, it.withdrawnTeamIds)
+            },
         )
     }
 }
@@ -270,9 +281,19 @@ data class TableResponse(
     val status: String,
     /** The teams that confirmed, in seat order. */
     val confirmedTeamIds: List<String>,
+    /** The table's Forfeit Games (ADR 0011); empty unless a seated team withdrew. */
+    val forfeits: List<ForfeitGameResponseDto>,
+    /** The seated teams that withdrew, in seat order (ADR 0011). */
+    val withdrawnTeamIds: List<String>,
 ) {
     companion object {
-        fun from(table: Table, games: List<RecordedGame>, confirmation: TableConfirmationState): TableResponse = TableResponse(
+        fun from(
+            table: Table,
+            games: List<RecordedGame>,
+            confirmation: TableConfirmationState,
+            forfeits: List<ForfeitGame>,
+            withdrawnTeamIds: List<TeamId>,
+        ): TableResponse = TableResponse(
             tableNumber = table.id.value,
             teamIds = table.seatedTeams.map { it.value },
             trio = table.isTrio,
@@ -281,6 +302,8 @@ data class TableResponse(
             games = games.map(RecordedGameDto::from),
             status = confirmation.status.name,
             confirmedTeamIds = confirmation.confirmedTeamIds.map { it.value },
+            forfeits = forfeits.map(ForfeitGameResponseDto::from),
+            withdrawnTeamIds = withdrawnTeamIds.map { it.value },
         )
     }
 }

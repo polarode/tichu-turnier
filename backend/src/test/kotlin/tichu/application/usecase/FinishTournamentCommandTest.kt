@@ -2,6 +2,7 @@ package tichu.application.usecase
 
 import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
+import tichu.domain.ForfeitCompensation
 import tichu.domain.GameKey
 import tichu.domain.Pairing
 import tichu.domain.Round
@@ -16,6 +17,8 @@ import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
@@ -58,7 +61,7 @@ class FinishTournamentCommandTest {
     private val command = FinishTournamentCommand(
         tournamentRepository,
         TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
-        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
         clock,
         finishEvents,
     )
@@ -174,6 +177,23 @@ class FinishTournamentCommandTest {
 
         assertFailsWith<NotFoundException> { command.finish(tournamentId, AdminUserId("admin-intruder")) }
         assertEquals(TournamentStatus.ACTIVE, statusOf())
+    }
+
+    @Test
+    fun `finishing succeeds when the last round's table was completed by the opponent alone`() {
+        tournament(totalRounds = 1)
+        teams("a", "b")
+        round(1, listOf("a", "b"))
+        play(1, 1, confirmed = false)
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), TeamId("b"), now)
+        val withdrawn = teamRepository.findById(TeamId("a"), tournamentId)!!
+        teamRepository.save(
+            withdrawn.copy(withdrawal = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.NONE, 1, now, owner)),
+        )
+
+        val finished = command.finish(tournamentId, owner)
+
+        assertEquals(TournamentStatus.COMPLETED, finished.status)
     }
 
     // ---- live events ------------------------------------------------------------

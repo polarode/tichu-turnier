@@ -1,5 +1,6 @@
 package tichu.domain
 
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -122,6 +123,32 @@ class TableTotalsTest {
                 TableId(2) to mapOf(
                     TeamId("c") to TableTotal(victoryPoints = 8, tichuPoints = 240),
                     TeamId("d") to TableTotal(victoryPoints = 0, tichuPoints = 160),
+                ),
+            ),
+            totals,
+        )
+    }
+
+    @Test
+    fun `a completed table with a withdrawn team includes the forfeits awarded at it`() {
+        val withdrawn = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.FULL, 1, Instant.EPOCH, AdminUserId("admin-1"))
+        val played = PlayedRound(
+            round = round(1, listOf("a", "b")),
+            games = normalTable(1, 1, "a", "b", 60, 70),
+            // b withdrew after its two played games; a confirmed alone, which completes the table.
+            confirmations = mapOf(completed(1, "a")),
+            withdrawals = mapOf(TeamId("b") to withdrawn),
+        )
+
+        val totals = TableTotals.of(played, settings)
+
+        // a: 4 VP / 130 TP from the two wins, plus 2 forfeits at 2 VP / 100 TP each = 8 VP, 330 TP.
+        // b: 0 VP / 70 TP from its two played games.
+        assertEquals(
+            mapOf(
+                TableId(1) to mapOf(
+                    TeamId("a") to TableTotal(victoryPoints = 8, tichuPoints = 330),
+                    TeamId("b") to TableTotal(victoryPoints = 0, tichuPoints = 70),
                 ),
             ),
             totals,

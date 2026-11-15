@@ -290,7 +290,7 @@ class PublicTournamentsIntegrationTest(
             round["tables"].forEach { table ->
                 assertEquals(setOf("tableNumber", "trio", "teams"), table.propertyNames().toSet(), "table: $table")
                 table["teams"].forEach { team ->
-                    assertEquals(setOf("id", "name", "players"), team.propertyNames().toSet(), "team: $team")
+                    assertEquals(setOf("id", "name", "players", "withdrawalReason"), team.propertyNames().toSet(), "team: $team")
                     team["players"].forEach { player ->
                         assertEquals(setOf("id", "name"), player.propertyNames().toSet(), "player: $player")
                     }

@@ -1,16 +1,25 @@
 package tichu.infra.persistence
 
 import tichu.domain.AdminUserId
+import tichu.domain.ForfeitCompensation
+import tichu.domain.Game
+import tichu.domain.GameKey
+import tichu.domain.GameRepository
+import tichu.domain.PlayerResult
 import tichu.domain.Player
 import tichu.domain.PlayerId
 import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
+import tichu.domain.TeamResult
+import tichu.domain.TichuCall
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
 import tichu.main.Application
 import tichu.testsupport.PostgresBackedIntegrationTest
 import tichu.testsupport.insertAdminRow
@@ -21,6 +30,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.transaction.support.TransactionTemplate
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertFailsWith
@@ -38,6 +48,8 @@ class TeamRepositoryPersistenceTest(
     @Autowired private val springDataTeamRepository: SpringDataTeamRepository,
     @Autowired private val springDataPlayerRepository: SpringDataPlayerRepository,
     @Autowired private val jdbcTemplate: JdbcTemplate,
+    @Autowired private val gameRepository: GameRepository,
+    @Autowired private val transactionTemplate: TransactionTemplate,
 ) : PostgresBackedIntegrationTest() {
 
     private var tournamentSeq = 0
@@ -220,8 +232,92 @@ class TeamRepositoryPersistenceTest(
         )
     }
 
+    @Test
+    fun `a withdrawal survives save and is read back by id and by tournament`() {
+        val tournamentId = insertTournament()
+        val withdrawn = team("t12-team-1", tournamentId).copy(withdrawal = withdrawal())
+        teamRepository.save(withdrawn)
+
+        assertEquals(withdrawn.withdrawal, teamRepository.findById(TeamId("t12-team-1"), tournamentId)?.withdrawal)
+        assertEquals(withdrawn.withdrawal, teamRepository.findById(TeamId("t12-team-1"))?.withdrawal)
+        assertEquals(withdrawn.withdrawal, teamRepository.findAllByTournament(tournamentId).single().withdrawal)
+    }
+
+    @Test
+    fun `saving a team without a withdrawal clears the stored one`() {
+        val tournamentId = insertTournament()
+        teamRepository.save(team("t13-team-1", tournamentId).copy(withdrawal = withdrawal()))
+
+        teamRepository.save(team("t13-team-1", tournamentId))
+
+        assertNull(teamRepository.findById(TeamId("t13-team-1"), tournamentId)?.withdrawal)
+    }
+
+    @Test
+    fun `renaming a withdrawn team keeps its withdrawal`() {
+        val tournamentId = insertTournament()
+        teamRepository.save(team("t14-team-1", tournamentId, name = "Old Name").copy(withdrawal = withdrawal()))
+
+        teamRepository.save(team("t14-team-1", tournamentId, name = "New Name").copy(withdrawal = withdrawal()))
+        val loaded = teamRepository.findById(TeamId("t14-team-1"), tournamentId)
+
+        assertEquals("New Name", loaded?.name)
+        assertEquals(withdrawal(), loaded?.withdrawal)
+    }
+
+    private fun withdrawal(): Withdrawal = Withdrawal(
+        reason = WithdrawalReason.VOLUNTARY,
+        compensation = ForfeitCompensation.HALF,
+        roundNumber = 3,
+        withdrawnAt = Instant.parse("2026-11-14T10:15:30.123456Z"),
+        withdrawnBy = AdminUserId("admin-owner"),
+    )
+
     private fun freshAdapter(): TeamRepository =
         // Rebuild the adapter over the shared Spring Data repositories so the read
         // bypasses any JPA first-level cache and proves the row was committed.
         JpaTeamRepository(springDataTeamRepository, springDataPlayerRepository)
+
+    @Test
+    fun `updating a withdrawal keeps the team's players and the participants of its recorded games`() {
+        val tournamentId = insertTournament()
+        val withdrawing = team("t15-team-1", tournamentId, name = "Leaving", playerOneName = "Ann", playerTwoName = "Ben")
+        val opponent = team("t15-team-2", tournamentId, name = "Staying", playerOneName = "Cem", playerTwoName = "Dan")
+        teamRepository.save(withdrawing)
+        teamRepository.save(opponent)
+        val key = GameKey(tournamentId, 1, 1, 1)
+        transactionTemplate.execute {
+            gameRepository.create(
+                Game.record(
+                    key,
+                    listOf(
+                        TeamResult(opponent.id, 55, listOf(
+                            PlayerResult(PlayerId("t15-team-2-p1"), 1, TichuCall.NONE, 0),
+                            PlayerResult(PlayerId("t15-team-2-p2"), 3, TichuCall.NONE, 0),
+                        )),
+                        TeamResult(withdrawing.id, 45, listOf(
+                            PlayerResult(PlayerId("t15-team-1-p1"), 2, TichuCall.NONE, 0),
+                            PlayerResult(PlayerId("t15-team-1-p2"), 4, TichuCall.NONE, 0),
+                        )),
+                    ),
+                    beschiss = false,
+                    settings = TournamentSettings(),
+                ),
+            )
+        }
+
+        teamRepository.updateWithdrawal(withdrawing.id, tournamentId, withdrawal())
+
+        val loaded = teamRepository.findById(withdrawing.id, tournamentId)
+        assertEquals(withdrawal(), loaded?.withdrawal)
+        assertEquals("Leaving", loaded?.name)
+        assertEquals(listOf("Ann", "Ben"), loaded?.players?.map { it.name })
+        assertEquals(4, gameRepository.find(key)?.participants?.size, "the recorded game keeps all four participants")
+
+        teamRepository.updateWithdrawal(withdrawing.id, tournamentId, null)
+
+        assertNull(teamRepository.findById(withdrawing.id, tournamentId)?.withdrawal)
+        assertEquals(listOf("Ann", "Ben"), teamRepository.findById(withdrawing.id, tournamentId)?.players?.map { it.name })
+        assertEquals(4, gameRepository.find(key)?.participants?.size)
+    }
 }

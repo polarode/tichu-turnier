@@ -5,6 +5,9 @@ import { Badge } from '@tichu/ui/badge.tsx';
 import { cn } from '@tichu/ui/lib/utils.ts';
 
 import {
+    type ForfeitGame,
+    isLockedByWithdrawal,
+    isSettled,
     type RecordedGame,
     type ScheduledGame,
     teamPoints,
@@ -40,37 +43,66 @@ interface GameResultsProps {
     schedule: readonly ScheduledGame[];
     /** The games entered so far. */
     games: readonly RecordedGame[];
+    /** The table's Forfeit Games (ADR 0011): shown as forfeited tiles among the games, never as played. */
+    forfeits: readonly ForfeitGame[];
     /** Makes every tile clickable; omitted, the tiles stay static. */
     gameAction?: GameTileAction;
+    /**
+     * The seated teams that withdrew (ADR 0011). A game against one of them is read-only
+     * (a link only views it), never the next game to enter.
+     */
+    withdrawnTeamIds?: readonly string[];
 }
 
 /**
  * A table's games, read-only (admin rounds view, team overview): the teams'
  * Victory Points over the games entered so far on top, then one tile per game
  * with its two teams, their Tichu Points and the Victory Points the game earned
- * them. The winner's trophy takes the place of its colour dot; Beschiss and
- * double-win markers sit at the tile's foot, as does a neutral "corrected by the
- * organizer" marker on a game an organizer corrected (ADR 0010). A game not
- * entered yet is a dashed tile reading "missing". At the trio table each tile
- * lists only the two teams playing it. Tiles go two across, four (trio: three)
- * once the container is wide enough. With a [gameAction] the whole tile is
- * clickable, its title being the control: the team panel's link to the scoring
- * screen, or the organizer's correction button on a completed table. A clickable
- * tile ends in a footer naming what a tap does (enter, edit, view, correct), and
- * while games can still be entered the first missing one is ringed as next up.
+ * them.
+ *
+ * A Forfeit Game (ADR 0011) is a tile of its own: the awarded team wins it with
+ * the forfeit's points, the withdrawn team scores 0, and it is badged forfeited.
+ * A forfeit that awards no Victory Points (no compensation) has no winner. The
+ * winner's trophy takes the place of its colour dot; Beschiss and double-win
+ * markers sit at the tile's foot, as does a neutral "corrected by the organizer"
+ * marker on a game an organizer corrected (ADR 0010). A game not entered yet is a
+ * dashed tile reading "missing".
+ *
+ * At the trio table each tile lists only the two teams playing it. Tiles go two
+ * across, four (trio: three) once the container is wide enough. With a
+ * [gameAction] the whole tile is clickable, its title being the control: the team
+ * panel's link to the scoring screen, or the organizer's correction button on a
+ * completed table. A clickable tile ends in a footer naming what a tap does
+ * (enter, edit, view, correct), and while games can still be entered the first
+ * missing one is ringed as next up.
  */
-export function GameResults({ caption, teams, schedule, games, gameAction }: GameResultsProps) {
+export function GameResults({
+    caption,
+    teams,
+    schedule,
+    games,
+    forfeits,
+    gameAction,
+    withdrawnTeamIds = [],
+}: GameResultsProps) {
     const byNumber = new Map(games.map((game) => [game.gameNumber, game]));
+    const forfeitByNumber = new Map(forfeits.map((forfeit) => [forfeit.gameNumber, forfeit]));
     // The next game to enter: the first missing one, at a trio table too (even one
-    // the viewing team sits out). Nothing is next once the links only view.
+    // the viewing team sits out). A forfeited game is not missing, and neither is a
+    // game against a withdrawn team, which is never entered. Nothing is next once the
+    // links only view.
     const nextGame =
         gameAction?.kind === 'link' && !gameAction.readOnly
-            ? schedule.find((scheduled) => !byNumber.has(scheduled.gameNumber))?.gameNumber
+            ? schedule.find(
+                  (scheduled) =>
+                      !isSettled(scheduled.gameNumber, games, forfeits) &&
+                      !isLockedByWithdrawal(scheduled, withdrawnTeamIds),
+              )?.gameNumber
             : undefined;
 
     return (
         <div className="@container flex flex-col gap-3">
-            <VictoryPointStandings teams={teams} games={games} />
+            <VictoryPointStandings teams={teams} games={games} forfeits={forfeits} />
             <ol
                 aria-label={caption}
                 // Phones get a little more room around and inside the tiles; from @lg up
@@ -86,8 +118,11 @@ export function GameResults({ caption, teams, schedule, games, gameAction }: Gam
                         teams={teams}
                         scheduled={scheduled}
                         game={byNumber.get(scheduled.gameNumber)}
+                        forfeit={forfeitByNumber.get(scheduled.gameNumber)}
+                        settled={isSettled(scheduled.gameNumber, games, forfeits)}
                         action={gameAction}
                         next={scheduled.gameNumber === nextGame}
+                        locked={isLockedByWithdrawal(scheduled, withdrawnTeamIds)}
                     />
                 ))}
             </ol>
@@ -100,9 +135,15 @@ export function GameResults({ caption, teams, schedule, games, gameAction }: Gam
  * tile is ringed in its colour and announced as leading; a tie at the top, or a
  * table with no points yet, has no leader.
  */
-function VictoryPointStandings({ teams, games }: Pick<GameResultsProps, 'teams' | 'games'>) {
+function VictoryPointStandings({
+    teams,
+    games,
+    forfeits,
+}: Pick<GameResultsProps, 'teams' | 'games' | 'forfeits'>) {
     const { t } = useI18n();
-    const points = teams.map((team) => totalVictoryPoints(games, team.id));
+    const points = teams.map(
+        (team) => totalVictoryPoints(games, team.id) + forfeitVictoryPoints(forfeits, team.id),
+    );
     const best = Math.max(...points);
     const leader =
         best > 0 && points.filter((p) => p === best).length === 1 ? points.indexOf(best) : -1;
@@ -148,41 +189,81 @@ function VictoryPointStandings({ teams, games }: Pick<GameResultsProps, 'teams' 
     );
 }
 
+/** The Victory Points a team earned from Forfeit Games (ADR 0011): only the awarded side scores. */
+function forfeitVictoryPoints(forfeits: readonly ForfeitGame[], teamId: string): number {
+    return forfeits
+        .filter((forfeit) => forfeit.awardedTeamId === teamId)
+        .reduce((sum, forfeit) => sum + forfeit.victoryPoints, 0);
+}
+
+/**
+ * The team a forfeit wins (ADR 0011): the awarded team, but only when the forfeit gains
+ * Victory Points. A forfeit that compensates nothing (no compensation) has no winner.
+ */
+function forfeitWinner(forfeit: ForfeitGame): string | undefined {
+    return forfeit.victoryPoints > 0 ? (forfeit.awardedTeamId ?? undefined) : undefined;
+}
+
 /** One game: its two teams with Tichu Points and Victory Points gained, winner marked. */
 function GameTile({
     teams,
     scheduled,
     game,
-    action,
+    forfeit,
+    settled,
+    action: gameAction,
     next,
+    locked,
 }: {
     teams: readonly ResultTeam[];
     scheduled: ScheduledGame;
     game?: RecordedGame;
+    /** The game was forfeited instead of played (ADR 0011); the awarded team wins it. */
+    forfeit?: ForfeitGame;
+    /** Recorded or forfeited (see `isSettled`): the tile reads as done rather than missing. */
+    settled: boolean;
     action?: GameTileAction;
     /** The next game to enter: ringed, badged, and its footer filled. */
     next: boolean;
+    /** A team of the game withdrew (ADR 0011): the game is only viewed, never entered. */
+    locked: boolean;
 }) {
     const { t } = useI18n();
+    // A forfeited game has nothing to enter, edit or correct, so its tile is not a control.
+    // A game against a withdrawn team can only be viewed.
+    const action: GameTileAction | undefined = forfeit
+        ? undefined
+        : locked && gameAction?.kind === 'link'
+          ? { ...gameAction, readOnly: true }
+          : gameAction;
     const rows = scheduled.teamIds.map((id) => ({
         id,
         name: teams.find((team) => team.id === id)?.name ?? '',
         seat: teams.findIndex((team) => team.id === id),
-        points: game && teamPoints(game, id),
-        victoryPoints: game?.outcome.victoryPoints[id] ?? 0,
+        points: forfeit
+            ? forfeit.awardedTeamId === id
+                ? forfeit.tichuPoints
+                : 0
+            : game && teamPoints(game, id),
+        victoryPoints: forfeit
+            ? forfeit.awardedTeamId === id
+                ? forfeit.victoryPoints
+                : 0
+            : (game?.outcome.victoryPoints[id] ?? 0),
     }));
     const [first, second] = rows;
     // A double win decides the game outright, even when a failed call levels the
     // points; otherwise the team ahead wins. A tie, or a game not entered, has none.
-    const winner =
-        game?.outcome.doubleWinTeam ??
-        (first?.points === undefined ||
-        second?.points === undefined ||
-        first.points === second.points
-            ? undefined
-            : first.points > second.points
-              ? first.id
-              : second.id);
+    const winner = forfeit
+        ? forfeitWinner(forfeit)
+        : (game?.outcome.doubleWinTeam ??
+          (first?.points === undefined ||
+          second?.points === undefined ||
+          first.points === second.points
+              ? undefined
+              : first.points > second.points
+                ? first.id
+                : second.id));
     const title = `${t('rounds.game')} ${scheduled.gameNumber}`;
     const footerLabel = !action
         ? undefined
@@ -198,7 +279,7 @@ function GameTile({
         <li
             className={cn(
                 'relative flex flex-col gap-1.5 rounded-md border p-3 @lg:gap-1 @lg:p-2',
-                game ? 'border-border bg-card' : 'border-dashed border-input',
+                settled ? 'border-border bg-card' : 'border-dashed border-input',
                 // The stretched link covers the tile; the ring follows its keyboard focus.
                 action &&
                     'hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
@@ -232,7 +313,7 @@ function GameTile({
                 )}
                 {next ? (
                     <Badge>{t('rounds.game.next')}</Badge>
-                ) : game ? null : (
+                ) : settled ? null : (
                     // A footer already says what to do and is hidden from screen readers,
                     // so "missing" is announced only.
                     <span className={cn(footerLabel && 'sr-only')}>{t('rounds.game.missing')}</span>
@@ -246,7 +327,7 @@ function GameTile({
                             key={row.id}
                             className={cn(
                                 'flex items-center gap-1',
-                                !game && 'text-muted-foreground',
+                                !settled && 'text-muted-foreground',
                             )}
                         >
                             <span className={cn('min-w-0 flex-1 truncate', won && 'font-semibold')}>
@@ -285,6 +366,11 @@ function GameTile({
                     );
                 })}
             </ul>
+            {forfeit ? (
+                <p className="flex flex-wrap gap-1">
+                    <Badge variant="outline">{t('rounds.game.forfeited')}</Badge>
+                </p>
+            ) : null}
             {game && (game.beschiss || game.outcome.doubleWinTeam !== null || game.correction) ? (
                 <p className="flex flex-wrap gap-1">
                     {game.beschiss ? (

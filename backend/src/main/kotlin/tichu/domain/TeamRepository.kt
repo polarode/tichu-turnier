@@ -42,4 +42,11 @@ interface TeamRepository {
 
     /** Removes the team; its players go with it (ON DELETE CASCADE in the schema). */
     fun delete(teamId: TeamId, tournamentId: TournamentId)
+
+    /**
+     * Sets or clears only the team's [Withdrawal] (ADR 0011), leaving its name and players
+     * untouched. Unlike [save], it never replaces the player rows, which game participants
+     * reference. Fails as not-found when the team is not in the tournament.
+     */
+    fun updateWithdrawal(teamId: TeamId, tournamentId: TournamentId, withdrawal: Withdrawal?)
 }

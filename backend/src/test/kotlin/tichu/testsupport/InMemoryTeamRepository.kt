@@ -4,6 +4,8 @@ import tichu.domain.Team
 import tichu.domain.TeamId
 import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
+import tichu.domain.Withdrawal
+import tichu.vocabulary.NotFoundException
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -39,5 +41,11 @@ class InMemoryTeamRepository : TeamRepository {
 
     override fun delete(teamId: TeamId, tournamentId: TournamentId) {
         store.entries.removeIf { it.value.id == teamId && it.value.tournamentId == tournamentId }
+    }
+
+    override fun updateWithdrawal(teamId: TeamId, tournamentId: TournamentId, withdrawal: Withdrawal?) {
+        val team = findById(teamId, tournamentId)
+            ?: throw NotFoundException("Team ${teamId.value} not found in tournament ${tournamentId.value}")
+        store[teamId.value] = team.copy(withdrawal = withdrawal)
     }
 }

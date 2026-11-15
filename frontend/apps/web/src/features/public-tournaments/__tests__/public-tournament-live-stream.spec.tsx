@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthRepository } from '@/auth-api/auth.repository.ts';
 import type { PublicRound, PublicTournamentDetail } from '@/domain/tournament.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
+import {
+    publicStatisticsQueryKey,
+    publicTournamentQueryKey,
+} from '@/shared/constants/query-keys.ts';
 import { TournamentRepository } from '@/tournament-api/tournament.repository.ts';
 import { FakeEventSource } from '@/test-helpers/fake-event-source.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
@@ -38,6 +42,7 @@ function round(number: number): PublicRound {
                 trio: false,
                 teams: [
                     {
+                        withdrawalReason: null,
                         id: `falcons-${number}`,
                         name: 'Falcons',
                         players: [
@@ -46,6 +51,7 @@ function round(number: number): PublicRound {
                         ],
                     },
                     {
+                        withdrawalReason: null,
                         id: `owls-${number}`,
                         name: 'Owls',
                         players: [
@@ -151,6 +157,35 @@ describe('live stream of a public active tournament', () => {
             callsBeforeFinish,
         );
         expect(source.closed).toBe(false);
+    });
+
+    it('refetches the public tournament and its statistics when a team withdraws', async () => {
+        tournaments.getPublicTournament.mockResolvedValue(
+            tournament(TournamentStatus.ACTIVE, [round(1)]),
+        );
+
+        const { queryClient } = renderApp('/public/tournaments/t-1', { initialLocale: 'en' });
+        await screen.findByRole('heading', { name: 'Autumn Cup' });
+        const source = await openedSource();
+        act(() => source.emitOpen());
+        expect(await screen.findByText('Live')).toBeInTheDocument();
+        const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+        const callsBeforeWithdrawal = tournaments.getPublicTournament.mock.calls.length;
+
+        act(() =>
+            source.emit(
+                TournamentEventType.TEAM_WITHDRAWAL_CHANGED,
+                eventPayload(TournamentEventType.TEAM_WITHDRAWAL_CHANGED),
+            ),
+        );
+
+        await waitFor(() =>
+            expect(tournaments.getPublicTournament.mock.calls.length).toBeGreaterThan(
+                callsBeforeWithdrawal,
+            ),
+        );
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: publicTournamentQueryKey('t-1') });
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: publicStatisticsQueryKey('t-1') });
     });
 
     it('refetches the pairings on every reconnect to catch up on missed rounds', async () => {

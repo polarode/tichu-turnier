@@ -63,6 +63,8 @@ function table(tableNumber: number, confirmation: TableConfirmation): TableOverv
         teamIds: ['a', 'b'] as [string, string],
     }));
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tableNumber,
         teamIds: ['a', 'b'],
         trio: false,

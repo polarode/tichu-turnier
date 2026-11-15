@@ -1,6 +1,7 @@
 package tichu.domain
 
 import tichu.testsupport.teamOf
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -105,5 +106,30 @@ class TeamTrendTest {
                 assertEquals(entry.team.victoryPoints, trend.points.last().victoryPoints, entry.team.teamName)
             }
         }
+    }
+
+    @Test
+    fun `a round is complete when only the remaining team confirmed, and its forfeits count`() {
+        val withdrawn = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.FULL, 1, Instant.EPOCH, AdminUserId("admin-1"))
+        val rounds = listOf(
+            PlayedRound(
+                round = round(1, listOf("a", "b")),
+                games = table(1, 1, "a", "b", 60, 70),
+                // b withdrew and never confirmed; a's confirmation alone completes the round.
+                confirmations = mapOf(completed(1, "a")),
+                withdrawals = mapOf(TeamId("b") to withdrawn),
+            ),
+        )
+
+        val trends = TeamTrend.compute(teams.take(2), rounds, settings)
+
+        // a: 2 VP from each of its two wins, plus 2 forfeits at 2 VP each = 8. b: 0.
+        assertEquals(
+            listOf(
+                TeamTrend(TeamId("a"), listOf(TrendPoint(1, 8))),
+                TeamTrend(TeamId("b"), listOf(TrendPoint(1, 0))),
+            ),
+            trends,
+        )
     }
 }

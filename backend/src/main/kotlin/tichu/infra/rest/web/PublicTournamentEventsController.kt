@@ -15,7 +15,7 @@ import tichu.infra.events.SseTournamentEventBroadcaster
 
 /**
  * Driving adapter for the anonymous public live stream. Carries only the events a spectator
- * may see (round starts, tournament finish, results publication). A tournament that is not
+ * may see (round starts, tournament finish, results publication, team withdrawals). A tournament that is not
  * publicly visible answers 404 through [CheckPublicTournamentVisible] before any stream opens.
  */
 @RestController
@@ -36,6 +36,7 @@ class PublicTournamentEventsController(
                 TournamentEventType.ROUND_STARTED,
                 TournamentEventType.TOURNAMENT_FINISHED,
                 TournamentEventType.RESULTS_PUBLISHED,
+                TournamentEventType.TEAM_WITHDRAWAL_CHANGED,
             ),
         )
     }

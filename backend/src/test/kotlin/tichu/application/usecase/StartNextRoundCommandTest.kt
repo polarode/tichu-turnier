@@ -2,6 +2,7 @@ package tichu.application.usecase
 
 import tichu.testsupport.InMemoryAdminUserRepository
 import tichu.domain.AdminUserId
+import tichu.domain.ForfeitCompensation
 import tichu.domain.GameKey
 import tichu.domain.IdGenerator
 import tichu.domain.Pairing
@@ -17,6 +18,8 @@ import tichu.domain.TournamentSettings
 import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
@@ -29,6 +32,7 @@ import tichu.testsupport.teamOf
 import tichu.vocabulary.ErrorCode
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.RoundIncompleteException
+import tichu.vocabulary.TooFewActiveTeamsException
 import tichu.vocabulary.TotalRoundsReachedException
 import tichu.vocabulary.TournamentNotActiveException
 import org.junit.jupiter.api.Test
@@ -64,7 +68,7 @@ class StartNextRoundCommandTest {
         TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()),
         teamRepository,
         roundRepository,
-        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository),
+        PlayedRoundsReader(roundRepository, gameRepository, confirmationRepository, teamRepository),
         idGenerator,
         Random(7),
         startEvents,
@@ -120,6 +124,60 @@ class StartNextRoundCommandTest {
             next.pairing.tables.map { it.seatedTeams },
         )
         assertEquals(next, roundRepository.findByTournamentAndNumber(tournamentId, 2))
+    }
+
+    /** Withdraws team [id] as of [roundNumber], keeping the rest of the team as stored. */
+    private fun withdraw(id: String, roundNumber: Int, reason: WithdrawalReason = WithdrawalReason.VOLUNTARY) {
+        val team = teamRepository.findById(TeamId(id), tournamentId)!!
+        teamRepository.save(
+            team.copy(withdrawal = Withdrawal(reason, ForfeitCompensation.NONE, roundNumber, now, owner)),
+        )
+    }
+
+    @Test
+    fun `a disqualified team is not drawn into the next round`() {
+        tournament()
+        teams("a", "b", "c", "d", "e")
+        round(1, listOf("a", "b"), listOf("c", "d", "e"))
+        play(1, 1, base = 70)
+        play(1, 2, base = 60)
+        withdraw("e", 1, WithdrawalReason.DISQUALIFIED)
+
+        val next = command.start(tournamentId, owner)
+
+        assertEquals(2, next.pairing.tables.size)
+        assertEquals(false, next.pairing.tables.any { it.isTrio })
+        assertEquals(false, next.pairing.tables.any { TeamId("e") in it.seatedTeams })
+    }
+
+    @Test
+    fun `fewer than two active teams refuse the draw`() {
+        tournament()
+        teams("a", "b", "c")
+        round(1, listOf("a", "b", "c"))
+        withdraw("a", 1)
+        withdraw("b", 1)
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), TeamId("c"), now)
+
+        val ex = assertFailsWith<TooFewActiveTeamsException> { command.start(tournamentId, owner) }
+
+        assertEquals(ErrorCode.TOO_FEW_ACTIVE_TEAMS, ex.code)
+        assertEquals(null, roundRepository.findByTournamentAndNumber(tournamentId, 2))
+    }
+
+    @Test
+    fun `a table whose withdrawn team is left to the opponent alone counts as complete`() {
+        tournament()
+        teams("a", "b", "c", "d")
+        round(1, listOf("a", "b"), listOf("c", "d"))
+        play(1, 1, confirmed = false)
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), TeamId("b"), now)
+        withdraw("a", 1)
+        play(1, 2)
+
+        val next = command.start(tournamentId, owner)
+
+        assertEquals(2, next.number)
     }
 
     // ---- live events ------------------------------------------------------------

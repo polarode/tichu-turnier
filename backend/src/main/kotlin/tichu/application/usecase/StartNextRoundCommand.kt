@@ -17,6 +17,7 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
 import tichu.vocabulary.RoundIncompleteException
+import tichu.vocabulary.TooFewActiveTeamsException
 import tichu.vocabulary.TotalRoundsReachedException
 import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
@@ -31,7 +32,8 @@ import kotlin.random.Random
  * and is rejected instead of colliding on the round number. Then the gates: active,
  * current round complete, rounds remaining; the Standings over all
  * completed tables feed [SwissPairing.pairNextRound], with every previous table in
- * the rematch history.
+ * the rematch history. A withdrawn team is not drawn (ADR 0011): only the active
+ * teams' standings entries are paired, and the draw needs at least two of them.
  */
 @Transactional
 class StartNextRoundCommand(
@@ -57,7 +59,7 @@ class StartNextRoundCommand(
 
         val played = playedRounds.of(tournamentId)
         val current = played.last()
-        if (!current.round.isComplete(current.confirmations)) {
+        if (!current.round.isComplete(current.confirmations, current.withdrawals.keys)) {
             throw RoundIncompleteException(
                 "Round ${current.round.number} of tournament ${tournamentId.value} still has tables to complete",
             )
@@ -68,13 +70,21 @@ class StartNextRoundCommand(
             )
         }
 
-        val standings = Standings.compute(teamRepository.findAllByTournament(tournamentId), played, tournament.settings)
+        val teams = teamRepository.findAllByTournament(tournamentId)
+        val active = teams.filter { !it.isWithdrawn }.map { it.id }.toSet()
+        if (active.size < 2) {
+            throw TooFewActiveTeamsException(
+                "Tournament ${tournamentId.value} has ${active.size} active teams; a round needs at least two",
+            )
+        }
+        val standings = Standings.compute(teams, played, tournament.settings)
+        val activeStandings = Standings(standings.entries.filter { it.team.teamId in active })
         val history = PairingHistory.of(played.flatMap { it.round.pairing.tables })
         val round = Round(
             id = RoundId(idGenerator.newId()),
             tournamentId = tournamentId,
             number = current.round.number + 1,
-            pairing = SwissPairing.pairNextRound(standings, history, random),
+            pairing = SwissPairing.pairNextRound(activeStandings, history, random),
         )
         val saved = roundRepository.save(round)
         tournamentEvents.publish(TournamentEvent(TournamentEventType.ROUND_STARTED, tournamentId, saved.id))

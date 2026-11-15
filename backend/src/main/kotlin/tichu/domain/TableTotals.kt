@@ -26,14 +26,18 @@ object TableTotals {
     /**
      * For each completed table of [played] (every seated team confirmed), each
      * seated team's summed VP and TP over the games it played there, scored with
-     * [settings]. A trio team's totals cover only its own games. Tables that are
-     * not completed are absent; a seated team with no games is listed with zeros.
+     * [settings], plus the Forfeit Games awarded at that table (ADR 0011). A trio team's
+     * totals cover only its own games. Tables that are not completed are absent; a
+     * seated team with no games is listed with zeros.
      */
     fun of(played: PlayedRound, settings: TournamentSettings): Map<TableId, Map<TeamId, TableTotal>> =
         played.completedTables.associate { table ->
             val outcomes = played.games
                 .filter { it.tableNumber == table.id.value }
                 .map { it.score(settings) }
-            table.id to table.seatedTeams.associateWith { team -> outcomes.totalFor(team) }
+            val forfeits = played.completedForfeits
+                .filter { it.tableNumber == table.id.value }
+                .map { it.outcome() }
+            table.id to table.seatedTeams.associateWith { team -> (outcomes + forfeits).totalFor(team) }
         }
 }

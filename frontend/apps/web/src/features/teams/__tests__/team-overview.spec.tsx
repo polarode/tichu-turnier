@@ -2,11 +2,13 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { TeamOverview } from '@/domain/team-overview.domain.ts';
 import { TeamAuthRepository } from '@/team-auth-api/team-auth.repository.ts';
 import { ScoringRepository } from '@/scoring-api/scoring.repository.ts';
 import type { RecordedGame, TeamTable } from '@/domain/game.domain.ts';
 import { ApiError } from '@/shared/api/api-error.ts';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
 import { TournamentEventType } from '@/vocabulary/tournament-event-type.enum.ts';
 import { FakeEventSource } from '@/test-helpers/fake-event-source.ts';
 import { renderApp } from '@/test-helpers/render-app.tsx';
@@ -47,6 +49,7 @@ const mockedConfirm = vi.mocked(ScoringRepository.confirm);
 const mockedRetract = vi.mocked(ScoringRepository.retract);
 
 const overview = {
+    withdrawalReason: null,
     teamId: 'team-1',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
@@ -161,6 +164,7 @@ describe('/team', () => {
         mockedMe.mockResolvedValue({ ...overview, tournamentStatus: TournamentStatus.PUBLISHED });
         mockedFinalRanking.mockResolvedValue([
             {
+                withdrawalReason: null,
                 rank: 1,
                 teamId: 'team-2',
                 teamName: 'Team Beta',
@@ -169,6 +173,7 @@ describe('/team', () => {
                 tichuPoints: 450,
             },
             {
+                withdrawalReason: null,
                 rank: 2,
                 teamId: 'team-1',
                 teamName: 'Team Alpha',
@@ -177,6 +182,7 @@ describe('/team', () => {
                 tichuPoints: 300,
             },
             {
+                withdrawalReason: null,
                 rank: 2,
                 teamId: 'team-3',
                 teamName: 'Team Gamma',
@@ -219,6 +225,8 @@ describe('/team', () => {
         // The tiles sit in the current table's panel; the scoring route resolves
         // the seat itself (a 404 there would show the not-seated placeholder).
         mockedCurrentTable.mockResolvedValue({
+            forfeits: [],
+            withdrawnTeamIds: [],
             tournamentId: 't-1',
             roundNumber: 1,
             tableNumber: 1,
@@ -325,6 +333,8 @@ describe('/team', () => {
 
 function seatedTable(overrides: Partial<TeamTable> = {}): TeamTable {
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tournamentId: 't-1',
         roundNumber: 1,
         tableNumber: 2,
@@ -424,8 +434,12 @@ function game(
 
 const allGames = () => [1, 2, 3, 4].map((n) => game(n));
 
-async function renderPanel(table: TeamTable, games: RecordedGame[]) {
-    mockedMe.mockResolvedValue(overview);
+async function renderPanel(
+    table: TeamTable,
+    games: RecordedGame[],
+    viewer: TeamOverview = overview,
+) {
+    mockedMe.mockResolvedValue(viewer);
     mockedCurrentTable.mockResolvedValue(table);
     mockedGames.mockResolvedValue(games);
     const result = renderApp('/team');
@@ -815,5 +829,64 @@ describe('/team confirmation panel', () => {
             );
             await waitFor(() => expect(mockedGames.mock.calls.length).toBeGreaterThan(gameFetches));
         });
+    });
+});
+
+// ---- withdrawal (ADR 0011) ----------------------------------------------------
+
+describe('/team withdrawal', () => {
+    beforeEach(() => {
+        mockedMe.mockReset();
+        mockedCurrentTable.mockReset();
+        mockedGames.mockReset();
+        mockedConfirm.mockReset();
+        mockedRetract.mockReset();
+    });
+
+    it('shows the disqualified notice and no Confirm to a disqualified team', async () => {
+        const { panel } = await renderPanel(seatedTable(), allGames(), {
+            ...overview,
+            withdrawalReason: WithdrawalReason.DISQUALIFIED,
+        });
+
+        expect(
+            screen.getByText('Euer Team wurde vom Turnier disqualifiziert.'),
+        ).toBeInTheDocument();
+        expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('shows the voluntary notice and no Confirm or entry to a withdrawn team', async () => {
+        const { panel } = await renderPanel(seatedTable(), allGames(), {
+            ...overview,
+            withdrawalReason: WithdrawalReason.VOLUNTARY,
+        });
+
+        expect(
+            screen.getByText('Euer Team hat sich vom Turnier zurückgezogen.'),
+        ).toBeInTheDocument();
+        expect(screen.getByText('Ihr könnt eure Spiele weiterhin ansehen.')).toBeInTheDocument();
+        expect(within(panel).queryByRole('button')).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('link', { name: 'Ergebnisse eintragen' }),
+        ).not.toBeInTheDocument();
+    });
+
+    it('views the games against a withdrawn team and rings no next game', async () => {
+        // Team Beta withdrew after games 1 and 2: games 3 and 4 are forfeits awarded to Alpha.
+        const forfeits = [3, 4].map((gameNumber) => ({
+            gameNumber,
+            withdrawnTeamId: 'team-2',
+            awardedTeamId: 'team-1',
+            victoryPoints: 2,
+            tichuPoints: 100,
+        }));
+        const { panel } = await renderPanel(
+            seatedTable({ withdrawnTeamIds: ['team-2'], forfeits }),
+            [game(1), game(2)],
+        );
+
+        expect(within(panel).getAllByText('Ansehen')).toHaveLength(2);
+        expect(within(panel).queryByText('Als Nächstes')).not.toBeInTheDocument();
+        expect(within(panel).queryByText('Eintragen')).not.toBeInTheDocument();
     });
 });

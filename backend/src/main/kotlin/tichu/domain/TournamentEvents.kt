@@ -27,4 +27,7 @@ enum class TournamentEventType {
     TOURNAMENT_FINISHED,
     RESULTS_PUBLISHED,
     ORGANIZERS_CHANGED,
+
+    /** A team was withdrawn or its withdrawal undone; the standings and tables may have changed (ADR 0011). */
+    TEAM_WITHDRAWAL_CHANGED,
 }

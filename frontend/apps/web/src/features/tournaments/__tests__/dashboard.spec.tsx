@@ -55,7 +55,7 @@ function team(id: string, tournamentId: string): Team {
         { id: `${id}-p1`, teamId: id, name: 'Alice' },
         { id: `${id}-p2`, teamId: id, name: 'Bob' },
     ];
-    return { id, tournamentId, name: `Team ${id}`, players };
+    return { withdrawal: null, id, tournamentId, name: `Team ${id}`, players };
 }
 
 describe('dashboard', () => {

@@ -62,7 +62,7 @@ function team(id: string, name: string): Team {
         { id: `${id}-p1`, teamId: id, name: `${name} 1` },
         { id: `${id}-p2`, teamId: id, name: `${name} 2` },
     ];
-    return { id, tournamentId: 't-1', name, players };
+    return { withdrawal: null, id, tournamentId: 't-1', name, players };
 }
 
 function round(number: number, tables: Round['tables']): Round {
@@ -81,6 +81,8 @@ function table(
         teamIds: [homeTeamId, awayTeamId] as [string, string],
     }));
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tableNumber,
         teamIds: [homeTeamId, awayTeamId],
         trio: false,
@@ -279,6 +281,150 @@ describe('rounds section', () => {
         expect(within(section).queryByText('Trio')).not.toBeInTheDocument();
     });
 
+    it('lists forfeit games as tiles in game order, awarded to the remaining team', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                {
+                    ...table(1, 'team-a', 'team-b', [
+                        game(1, { a: 100, b: 0 }),
+                        game(2, { a: 100, b: 0 }),
+                    ]),
+                    withdrawnTeamIds: ['team-b'],
+                    forfeits: [
+                        {
+                            gameNumber: 3,
+                            withdrawnTeamId: 'team-b',
+                            awardedTeamId: 'team-a',
+                            victoryPoints: 1,
+                            tichuPoints: 50,
+                        },
+                        {
+                            gameNumber: 4,
+                            withdrawnTeamId: 'team-b',
+                            awardedTeamId: 'team-a',
+                            victoryPoints: 1,
+                            tichuPoints: 50,
+                        },
+                    ],
+                },
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(
+            await within(section).findByRole('button', { name: /^Tisch A.*Alpha.*vs Beta/ }),
+        );
+
+        // Forfeit tiles sit among the played games: the awarded team wins them, the withdrawn team scores 0.
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(gameTiles(games)).toEqual([
+            ['Spiel 1', 'Alpha, Gewinner 100 +2 Siegpunkte', 'Beta 0'],
+            ['Spiel 2', 'Alpha, Gewinner 100 +2 Siegpunkte', 'Beta 0'],
+            ['Spiel 3', 'Alpha, Gewinner 50 +1 Siegpunkte', 'Beta 0', 'Kampflos gewertet'],
+            ['Spiel 4', 'Alpha, Gewinner 50 +1 Siegpunkte', 'Beta 0', 'Kampflos gewertet'],
+        ]);
+        // Forfeit Games count toward the Victory Points: 2 + 2 + 1 + 1.
+        expect(listItems(within(section).getByRole('list', { name: 'Siegpunkte' }))).toEqual([
+            'Alpha, führt 6',
+            'Beta 0',
+        ]);
+    });
+
+    it('shows a forfeit that awards nobody as a tile without a winner, both teams at 0', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                {
+                    ...table(1, 'team-a', 'team-b', [game(1, { a: 100, b: 0 })]),
+                    withdrawnTeamIds: ['team-b'],
+                    forfeits: [
+                        {
+                            gameNumber: 2,
+                            withdrawnTeamId: 'team-b',
+                            awardedTeamId: null,
+                            victoryPoints: 0,
+                            tichuPoints: 0,
+                        },
+                    ],
+                },
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(
+            await within(section).findByRole('button', { name: /^Tisch A.*Alpha.*vs Beta/ }),
+        );
+
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(gameTiles(games)).toEqual([
+            ['Spiel 1', 'Alpha, Gewinner 100 +2 Siegpunkte', 'Beta 0'],
+            ['Spiel 2', 'Alpha 0', 'Beta 0', 'Kampflos gewertet'],
+            ['Spiel 3 fehlt', 'Alpha', 'Beta'],
+            ['Spiel 4 fehlt', 'Alpha', 'Beta'],
+        ]);
+    });
+
+    it('shows a forfeit that compensates nothing as a tile without a winner', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([team('team-a', 'Alpha'), team('team-b', 'Beta')]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [
+                {
+                    ...table(1, 'team-a', 'team-b', [game(1, { a: 100, b: 0 })]),
+                    withdrawnTeamIds: ['team-b'],
+                    forfeits: [
+                        {
+                            gameNumber: 2,
+                            withdrawnTeamId: 'team-b',
+                            awardedTeamId: 'team-a',
+                            victoryPoints: 0,
+                            tichuPoints: 0,
+                        },
+                    ],
+                },
+            ]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        await userEvent.click(
+            await within(section).findByRole('button', { name: /^Tisch A.*Alpha.*vs Beta/ }),
+        );
+
+        // Nothing is awarded, so no team is marked as the winner; the tile still reads as forfeited.
+        const games = within(section).getByRole('list', { name: 'Spiele – Tisch A' });
+        expect(gameTiles(games)[1]).toEqual(['Spiel 2', 'Alpha 0', 'Beta 0', 'Kampflos gewertet']);
+    });
+
+    it('marks a withdrawn team in its table header with the reason it withdrew', async () => {
+        tournaments.get.mockResolvedValue(tournament('ACTIVE'));
+        teams.list.mockResolvedValue([
+            team('team-a', 'Alpha'),
+            {
+                ...team('team-b', 'Beta'),
+                withdrawal: {
+                    reason: 'DISQUALIFIED',
+                    compensation: 'FULL',
+                    roundNumber: 1,
+                    withdrawnAt: new Date('2026-01-02T00:00:00Z'),
+                },
+            },
+        ]);
+        tournaments.rounds.mockResolvedValue([
+            round(1, [{ ...table(1, 'team-a', 'team-b'), withdrawnTeamIds: ['team-b'] }]),
+        ]);
+        renderApp('/admin/tournaments/t-1');
+
+        const section = await screen.findByRole('region', { name: 'Runden' });
+        const header = await within(section).findByRole('button', { name: /^Tisch A/ });
+        expect(within(header).getByText('Disqualifiziert')).toBeInTheDocument();
+    });
+
     it("shows each table's status and marks the teams that confirmed", async () => {
         tournaments.get.mockResolvedValue(tournament('ACTIVE'));
         teams.list.mockResolvedValue([
@@ -354,6 +500,8 @@ describe('rounds section', () => {
         tournaments.rounds.mockResolvedValue([
             round(1, [
                 {
+                    forfeits: [],
+                    withdrawnTeamIds: [],
                     tableNumber: 1,
                     teamIds: ['team-a', 'team-b', 'team-c'],
                     trio: true,

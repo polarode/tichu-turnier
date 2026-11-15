@@ -10,5 +10,6 @@ export function standingsEntryDtoToDomain(dto: StandingsEntryDto): StandingsEntr
         gamesPlayed: dto.gamesPlayed,
         victoryPoints: dto.victoryPoints,
         tichuPoints: dto.tichuPoints,
+        withdrawalReason: dto.withdrawalReason,
     };
 }

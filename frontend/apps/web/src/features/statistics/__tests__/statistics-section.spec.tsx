@@ -82,6 +82,8 @@ function table(tableNumber: number): TableOverview {
         teamIds: ['a', 'b'] as [string, string],
     }));
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tableNumber,
         teamIds: ['a', 'b'],
         trio: false,

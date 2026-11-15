@@ -49,7 +49,8 @@ enum class HighlightMetric(
  * the highest value, except for the Good Horse Ratio, where it means the lowest non-null
  * ratio; teams without a value are never shown. A count metric whose maximum is 0 has no
  * highlight, and the Good Horse has none when no team has a ratio. Zero and negative
- * Good Horse ratios are valid and can lead.
+ * Good Horse ratios are valid and can lead. A disqualified team (ADR 0011) never leads:
+ * it is left out before the leader is picked, so ties among the others are unchanged.
  */
 data class Highlight(
     val metric: HighlightMetric,
@@ -59,9 +60,19 @@ data class Highlight(
 
     companion object {
 
-        /** The highlights of [stats], one per metric that has a leading value, in metric order. */
-        fun of(stats: List<TeamStatistics>): List<Highlight> =
-            HighlightMetric.entries.mapNotNull { metric -> leading(metric, stats) }
+        /**
+         * The highlights of [stats], one per metric that has a leading value, in metric order.
+         * [teams] tells which teams were disqualified; a team of [stats] missing from it is
+         * not disqualified.
+         */
+        fun of(stats: List<TeamStatistics>, teams: List<Team>): List<Highlight> {
+            val disqualified = teams
+                .filter { it.withdrawal?.isDisqualified == true }
+                .map { it.id }
+                .toSet()
+            val eligible = stats.filter { it.teamId !in disqualified }
+            return HighlightMetric.entries.mapNotNull { metric -> leading(metric, eligible) }
+        }
 
         private fun leading(metric: HighlightMetric, stats: List<TeamStatistics>): Highlight? {
             val valued = stats.mapNotNull { team -> metric.selector(team)?.let { value -> team.teamId to value } }

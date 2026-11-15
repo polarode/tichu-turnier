@@ -12,16 +12,19 @@ import tichu.domain.TableConfirmationRepository
 import tichu.domain.TableConfirmations
 import tichu.domain.TableKey
 import tichu.domain.TeamId
+import tichu.domain.TeamRepository
 import tichu.domain.TournamentEvent
 import tichu.domain.TournamentEventType
 import tichu.domain.TournamentEvents
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
+import tichu.vocabulary.TeamWithdrawnException
 import tichu.vocabulary.TournamentNotActiveException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -38,14 +41,17 @@ import java.time.Clock
  * Confirm and retract are only accepted while the tournament is ACTIVE
  * ([TournamentNotActiveException]).
  *
- * Confirm checks, in order: seat (403), tournament status, already confirmed (no
- * change), every game entered ([TableIncompleteException]), then the seen versions
- * ([GameConcurrentModificationException] on any difference).
+ * Confirm checks, in order: seat (403), tournament status, withdrawn session
+ * ([TeamWithdrawnException], ADR 0011), already confirmed (no change), every game
+ * entered ([TableIncompleteException]), then the seen versions
+ * ([GameConcurrentModificationException] on any difference). A Forfeit Game counts as
+ * entered; a withdrawn team's confirmation is not needed for completion.
  */
 @Transactional
 class ConfirmTableCommand(
     private val roundRepository: RoundRepository,
     private val tournamentRepository: TournamentRepository,
+    private val teamRepository: TeamRepository,
     private val gameRepository: GameRepository,
     private val confirmationRepository: TableConfirmationRepository,
     private val clock: Clock,
@@ -57,19 +63,20 @@ class ConfirmTableCommand(
         seenGames: List<SeenGame>,
         principal: AuthenticatedTeam,
     ): TableConfirmationState {
-        val (round, table) = lockSeatedTable(key, principal)
+        val (round, table, withdrawals) = lockSeatedTable(key, principal)
         val confirmed = confirmationRepository.findByTable(key)
-        if (principal.teamId in confirmed) return state(table, confirmed)
+        if (principal.teamId in confirmed) return state(table, confirmed, withdrawals.keys)
         requireDistinctGameNumbers(seenGames)
 
         val stored = gameRepository.findByTable(key.tournamentId, key.roundNumber, key.tableNumber)
-            .associate { it.gameNumber to it.version }
-        if (stored.size < table.gameCount) {
+        val forfeits = tableForfeits(round, table, stored, withdrawals)
+        val covered = stored.size + forfeits.size
+        if (covered < table.gameCount) {
             throw TableIncompleteException(
-                "Table ${table.id.value} has ${stored.size} of ${table.gameCount} games entered",
+                "Table ${table.id.value} has $covered of ${table.gameCount} games entered",
             )
         }
-        if (seenGames.associate { it.gameNumber to it.version } != stored) {
+        if (seenGames.associate { it.gameNumber to it.version } != stored.associate { it.gameNumber to it.version }) {
             throw GameConcurrentModificationException(
                 "The games at table ${table.id.value} changed since they were read; reload and retry",
             )
@@ -77,27 +84,28 @@ class ConfirmTableCommand(
 
         confirmationRepository.add(key, principal.teamId, clock.instant())
         publish(TournamentEventType.TABLE_CONFIRMED, key, round, table)
-        return state(table, confirmed + principal.teamId)
+        return state(table, confirmed + principal.teamId, withdrawals.keys)
     }
 
     override fun retract(key: TableKey, principal: AuthenticatedTeam): TableConfirmationState {
-        val (round, table) = lockSeatedTable(key, principal)
+        val (round, table, withdrawals) = lockSeatedTable(key, principal)
         val confirmed = confirmationRepository.findByTable(key)
-        if (TableConfirmations(table, confirmed).isCompleted) {
+        if (TableConfirmations(table, confirmed, withdrawals.keys).isCompleted) {
             throw TableCompletedException("Table ${table.id.value} is completed; confirmations are final")
         }
-        if (principal.teamId !in confirmed) return state(table, confirmed)
+        if (principal.teamId !in confirmed) return state(table, confirmed, withdrawals.keys)
 
         confirmationRepository.remove(key, principal.teamId)
         publish(TournamentEventType.CONFIRMATION_RETRACTED, key, round, table)
-        return state(table, confirmed - principal.teamId)
+        return state(table, confirmed - principal.teamId, withdrawals.keys)
     }
 
     /**
-     * Resolves the table, checks the principal is seated there and the tournament is
-     * ACTIVE, and takes the table lock.
+     * Resolves the table, checks the principal is seated there, the tournament is
+     * ACTIVE and the principal's team has not withdrawn (ADR 0011), and takes the table
+     * lock. Returns the round, the table and the tournament's withdrawn teams.
      */
-    private fun lockSeatedTable(key: TableKey, principal: AuthenticatedTeam): Pair<Round, Table> {
+    private fun lockSeatedTable(key: TableKey, principal: AuthenticatedTeam): Triple<Round, Table, Map<TeamId, Withdrawal>> {
         // The session scopes the request: a foreign tournament is not found, never widened.
         if (key.tournamentId != principal.tournamentId) {
             throw NotFoundException("Tournament ${key.tournamentId.value} not found")
@@ -113,8 +121,12 @@ class ConfirmTableCommand(
                 "Tournament ${key.tournamentId.value} is ${tournament.status}; tables are only confirmed while it is active",
             )
         }
+        val withdrawals = withdrawalsOf(teamRepository, key.tournamentId)
+        if (principal.teamId in withdrawals) {
+            throw TeamWithdrawnException("Team ${principal.teamId.value} withdrew; it can no longer confirm or retract")
+        }
         roundRepository.lockTable(key)
-        return round to table
+        return Triple(round, table, withdrawals)
     }
 
     private fun publish(type: TournamentEventType, key: TableKey, round: Round, table: Table) =
@@ -126,5 +138,6 @@ class ConfirmTableCommand(
         }
     }
 
-    private fun state(table: Table, confirmed: Set<TeamId>) = TableConfirmationState.of(table, confirmed)
+    private fun state(table: Table, confirmed: Set<TeamId>, withdrawn: Set<TeamId>) =
+        TableConfirmationState.of(table, confirmed, withdrawn)
 }

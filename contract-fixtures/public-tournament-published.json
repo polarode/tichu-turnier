@@ -27,7 +27,8 @@
                   { "id": "team-falcons-1", "name": "Falcons one" },
                   { "id": "team-falcons-2", "name": "Falcons two" }
                 ],
-                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 },
+                "withdrawalReason": null
               },
               {
                 "id": "team-owls",
@@ -36,7 +37,8 @@
                   { "id": "team-owls-1", "name": "Owls one" },
                   { "id": "team-owls-2", "name": "Owls two" }
                 ],
-                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 },
+                "withdrawalReason": null
               }
             ]
           },
@@ -51,7 +53,8 @@
                   { "id": "team-ravens-1", "name": "Ravens one" },
                   { "id": "team-ravens-2", "name": "Ravens two" }
                 ],
-                "totals": { "victoryPoints": 8, "tichuPoints": 280 }
+                "totals": { "victoryPoints": 8, "tichuPoints": 280 },
+                "withdrawalReason": null
               },
               {
                 "id": "team-badgers",
@@ -60,7 +63,8 @@
                   { "id": "team-badgers-1", "name": "Badgers one" },
                   { "id": "team-badgers-2", "name": "Badgers two" }
                 ],
-                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 },
+                "withdrawalReason": null
               },
               {
                 "id": "team-wolves",
@@ -69,7 +73,8 @@
                   { "id": "team-wolves-1", "name": "Wolves one" },
                   { "id": "team-wolves-2", "name": "Wolves two" }
                 ],
-                "totals": { "victoryPoints": 0, "tichuPoints": 120 }
+                "totals": { "victoryPoints": 0, "tichuPoints": 120 },
+                "withdrawalReason": null
               }
             ]
           }
@@ -89,7 +94,8 @@
                   { "id": "team-falcons-1", "name": "Falcons one" },
                   { "id": "team-falcons-2", "name": "Falcons two" }
                 ],
-                "totals": { "victoryPoints": 8, "tichuPoints": 240 }
+                "totals": { "victoryPoints": 8, "tichuPoints": 240 },
+                "withdrawalReason": null
               },
               {
                 "id": "team-ravens",
@@ -98,7 +104,8 @@
                   { "id": "team-ravens-1", "name": "Ravens one" },
                   { "id": "team-ravens-2", "name": "Ravens two" }
                 ],
-                "totals": { "victoryPoints": 0, "tichuPoints": 160 }
+                "totals": { "victoryPoints": 0, "tichuPoints": 160 },
+                "withdrawalReason": null
               }
             ]
           },
@@ -113,7 +120,8 @@
                   { "id": "team-owls-1", "name": "Owls one" },
                   { "id": "team-owls-2", "name": "Owls two" }
                 ],
-                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 },
+                "withdrawalReason": null
               },
               {
                 "id": "team-badgers",
@@ -122,7 +130,8 @@
                   { "id": "team-badgers-1", "name": "Badgers one" },
                   { "id": "team-badgers-2", "name": "Badgers two" }
                 ],
-                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 },
+                "withdrawalReason": null
               },
               {
                 "id": "team-wolves",
@@ -131,7 +140,8 @@
                   { "id": "team-wolves-1", "name": "Wolves one" },
                   { "id": "team-wolves-2", "name": "Wolves two" }
                 ],
-                "totals": { "victoryPoints": 4, "tichuPoints": 200 }
+                "totals": { "victoryPoints": 4, "tichuPoints": 200 },
+                "withdrawalReason": null
               }
             ]
           }
@@ -139,11 +149,11 @@
       }
     ],
     "finalRanking": [
-      { "rank": 1, "teamId": "team-falcons", "teamName": "Falcons", "gamesPlayed": 8, "victoryPoints": 12, "tichuPoints": 440 },
-      { "rank": 2, "teamId": "team-ravens", "teamName": "Ravens", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 440 },
-      { "rank": 3, "teamId": "team-badgers", "teamName": "Badgers", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 400 },
-      { "rank": 3, "teamId": "team-owls", "teamName": "Owls", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 400 },
-      { "rank": 5, "teamId": "team-wolves", "teamName": "Wolves", "gamesPlayed": 8, "victoryPoints": 4, "tichuPoints": 320 }
+      { "rank": 1, "teamId": "team-falcons", "teamName": "Falcons", "gamesPlayed": 8, "victoryPoints": 12, "tichuPoints": 440, "withdrawalReason": null },
+      { "rank": 2, "teamId": "team-ravens", "teamName": "Ravens", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 440, "withdrawalReason": null },
+      { "rank": 3, "teamId": "team-badgers", "teamName": "Badgers", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 400, "withdrawalReason": null },
+      { "rank": 3, "teamId": "team-owls", "teamName": "Owls", "gamesPlayed": 8, "victoryPoints": 8, "tichuPoints": 400, "withdrawalReason": null },
+      { "rank": 5, "teamId": "team-wolves", "teamName": "Wolves", "gamesPlayed": 8, "victoryPoints": 4, "tichuPoints": 320, "withdrawalReason": null }
     ]
   }
 }

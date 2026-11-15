@@ -8,10 +8,10 @@
     "Result: Badgers, Falcons and Owls tie exactly at 4 VP / 200 TP and share rank 2 (listed by name); Wolves follow at rank 5."
   ],
   "response": [
-    { "rank": 1, "teamId": "team-ravens", "teamName": "Ravens", "gamesPlayed": 4, "victoryPoints": 8, "tichuPoints": 280 },
-    { "rank": 2, "teamId": "team-badgers", "teamName": "Badgers", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200 },
-    { "rank": 2, "teamId": "team-falcons", "teamName": "Falcons", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200 },
-    { "rank": 2, "teamId": "team-owls", "teamName": "Owls", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200 },
-    { "rank": 5, "teamId": "team-wolves", "teamName": "Wolves", "gamesPlayed": 4, "victoryPoints": 0, "tichuPoints": 120 }
+    { "rank": 1, "teamId": "team-ravens", "teamName": "Ravens", "gamesPlayed": 4, "victoryPoints": 8, "tichuPoints": 280, "withdrawalReason": null },
+    { "rank": 2, "teamId": "team-badgers", "teamName": "Badgers", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200, "withdrawalReason": null },
+    { "rank": 2, "teamId": "team-falcons", "teamName": "Falcons", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200, "withdrawalReason": null },
+    { "rank": 2, "teamId": "team-owls", "teamName": "Owls", "gamesPlayed": 4, "victoryPoints": 4, "tichuPoints": 200, "withdrawalReason": null },
+    { "rank": 5, "teamId": "team-wolves", "teamName": "Wolves", "gamesPlayed": 4, "victoryPoints": 0, "tichuPoints": 120, "withdrawalReason": null }
   ]
 }

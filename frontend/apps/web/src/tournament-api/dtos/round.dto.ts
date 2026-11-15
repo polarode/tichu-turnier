@@ -5,6 +5,7 @@ import {
     scheduledGameDtoSchema,
     seatedSchema,
     tableConfirmationDtoSchema,
+    tableWithdrawalDtoSchema,
 } from '@/scoring-api/dtos/scoring.dto.ts';
 import { tournamentDtoSchema } from '@/tournament-api/dtos/tournament.dto.ts';
 
@@ -25,6 +26,8 @@ export const tableOverviewDtoSchema = z.object({
     schedule: z.array(scheduledGameDtoSchema),
     /** Games entered so far, ordered by game number (the shared recorded-game shape). */
     games: z.array(recordedGameDtoSchema),
+    /** The table's Forfeit Games and withdrawn seats (ADR 0011). */
+    ...tableWithdrawalDtoSchema.shape,
 });
 
 export type TableOverviewDto = z.infer<typeof tableOverviewDtoSchema>;

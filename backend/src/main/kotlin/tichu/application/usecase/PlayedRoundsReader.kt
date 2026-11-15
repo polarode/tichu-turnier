@@ -4,6 +4,7 @@ import tichu.domain.GameRepository
 import tichu.domain.PlayedRound
 import tichu.domain.RoundRepository
 import tichu.domain.TableConfirmationRepository
+import tichu.domain.TeamRepository
 import tichu.domain.TournamentId
 
 /**
@@ -15,13 +16,21 @@ class PlayedRoundsReader(
     private val roundRepository: RoundRepository,
     private val gameRepository: GameRepository,
     private val confirmationRepository: TableConfirmationRepository,
+    private val teamRepository: TeamRepository,
 ) {
-    /** The tournament's rounds in round order, each with its games and confirmed teams per table. */
-    fun of(tournamentId: TournamentId): List<PlayedRound> = roundRepository.findByTournament(tournamentId).map { round ->
-        PlayedRound(
-            round = round,
-            games = gameRepository.findByRound(tournamentId, round.number),
-            confirmations = confirmationRepository.findByRound(tournamentId, round.number),
-        )
+    /**
+     * The tournament's rounds in round order, each with its games, confirmed teams per table
+     * and the tournament's withdrawals (ADR 0011), so Forfeit Games reach the standings.
+     */
+    fun of(tournamentId: TournamentId): List<PlayedRound> {
+        val withdrawals = withdrawalsOf(teamRepository, tournamentId)
+        return roundRepository.findByTournament(tournamentId).map { round ->
+            PlayedRound(
+                round = round,
+                games = gameRepository.findByRound(tournamentId, round.number),
+                confirmations = confirmationRepository.findByRound(tournamentId, round.number),
+                withdrawals = withdrawals,
+            )
+        }
     }
 }

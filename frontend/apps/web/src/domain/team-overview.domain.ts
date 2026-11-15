@@ -1,4 +1,5 @@
 import type { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import type { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 /**
  * The team's identity view as served by `GET /api/team/me` (see glossary: "Team
@@ -13,4 +14,6 @@ export interface TeamOverview {
     tournamentStatus: TournamentStatus;
     teamName: string;
     players: { id: string; name: string }[];
+    /** Why the team withdrew (ADR 0011); null while it plays on. */
+    withdrawalReason: WithdrawalReason | null;
 }

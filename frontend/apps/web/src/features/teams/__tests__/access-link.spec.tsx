@@ -60,7 +60,7 @@ function team(): Team {
         { id: 'tm-1-p1', teamId: 'tm-1', name: 'Alice' },
         { id: 'tm-1-p2', teamId: 'tm-1', name: 'Bob' },
     ];
-    return { id: 'tm-1', tournamentId: 't-1', name: 'Team Ass', players };
+    return { withdrawal: null, id: 'tm-1', tournamentId: 't-1', name: 'Team Ass', players };
 }
 
 function revealedError(): ApiError {

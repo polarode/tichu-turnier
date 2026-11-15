@@ -308,5 +308,26 @@
                 "text": "A half-entered game is kept on the phone and restored after a reload, with an option to discard it"
             }
         ]
+    },
+    {
+        "date": "2026-11-15",
+        "changes": [
+            {
+                "type": "feature",
+                "text": "Withdraw a team from a running tournament, either disqualified or by its own choice. It is no longer paired, its played games stand, and you choose what its opponent gets for the games it still owed: full, half or no points"
+            },
+            {
+                "type": "feature",
+                "text": "Games a withdrawn team still owed are shown as forfeited and count for its opponent once the table is confirmed"
+            },
+            {
+                "type": "feature",
+                "text": "Disqualified teams are listed last in the standings without a rank; a team that withdrew voluntarily keeps its rank and is marked"
+            },
+            {
+                "type": "feature",
+                "text": "A withdrawal can be undone until the next round is drawn or the results are published"
+            }
+        ]
     }
 ]

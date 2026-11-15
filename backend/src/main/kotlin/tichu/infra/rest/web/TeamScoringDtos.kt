@@ -24,6 +24,10 @@ data class TeamTableResponseDto(
     val trio: Boolean,
     /** Who plays each game at this table; the frontend never re-derives the trio schedule. */
     val schedule: List<ScheduledGameDto>,
+    /** The table's Forfeit Games (ADR 0011); empty unless a seated team withdrew. */
+    val forfeits: List<ForfeitGameResponseDto>,
+    /** The seated teams that withdrew, in seat order (ADR 0011). */
+    val withdrawnTeamIds: List<String>,
 ) {
     companion object {
         fun from(table: TeamTable): TeamTableResponseDto = TeamTableResponseDto(
@@ -37,6 +41,8 @@ data class TeamTableResponseDto(
             teams = table.teams.map(TeamTableTeamDto::from),
             trio = table.trio,
             schedule = table.schedule.map(ScheduledGameDto::from),
+            forfeits = table.forfeits.map(ForfeitGameResponseDto::from),
+            withdrawnTeamIds = table.withdrawnTeamIds.map { it.value },
         )
     }
 }

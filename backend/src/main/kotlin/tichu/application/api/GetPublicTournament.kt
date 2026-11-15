@@ -2,6 +2,7 @@ package tichu.application.api
 
 import tichu.domain.PlayerId
 import tichu.domain.TeamId
+import tichu.domain.WithdrawalReason
 import tichu.domain.TournamentId
 import tichu.domain.TournamentStatus
 
@@ -53,13 +54,15 @@ data class PublicTable(
 
 /**
  * A team seated at a public table, with its players. [totals] is its Table Totals at this
- * table: null unless the tournament is PUBLISHED and the table is completed.
+ * table: null unless the tournament is PUBLISHED and the table is completed. [withdrawalReason]
+ * is set once the team withdrew; the reason is visible to everyone (ADR 0011).
  */
 data class PublicTeam(
     val id: TeamId,
     val name: String,
     val players: List<PublicPlayer>,
     val totals: PublicTableTotal? = null,
+    val withdrawalReason: WithdrawalReason? = null,
 )
 
 /** A player of a public team. */
@@ -74,12 +77,16 @@ data class PublicTableTotal(
     val tichuPoints: Int,
 )
 
-/** One line of the public Final Ranking: the team's summed results and the [rank] they earn. */
+/**
+ * One line of the public Final Ranking: the team's summed results and the [rank] they earn,
+ * null for a disqualified team (listed last, ADR 0011). [withdrawalReason] marks a withdrawn team.
+ */
 data class PublicFinalRankingEntry(
-    val rank: Int,
+    val rank: Int?,
     val teamId: TeamId,
     val teamName: String,
     val gamesPlayed: Int,
     val victoryPoints: Int,
     val tichuPoints: Int,
+    val withdrawalReason: WithdrawalReason? = null,
 )

@@ -38,7 +38,7 @@ import java.time.Instant
 /**
  * Seam: `GET /api/public/tournaments/{id}/events` through the full Spring context and
  * security chain. The anonymous public live stream carries only the spectator-relevant
- * events (ROUND_STARTED, TOURNAMENT_FINISHED, RESULTS_PUBLISHED); a tournament that is
+ * events (ROUND_STARTED, TOURNAMENT_FINISHED, RESULTS_PUBLISHED, TEAM_WITHDRAWAL_CHANGED); a tournament that is
  * not publicly visible, or unknown, answers 404 before any stream opens.
  */
 @SpringBootTest(classes = [Application::class])
@@ -147,6 +147,20 @@ class PublicTournamentEventsIntegrationTest(
         assertFalse(content.contains("event:PUBLIC_VISIBILITY_CHANGED"), content)
         assertFalse(content.contains("event:GAME_RECORDED"), content)
         assertFalse(content.contains("event:TABLE_CONFIRMED"), content)
+    }
+
+    @Test
+    fun `anonymous caller streams team withdrawal changes of a public tournament`() {
+        val stream = mockMvc.perform(get(eventsUrl(publicId)).accept(MediaType.TEXT_EVENT_STREAM))
+            .andExpect(request().asyncStarted())
+            .andExpect(status().isOk)
+            .andReturn()
+        val id = TournamentId(publicId)
+
+        broadcaster.publish(TournamentEvent(TournamentEventType.TEAM_WITHDRAWAL_CHANGED, id))
+
+        val content = streamContentWithin(stream, 1000) { it.contains("event:TEAM_WITHDRAWAL_CHANGED") }
+        assertTrue(content.contains("event:TEAM_WITHDRAWAL_CHANGED"), content)
     }
 
     @Test

@@ -10,6 +10,7 @@ import tichu.application.api.TeamResultInput
 import tichu.domain.AdminUserId
 import tichu.domain.CoOrganizer
 import tichu.domain.GameCorrection
+import tichu.domain.ForfeitCompensation
 import tichu.domain.GameKey
 import tichu.domain.Pairing
 import tichu.domain.PlayerId
@@ -28,6 +29,8 @@ import tichu.domain.TournamentEventType
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
@@ -296,4 +299,19 @@ class CorrectGameCommandTest {
         assertEquals(ErrorCode.NOT_FOUND, ex.code)
         assertEquals(2, gameRepository.find(gameKey())!!.version, "stranger changed nothing")
     }
+
+    @Test
+    fun `a correction is possible at a table the opponent completed alone after a withdrawal`() {
+        teamRepository.save(
+            teamRepository.findById(teamA, tournamentId)!!.copy(
+                withdrawal = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.NONE, 1, correctedAt, lead),
+            ),
+        )
+        confirmationRepository.add(TableKey(tournamentId, 1, 1), teamB, Instant.parse("2026-01-01T13:01:00Z"))
+
+        val corrected = correctGame.correct(tournamentId, 1, 1, validRequest(version = 1, beschiss = true), lead)
+
+        assertEquals(2, corrected.version)
+    }
 }
+

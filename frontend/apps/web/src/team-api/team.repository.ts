@@ -1,8 +1,18 @@
-import { teamDtoToDomain, teamWriteInputToDto } from '@/team-api/mappers/team.mapper.ts';
-import { teamDtoSchema, teamListDtoSchema } from '@/team-api/dtos/team.dto.ts';
+import {
+    teamDtoToDomain,
+    teamWriteInputToDto,
+    withdrawalDtoToDomain,
+    withdrawalInputToDto,
+} from '@/team-api/mappers/team.mapper.ts';
+import { teamDtoSchema, teamListDtoSchema, withdrawalDtoSchema } from '@/team-api/dtos/team.dto.ts';
 import { accessLinkRevealDtoToDomain } from '@/team-api/mappers/access-link.mapper.ts';
 import { accessLinkRevealDtoSchema } from '@/team-api/dtos/access-link.dto.ts';
-import type { Team, TeamWriteInput } from '@/domain/team.domain.ts';
+import type {
+    Team,
+    TeamWithdrawal,
+    TeamWriteInput,
+    WithdrawalInput,
+} from '@/domain/team.domain.ts';
 import type { RevealedAccessLink } from '@/domain/access-link.domain.ts';
 import { apiClient } from '@/shared/api/api-client.ts';
 
@@ -63,6 +73,27 @@ async function revokeAccessLink(tournamentId: string, teamId: string): Promise<v
     await apiClient.post(accessLinkPath(tournamentId, teamId, 'revoke'));
 }
 
+const withdrawalPath = (tournamentId: string, teamId: string) =>
+    `${teamsPath(tournamentId)}/${teamId}/withdrawal`;
+
+/** Withdraws the team (ADR 0011): its played games stand, its owed games become Forfeit Games. */
+async function withdraw(
+    tournamentId: string,
+    teamId: string,
+    input: WithdrawalInput,
+): Promise<TeamWithdrawal> {
+    const { data } = await apiClient.post<unknown>(
+        withdrawalPath(tournamentId, teamId),
+        withdrawalInputToDto(input),
+    );
+    return withdrawalDtoToDomain(withdrawalDtoSchema.parse(data));
+}
+
+/** Undoes the team's Withdrawal, removing its Forfeit Games (ADR 0011). */
+async function undoWithdrawal(tournamentId: string, teamId: string): Promise<void> {
+    await apiClient.delete(withdrawalPath(tournamentId, teamId));
+}
+
 export const TeamRepository = {
     list,
     get,
@@ -72,4 +103,6 @@ export const TeamRepository = {
     revealAccessLink,
     rotateAccessLink,
     revokeAccessLink,
+    withdraw,
+    undoWithdrawal,
 };

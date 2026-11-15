@@ -36,8 +36,12 @@ data class TableConfirmationState(
     val confirmedTeamIds: List<TeamId>,
 ) {
     companion object {
-        /** The state of [table] given who confirmed it; none by default, as on a fresh table. */
-        fun of(table: Table, confirmed: Set<TeamId> = emptySet()): TableConfirmationState =
-            TableConfirmations(table, confirmed).let { TableConfirmationState(it.status, it.confirmedInSeatOrder) }
+        /** The state of [table] given who confirmed it; none by default, as on a fresh table. A withdrawn team needs no confirmation (ADR 0011). */
+        fun of(
+            table: Table,
+            confirmed: Set<TeamId> = emptySet(),
+            withdrawnTeamIds: Set<TeamId> = emptySet(),
+        ): TableConfirmationState =
+            TableConfirmations(table, confirmed, withdrawnTeamIds).let { TableConfirmationState(it.status, it.confirmedInSeatOrder) }
     }
 }

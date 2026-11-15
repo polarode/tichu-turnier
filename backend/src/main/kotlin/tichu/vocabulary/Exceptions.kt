@@ -130,6 +130,24 @@ enum class ErrorCode {
 
     /** The lead organizer tried to leave their own tournament; they can only delete it (#132). */
     LEAD_ORGANIZER_CANNOT_LEAVE,
+
+    /** A team that already withdrew from the tournament cannot withdraw again (ADR 0011). */
+    TEAM_ALREADY_WITHDRAWN,
+
+    /** A withdrawal is undone for a team that is not withdrawn (ADR 0011). */
+    TEAM_NOT_WITHDRAWN,
+
+    /**
+     * A withdrawal can no longer be undone: the results are published, a later round was
+     * drawn, or the withdrawal's completed table would be left unfinished (ADR 0011).
+     */
+    WITHDRAWAL_FINAL,
+
+    /** A withdrawn team cannot confirm, retract or record games; a Forfeit Game cannot be recorded (ADR 0011). */
+    TEAM_WITHDRAWN,
+
+    /** The next round cannot be drawn with fewer than two active (not withdrawn) teams (ADR 0011). */
+    TOO_FEW_ACTIVE_TEAMS,
 }
 
 /**
@@ -433,6 +451,33 @@ class TableCompletedException(message: String) : ApiException(ErrorCode.TABLE_CO
  * Mapped to HTTP 409.
  */
 class TableNotCompletedException(message: String) : ApiException(ErrorCode.TABLE_NOT_COMPLETED, message)
+
+/**
+ * Thrown when a team that already withdrew is withdrawn again. The first withdrawal
+ * stands. Mapped to HTTP 409.
+ */
+class TeamAlreadyWithdrawnException(message: String) : ApiException(ErrorCode.TEAM_ALREADY_WITHDRAWN, message)
+
+/** Thrown when the withdrawal of a team that is not withdrawn is undone. Mapped to HTTP 409. */
+class TeamNotWithdrawnException(message: String) : ApiException(ErrorCode.TEAM_NOT_WITHDRAWN, message)
+
+/**
+ * Thrown when an undo of a withdrawal is refused because the withdrawal is final (ADR 0011).
+ * Mapped to HTTP 409.
+ */
+class WithdrawalFinalException(message: String) : ApiException(ErrorCode.WITHDRAWAL_FINAL, message)
+
+/**
+ * Thrown when a withdrawn team tries to confirm, retract or record a game, or when a
+ * Forfeit Game is recorded against a withdrawn team (ADR 0011). Mapped to HTTP 409.
+ */
+class TeamWithdrawnException(message: String) : ApiException(ErrorCode.TEAM_WITHDRAWN, message)
+
+/**
+ * Thrown when the next round is drawn while fewer than two teams are active, that is not
+ * withdrawn (ADR 0011). Mapped to HTTP 409.
+ */
+class TooFewActiveTeamsException(message: String) : ApiException(ErrorCode.TOO_FEW_ACTIVE_TEAMS, message)
 
 /**
  * Thrown when a co-organizer is added by an email that matches no active admin account.

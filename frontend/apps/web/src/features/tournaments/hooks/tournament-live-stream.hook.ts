@@ -4,6 +4,7 @@ import {
     organizersQueryKey,
     roundsQueryKey,
     standingsQueryKey,
+    statisticsQueryKey,
     teamsQueryKey,
     tournamentQueryKey,
 } from '@/shared/constants/query-keys.ts';
@@ -17,6 +18,8 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
     const rounds = roundsQueryKey(tournamentId);
     const standings = standingsQueryKey(tournamentId);
     const organizers = organizersQueryKey(tournamentId);
+    const teams = teamsQueryKey(tournamentId);
+    const statistics = statisticsQueryKey(tournamentId);
     const queryKeysByEvent: Record<TournamentEventType, readonly QueryKey[]> = {
         // A recorded game or a confirmation change alters the tables' results.
         [TournamentEventType.GAME_RECORDED]: [rounds, standings],
@@ -32,6 +35,9 @@ function subscriptionsFor(tournamentId: string): SseSubscription[] {
         // Remove, leave and add change the organizer list; the tournament is refetched too so
         // a removed admin's tournament query hits not-found and the page can send them away.
         [TournamentEventType.ORGANIZERS_CHANGED]: [organizers, tournament],
+        // A withdrawal changes the team's reason and the standings, the rounds' Forfeit Games
+        // and the statistics that count played games.
+        [TournamentEventType.TEAM_WITHDRAWAL_CHANGED]: [teams, rounds, standings, statistics],
     };
     return Object.entries(queryKeysByEvent).map(([event, queryKeys]) => ({ event, queryKeys }));
 }

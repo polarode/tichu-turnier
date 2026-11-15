@@ -62,6 +62,7 @@ class GetPublicTournamentQuery(
                                 totals = tableTotals[teamId]?.let {
                                     PublicTableTotal(victoryPoints = it.victoryPoints, tichuPoints = it.tichuPoints)
                                 },
+                                withdrawalReason = team.withdrawal?.reason,
                             )
                         },
                     )
@@ -78,6 +79,7 @@ class GetPublicTournamentQuery(
                     gamesPlayed = entry.team.gamesPlayed,
                     victoryPoints = entry.team.victoryPoints,
                     tichuPoints = entry.team.tichuPoints,
+                    withdrawalReason = entry.team.withdrawalReason,
                 )
             }
         } else {

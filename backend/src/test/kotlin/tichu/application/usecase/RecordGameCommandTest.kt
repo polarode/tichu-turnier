@@ -6,6 +6,8 @@ import tichu.application.api.PlayerResultInput
 import tichu.application.api.RecordGame
 import tichu.application.api.TeamResultInput
 import tichu.domain.AdminUserId
+import tichu.domain.ForfeitCompensation
+
 import tichu.domain.GameKey
 import tichu.domain.IdGenerator
 import tichu.domain.PlayerId
@@ -27,6 +29,10 @@ import tichu.domain.TournamentId
 import tichu.domain.TournamentRepository
 import tichu.domain.TournamentSettings
 import tichu.domain.TournamentStatus
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
+
+
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
@@ -39,7 +45,10 @@ import tichu.vocabulary.GameNotFoundException
 import tichu.vocabulary.GameConfirmedException
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.GameValidationException
+
 import tichu.vocabulary.InvalidFieldException
+import tichu.vocabulary.TeamWithdrawnException
+
 import tichu.vocabulary.TournamentNotActiveException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -472,5 +481,61 @@ class RecordGameCommandTest {
         assertFailsWith<ForbiddenException> {
             create(trioRequest(1, teamA, teamB), principal = AuthenticatedTeam(outsider, tournamentId))
         }
+    }
+
+    // ---- withdrawal (ADR 0011) ----------------------------------------------------
+
+    private fun withdraw(teamId: TeamId, roundNumber: Int) {
+        val team = teamRepository.findById(teamId, tournamentId)!!
+        teamRepository.save(
+            team.copy(withdrawal = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.FULL, roundNumber, Instant.parse("2026-01-01T12:00:00Z"), AdminUserId("admin-owner"))),
+        )
+    }
+
+    @Test
+    fun `a withdrawn team cannot record a game`() {
+        withdraw(teamA, 1)
+
+        val ex = assertFailsWith<TeamWithdrawnException> { create() }
+
+        assertEquals(ErrorCode.TEAM_WITHDRAWN, ex.code)
+        assertNull(gameRepository.find(gameKey()), "nothing was written")
+    }
+
+    @Test
+    fun `the opponent cannot record a forfeit game against a withdrawn team`() {
+        create(validRequest(gameNumber = 1))
+        create(validRequest(gameNumber = 2))
+        withdraw(teamA, 1)
+
+        val ex = assertFailsWith<TeamWithdrawnException> {
+            create(validRequest(gameNumber = 3), principal = AuthenticatedTeam(teamB, tournamentId))
+        }
+
+        assertEquals(ErrorCode.TEAM_WITHDRAWN, ex.code)
+        assertNull(gameRepository.find(GameKey(tournamentId, 1, 1, 3)), "game 3 is a forfeit and stays unrecorded")
+    }
+
+    @Test
+    fun `the opponent cannot edit a played game against a withdrawn team`() {
+        create(validRequest(gameNumber = 1))
+        withdraw(teamA, 1)
+
+        val ex = assertFailsWith<TeamWithdrawnException> {
+            update(validRequest(gameNumber = 1, version = 1), principal = AuthenticatedTeam(teamB, tournamentId))
+        }
+
+        assertEquals(ErrorCode.TEAM_WITHDRAWN, ex.code)
+        assertEquals(1, gameRepository.find(GameKey(tournamentId, 1, 1, 1))!!.version, "the played game stands unchanged")
+    }
+
+    @Test
+    fun `at a trio table the two active teams can still record their game`() {
+        seatTrio()
+        withdraw(teamA, 1)
+
+        val recorded = create(trioRequest(3, teamB, teamC), principal = AuthenticatedTeam(teamB, tournamentId))
+
+        assertEquals(3, recorded.gameNumber)
     }
 }

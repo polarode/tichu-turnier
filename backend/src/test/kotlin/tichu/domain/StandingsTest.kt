@@ -1,5 +1,6 @@
 package tichu.domain
 
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -187,5 +188,87 @@ class StandingsTest {
         )
 
         assertEquals(listOf(1 to "Beta", 2 to "Alpha"), standings.entries.map { it.rank to it.team.teamName })
+    }
+
+    private fun withdrawal(reason: WithdrawalReason, compensation: ForfeitCompensation) = Withdrawal(
+        reason = reason,
+        compensation = compensation,
+        roundNumber = 1,
+        withdrawnAt = Instant.EPOCH,
+        withdrawnBy = AdminUserId("admin-1"),
+    )
+
+    /**
+     * Team b withdraws after two of its four games at table 1 (a wins them with 60 and 70)
+     * and a confirms, so the table completes. The two games b still owed are forfeits to a.
+     */
+    private fun standingsAfterVoluntaryWithdrawal(compensation: ForfeitCompensation): Standings {
+        val withdrawn = withdrawal(WithdrawalReason.VOLUNTARY, compensation)
+        val played = PlayedRound(
+            round = round(1, listOf("a", "b")),
+            games = normalTable(1, 1, "a", "b", 60, 70),
+            confirmations = mapOf(completed(1, "a")),
+            withdrawals = mapOf(TeamId("b") to withdrawn),
+        )
+        return Standings.compute(listOf(team("a"), team("b").copy(withdrawal = withdrawn)), listOf(played), settings)
+    }
+
+    @Test
+    fun `a voluntary withdrawal keeps the played games and awards the owed ones at full compensation`() {
+        // a: 4 VP and 130 TP from the two played wins, plus 2 forfeits at 2 VP and 100 TP each.
+        // b: 0 VP and 70 TP from its two played games; it keeps its rank, marked as voluntary.
+        assertEquals(
+            listOf(
+                StandingsEntry(1, TeamTotals(TeamId("a"), "A", gamesPlayed = 2, victoryPoints = 8, tichuPoints = 330)),
+                StandingsEntry(
+                    2,
+                    TeamTotals(
+                        TeamId("b"),
+                        "B",
+                        gamesPlayed = 2,
+                        victoryPoints = 0,
+                        tichuPoints = 70,
+                        withdrawalReason = WithdrawalReason.VOLUNTARY,
+                    ),
+                ),
+            ),
+            standingsAfterVoluntaryWithdrawal(ForfeitCompensation.FULL).entries,
+        )
+    }
+
+    @Test
+    fun `a voluntary withdrawal awards the owed games at half compensation`() {
+        // a: 4 VP and 130 TP played, plus 2 forfeits at 1 VP and 50 TP each.
+        assertEquals(
+            TeamTotals(TeamId("a"), "A", gamesPlayed = 2, victoryPoints = 6, tichuPoints = 230),
+            standingsAfterVoluntaryWithdrawal(ForfeitCompensation.HALF).entries.single { it.team.teamId == TeamId("a") }.team,
+        )
+    }
+
+    @Test
+    fun `a voluntary withdrawal awards nothing for the owed games at no compensation`() {
+        // a: 4 VP and 130 TP from the played wins only; the forfeits give 0 VP and 0 TP.
+        assertEquals(
+            TeamTotals(TeamId("a"), "A", gamesPlayed = 2, victoryPoints = 4, tichuPoints = 130),
+            standingsAfterVoluntaryWithdrawal(ForfeitCompensation.NONE).entries.single { it.team.teamId == TeamId("a") }.team,
+        )
+    }
+
+    @Test
+    fun `disqualified teams are listed last without a rank, ordered among themselves by victory points`() {
+        val standings = Standings.rank(
+            listOf(
+                totals("x", "Xeno", victoryPoints = 10, tichuPoints = 500).copy(withdrawalReason = WithdrawalReason.DISQUALIFIED),
+                totals("a", "Alpha", victoryPoints = 4, tichuPoints = 100),
+                totals("y", "Yak", victoryPoints = 6, tichuPoints = 300).copy(withdrawalReason = WithdrawalReason.DISQUALIFIED),
+                totals("b", "Beta", victoryPoints = 2, tichuPoints = 90),
+                totals("c", "Gamma", victoryPoints = 2, tichuPoints = 50),
+            ),
+        )
+
+        assertEquals(
+            listOf(1 to "Alpha", 2 to "Beta", 3 to "Gamma", null to "Xeno", null to "Yak"),
+            standings.entries.map { it.rank to it.team.teamName },
+        )
     }
 }

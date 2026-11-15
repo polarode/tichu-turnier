@@ -18,6 +18,8 @@ import {
 } from '@/features/scoring/game-form.model.ts';
 
 const table: TeamTable = {
+    forfeits: [],
+    withdrawnTeamIds: [],
     tournamentId: 't-1',
     roundNumber: 1,
     tableNumber: 1,

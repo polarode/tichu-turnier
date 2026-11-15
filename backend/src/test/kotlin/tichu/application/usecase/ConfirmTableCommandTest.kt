@@ -8,6 +8,8 @@ import tichu.application.api.RecordGame
 import tichu.application.api.SeenGame
 import tichu.application.api.TeamResultInput
 import tichu.domain.AdminUserId
+import tichu.domain.ForfeitCompensation
+
 import tichu.domain.Pairing
 import tichu.domain.Player
 import tichu.domain.PlayerId
@@ -25,6 +27,10 @@ import tichu.domain.TichuCall
 import tichu.domain.Tournament
 import tichu.domain.TournamentId
 import tichu.domain.TournamentSettings
+import tichu.domain.Withdrawal
+import tichu.domain.WithdrawalReason
+
+
 import tichu.domain.TournamentStatus
 import tichu.infra.persistence.InMemoryTournamentRepository
 import tichu.testsupport.InMemoryGameRepository
@@ -34,12 +40,16 @@ import tichu.testsupport.InMemoryTeamRepository
 import tichu.testsupport.RecordingTournamentEvents
 import tichu.testsupport.MutableClock
 import tichu.vocabulary.ForbiddenException
+import tichu.vocabulary.ErrorCode
+
 import tichu.vocabulary.GameConcurrentModificationException
 import tichu.vocabulary.InvalidFieldException
 import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TournamentNotActiveException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
+import tichu.vocabulary.TeamWithdrawnException
+
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -74,7 +84,7 @@ class ConfirmTableCommandTest {
     private val confirmEvents = RecordingTournamentEvents()
     private val confirmTable: ConfirmTable =
         ConfirmTableCommand(
-            roundRepository, tournamentRepository, gameRepository, confirmationRepository, clock, confirmEvents,
+            roundRepository, tournamentRepository, teamRepository, gameRepository, confirmationRepository, clock, confirmEvents,
         )
 
     @BeforeEach
@@ -361,5 +371,37 @@ class ConfirmTableCommandTest {
 
         assertEquals(TableStatus.COMPLETED, last.status)
         assertEquals(listOf(teamA, teamB, teamC), last.confirmedTeamIds, "seat order")
+    }
+
+    // ---- withdrawal (ADR 0011) ----------------------------------------------------
+
+    private fun withdraw(teamId: TeamId, roundNumber: Int) {
+        val team = teamRepository.findById(teamId, tournamentId)!!
+        teamRepository.save(
+            team.copy(withdrawal = Withdrawal(WithdrawalReason.VOLUNTARY, ForfeitCompensation.FULL, roundNumber, Instant.parse("2026-01-01T12:00:00Z"), AdminUserId("admin-owner"))),
+        )
+    }
+
+    @Test
+    fun `the opponent confirms a table with two games entered and two forfeits, completing it`() {
+        enterGame(1)
+        enterGame(2)
+        withdraw(teamA, 1)
+
+        val state = confirmTable.confirm(tableKey, listOf(SeenGame(1, 1), SeenGame(2, 1)), principal(teamB))
+
+        assertEquals(TableStatus.COMPLETED, state.status)
+        assertEquals(listOf(teamB), state.confirmedTeamIds)
+    }
+
+    @Test
+    fun `a withdrawn team cannot confirm or retract its table`() {
+        withdraw(teamA, 1)
+
+        val confirmEx = assertFailsWith<TeamWithdrawnException> { confirmTable.confirm(tableKey, emptyList(), principal(teamA)) }
+        val retractEx = assertFailsWith<TeamWithdrawnException> { confirmTable.retract(tableKey, principal(teamA)) }
+
+        assertEquals(ErrorCode.TEAM_WITHDRAWN, confirmEx.code)
+        assertEquals(ErrorCode.TEAM_WITHDRAWN, retractEx.code)
     }
 }

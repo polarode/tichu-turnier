@@ -109,6 +109,11 @@ interface GameEntryFormProps {
      */
     tournamentLocked?: boolean;
     /**
+     * The game's matchup includes a withdrawn team (ADR 0011): the game is a Forfeit Game or
+     * only viewed, so the form renders read-only and keeps no draft.
+     */
+    withdrawnMatchup?: boolean;
+    /**
      * An organizer's correction of a completed table (ADR 0010). The table's freeze
      * does not apply: the correction is the one write a completed table accepts.
      */
@@ -149,6 +154,7 @@ export function GameEntryForm({
     onSaved,
     onFrozen,
     tournamentLocked = false,
+    withdrawnMatchup = false,
     correcting = false,
     draftsReady = false,
 }: GameEntryFormProps) {
@@ -162,7 +168,11 @@ export function GameEntryForm({
     // Drafts live only on the team score page: not in the correction dialog, and not for a
     // table or tournament that no longer accepts writes.
     const draftable =
-        draftsReady && !correcting && !isFrozen(table.confirmation) && !tournamentLocked;
+        draftsReady &&
+        !correcting &&
+        !isFrozen(table.confirmation) &&
+        !tournamentLocked &&
+        !withdrawnMatchup;
     const draftKey = gameDraftKey(table, gameNumber);
     // Read once at mount; a draft restores only when it started from the version now stored.
     const [draft] = useState(() => {
@@ -225,7 +235,7 @@ export function GameEntryForm({
     // the same read-only mode when the table freezes mid-edit.
     const frozen = !correcting && isFrozen(table.confirmation);
     const confirmed = form.formState.errors.root?.type === 'confirmed';
-    const readOnly = frozen || confirmed || tournamentLocked;
+    const readOnly = frozen || confirmed || tournamentLocked || withdrawnMatchup;
 
     // Save as you go: the draft mirrors the entry while it differs from the loaded game, and
     // is dropped once the entry matches it again (after a save or a load of the stored game).

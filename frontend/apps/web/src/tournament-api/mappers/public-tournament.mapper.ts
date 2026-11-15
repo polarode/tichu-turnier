@@ -41,6 +41,7 @@ export function publicTeamDtoToDomain(dto: PublicTeamDto): PublicTeam {
                 tichuPoints: dto.totals.tichuPoints,
             },
         }),
+        withdrawalReason: dto.withdrawalReason,
     };
 }
 

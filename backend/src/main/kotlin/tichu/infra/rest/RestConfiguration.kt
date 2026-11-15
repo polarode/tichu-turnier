@@ -49,6 +49,8 @@ import tichu.application.api.SetPublicVisibility
 import tichu.application.api.SetTotalRounds
 import tichu.application.api.StartNextRound
 import tichu.application.api.StartTournament
+import tichu.application.api.UndoWithdrawal
+import tichu.application.api.WithdrawTeam
 import tichu.infra.events.SseTournamentEventBroadcaster
 import tichu.infra.rest.web.AdminController
 import tichu.infra.rest.web.AuthController
@@ -65,6 +67,7 @@ import tichu.infra.rest.web.TeamController
 import tichu.infra.rest.web.TeamEventsController
 import tichu.infra.rest.web.TableConfirmationController
 import tichu.infra.rest.web.TeamScoringController
+import tichu.infra.rest.web.TeamWithdrawalController
 import tichu.infra.rest.web.TournamentController
 import tichu.infra.rest.web.TournamentEventsController
 import tichu.infra.rest.web.WebControllerAdvice
@@ -188,6 +191,12 @@ class RestConfiguration(
     @Bean
     fun gameCorrectionController(correctGame: CorrectGame): GameCorrectionController =
         GameCorrectionController(correctGame)
+
+    @Bean
+    fun teamWithdrawalController(
+        withdrawTeam: WithdrawTeam,
+        undoWithdrawal: UndoWithdrawal,
+    ): TeamWithdrawalController = TeamWithdrawalController(withdrawTeam, undoWithdrawal)
 
     @Bean
     fun teamScoringController(getTeamScoring: GetTeamScoring): TeamScoringController =

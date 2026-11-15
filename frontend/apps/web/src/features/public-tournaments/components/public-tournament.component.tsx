@@ -18,6 +18,7 @@ import { StatisticsPanel } from '@/shared/components/statistics-panel.component.
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { StandingsTable } from '@/shared/components/standings-table.component.tsx';
 import { TeamTrendPanel } from '@/shared/components/team-trend-panel.component.tsx';
+import { WithdrawalBadge } from '@/shared/components/withdrawal-badge.component.tsx';
 import { seatTone } from '@/shared/constants/seat-tones.ts';
 import { localizedErrorMessage } from '@/shared/forms/server-error.ts';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
@@ -292,6 +293,12 @@ function PublicTableItem({ table }: { table: PublicTable }) {
                                 </span>
                             ) : null}{' '}
                             <span className="truncate text-sm font-semibold">{team.name}</span>
+                            {team.withdrawalReason ? (
+                                <WithdrawalBadge
+                                    reason={team.withdrawalReason}
+                                    className="shrink-0 self-center"
+                                />
+                            ) : null}
                         </span>
                         <span className="max-w-full truncate text-xs text-muted-foreground">
                             {team.players.map((player) => player.name).join(' · ')}

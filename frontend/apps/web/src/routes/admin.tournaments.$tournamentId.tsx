@@ -274,6 +274,7 @@ function TournamentDetailBody() {
                                 tournamentId={tournament.id}
                                 maxTeams={tournament.maxTeams}
                                 editable={editable}
+                                tournamentStatus={tournament.status}
                                 teams={teams}
                             />
                         )}

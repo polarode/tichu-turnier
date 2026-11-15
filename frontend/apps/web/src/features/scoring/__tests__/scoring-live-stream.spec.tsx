@@ -33,6 +33,7 @@ const currentTable = vi.mocked(ScoringRepository.currentTable);
 const games = vi.mocked(ScoringRepository.games);
 
 const overview = {
+    withdrawalReason: null,
     teamId: 'team-1',
     tournamentId: 't-1',
     tournamentName: 'Spring Classic',
@@ -46,6 +47,8 @@ const overview = {
 
 function seatedTable(): TeamTable {
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tournamentId: 't-1',
         roundNumber: 1,
         tableNumber: 2,

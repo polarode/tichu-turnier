@@ -34,6 +34,7 @@ describe('teamOverviewDtoToDomain', () => {
                 { id: 'p-1', teamId: 'team-1', name: 'Alice' },
                 { id: 'p-2', teamId: 'team-1', name: 'Bob' },
             ],
+            withdrawalReason: null,
         });
 
         expect(overview).toEqual({
@@ -46,6 +47,24 @@ describe('teamOverviewDtoToDomain', () => {
                 { id: 'p-1', name: 'Alice' },
                 { id: 'p-2', name: 'Bob' },
             ],
+            withdrawalReason: null,
         });
+    });
+
+    it('maps the withdrawal reason of a withdrawn team', () => {
+        const overview = teamOverviewDtoToDomain({
+            teamId: 'team-1',
+            tournamentId: 't-1',
+            tournamentName: 'Spring Classic',
+            tournamentStatus: TournamentStatus.PUBLISHED,
+            teamName: 'Team Alpha',
+            players: [
+                { id: 'p-1', teamId: 'team-1', name: 'Alice' },
+                { id: 'p-2', teamId: 'team-1', name: 'Bob' },
+            ],
+            withdrawalReason: 'DISQUALIFIED',
+        });
+
+        expect(overview.withdrawalReason).toBe('DISQUALIFIED');
     });
 });

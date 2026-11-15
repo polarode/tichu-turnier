@@ -40,6 +40,23 @@ class TableConfirmationsTest {
     }
 
     @Test
+    fun `a withdrawn team's confirmation is not needed, so the opponent alone completes a normal table`() {
+        assertEquals(TableStatus.COMPLETED, TableConfirmations(normal, setOf(teamA), setOf(teamB)).status)
+        assertEquals(TableStatus.PLAYING, TableConfirmations(normal, emptySet(), setOf(teamB)).status)
+    }
+
+    @Test
+    fun `a trio table with one withdrawn team needs the other two to confirm`() {
+        assertEquals(TableStatus.CONFIRMING, TableConfirmations(trio, setOf(teamB), setOf(teamC)).status)
+        assertEquals(TableStatus.COMPLETED, TableConfirmations(trio, setOf(teamB, teamD), setOf(teamC)).status)
+    }
+
+    @Test
+    fun `a table whose seated teams all withdrew is completed without any confirmation`() {
+        assertEquals(TableStatus.COMPLETED, TableConfirmations(normal, emptySet(), setOf(teamA, teamB)).status)
+    }
+
+    @Test
     fun `a round is complete only when every table is completed`() {
         val round = Round(RoundId("r-1"), TournamentId("t-1"), 1, Pairing(listOf(normal, trio)))
 

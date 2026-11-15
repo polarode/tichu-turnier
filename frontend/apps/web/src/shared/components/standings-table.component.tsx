@@ -1,6 +1,7 @@
 import { DataTable, type DataTableColumn } from '@tichu/ui/data-table.tsx';
 
 import type { StandingsEntry } from '@/domain/standings.domain.ts';
+import { WithdrawalBadge } from '@/shared/components/withdrawal-badge.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 
 interface StandingsTableProps {
@@ -25,14 +26,32 @@ export function StandingsTable({ entries, caption, highlightTeamId }: StandingsT
         {
             id: 'rank',
             header: t('standings.rank'),
-            cell: (entry) => entry.rank,
+            // A disqualified team has no rank (ADR 0011); the dash keeps its row readable,
+            // and the sr-only label says why there is no number.
+            cell: (entry) =>
+                entry.rank ?? (
+                    <>
+                        <span aria-hidden="true">–</span>
+                        <span className="sr-only">{t('standings.noRank')}</span>
+                    </>
+                ),
             sortValue: (entry) => entry.rank,
             sortFirst: 'asc',
         },
         {
             id: 'team',
             header: t('standings.team'),
-            cell: (entry) => entry.teamName,
+            cell: (entry) => (
+                <>
+                    {entry.teamName}
+                    {entry.withdrawalReason ? (
+                        <WithdrawalBadge
+                            reason={entry.withdrawalReason}
+                            className="ml-1.5 align-middle"
+                        />
+                    ) : null}
+                </>
+            ),
             sortValue: (entry) => entry.teamName,
             sortFirst: 'asc',
             rowHeader: true,

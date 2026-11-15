@@ -6,6 +6,8 @@ import { buttonVariants } from '@tichu/ui/button.tsx';
 import {
     isCompleted,
     isFrozen,
+    isLockedByWithdrawal,
+    isSettled,
     matchupOf,
     type RecordedGame,
     sitsOut,
@@ -18,11 +20,13 @@ import {
     useReloadCurrentTable,
     useTableGames,
 } from '@/features/scoring/hooks/scoring-queries.hook.ts';
+import { WithdrawalNotice } from '@/features/teams/components/withdrawal-notice.component.tsx';
 import { BackLink } from '@/shared/components/back-link.component.tsx';
 import { LiveBadge } from '@/shared/components/live-badge.component.tsx';
 import { LoadingIndicator } from '@/shared/components/loading-indicator.component.tsx';
 import { useI18n } from '@/shared/i18n/i18n.context.tsx';
 import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
+import type { WithdrawalReason } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 /**
  * The team scoring screen (S5c, #101; trio tables #110): the entry grid for one
@@ -39,13 +43,16 @@ import { TournamentStatus } from '@/vocabulary/tournament-status.enum.ts';
  * gives way to a notice; an absent status (overview unavailable) leaves the screen
  * editable, as before. The table state and games follow the team's live stream
  * while `live` (the tournament is not yet published), with `connected` shown as a
- * Live badge.
+ * Live badge. A withdrawn team (ADR 0011, [withdrawalReason]) is locked like a finished
+ * tournament and gets a notice; a game against a withdrawn team is never entered, so the
+ * next game to enter skips it, and such a game opens read-only.
  */
 export function ScoringPage({
     table,
     initialGame,
     viewerTeamId,
     tournamentStatus,
+    withdrawalReason,
     live = false,
     connected = false,
 }: {
@@ -54,6 +61,8 @@ export function ScoringPage({
     initialGame?: number;
     viewerTeamId?: string;
     tournamentStatus?: TournamentStatus;
+    /** Why the viewing team withdrew (ADR 0011); null or absent while it plays on. */
+    withdrawalReason?: WithdrawalReason | null;
     /** Whether the live stream applies; only then is the connection state shown. */
     live?: boolean;
     /** Whether the live stream is connected; only read while `live`. */
@@ -71,21 +80,34 @@ export function ScoringPage({
 
     const games = gamesQuery.data ?? [];
     const byNumber = new Map<number, RecordedGame>(games.map((g) => [g.gameNumber, g]));
+    const settled = (gameNumber: number) => isSettled(gameNumber, games, table.forfeits);
+    // A game against a withdrawn team is never entered: it is a forfeit or only viewed.
+    const lockedGame = (gameNumber: number) => {
+        const scheduled = table.schedule.find((game) => game.gameNumber === gameNumber);
+        return scheduled !== undefined && isLockedByWithdrawal(scheduled, table.withdrawnTeamIds);
+    };
     const gameNumbers = table.schedule.map((game) => game.gameNumber);
     const linked =
         initialGame !== undefined && gameNumbers.includes(initialGame) ? initialGame : undefined;
     const selected =
-        pinned ?? linked ?? gameNumbers.find((n) => !byNumber.has(n)) ?? gameNumbers[0] ?? 1;
+        pinned ??
+        linked ??
+        gameNumbers.find((n) => !settled(n) && !lockedGame(n)) ??
+        gameNumbers[0] ??
+        1;
     // Pin the opening game once the games are in, so a poll that fills it does
     // not move the viewer to another game mid-entry.
     if (pinned === null && gamesQuery.isSuccess) setPinned(selected);
     const existingGame = byNumber.get(selected);
     const matchup = matchupOf(table, selected);
     // Confirming happens on the overview, so point there once nothing is left to enter.
-    const allEntered = gamesQuery.isSuccess && gameNumbers.every((n) => byNumber.has(n));
-    // The tournament left ACTIVE (S7c): nothing here may be written any more.
+    const allEntered = gamesQuery.isSuccess && gameNumbers.every(settled);
+    // The tournament left ACTIVE (S7c), or the viewing team withdrew (ADR 0011): nothing
+    // here may be written any more.
+    const withdrawn = withdrawalReason !== undefined && withdrawalReason !== null;
     const tournamentLocked =
-        tournamentStatus !== undefined && tournamentStatus !== TournamentStatus.ACTIVE;
+        withdrawn ||
+        (tournamentStatus !== undefined && tournamentStatus !== TournamentStatus.ACTIVE);
     // Without the viewer's identity (overview unavailable) no game is marked as sat out.
     const sittingOut = viewerTeamId !== undefined && sitsOut(table, viewerTeamId, selected);
 
@@ -111,9 +133,10 @@ export function ScoringPage({
                 </div>
                 <p className="font-medium">{header}</p>
             </div>
+            {withdrawalReason ? <WithdrawalNotice reason={withdrawalReason} /> : null}
             {isFrozen(table.confirmation) ? (
                 <FrozenNotice table={table} viewerTeamId={viewerTeamId} />
-            ) : tournamentLocked ? (
+            ) : tournamentLocked && !withdrawn ? (
                 <p className="rounded-md bg-muted px-3 py-2 text-sm">
                     {t('scoring.tournamentLocked')}
                 </p>
@@ -149,6 +172,7 @@ export function ScoringPage({
                     onSaved={() => void navigate({ to: '/team' })}
                     onFrozen={() => void reloadCurrentTable()}
                     tournamentLocked={tournamentLocked}
+                    withdrawnMatchup={lockedGame(selected)}
                     draftsReady={gamesQuery.isSuccess}
                 />
             </div>

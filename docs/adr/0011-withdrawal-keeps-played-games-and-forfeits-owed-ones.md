@@ -23,6 +23,12 @@ Setup Phase, even once published, as either **Disqualified** or **Voluntary**.
 - Undo is possible until the next round is drawn, or until publishing if no round follows.
   It removes the Forfeit Games and returns the table to Playing, even if it was Completed.
 
+> **Amendment 2026-11-15**: undo only reopens a table when the withdrawal produced Forfeit
+> Games there; a table without any keeps its confirmations, so it waits for the returning
+> team's confirmation at most. In a Completed tournament, undo is refused when it would
+> leave the table unfinished (it produced Forfeit Games, or the team had not confirmed),
+> because the tournament cannot return to Active.
+
 ## Why
 
 - **Keep played games rather than void them.** Voiding would take points away from the

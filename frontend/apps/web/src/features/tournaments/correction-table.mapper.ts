@@ -40,6 +40,8 @@ export function correctionTable({
         teams: seatedTeams,
         trio: table.trio,
         schedule: table.schedule,
+        forfeits: table.forfeits,
+        withdrawnTeamIds: table.withdrawnTeamIds,
     };
 }
 

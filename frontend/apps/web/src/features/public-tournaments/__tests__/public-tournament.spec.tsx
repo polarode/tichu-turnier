@@ -65,6 +65,7 @@ const autumnCup: PublicTournamentDetail = {
                     trio: false,
                     teams: [
                         {
+                            withdrawalReason: null,
                             id: 'falcons',
                             name: 'Falcons',
                             players: [
@@ -73,6 +74,7 @@ const autumnCup: PublicTournamentDetail = {
                             ],
                         },
                         {
+                            withdrawalReason: null,
                             id: 'owls',
                             name: 'Owls',
                             players: [
@@ -87,6 +89,7 @@ const autumnCup: PublicTournamentDetail = {
                     trio: false,
                     teams: [
                         {
+                            withdrawalReason: null,
                             id: 'star',
                             name: 'Star',
                             players: [
@@ -95,6 +98,7 @@ const autumnCup: PublicTournamentDetail = {
                             ],
                         },
                         {
+                            withdrawalReason: null,
                             id: 'pagoda',
                             name: 'Pagoda',
                             players: [
@@ -114,6 +118,7 @@ const autumnCup: PublicTournamentDetail = {
                     trio: false,
                     teams: [
                         {
+                            withdrawalReason: null,
                             id: 'falcons',
                             name: 'Falcons',
                             players: [
@@ -122,6 +127,7 @@ const autumnCup: PublicTournamentDetail = {
                             ],
                         },
                         {
+                            withdrawalReason: null,
                             id: 'star',
                             name: 'Star',
                             players: [
@@ -136,6 +142,7 @@ const autumnCup: PublicTournamentDetail = {
                     trio: true,
                     teams: [
                         {
+                            withdrawalReason: null,
                             id: 'owls',
                             name: 'Owls',
                             players: [
@@ -144,6 +151,7 @@ const autumnCup: PublicTournamentDetail = {
                             ],
                         },
                         {
+                            withdrawalReason: null,
                             id: 'pagoda',
                             name: 'Pagoda',
                             players: [
@@ -152,6 +160,7 @@ const autumnCup: PublicTournamentDetail = {
                             ],
                         },
                         {
+                            withdrawalReason: null,
                             id: 'comet',
                             name: 'Comet',
                             players: [
@@ -286,6 +295,30 @@ describe('public tournament page', () => {
         const round1 = screen.getByRole('region', { name: 'Round 1' });
         const wolves = within(tableItem(round1, 'Table B')).getByText('Wolves').closest('li')!;
         expect(wolves).toHaveTextContent(/^0 VP Wolves.*120 TP$/);
+    });
+
+    it('shows the reason beside the name of a withdrawn team in the pairings', async () => {
+        const withdrawnFalcons: PublicTournamentDetail = {
+            ...autumnCup,
+            rounds: autumnCup.rounds.map((round) => ({
+                ...round,
+                tables: round.tables.map((table) => ({
+                    ...table,
+                    teams: table.teams.map((team) =>
+                        team.id === 'falcons'
+                            ? { ...team, withdrawalReason: 'DISQUALIFIED' as const }
+                            : team,
+                    ),
+                })),
+            })),
+        };
+        tournaments.getPublicTournament.mockResolvedValue(withdrawnFalcons);
+
+        renderApp('/public/tournaments/t-1', { initialLocale: 'en' });
+
+        const round2 = await screen.findByRole('region', { name: 'Round 2' });
+        expect(within(tableItem(round2, 'Table A')).getByText('Disqualified')).toBeInTheDocument();
+        expect(within(tableItem(round2, 'Table B')).queryByText('Disqualified')).toBeNull();
     });
 
     it('shows no Final Ranking before the tournament is published', async () => {

@@ -25,6 +25,7 @@ import tichu.testsupport.InMemoryCoOrganizerRepository
 import tichu.testsupport.InMemoryGameRepository
 import tichu.testsupport.InMemoryRoundRepository
 import tichu.testsupport.InMemoryTableConfirmationRepository
+import tichu.testsupport.InMemoryTeamRepository
 import tichu.vocabulary.NotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -51,7 +52,7 @@ class ListRoundsQueryTest {
     private val gameRepository = InMemoryGameRepository()
     private val confirmationRepository = InMemoryTableConfirmationRepository()
 
-    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), roundRepository, gameRepository, confirmationRepository)
+    private val query = ListRoundsQuery(TournamentAccess(tournamentRepository, InMemoryCoOrganizerRepository(), InMemoryAdminUserRepository()), roundRepository, gameRepository, confirmationRepository, InMemoryTeamRepository())
 
     @BeforeEach
     fun setUp() {

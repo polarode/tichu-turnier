@@ -1,4 +1,5 @@
 import type {
+    ForfeitGame,
     RecordedGame,
     ScheduledGame,
     SeatedTeams,
@@ -22,6 +23,10 @@ export interface TableOverview {
     schedule: readonly ScheduledGame[];
     /** Games entered so far, ordered by game number; a missing number is not yet entered. */
     games: readonly RecordedGame[];
+    /** The table's Forfeit Games (ADR 0011); empty unless a seated team withdrew. */
+    forfeits: readonly ForfeitGame[];
+    /** The seated teams that withdrew; their games are forfeited, not played. */
+    withdrawnTeamIds: readonly string[];
 }
 
 /** One iteration of the tournament: every team plays exactly one match. */

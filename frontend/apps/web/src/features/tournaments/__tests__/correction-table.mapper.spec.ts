@@ -7,6 +7,7 @@ import { TableStatus } from '@/vocabulary/table-status.enum.ts';
 
 function team(id: string, name: string): Team {
     return {
+        withdrawal: null,
         id,
         tournamentId: 't-1',
         name,
@@ -19,6 +20,8 @@ function team(id: string, name: string): Team {
 
 function table(teamIds: TableOverview['teamIds'], trio = false): TableOverview {
     return {
+        forfeits: [],
+        withdrawnTeamIds: [],
         tableNumber: 3,
         teamIds,
         trio,

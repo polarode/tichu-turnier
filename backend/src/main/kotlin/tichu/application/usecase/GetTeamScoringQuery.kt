@@ -43,6 +43,8 @@ class GetTeamScoringQuery(
                 "Team ${principal.teamId.value} is not seated at any round yet",
             )
         val settings = tournamentSettings(tournamentId)
+        val withdrawals = withdrawalsOf(teamRepository, tournamentId)
+        val games = gameRepository.findByTable(tournamentId, round.number, table.id.value)
 
         val teams = table.seatedTeams.map { teamId ->
             val team = requireTeam(teamId, tournamentId)
@@ -60,12 +62,15 @@ class GetTeamScoringQuery(
             confirmation = TableConfirmationState.of(
                 table,
                 confirmationRepository.findByTable(TableKey(tournamentId, round.number, table.id.value)),
+                withdrawals.keys,
             ),
             grandTichuBonus = settings.grandTichuBonus,
             doubleWinBonus = settings.doubleWinBonus,
             teams = teams,
             trio = table.isTrio,
             schedule = table.schedule,
+            forfeits = tableForfeits(round, table, games, withdrawals),
+            withdrawnTeamIds = table.seatedTeams.filter { it in withdrawals },
         )
     }
 

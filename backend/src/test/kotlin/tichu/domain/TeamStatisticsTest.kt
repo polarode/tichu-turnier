@@ -1,6 +1,7 @@
 package tichu.domain
 
 import tichu.testsupport.teamOf
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -321,5 +322,58 @@ class TeamStatisticsTest {
             assertEquals(0, s.beschissGames, "beschissGames of $team")
             assertEquals(null, s.goodHorseRatio, "goodHorseRatio of $team")
         }
+    }
+
+    /** b withdrew after a's two wins (60 and 70, two bombs each in game 1 and 2) with FULL compensation. */
+    private fun playedThenWithdrawn(compensation: ForfeitCompensation) = PlayedRound(
+        round = round(1, listOf("a", "b")),
+        games = listOf(
+            game(1, 1, 1, side("a", 60, p("a", 1, 1, bombs = 1), p("a", 2, 3, bombs = 1)),
+                side("b", 40, p("b", 1, 2), p("b", 2, 4))),
+            game(1, 1, 2, side("a", 70, p("a", 1, 1, bombs = 2), p("a", 2, 3)),
+                side("b", 30, p("b", 1, 2), p("b", 2, 4))),
+        ),
+        confirmations = mapOf(completed(1, "a")),
+        withdrawals = mapOf(
+            TeamId("b") to Withdrawal(WithdrawalReason.VOLUNTARY, compensation, 1, Instant.EPOCH, AdminUserId("admin-1")),
+        ),
+    )
+
+    @Test
+    fun `the good horse ratio counts the forfeits a team is awarded`() {
+        val stats = TeamStatistics.compute(teams, listOf(playedThenWithdrawn(ForfeitCompensation.FULL)), settings)
+
+        // a: played TP 130 and VP 4; two forfeits at FULL add 200 TP and 4 VP. Ratio 330 / 8 = 41.25.
+        // b: no VP at all, so no ratio.
+        assertEquals(41.25, stats.single { it.teamId == TeamId("a") }.goodHorseRatio)
+        assertEquals(null, stats.single { it.teamId == TeamId("b") }.goodHorseRatio)
+    }
+
+    @Test
+    fun `a team with only forfeited victory points still has a good horse ratio`() {
+        // Nothing was played: b withdrew before any game and a is awarded all four games at FULL.
+        val round = PlayedRound(
+            round = round(1, listOf("a", "b")),
+            games = emptyList(),
+            confirmations = mapOf(completed(1, "a")),
+            withdrawals = mapOf(
+                TeamId("b") to Withdrawal(WithdrawalReason.DISQUALIFIED, ForfeitCompensation.FULL, 1, Instant.EPOCH, AdminUserId("admin-1")),
+            ),
+        )
+
+        val stats = TeamStatistics.compute(teams, listOf(round), settings)
+
+        // a: four forfeits at 2 VP and 100 TP each = 8 VP, 400 TP; ratio 50.0.
+        assertEquals(50.0, stats.single { it.teamId == TeamId("a") }.goodHorseRatio)
+    }
+
+    @Test
+    fun `bombs per game divide by the games played, leaving out the forfeited ones`() {
+        val stats = TeamStatistics.compute(teams, listOf(playedThenWithdrawn(ForfeitCompensation.FULL)), settings)
+
+        // a: 4 bombs in its two played games. One seated round gives 4 games, minus the 2 forfeits
+        // a was the opponent in, so 4 / 2 = 2.0. b: no bombs, its 2 forfeits leave 2 games, 0 / 2 = 0.0.
+        assertEquals(2.0, stats.single { it.teamId == TeamId("a") }.bombsPerGame)
+        assertEquals(0.0, stats.single { it.teamId == TeamId("b") }.bombsPerGame)
     }
 }

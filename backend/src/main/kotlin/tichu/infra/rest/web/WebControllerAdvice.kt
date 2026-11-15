@@ -31,6 +31,11 @@ import tichu.vocabulary.NotFoundException
 import tichu.vocabulary.TableCompletedException
 import tichu.vocabulary.TableIncompleteException
 import tichu.vocabulary.TableNotCompletedException
+import tichu.vocabulary.TeamAlreadyWithdrawnException
+import tichu.vocabulary.TeamWithdrawnException
+import tichu.vocabulary.TooFewActiveTeamsException
+import tichu.vocabulary.TeamNotWithdrawnException
+import tichu.vocabulary.WithdrawalFinalException
 import tichu.vocabulary.TeamAccessException
 import tichu.vocabulary.TeamAccessLinkConflictException
 import tichu.vocabulary.TeamLimitReachedException
@@ -226,6 +231,31 @@ class WebControllerAdvice {
 
     @ExceptionHandler(InsufficientTeamsException::class)
     fun handleInsufficientTeams(ex: InsufficientTeamsException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Withdrawing a team that already withdrew: HTTP 409. */
+    @ExceptionHandler(TeamAlreadyWithdrawnException::class)
+    fun handleTeamAlreadyWithdrawn(ex: TeamAlreadyWithdrawnException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Undoing the withdrawal of a team that is not withdrawn: HTTP 409. */
+    @ExceptionHandler(TeamNotWithdrawnException::class)
+    fun handleTeamNotWithdrawn(ex: TeamNotWithdrawnException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Undoing a withdrawal that is final (published, a later round drawn, or left unfinished): HTTP 409. */
+    @ExceptionHandler(WithdrawalFinalException::class)
+    fun handleWithdrawalFinal(ex: WithdrawalFinalException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** A withdrawn team acting on its table, or a Forfeit Game recorded against one: HTTP 409. */
+    @ExceptionHandler(TeamWithdrawnException::class)
+    fun handleTeamWithdrawn(ex: TeamWithdrawnException): ProblemDetail =
+        problem(HttpStatus.CONFLICT, ex)
+
+    /** Drawing the next round with fewer than two active teams: HTTP 409. */
+    @ExceptionHandler(TooFewActiveTeamsException::class)
+    fun handleTooFewActiveTeams(ex: TooFewActiveTeamsException): ProblemDetail =
         problem(HttpStatus.CONFLICT, ex)
 
     /** Uniqueness violations of teams/players: 409, field-anchored like InvalidFieldException. */

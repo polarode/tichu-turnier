@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { TOURNAMENT_STATUSES } from '@/vocabulary/tournament-status.enum.ts';
+import { WITHDRAWAL_REASONS } from '@/vocabulary/withdrawal-reason.enum.ts';
 
 /**
  * zod schema for the exchange response. Unlike the access-link reveal, this carries
@@ -36,6 +37,8 @@ export const teamOverviewDtoSchema = z.object({
         .array()
         // A team is exactly two named players, server-enforced since S1.
         .length(2),
+    /** Why the team withdrew (ADR 0011); null while it plays on. */
+    withdrawalReason: z.enum(WITHDRAWAL_REASONS).nullable(),
 });
 
 export type TeamOverviewDto = z.infer<typeof teamOverviewDtoSchema>;

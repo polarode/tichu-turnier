@@ -85,6 +85,21 @@ export const ERROR_CODES = [
     // --- Corrections (ADR 0010) ---
     /** Correcting a game before every team confirmed its table. */
     'TABLE_NOT_COMPLETED',
+
+    // --- Withdrawal (ADR 0011) ---
+    /** Withdrawing a team that already withdrew. */
+    'TEAM_ALREADY_WITHDRAWN',
+    /** Undoing the withdrawal of a team that did not withdraw. */
+    'TEAM_NOT_WITHDRAWN',
+    /**
+     * Undoing a withdrawal once it is final: the results are published, or a later round is
+     * drawn. Either way a completed tournament's table would stay unfinished.
+     */
+    'WITHDRAWAL_FINAL',
+    /** Recording a game for a team that withdrew. */
+    'TEAM_WITHDRAWN',
+    /** Drawing a round with fewer than two teams still in the tournament. */
+    'TOO_FEW_ACTIVE_TEAMS',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

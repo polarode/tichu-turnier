@@ -138,7 +138,7 @@ class TournamentRepositoryPersistenceTest(
     }
 
     @Test
-    fun `V24 turns tournaments without shuffled tables off and keeps a stored value`() {
+    fun `V25 turns tournaments without shuffled tables off and keeps a stored value`() {
         // Raw JSON is asserted: reading through the adapter would hide a missing key behind the domain default (true).
         val stored = mapOf(
             "t-old" to """{"grandTichuBonus": 100, "totalRounds": 4, "doubleWinBonus": 200}""",
@@ -152,7 +152,7 @@ class TournamentRepositoryPersistenceTest(
             )
         }
 
-        val migration = javaClass.getResource("/db/migration/V24__add_shuffled_tables_setting.sql")!!.readText()
+        val migration = javaClass.getResource("/db/migration/V25__add_shuffled_tables_setting.sql")!!.readText()
         jdbcTemplate.execute(migration)
 
         fun rawSettings(id: String) = jdbcTemplate.queryForObject("SELECT settings::text FROM tournaments WHERE id = ?", String::class.java, id)

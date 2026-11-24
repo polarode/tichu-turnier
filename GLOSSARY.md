@@ -137,18 +137,6 @@ teams; a trio table plays six games (a sequence in which every pair of the three
 teams meets twice), so each of its teams plays four and sits out two.
 _Avoid_: game, match
 
-**Game**:
-One completed deal of Tichu at a table, recorded as the four participating
-players' finish order, Tichu calls, bomb counts and the two teams' base scores.
-A normal table hosts four games per round, a trio table six.
-_Avoid_: match, round (when speaking of a single deal)
-
-**Position**:
-A player's finish order within one game (1 = first out). In a double win the two
-winning players hold positions 1 and 2; the two losing players have no position —
-the game ended without them finishing.
-_Avoid_: rank, placement
-
 **Pairing**:
 The assignment of teams to opponents for a round, produced by the Swiss pairing
 component. Each pairing assigns every team to exactly one table. Tables are shown
@@ -243,29 +231,19 @@ _Avoid_: override, admin edit
 
 ### Scoring
 
-**Beschiss**:
-A per-game flag meaning "someone cheated — sort of": the loose, playful Tichu-table
-accusation, not a formal ruling. Set by the teams when entering the game; carries no
-scoring consequence.
-_Avoid_: cheating (too grave), foul
+The rules of a single game (Game, Position, Tichu Call, Base Score, Double Win, Game
+Score, Beschiss) live in the [Tichu Rules glossary](./backend/tichu-core/GLOSSARY.md).
+Turnier adds:
 
-**Tichu Call**:
-A player's pre-deal announcement: none, small Tichu (after first card) or grand
-Tichu (before any card). Success is derived: called and finished first. A small
-Tichu wins or loses 100 Tichu Points; a grand Tichu the tournament's **Grand Tichu
-Bonus**: 200 normally, or 100 to score it like a small Tichu.
-_Avoid_: announcement, bet
+**Grand Tichu Bonus**:
+The tournament's setting for a grand Tichu: 200 normally, or 100 to score it like a
+small Tichu.
+_Avoid_: GT setting
 
-**Base Score**:
-The card points a team collects in a game before bonuses; the two teams' base scores
-sum to 100. The only score a team enters — bonuses and totals are derived.
-_Avoid_: raw score, card points
-
-**Double Win**:
-A game outcome where one team's two players finish first and second; the base scores
-are 0/0 and the other team's players have no position. The winning team earns the
-tournament's **Double Win Bonus** (200 normally, or 100) and an extra victory point.
-_Avoid_: sweep, shutout
+**Double Win Bonus**:
+The tournament's setting for a double win: 200 normally, or 100. A double win also
+earns an extra victory point.
+_Avoid_: sweep bonus
 
 ### Statistics
 

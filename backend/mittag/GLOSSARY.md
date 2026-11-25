@@ -32,8 +32,16 @@ _Avoid_: guest player, placeholder player, anonymous
 
 **Account**:
 A login, linked to one or more Players, e.g. one person and their family members. Only
-the linked Account sees a Player's statistics across Circles.
+the linked Account sees a Player's statistics across Circles. It reaches every Circle
+where it is a Circle Admin or one of its Players has a Circle Membership, without that
+Circle's Shared Login. Comes to exist only through an Account Invite.
 _Avoid_: user, admin, player
+
+**Account Invite**:
+A single-use link that the Owner or a Circle Admin hands to someone so they can create
+an Account. The issuer picks the Player or Players it links to; there is no open
+sign-up and no self-claiming of a Player.
+_Avoid_: invitation, sign-up link, admin invite (turnier's term)
 
 **Owner**:
 The single Account that exists from configuration and runs the deployment.
@@ -82,6 +90,6 @@ created or named; it exists through the Games the pair played.
 _Avoid_: pair, partnership, side
 
 **Correction**:
-A change to a recorded Game by someone with an Account, made in place and stamped with
-who changed it and when.
+A change to a recorded Game by any Account that reaches the Game's Circle, made in place
+and stamped with who changed it and when.
 _Avoid_: edit, override

@@ -30,7 +30,7 @@
         "zustand": "catalog:"
     },
     "devDependencies": {
-        "@tanstack/react-query-devtools": "5.108.1",
+        "@tanstack/react-query-devtools": "5.108.2",
         "@tanstack/react-router-devtools": "1.167.4",
         "@tanstack/router-plugin": "1.169.0",
         "axios-mock-adapter": "2.1.0"
